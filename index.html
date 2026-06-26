@@ -177,6 +177,15 @@ const MOVES = {
   雷:[{n:'放電',p:0.8},{n:'雷撃',p:1.0},{n:'轟雷',p:1.2}],
   闇:[{n:'影撃ち',p:0.8},{n:'呪詛弾',p:1.0},{n:'冥界波動',p:1.2}],
 };
+// タイプ別の地形特性（攻撃範囲補正）の説明
+const TYPE_TRAIT = {
+  炎:'森に隣接/上で攻撃範囲+1＆その範囲を全体攻撃（山火事）',
+  水:'海に隣接/上で攻撃範囲+1',
+  雷:'海に隣接/上だと、海マスにいる敵を海全域から攻撃（通電）',
+  風:'機動力が高い代わりに、攻撃は隣接マスのみ',
+  地:'地形による攻撃範囲補正なし（地形ダメージ+20%は荒地）',
+  闇:'地形による攻撃範囲補正なし（地形ダメージ+20%は荒地）',
+};
 function movesFor(u){ const m=mon(u); const arr=MOVES[m.type]||MOVES['炎']; const out=[];
   for(let t=0;t<m.level && t<arr.length;t++) out.push({...arr[t], tier:t+1});
   return out.reverse(); // 上位技を先頭に（既定で最強）
@@ -272,6 +281,34 @@ function addUnit(owner, mid, r, c){
 function unitAt(r,c){ if(r<0||c<0||r>=N||c>=N)return null; const id=state.board[r][c]; return id?state.units[id]:null; }
 function mon(u){ return MID[u.mid]; }
 function effMove(u){ const m=mon(u); let v=Math.max(1, m.move-1); if(m.type==='風')v+=1; if(m.type==='水'&&state.terrain[u.r][u.c]==='sea')v+=1; return Math.min(v,3); }
+// 自マス含む隣接8マスに terr があるか（=「海/森に隣接または上」）
+function nearTerrain(u, terr){
+  for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+    const rr=u.r+dr, cc=u.c+dc; if(rr<0||cc<0||rr>=N||cc>=N)continue;
+    if(state.terrain[rr][cc]===terr) return true;
+  }
+  return false;
+}
+// タイプ×地形の攻撃範囲補正
+function effRange(u){ const m=mon(u);
+  if(m.type==='風') return 1;                              // 風：機動力が高い代わりに攻撃は隣接のみ
+  let R=m.atk_range;
+  if(m.type==='水' && nearTerrain(u,'sea')) R+=1;          // 水：海に隣接/海上で射程+1
+  if(m.type==='炎' && nearTerrain(u,'forest')) R+=1;       // 炎：森に隣接/上で射程+1
+  return R;
+}
+function effMulti(u){ const m=mon(u);
+  if(m.type==='炎' && nearTerrain(u,'forest')) return true; // 炎×森：その範囲を全体攻撃
+  return !!m.multi_target;
+}
+// 攻撃範囲ボーナスの説明（発動中のみ）
+function traitNote(u){ const m=mon(u);
+  if(m.type==='風') return '隣接のみ';
+  if(m.type==='水' && nearTerrain(u,'sea')) return '海効果:射程+1';
+  if(m.type==='炎' && nearTerrain(u,'forest')) return '森効果:射程+1&全体';
+  if(m.type==='雷' && nearTerrain(u,'sea')) return '海効果:海上の敵を全域攻撃';
+  return '';
+}
 function alive(owner){ return Object.values(state.units).filter(u=>u.owner===owner); }
 
 function moveTargets(u){
@@ -305,9 +342,13 @@ function fusionResult(a,b){
 }
 function attackTargets(u){
   if(!canAttack(u)) return [];
-  const m=mon(u), R=m.atk_range, res=[];
+  const m=mon(u), R=effRange(u), res=[];
+  const thunderSea = (m.type==='雷' && nearTerrain(u,'sea'));
   for(const e of alive(1-u.owner)){
-    if(Math.max(Math.abs(e.r-u.r),Math.abs(e.c-u.c))<=R) res.push(e);
+    let inRange = Math.max(Math.abs(e.r-u.r),Math.abs(e.c-u.c))<=R;
+    // 雷×海：海マスにいる敵は海全域で対象（通電）
+    if(!inRange && thunderSea && state.terrain[e.r][e.c]==='sea') inRange=true;
+    if(inRange) res.push(e);
   }
   return res;
 }
@@ -334,8 +375,8 @@ function calcDamage(att, def, move){
 function doAttack(att, def, move){
   const m=mon(att);
   if(!move){ const mv=movesFor(att); move=mv[0]; }   // 既定=最強技
-  // multi_target は射程内の敵全体に当てる
-  const targets = m.multi_target ? attackTargets(att) : [def];
+  // 範囲攻撃（multi_target または 炎×森）は射程内の敵全体に当てる
+  const targets = effMulti(att) ? attackTargets(att) : [def];
   if(!targets.includes(def)) targets.push(def);
   att.attacked=true; att.moved=true;
   let kills=0, msg='';
@@ -813,8 +854,10 @@ function updateUI(){
   if(state.phase!=='battle'){ document.getElementById('detail').style.display='none'; return; }
   if(sel){
     const m=mon(sel);
+    const R=effRange(sel), note=traitNote(sel);
     sd.innerHTML = `<img src="${IMG[sel.mid]}"><div><b style="color:#ffd86b">${m.name}</b> <span class="muted">${m.type}/Lv${m.level}</span><br>`
-      +`<span class="muted">HP ${sel.hp}/${sel.maxhp}・ATK ${m.atk}・移動 ${effMove(sel)}・射程 ${m.atk_range}</span></div>`;
+      +`<span class="muted">HP ${sel.hp}/${sel.maxhp}・ATK ${m.atk}・移動 ${effMove(sel)}・射程 ${R}${R>m.atk_range?'↑':''}</span>`
+      +(note?`<br><span style="color:#7be0a0;font-size:11px">⚡${note}</span>`:'')+`</div>`;
     // 技メニュー（攻撃メニュー）
     const atkable=canAttack(sel);
     const movesRow=document.createElement('div'); movesRow.style.cssText='width:100%;display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:3px';
@@ -924,6 +967,7 @@ function showMonsterDetail(id){
     +`<div class="row"><span>こうげき</span><b>${m.atk}</b></div>`
     +`<div class="row"><span>移動</span><b>${Math.min(3,Math.max(1,m.move-1))}マス${m.type==='風'?'(風+1)':''}${m.type==='水'?'(海+1)':''}</b></div>`
     +`<div class="row"><span>攻撃範囲</span><b>${rng}${m.multi_target?' / 範囲攻撃':''}</b></div>`
+    +`<div class="sec">地形特性</div><div class="chain">${TYPE_TRAIT[m.type]||'—'}</div>`
     +`<div class="sec">技（Lvが上がると下位技も使える）</div>${movesHtml}`
     +`<div class="sec">進化ライン</div><div class="chain">${chain.join(' → ')||'進化なし'}</div>`
     +fuseHtml
@@ -1056,6 +1100,8 @@ window.__game={
   get state(){return state;}, MID, FUSE_IDX,
   start(team){ document.getElementById('btStart').onclick(); if(team){chosen=team.slice(0,5);} else randomTeam(); enterPlace(); autoPlace(); beginBattle(); return alive(0).length; },
   click(r,c){ onCellTap(r,c); },
+  atk(uid){ const u=state.units[uid]; if(!u)return null; return {type:mon(u).type, baseRange:mon(u).atk_range, range:effRange(u), multi:effMulti(u), note:traitNote(u), targets:attackTargets(u).length}; },
+  setTerrain(r,c,t){ state.terrain[r][c]=t; },
   endTurn, alive:(o)=>alive(o).length,
   dbg(){ return {phase:state.phase, turn:state.turn, cur:state.cur, energy:state.energy, castle:state.castleHP, p0:alive(0).length, p1:alive(1).length}; }
 };
