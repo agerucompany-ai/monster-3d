@@ -70,6 +70,19 @@ button.bt.evo{background:#7a4ea8}
   <div style="margin-top:14px"><button class="bt go" id="btStart" style="font-size:16px;padding:12px 22px">対CPUで始める</button></div>
 </div>
 
+<!-- preview: 地形を見てから編成 -->
+<div class="overlay" id="ovPreview" style="display:none;background:transparent;pointer-events:none">
+  <div style="margin-top:auto;background:rgba(8,10,16,.92);border-radius:12px;padding:12px;pointer-events:auto">
+    <h2 style="margin-top:0">① 地形を確認</h2>
+    <p class="muted">この地形で戦う。川(海)・森・荒地・高低差を見てから編成を決めよう。<br>中央の🏳フラッグ(中立・左右3つずつ)は乗れば支配＝毎ターン気+1。🔵自陣=手前 / 🔴敵陣=奥。</p>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="bt go" id="btToSelect">この地形で編成する →</button>
+      <button class="bt" id="btReroll">地形を引き直す</button>
+    </div>
+  </div>
+</div>
+<button id="btPeekBack" style="display:none;position:fixed;top:34px;left:8px;z-index:25" class="bt go">← 編成にもどる</button>
+
 <!-- select -->
 <div class="overlay" id="ovSelect" style="display:none">
   <h1>① 編成：5体えらぶ</h1>
@@ -80,6 +93,7 @@ button.bt.evo{background:#7a4ea8}
     <span id="selCount">0 / 5</span>
     <button class="bt go" id="btToPlace" disabled>配置へ →</button>
     <button class="bt" id="btRandom">おまかせ5体</button>
+    <button class="bt" id="btPeek">🗺地形を見る</button>
     <span class="muted" id="selHint"></span>
   </div>
 </div>
@@ -131,13 +145,31 @@ const TYPE_HEX = {炎:0xe8503a,水:0x2f86c5,地:0x9c7a3c,風:0x4fa86a,雷:0xd6a9
 const STRONG = {水:['炎'], 雷:['水','風'], 地:['雷'], 風:['地'], 闇:['風'], 炎:['闇']};
 const TERR = ['plain','forest','wasteland','sea'];
 const TERR_JP = {plain:'平原',forest:'森',wasteland:'荒地',sea:'海'};
-const TERR_HEX = {plain:0x8fb863, forest:0x3c7a47, wasteland:0xb09256, sea:0x3877ab};
+const TERR_HEX = {plain:0x83c258, forest:0x2c6a3a, wasteland:0xc39a57, sea:0x265f9e};
 const TERR_BONUS = {forest:['炎','風'], wasteland:['地','闇'], sea:['水','雷'], plain:[]};
+
+// 技（タイプ×レベル帯。モンスター間で共通。Lvが上がると下位の技も使える＝下位互換）
+const MOVES = {
+  炎:[{n:'火の粉',p:0.8},{n:'火炎弾',p:1.0},{n:'獄炎爆火',p:1.2}],
+  水:[{n:'水鉄砲',p:0.8},{n:'激流弾',p:1.0},{n:'大海嘯',p:1.2}],
+  地:[{n:'石つぶて',p:0.8},{n:'岩石弾',p:1.0},{n:'大地割断',p:1.2}],
+  風:[{n:'かまいたち',p:0.8},{n:'真空波',p:1.0},{n:'大旋風',p:1.2}],
+  雷:[{n:'放電',p:0.8},{n:'雷撃',p:1.0},{n:'轟雷',p:1.2}],
+  闇:[{n:'影撃ち',p:0.8},{n:'呪詛弾',p:1.0},{n:'冥界波動',p:1.2}],
+};
+function movesFor(u){ const m=mon(u); const arr=MOVES[m.type]||MOVES['炎']; const out=[];
+  for(let t=0;t<m.level && t<arr.length;t++) out.push({...arr[t], tier:t+1});
+  return out.reverse(); // 上位技を先頭に（既定で最強）
+}
 
 const HOME = {0:N-1, 1:0};           // 各陣のhome_row (0=自分=手前, 1=CPU=奥)
 const CASTLE = {0:{r:N-1,c:CC}, 1:{r:0,c:CC}};
-const FLAG_COLS = [2, CC, N-3];      // フラッグ列
-const FLAG_CFG = [ {owner:0,cells:FLAG_COLS.map(c=>[N-2,c])}, {owner:1,cells:FLAG_COLS.map(c=>[1,c])} ];
+const MIDR = Math.floor(N/2);        // 中央行
+// フラッグは盤中央・中立。左右両サイドに振り分け（敵味方どちらでも乗れば支配）
+const FLAG_CELLS = [
+  [MIDR-2,2],[MIDR,2],[MIDR+2,2],          // 左サイド
+  [MIDR-2,N-3],[MIDR,N-3],[MIDR+2,N-3]     // 右サイド
+];
 const EVO_COST = {1:3, 2:5};         // Lv1->2, Lv2->3
 const FUSE_COST = {2:4, 3:6};        // 融合体のlevel
 const CASTLE_HP = 1000;
@@ -156,7 +188,7 @@ let uidSeq = 1;
 function newState(){
   return {phase:'title', turn:1, cur:0, board:grid(()=>null), units:{},
           energy:[0,0], terrain:genTerrain(), castleHP:{0:CASTLE_HP,1:CASTLE_HP},
-          flags: FLAG_CFG.flatMap(g=>g.cells.map(([r,c])=>({r,c,owner:g.owner}))) };
+          flags: FLAG_CELLS.map(([r,c])=>({r,c,owner:-1})) };
 }
 function grid(f){ const a=[]; for(let r=0;r<N;r++){a.push([]); for(let c=0;c<N;c++)a[r].push(f(r,c));} return a; }
 function genTerrain(){
@@ -201,13 +233,13 @@ function genTerrain(){
     }
     for(let r=0;r<N;r++)for(let c=0;c<N;c++)t[r][c]=nt[r][c];
   }
-  // 城・フラッグ・自陣最前列(配置の足場)は平原に整地
+  // 城・フラッグマスは平原に整地
   for(const o of [0,1]){ t[CASTLE[o].r][CASTLE[o].c]='plain'; }
-  for(const f of FLAG_CFG.flatMap(g=>g.cells)) t[f[0]][f[1]]='plain';
+  for(const f of FLAG_CELLS) t[f[0]][f[1]]='plain';
   return t;
 }
 // 地形の高さ（一体化した起伏に）
-const TERR_H = {plain:0, forest:0.16, wasteland:0.10, sea:-0.16};
+const TERR_H = {plain:0, forest:0.22, wasteland:0.13, sea:-0.22};
 function terrAt(r,c){ const rr=Math.min(N-1,Math.max(0,r)), cc=Math.min(N-1,Math.max(0,c)); return state.terrain[rr][cc]; }
 function cellH(r,c){ return TERR_H[terrAt(r,c)]||0; }
 
@@ -219,7 +251,7 @@ function addUnit(owner, mid, r, c){
 }
 function unitAt(r,c){ if(r<0||c<0||r>=N||c>=N)return null; const id=state.board[r][c]; return id?state.units[id]:null; }
 function mon(u){ return MID[u.mid]; }
-function effMove(u){ const m=mon(u); let v=m.move; if(m.type==='風')v+=1; if(m.type==='水'&&state.terrain[u.r][u.c]==='sea')v+=1; return v; }
+function effMove(u){ const m=mon(u); let v=Math.max(1, m.move-1); if(m.type==='風')v+=1; if(m.type==='水'&&state.terrain[u.r][u.c]==='sea')v+=1; return Math.min(v,3); }
 function alive(owner){ return Object.values(state.units).filter(u=>u.owner===owner); }
 
 function moveTargets(u){
@@ -272,14 +304,16 @@ function castleAdjacent(u){
 
 function typeBonus(at,dt){ return (STRONG[at]||[]).includes(dt)?0.2:0; }
 function terrBonus(type,terr){ return (TERR_BONUS[terr]||[]).includes(type)?0.2:0; }
-function calcDamage(att, def){
+function calcDamage(att, def, move){
   const ma=mon(att), md=mon(def);
   const b = typeBonus(ma.type, md.type) + terrBonus(ma.type, state.terrain[att.r][att.c]);
-  return Math.round(ma.atk*(1+b));
+  const p = move? move.p : 1;
+  return Math.round(ma.atk*p*(1+b));
 }
 
-function doAttack(att, def){
+function doAttack(att, def, move){
   const m=mon(att);
+  if(!move){ const mv=movesFor(att); move=mv[0]; }   // 既定=最強技
   // multi_target は射程内の敵全体に当てる
   const targets = m.multi_target ? attackTargets(att) : [def];
   if(!targets.includes(def)) targets.push(def);
@@ -287,8 +321,8 @@ function doAttack(att, def){
   let kills=0, msg='';
   for(const t of targets){
     if(!state.units[t.uid]) continue;
-    const dmg=calcDamage(att,t); t.hp-=dmg;
-    if(!msg) msg=`${m.name} → ${t.name||mon(t).name} に ${dmg}`+(targets.length>1?` 他${targets.length-1}体`:'');
+    const dmg=calcDamage(att,t,move); t.hp-=dmg;
+    if(!msg) msg=`${m.name}の「${move.n}」→ ${mon(t).name} に ${dmg}`+(targets.length>1?` 他${targets.length-1}体`:'');
     if(t.hp<=0){ killUnit(t); kills++; }
   }
   if(kills) state.energy[att.owner]+=kills;
@@ -480,36 +514,63 @@ function buildTerrain(){
       const ln=new THREE.LineSegments(eg,new THREE.LineBasicMaterial({color:0x0a0d14,transparent:true,opacity:0.45}));
       ln.rotation.x=-Math.PI/2; ln.position.set(w.x,h+0.002,w.z); gridGroup.add(ln);
     }
-    // 装飾: 森=木 / 荒地=岩
-    if(terr==='forest' && ((r*5+c*3+7)%10)<7) addTree(w.x,h,w.z,(r*3+c*7));
-    else if(terr==='wasteland' && ((r*7+c*5+3)%10)<6) addRock(w.x,h,w.z,(r*5+c*2));
-    // 海はさざ波の薄板
-    if(terr==='sea'){
-      const wm=new THREE.Mesh(new THREE.PlaneGeometry(0.98,0.98),
-          new THREE.MeshBasicMaterial({color:0x6fb4e0,transparent:true,opacity:0.35}));
-      wm.rotation.x=-Math.PI/2; wm.position.set(w.x,h+0.03,w.z); decoGroup.add(wm);
-    }
+    // 装飾: 森=木の群れ / 荒地=岩場 / 平原=草 / 海=二層の水面+さざ波
+    const seed=(r+99)*7+(c+99)*13;
+    if(terr==='forest') addTrees(w.x,h,w.z,seed);
+    else if(terr==='wasteland') addRocks(w.x,h,w.z,seed);
+    else if(terr==='plain' && inside && seed%3===0) addGrass(w.x,h,w.z,seed);
+    if(terr==='sea') addWater(w.x,h,w.z,seed);
   }
   addZone(HOME[0], 0x2f6bd0); addZone(HOME[1], 0xd0432f);
 }
-function addTree(x,h,z,seed){
+// 共有マテリアル（軽量化）
+const M_TRUNK=new THREE.MeshLambertMaterial({color:0x6b4a2b});
+const M_LEAF=[new THREE.MeshLambertMaterial({color:0x2c6633}),new THREE.MeshLambertMaterial({color:0x368044}),new THREE.MeshLambertMaterial({color:0x256b3a})];
+const M_ROCK=[new THREE.MeshLambertMaterial({color:0x8a836f}),new THREE.MeshLambertMaterial({color:0x9a917a}),new THREE.MeshLambertMaterial({color:0x77705e})];
+const M_GRASS=new THREE.MeshLambertMaterial({color:0x5fa83f});
+const G_CONE3=new THREE.ConeGeometry(0.19,0.34,7), G_CONE2=new THREE.ConeGeometry(0.14,0.26,7), G_CONE1=new THREE.ConeGeometry(0.1,0.2,6);
+const G_TRUNK=new THREE.CylinderGeometry(0.04,0.055,0.22,5);
+const G_ROCK=[new THREE.DodecahedronGeometry(0.16),new THREE.DodecahedronGeometry(0.1),new THREE.DodecahedronGeometry(0.07)];
+const G_BLADE=new THREE.ConeGeometry(0.03,0.16,4);
+function makeTree(scale,leaf){
   const g=new THREE.Group();
-  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.055,0.2,5),new THREE.MeshLambertMaterial({color:0x6b4a2b}));
-  trunk.position.y=0.1; g.add(trunk);
-  const f1=new THREE.Mesh(new THREE.ConeGeometry(0.2,0.3,7),new THREE.MeshLambertMaterial({color:0x2f6b39}));
-  f1.position.y=0.32; g.add(f1);
-  const f2=new THREE.Mesh(new THREE.ConeGeometry(0.15,0.24,7),new THREE.MeshLambertMaterial({color:0x387c44}));
-  f2.position.y=0.46; g.add(f2);
-  const off=((seed%3)-1)*0.22, off2=(((seed*3)%3)-1)*0.22;
-  g.position.set(x+0.26+off*0.2, h, z+0.26+off2*0.2);
-  const s=0.8+((seed%4)*0.08); g.scale.set(s,s,s);
-  decoGroup.add(g);
+  const tr=new THREE.Mesh(G_TRUNK,M_TRUNK); tr.position.y=0.11; g.add(tr);
+  const f1=new THREE.Mesh(G_CONE3,M_LEAF[leaf%3]); f1.position.y=0.32; g.add(f1);
+  const f2=new THREE.Mesh(G_CONE2,M_LEAF[(leaf+1)%3]); f2.position.y=0.47; g.add(f2);
+  const f3=new THREE.Mesh(G_CONE1,M_LEAF[(leaf+2)%3]); f3.position.y=0.58; g.add(f3);
+  g.scale.setScalar(scale); return g;
 }
-function addRock(x,h,z,seed){
-  const r1=new THREE.Mesh(new THREE.DodecahedronGeometry(0.13),new THREE.MeshLambertMaterial({color:0x8a836f}));
-  r1.position.set(x+0.24,h+0.06,z-0.22); r1.rotation.set(seed,seed*2,seed); decoGroup.add(r1);
-  if(seed%2===0){ const r2=new THREE.Mesh(new THREE.DodecahedronGeometry(0.08),new THREE.MeshLambertMaterial({color:0x9a917a}));
-    r2.position.set(x-0.2,h+0.04,z+0.2); decoGroup.add(r2); }
+function addTrees(x,h,z,seed){
+  const n=2+(seed%3); // 2〜4本の群れ
+  for(let i=0;i<n;i++){
+    const a=seed*1.7+i*2.39, rad=0.1+((i+seed)%3)*0.13;
+    const t=makeTree(0.62+((seed+i)%4)*0.09, seed+i);
+    t.position.set(x+Math.cos(a)*rad, h, z+Math.sin(a)*rad);
+    t.rotation.y=a; decoGroup.add(t);
+  }
+}
+function addRocks(x,h,z,seed){
+  const n=1+(seed%3);
+  for(let i=0;i<n;i++){
+    const gi=(seed+i)%3, a=seed*0.9+i*2.1, rad=0.12+i*0.16;
+    const m=new THREE.Mesh(G_ROCK[gi],M_ROCK[(seed+i)%3]);
+    m.position.set(x+Math.cos(a)*rad, h+0.04+gi*0.02, z+Math.sin(a)*rad);
+    m.rotation.set(seed+i,seed*1.3,seed*0.7); decoGroup.add(m);
+  }
+}
+function addGrass(x,h,z,seed){
+  for(let i=0;i<3;i++){ const a=seed+i*2.1, rad=0.12+i*0.1;
+    const b=new THREE.Mesh(G_BLADE,M_GRASS); b.position.set(x+Math.cos(a)*rad,h+0.08,z+Math.sin(a)*rad);
+    b.rotation.z=0.2*((i%2)?1:-1); decoGroup.add(b); }
+}
+function addWater(x,h,z,seed){
+  // 浅瀬（明るい）＋さざ波線
+  const sf=new THREE.Mesh(new THREE.PlaneGeometry(0.99,0.99),
+      new THREE.MeshBasicMaterial({color:0x5aa6e0,transparent:true,opacity:0.45}));
+  sf.rotation.x=-Math.PI/2; sf.position.set(x,h+0.05,z); decoGroup.add(sf);
+  const rp=new THREE.Mesh(new THREE.PlaneGeometry(0.6,0.05),
+      new THREE.MeshBasicMaterial({color:0xcfeaff,transparent:true,opacity:0.5}));
+  rp.rotation.x=-Math.PI/2; rp.position.set(x+((seed%3)-1)*0.15,h+0.06,z+((seed%2)?0.1:-0.12)); decoGroup.add(rp);
 }
 function addZone(row,col){
   for(let c=0;c<N;c++){
@@ -664,6 +725,7 @@ let pickEnabled=false;
 let sel=null;          // 選択中の自ユニット
 let selMoves=null;     // {move,fuse}
 let selAtks=null;
+let selMove=null;      // 選択中の技
 
 function onCellTap(r,c){
   if(state.phase==='place'){ placeTap(r,c); return; }
@@ -672,7 +734,7 @@ function onCellTap(r,c){
   // 攻撃対象タップ
   if(sel && selAtks){
     const tgt=selAtks.find(e=>e.r===r&&e.c===c);
-    if(tgt){ doAttack(sel, tgt); refreshSelAfterAct(); return; }
+    if(tgt){ doAttack(sel, tgt, selMove); refreshSelAfterAct(); return; }
   }
   // 攻城（敵城マスタップ）
   if(sel){
@@ -692,6 +754,7 @@ function onCellTap(r,c){
 }
 function selectUnit(u){
   sel=u; selMoves = (u.moved?{move:[],fuse:[]}:moveTargets(u)); selAtks=attackTargets(u);
+  const mv=movesFor(u); selMove = mv.length?mv[0]:null;   // 既定=最強技
   drawSelHL(); updateUI();
 }
 function refreshSelAfterAct(){
@@ -707,7 +770,7 @@ function drawSelHL(){
   // 攻城可能表示
   if(sel && castleAdjacent(sel) && canAttack(sel)){ const ec=CASTLE[1]; addHL(ec.r,ec.c,0xff8040,0.5); }
 }
-function clearSel(){ sel=null; selMoves=null; selAtks=null; clearHL(); syncUnits(); updateUI(); }
+function clearSel(){ sel=null; selMoves=null; selAtks=null; selMove=null; clearHL(); syncUnits(); updateUI(); }
 
 // ======================= UI =======================
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),1400); }
@@ -730,10 +793,27 @@ function updateUI(){
     const m=mon(sel);
     sd.innerHTML = `<img src="${IMG[sel.mid]}"><div><b style="color:#ffd86b">${m.name}</b> <span class="muted">${m.type}/Lv${m.level}</span><br>`
       +`<span class="muted">HP ${sel.hp}/${sel.maxhp}・ATK ${m.atk}・移動 ${effMove(sel)}・射程 ${m.atk_range}</span></div>`;
+    // 技メニュー（攻撃メニュー）
+    const atkable=canAttack(sel);
+    const movesRow=document.createElement('div'); movesRow.style.cssText='width:100%;display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:3px';
+    const lab=document.createElement('span'); lab.className='muted'; lab.textContent='技:'; movesRow.appendChild(lab);
+    movesFor(sel).forEach(mo=>{
+      const on=selMove&&selMove.n===mo.n;
+      const dmg=Math.round(m.atk*mo.p);
+      const b=document.createElement('button'); b.className='bt '+(on?'go':'');
+      b.style.cssText='padding:6px 10px;font-size:12px'+(atkable?'':';opacity:.5');
+      b.innerHTML=`${mo.n}<span style="opacity:.7;font-size:10px"> 威${dmg}${mo.tier< m.level?'(下位)':''}</span>`;
+      b.onclick=()=>{ selMove=mo; updateUI(); };
+      movesRow.appendChild(b);
+    });
+    ac.appendChild(movesRow);
+    const tip=document.createElement('div'); tip.className='muted'; tip.style.cssText='width:100%;font-size:11px;margin-bottom:3px';
+    tip.textContent = atkable? '技を選び、赤い敵（橙=城）をタップで攻撃' : (sel.attacked?'行動済み':'移動後は攻撃できない技もある');
+    ac.appendChild(tip);
     // 進化ボタン
     if(m.evolves_to!=null && !sel.moved && !sel.attacked){
       const cost=EVO_COST[m.level];
-      const b=mkbt(`進化 (気${cost})`,'evo', state.energy[0]>=cost, ()=>{ if(evolveUnit(sel,false)){ refreshSelAfterAct(); } });
+      const b=mkbt(`進化 Lv${m.level}→${m.level+1} (気${cost})`,'evo', state.energy[0]>=cost, ()=>{ if(evolveUnit(sel,false)){ refreshSelAfterAct(); } });
       ac.appendChild(b);
     }
     ac.appendChild(mkbt('選択解除','',true,clearSel));
@@ -749,7 +829,7 @@ function mkbt(label,cls,enabled,fn){ const b=document.createElement('button'); b
 // ======================= 編成・配置画面 =======================
 let chosen=[];    // 選んだmid配列(最大5)
 let placeList=[]; // 配置待ち [{mid, placed:false}]
-function poolMonsters(){ return MONSTERS.filter(m=> m.level<=2 && m.role!=='default3' && m.role!=='fusion'); }
+function poolMonsters(){ return MONSTERS.filter(m=> m.level===1); }  // 開始時はLv1のみ（Lv2/3は進化・融合で）
 let selFilter='all';
 function buildSelect(){
   const tabs=document.getElementById('selTabs'); tabs.innerHTML='';
@@ -789,6 +869,7 @@ function randomTeam(){
 
 function enterPlace(){
   document.getElementById('ovSelect').style.display='none';
+  document.getElementById('btPeekBack').style.display='none';
   document.getElementById('ovPlace').style.display='flex';
   state.phase='place'; pickEnabled=true;
   placeList=chosen.map(mid=>({mid,placed:false}));
@@ -863,8 +944,26 @@ function boot(){
   buildTerrain(); buildStructures(); syncUnits(); fit();
   document.getElementById('btStart').onclick=()=>{
     document.getElementById('ovTitle').style.display='none';
+    state=newState(); state.phase='preview';
+    buildTerrain(); buildStructures(); syncUnits(); fit();
+    document.getElementById('ovPreview').style.display='flex';
+  };
+  document.getElementById('btReroll').onclick=()=>{
+    state=newState(); state.phase='preview';
+    buildTerrain(); buildStructures(); syncUnits(); fit();
+  };
+  document.getElementById('btToSelect').onclick=()=>{
+    document.getElementById('ovPreview').style.display='none';
     document.getElementById('ovSelect').style.display='flex';
     chosen=[]; buildSelect();
+  };
+  document.getElementById('btPeek').onclick=()=>{
+    document.getElementById('ovSelect').style.display='none';
+    document.getElementById('btPeekBack').style.display='block';
+  };
+  document.getElementById('btPeekBack').onclick=()=>{
+    document.getElementById('btPeekBack').style.display='none';
+    document.getElementById('ovSelect').style.display='flex';
   };
   document.getElementById('btRandom').onclick=randomTeam;
   document.getElementById('btToPlace').onclick=enterPlace;
@@ -872,6 +971,8 @@ function boot(){
   document.getElementById('btBegin').onclick=beginBattle;
   document.getElementById('btAgain').onclick=()=>{
     document.getElementById('ovEnd').style.display='none';
+    document.getElementById('btPeekBack').style.display='none';
+    document.getElementById('ovPreview').style.display='none';
     state=newState(); chosen=[]; placeList=[];
     buildTerrain(); buildStructures(); syncUnits(); fit();
     document.getElementById('ovTitle').style.display='flex';
