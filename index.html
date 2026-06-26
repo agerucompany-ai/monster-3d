@@ -396,6 +396,7 @@ function doAttack(att, def, move){
   const targets = effMulti(att) ? attackTargets(att) : [def];
   if(!targets.includes(def)) targets.push(def);
   att.attacked=true; att.moved=true;
+  attackFx(att, targets, def);                 // 攻撃エフェクト
   let kills=0, msg='';
   for(const t of targets){
     if(!state.units[t.uid]) continue;
@@ -413,6 +414,7 @@ function doCastleAttack(att){
   state.castleHP[enemy]-=dmg;
   if(state.castleHP[enemy]<0) state.castleHP[enemy]=0;
   const cc=CASTLE[enemy]; floatText(cc.r,cc.c,`-${dmg}`, '#ffb030');
+  attackFx(att, [{r:cc.r,c:cc.c}], {r:cc.r,c:cc.c});   // 攻城エフェクト
   toast(`攻城！ ${enemy===1?'敵':'自'}城に ${dmg}（残${state.castleHP[enemy]}）`);
   att.attacked=true; att.moved=true;
   afterAction();
@@ -436,12 +438,14 @@ function tryFusion(a, b, r, c){
   const lv=MID[fid].level, cost=FUSE_COST[lv]||4;
   if(state.energy[a.owner]<cost){ toast(`融合には気${cost}必要`); return; }
   state.energy[a.owner]-=cost;
+  const ca=TYPE_HEX[mon(a).type], cb=TYPE_HEX[mon(b).type];
   // 2体除外→融合体
   state.board[a.r][a.c]=null; state.board[b.r][b.c]=null;
   delete state.units[a.uid]; delete state.units[b.uid];
   markSprite(a.uid,'dead'); markSprite(b.uid,'dead');
   const nu=addUnit(a.owner, fid, r, c);
   nu.moved=true; nu.attacked=true; nu.evoLock=state.turn;
+  fusionFx(r,c,ca,cb);
   toast(`融合！ ${MID[fid].name} 誕生（気-${cost}）`);
   afterAction();
 }
@@ -452,6 +456,7 @@ function evolveUnit(u, free){
     state.energy[u.owner]-=cost; u.moved=true; u.attacked=true;
   }
   u.mid=m.evolves_to; const nm=mon(u); u.maxhp=nm.hp; u.hp=nm.hp; u.evoLock=state.turn;
+  evolveFx(u.r,u.c);
   toast(`${m.name} → ${nm.name} に進化！`+(free?'（位置進化）':`（気-${EVO_COST[m.level]}）`));
   return true;
 }
@@ -778,6 +783,45 @@ function addHL(r,c,color,op){
   m.rotation.x=-Math.PI/2; m.position.set(w.x,cellH(r,c)+0.04,w.z); fxGroup.add(m); hlMeshes.push(m);
 }
 
+// ---- エフェクト（進化・融合・攻撃）----
+let effects=[];
+function updateEffects(){
+  const now=performance.now();
+  for(let i=effects.length-1;i>=0;i--){ const e=effects[i]; const t=(now-e.t0)/e.dur;
+    if(t>=1){ e.cleanup&&e.cleanup(); effects.splice(i,1); } else e.update(t); }
+}
+function fxRing(r,c,color,o){ o=o||{}; const w=cell2world(r,c), h=cellH(r,c)+(o.y||0.1);
+  const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:0.9,side:THREE.DoubleSide});
+  const m=new THREE.Mesh(new THREE.RingGeometry(0.18,0.3,24),mat); m.rotation.x=-Math.PI/2; m.position.set(w.x,h,w.z); fxGroup.add(m);
+  effects.push({t0:performance.now(),dur:o.dur||520,update:t=>{const s=0.4+t*(o.max||2.4);m.scale.set(s,s,s);mat.opacity=0.9*(1-t);},cleanup:()=>fxGroup.remove(m)});
+}
+function fxBurst(r,c,color,n,o){ o=o||{}; const w=cell2world(r,c), baseY=cellH(r,c)+(o.y||0.45); const parts=[];
+  for(let i=0;i<n;i++){ const mt=new THREE.MeshBasicMaterial({color,transparent:true,opacity:1});
+    const p=new THREE.Mesh(new THREE.SphereGeometry(o.size||0.07,6,6),mt);
+    const a=(i/n)*Math.PI*2+Math.random()*0.6, sp=0.45+Math.random()*0.6;
+    p.userData={vx:Math.cos(a)*sp,vz:Math.sin(a)*sp,vy:(o.up!=null?o.up:0.9)+Math.random()*0.5};
+    p.position.set(w.x,baseY,w.z); fxGroup.add(p); parts.push({p,mt}); }
+  const g=o.gravity!=null?o.gravity:1.9;
+  effects.push({t0:performance.now(),dur:o.dur||640,update:t=>{ for(const{p,mt}of parts){const d=p.userData;p.position.set(w.x+d.vx*t*1.2,baseY+d.vy*t-g*t*t,w.z+d.vz*t*1.2);mt.opacity=1-t;const s=1-0.35*t;p.scale.set(s,s,s);} },cleanup:()=>{for(const{p}of parts)fxGroup.remove(p);}});
+}
+function fxPillar(r,c,color){ const w=cell2world(r,c), h=cellH(r,c);
+  const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:0.55,side:THREE.DoubleSide});
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.5,2.6,18,1,true),mat); m.position.set(w.x,h+1.3,w.z); fxGroup.add(m);
+  effects.push({t0:performance.now(),dur:850,update:t=>{m.rotation.y=t*5;const s=1+t*0.4;m.scale.set(s,1,s);mat.opacity=0.55*(1-t);},cleanup:()=>fxGroup.remove(m)});
+}
+function fxProjectile(r0,c0,r1,c1,color,onHit){ const w0=cell2world(r0,c0),w1=cell2world(r1,c1);
+  const y0=cellH(r0,c0)+0.6,y1=cellH(r1,c1)+0.6;
+  const mt=new THREE.MeshBasicMaterial({color}); const p=new THREE.Mesh(new THREE.SphereGeometry(0.13,8,8),mt); fxGroup.add(p);
+  effects.push({t0:performance.now(),dur:240,update:t=>{p.position.set(w0.x+(w1.x-w0.x)*t,y0+(y1-y0)*t+Math.sin(t*Math.PI)*0.5,w0.z+(w1.z-w0.z)*t);},cleanup:()=>{fxGroup.remove(p);onHit&&onHit();}});
+}
+function attackFx(att,targets,def){ const col=TYPE_HEX[mon(att).type]||0xffffff;
+  fxBurst(att.r,att.c,col,5,{up:0.3,dur:280,size:0.05,gravity:0.6});   // 発射の閃光
+  if(def) fxProjectile(att.r,att.c,def.r,def.c,col);                    // 弾
+  for(const t of targets){ fxRing(t.r,t.c,col,{max:2.2,dur:480}); fxBurst(t.r,t.c,col,9,{dur:600}); }  // 着弾
+}
+function evolveFx(r,c){ fxPillar(r,c,0xfff0a0); fxRing(r,c,0xffe070,{max:3,dur:760}); fxBurst(r,c,0xffe070,14,{up:1.7,gravity:0.7,dur:820,size:0.08}); }
+function fusionFx(r,c,ca,cb){ fxPillar(r,c,0xc890ff); fxRing(r,c,0xc080ff,{max:3.2,dur:820}); fxBurst(r,c,ca||0xffffff,10,{dur:720}); fxBurst(r,c,cb||0xc080ff,10,{up:1.4,dur:780}); }
+
 // ---- カメラfit（固定視点・操作不可）----
 function fit(){
   const cv=renderer.domElement; const cw=cv.clientWidth, ch=cv.clientHeight;
@@ -794,7 +838,7 @@ function fit(){
   camera.lookAt(0,0,0);
   camera.updateProjectionMatrix();
 }
-function animate(){ requestAnimationFrame(animate); if(renderer){ fit(); renderer.render(scene,camera); } }
+function animate(){ requestAnimationFrame(animate); if(renderer){ fit(); updateEffects(); renderer.render(scene,camera); } }
 
 // ---- ピック ----
 function onPick(ev){
