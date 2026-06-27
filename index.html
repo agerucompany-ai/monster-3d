@@ -337,6 +337,7 @@ function effRange(u){ const m=mon(u);
 }
 function effMulti(u){ const m=mon(u);
   if(m.type==='炎' && nearTerrain(u,'forest')) return true; // 炎×森：その範囲を全体攻撃
+  if(m.type==='雷' && nearTerrain(u,'sea')) return true;    // 雷×海：海上の敵 全員に通電（範囲攻撃）
   return !!m.multi_target;
 }
 // 攻撃範囲ボーナスの説明（発動中のみ）
@@ -940,8 +941,8 @@ function attackFx(att,targets,def){ const ty=mon(att).type; const cf=FX_CONF[ty]
   const nMul = 0.7+0.55*lv;                       // 粒子量 Lv1≈1.25/Lv2≈1.8/Lv3≈2.35倍
   const ringMax = 2.0+0.7*lv;                     // 着弾リングの大きさ
   fxBurst(att.r,att.c,cf.col,4+lv*2,{up:cf.up*0.35,dur:260,size:0.05+lv*0.01,gravity:0.6});  // 発射の閃光
-  if(def) fxProjectile(att.r,att.c,def.r,def.c,cf.col,null,0.12+lv*0.05);                     // 弾(Lvで太く)
   for(const t of targets){
+    fxProjectile(att.r,att.c,t.r,t.c,cf.col,null,0.12+lv*0.05);   // 対象ごとに弾(範囲攻撃は全員へ)
     fxRing(t.r,t.c,cf.ring,{max:ringMax,dur:480});
     fxBurst(t.r,t.c,cf.col,Math.round(cf.n*nMul),{dur:640,up:cf.up,gravity:cf.grav,size:cf.size});
     if(lv>=2){ fxRing(t.r,t.c,0xffffff,{max:ringMax*1.3,dur:560,y:0.05}); }   // Lv2+ 二重リング
