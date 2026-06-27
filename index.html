@@ -195,9 +195,9 @@ const MOVES = {
 };
 // タイプ別の地形特性（攻撃範囲補正）の説明
 const TYPE_TRAIT = {
-  炎:'森に隣接/上で攻撃範囲+1＆その範囲を全体攻撃（山火事）',
+  炎:'森に隣接/上で攻撃範囲+1＆その範囲を全体攻撃（山火事・範囲内の味方も巻き込む）',
   水:'海に隣接/上で攻撃範囲+1',
-  雷:'海に隣接/上だと、海マスにいる敵を海全域から攻撃（通電）',
+  雷:'海に隣接/上だと海マスにいる敵全員に通電（範囲攻撃・海上の味方も巻き込む）',
   風:'機動力が高い代わりに、攻撃は隣接マスのみ',
   地:'地形による攻撃範囲補正なし（地形ダメージ+20%は荒地）',
   闇:'地形による攻撃範囲補正なし（地形ダメージ+20%は荒地）',
@@ -340,12 +340,32 @@ function effMulti(u){ const m=mon(u);
   if(m.type==='雷' && nearTerrain(u,'sea')) return true;    // 雷×海：海上の敵 全員に通電（範囲攻撃）
   return !!m.multi_target;
 }
+// 地形範囲攻撃か（雷×海・炎×森＝味方も巻き込む）
+function isAreaTerrain(u){ const m=mon(u);
+  return (m.type==='雷'&&nearTerrain(u,'sea')) || (m.type==='炎'&&nearTerrain(u,'forest')); }
+// 範囲攻撃で実際に当たる全ユニット（自分以外・敵味方問わず）
+function areaTargets(u){
+  const m=mon(u);
+  if(m.type==='雷' && nearTerrain(u,'sea')){
+    const res=[], R=effRange(u);
+    for(const x of Object.values(state.units)){ if(x.uid===u.uid)continue;
+      if(state.terrain[x.r][x.c]==='sea' || Math.max(Math.abs(x.r-u.r),Math.abs(x.c-u.c))<=R) res.push(x); }  // 海上の全員＋通常射程内
+    return res;
+  }
+  if(m.type==='炎' && nearTerrain(u,'forest')){
+    const res=[], R=effRange(u);
+    for(const x of Object.values(state.units)){ if(x.uid===u.uid)continue;
+      if(Math.max(Math.abs(x.r-u.r),Math.abs(x.c-u.c))<=R) res.push(x); }   // 射程内の全員
+    return res;
+  }
+  return attackTargets(u);   // 通常multi_targetは敵のみ
+}
 // 攻撃範囲ボーナスの説明（発動中のみ）
 function traitNote(u){ const m=mon(u);
   if(m.type==='風') return '隣接のみ';
   if(m.type==='水' && nearTerrain(u,'sea')) return '海効果:射程+1';
-  if(m.type==='炎' && nearTerrain(u,'forest')) return '森効果:射程+1&全体';
-  if(m.type==='雷' && nearTerrain(u,'sea')) return '海効果:海上の敵を全域攻撃';
+  if(m.type==='炎' && nearTerrain(u,'forest')) return '森効果:射程+1&全体(味方も巻込)';
+  if(m.type==='雷' && nearTerrain(u,'sea')) return '海効果:海上の敵全員に通電(味方も巻込)';
   return '';
 }
 function alive(owner){ return Object.values(state.units).filter(u=>u.owner===owner); }
@@ -414,9 +434,9 @@ function calcDamage(att, def, move){
 function doAttack(att, def, move){
   const m=mon(att);
   if(!move){ const mv=movesFor(att); move=mv[0]; }   // 既定=最強技
-  // 範囲攻撃（multi_target または 炎×森）は射程内の敵全体に当てる
-  const targets = effMulti(att) ? attackTargets(att) : [def];
-  if(!targets.includes(def)) targets.push(def);
+  // 範囲攻撃は射程内/海上の全体に当てる（地形範囲＝雷×海・炎×森は味方も巻き込む）
+  const targets = effMulti(att) ? areaTargets(att) : [def];
+  if(def && !targets.includes(def)) targets.push(def);
   att.acted=true;                              // 攻撃したら行動終了
   attackFx(att, targets, def);                 // 攻撃エフェクト
   const advType = typeBonus(m.type, mon(def).type)>0;                      // タイプ相性(弱点)発動?
@@ -1072,6 +1092,7 @@ function drawSelHL(){
   if(selMode==='move' && selMoves){ for(const [r,c] of selMoves.move) addHL(r,c,0xff3838,0.5);   // 移動=赤(海でも見える)
     for(const [r,c] of selMoves.fuse) addHL(r,c,0xc060ff,0.65); }                                   // 融合=紫
   if(selMode==='attack'){ if(selAtks) for(const e of selAtks) addHL(e.r,e.c,0xff5040,0.55);
+    if(isAreaTerrain(sel)) for(const x of areaTargets(sel)) addHL(x.r,x.c, x.owner===0?0xffc020:0xff5040, 0.5);   // 味方巻込=黄警告
     if(castleAdjacent(sel)&&canAttack(sel)){ const ec=CASTLE[1]; addHL(ec.r,ec.c,0xff8040,0.6); } }
 }
 function clearSel(){ sel=null; selMode='none'; selMoves=null; selAtks=null; selMove=null; clearHL(); syncUnits(); updateUI(); }
