@@ -1,0 +1,4 @@
+node_modules/
+*.log
+desktop.ini
+rooms.json
