@@ -1,7 +1,7 @@
 # Render Blueprint — モンスター戦略3D（対CPU＋オンライン対戦）
 # 2サービス構成:
 #   1) monster-3d        : 単一HTML(index.html)を配る静的サイト（=ゲーム本体）
-#   2) monster-3d-server : WebSocket中継サーバー (Node)。client の DEFAULT_WS と名前を一致させること。
+#   2) monster3d-server-agc : WebSocket中継サーバー (Node)。client の DEFAULT_WS と名前を一致させること。
 #
 # 既に monster-3d（静的）を手動作成済みの場合は、server だけを
 # New → Web Service → このリポジトリ → Root Directory = server で追加すればよい。
@@ -20,7 +20,7 @@ services:
 
   # --- WebSocket中継サーバー ---
   - type: web
-    name: monster-3d-server
+    name: monster3d-server-agc
     runtime: node
     plan: free
     rootDir: server

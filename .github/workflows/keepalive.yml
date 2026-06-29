@@ -17,7 +17,7 @@ jobs:
         run: |
           set -e
           for i in 1 2 3; do
-            code=$(curl -sS -o /tmp/r -w "%{http_code}" -m 30 https://monster-3d-server.onrender.com/health || echo "000")
+            code=$(curl -sS -o /tmp/r -w "%{http_code}" -m 30 https://monster3d-server-agc.onrender.com/health || echo "000")
             cat /tmp/r || true
             echo
             echo "http=$code attempt=$i"
