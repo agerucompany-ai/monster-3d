@@ -14,11 +14,156 @@ import { WebSocketServer } from "ws";
 const PORT = process.env.PORT || 8080;
 const ROOM_TTL_MS = 6 * 60 * 60 * 1000; // 6時間アクセスのない部屋は破棄（権威状態はクライアント側なので短め）
 
-// ---- HTTP（ヘルスチェック。GitHub Actions cron で叩いてスリープ防止） ----
+// ============================================================
+// クラウドセーブ（ID+PIN引き継ぎ）
+//   POST /api/cloud/new            → {id, pin} 発行
+//   PUT  /api/cloud/:id {pin,data} → 保存
+//   GET  /api/cloud/:id?pin=XXXX   → {data}
+// 永続化: GitHubプライベートリポジトリ (env: GH_SAVES_TOKEN / GH_SAVES_REPO)
+// メモリはキャッシュ。トークン未設定時はメモリのみ（再起動で消える）。
+// ============================================================
+const SAVES_REPO = process.env.GH_SAVES_REPO || "";
+const SAVES_TOKEN = process.env.GH_SAVES_TOKEN || "";
+const saves = new Map(); // id -> {pinHash, data, sha}
+const ID_CH = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // 紛らわしい文字(0O1I)抜き
+const MAX_SAVE_BYTES = 300 * 1024;
+
+function genSaveId() {
+  let s = "";
+  for (let i = 0; i < 8; i++) { s += ID_CH[crypto.randomInt(ID_CH.length)]; }
+  return s.slice(0, 4) + "-" + s.slice(4);
+}
+function genPin() { return String(crypto.randomInt(1000, 10000)); }
+function pinHash(id, pin) { return crypto.createHash("sha256").update(id + ":" + String(pin)).digest("hex"); }
+function normId(raw) { return String(raw || "").toUpperCase().replace(/[^A-Z0-9]/g, "").replace(/^(.{4})(.{4})$/, "$1-$2"); }
+
+const GH_API = "https://api.github.com";
+const ghHeaders = { Authorization: `Bearer ${SAVES_TOKEN}`, Accept: "application/vnd.github+json", "User-Agent": "monster3d-saves" };
+async function ghLoad(id) {
+  if (!SAVES_TOKEN || !SAVES_REPO) return null;
+  const r = await fetch(`${GH_API}/repos/${SAVES_REPO}/contents/saves/${id}.json`, { headers: ghHeaders });
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error("gh get " + r.status);
+  const d = await r.json();
+  return { rec: JSON.parse(Buffer.from(d.content, "base64").toString("utf8")), sha: d.sha };
+}
+async function ghStore(id, rec, sha) {
+  if (!SAVES_TOKEN || !SAVES_REPO) return null;
+  const body = { message: `save ${id}`, content: Buffer.from(JSON.stringify(rec)).toString("base64") };
+  if (sha) body.sha = sha;
+  const r = await fetch(`${GH_API}/repos/${SAVES_REPO}/contents/saves/${id}.json`, { method: "PUT", headers: { ...ghHeaders, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error("gh put " + r.status);
+  const d = await r.json();
+  return d.content && d.content.sha;
+}
+async function loadRec(id) {
+  if (saves.has(id)) return saves.get(id);
+  const g = await ghLoad(id).catch(() => null);
+  if (!g) return null;
+  const rec = { pinHash: g.rec.pinHash, data: g.rec.data, sha: g.sha };
+  saves.set(id, rec);
+  return rec;
+}
+
+// 簡易レート制限（PIN総当たり対策）: IPごと 30リクエスト/分
+const rateMap = new Map();
+function rateLimited(ip) {
+  const now = Date.now();
+  const e = rateMap.get(ip) || { n: 0, t: now };
+  if (now - e.t > 60000) { e.n = 0; e.t = now; }
+  e.n++; rateMap.set(ip, e);
+  if (rateMap.size > 5000) rateMap.clear();
+  return e.n > 30;
+}
+
+function sendJson(res, code, obj) {
+  res.writeHead(code, {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  });
+  res.end(JSON.stringify(obj));
+}
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let len = 0; const chunks = [];
+    req.on("data", (c) => { len += c.length; if (len > MAX_SAVE_BYTES) { reject(new Error("too large")); req.destroy(); return; } chunks.push(c); });
+    req.on("end", () => { try { resolve(chunks.length ? JSON.parse(Buffer.concat(chunks).toString("utf8")) : {}); } catch { reject(new Error("bad json")); } });
+    req.on("error", reject);
+  });
+}
+
+async function handleCloud(req, res, url) {
+  const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "?").split(",")[0].trim();
+  if (rateLimited(ip)) return sendJson(res, 429, { error: "しばらく待ってから再試行してください" });
+
+  // 新規ID発行
+  if (req.method === "POST" && url.pathname === "/api/cloud/new") {
+    let id = genSaveId();
+    for (let i = 0; i < 5 && (saves.has(id) || (await ghLoad(id).catch(() => null))); i++) id = genSaveId();
+    const pin = genPin();
+    const rec = { pinHash: pinHash(id, pin), data: null, sha: null };
+    saves.set(id, rec);
+    try { rec.sha = await ghStore(id, { pinHash: rec.pinHash, data: null }, null); } catch (e) { console.log("gh new fail", e.message); }
+    return sendJson(res, 200, { id, pin, durable: !!rec.sha });
+  }
+
+  const m = url.pathname.match(/^\/api\/cloud\/([A-Za-z0-9-]{6,12})$/);
+  if (!m) return sendJson(res, 404, { error: "not found" });
+  const id = normId(m[1]);
+
+  // 保存
+  if (req.method === "PUT") {
+    let body;
+    try { body = await readBody(req); } catch (e) { return sendJson(res, 400, { error: e.message }); }
+    const rec = await loadRec(id);
+    if (!rec) return sendJson(res, 404, { error: "IDが見つかりません" });
+    if (pinHash(id, body.pin) !== rec.pinHash) return sendJson(res, 403, { error: "PINが違います" });
+    if (!body.data || typeof body.data !== "object") return sendJson(res, 400, { error: "dataがありません" });
+    rec.data = body.data;
+    let durable = false;
+    try { rec.sha = await ghStore(id, { pinHash: rec.pinHash, data: rec.data }, rec.sha); durable = !!rec.sha; }
+    catch (e) {
+      // sha競合等は一度リロードして再試行
+      try { const g = await ghLoad(id); rec.sha = await ghStore(id, { pinHash: rec.pinHash, data: rec.data }, g && g.sha); durable = !!rec.sha; }
+      catch (e2) { console.log("gh put fail", id, e2.message); }
+    }
+    return sendJson(res, 200, { ok: true, durable });
+  }
+
+  // 取得（ログイン）
+  if (req.method === "GET") {
+    const rec = await loadRec(id);
+    if (!rec) return sendJson(res, 404, { error: "IDが見つかりません" });
+    if (pinHash(id, url.searchParams.get("pin")) !== rec.pinHash) return sendJson(res, 403, { error: "PINが違います" });
+    if (!rec.data) return sendJson(res, 404, { error: "まだデータが保存されていません" });
+    return sendJson(res, 200, { data: rec.data });
+  }
+
+  return sendJson(res, 405, { error: "method" });
+}
+
+// ---- HTTP（ヘルスチェック + クラウドセーブAPI） ----
 const httpServer = http.createServer((req, res) => {
-  if (req.url === "/health" || req.url === "/") {
+  const url = new URL(req.url, "http://x");
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Max-Age": "86400",
+    });
+    res.end();
+    return;
+  }
+  if (url.pathname.startsWith("/api/cloud")) {
+    handleCloud(req, res, url).catch((e) => { console.log("cloud error", e); sendJson(res, 500, { error: "server error" }); });
+    return;
+  }
+  if (url.pathname === "/health" || url.pathname === "/") {
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ ok: true, rooms: rooms.size }));
+    res.end(JSON.stringify({ ok: true, rooms: rooms.size, saves: saves.size, durable: !!(SAVES_TOKEN && SAVES_REPO) }));
     return;
   }
   res.writeHead(404);
