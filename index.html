@@ -250,9 +250,10 @@ button.bt.fuse{background:#a24ec0}
     <div style="background:rgba(8,10,16,.88);border:1px solid #2c3346;border-radius:12px;padding:8px 12px;max-width:94vw;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;pointer-events:auto">
       <b style="color:#ffd86b;white-space:nowrap;font-size:14px">🏘 アルケー村</b>
       <span id="vgStat" style="font-size:11px;color:#8ee0ff;white-space:nowrap"></span>
-      <button class="bt" id="btBgm" style="padding:5px 9px;font-size:12px;margin-left:auto">🔊</button>
+      <button class="bt" id="btWMap" style="padding:5px 9px;font-size:12px;margin-left:auto">🗺</button>
+      <button class="bt" id="btBgm" style="padding:5px 9px;font-size:12px">🔊</button>
       <button class="bt warn" id="vgTitle" style="padding:5px 9px;font-size:12px">🏠</button>
-      <span class="muted" style="font-size:10px;line-height:1.35;flex:1 1 100%;white-space:normal">タップ/ドラッグで移動｜🚪北門=出撃 🎰祭壇=召喚 🧙長老 📋掲示板 📖図鑑</span>
+      <span class="muted" style="font-size:10px;line-height:1.35;flex:1 1 100%;white-space:normal">タップ/ドラッグで移動｜🚪北門から世界へ（陸続き） 🗺地図=移動 🎰祭壇=召喚 🧙長老 📖図鑑</span>
     </div>
   </div>
 </div>
@@ -4600,6 +4601,7 @@ function VG_setupVillagers(){
 }
 function villagerTalk(n){
   const v=n.def;
+  if(v.bossCh!=null){ bossTalk(v.bossCh); return; }
   if(v.name&&v.name.startsWith('行商人ザザ')){ openShop(); return; }
   if(v.rival){
     const rv=v.rival;
@@ -6817,7 +6819,11 @@ function vResolve(nx,nz){
   }
   return [nx,nz];
 }
-let V_MAP='village';   // 'village' | 'forest'
+let V_MAP='village';   // 'village' | 'forest' | ...
+let V_SPAWN=null;      // 次のマップ構築時の主人公スポーン位置（門から入った側に出る）
+const WORLD_CHAIN=['village','forest','port','mountain','snow','under','tree','volcano'];   // 大陸はひとつながり
+function vNextUnlocked(){ const i=WORLD_CHAIN.indexOf(V_MAP); const nxt=WORLD_CHAIN[i+1]; if(!nxt) return false;
+  const eff=window._DEBUG?99:STORY.clear; return FIELD_INFO[nxt].need<=eff+1; }
 const V_NPC_VILLAGE=[
  {key:'gate', x:0,    z:-10.2, label:'🚪 北門（旅立つ）'},
  {key:'altar',x:7.2,  z:-2.6,  label:'🎰 召喚の祭壇'},
@@ -6829,37 +6835,43 @@ const V_NPC_VILLAGE=[
 const V_NPC_FOREST=[
  {key:'portal',x:0,   z:-10.0, label:'⚔ 出撃の魔法陣'},
  {key:'chest', x:5.6, z:1.2,   label:'💰 たからばこ'},
- {key:'back',  x:0,   z:10.6,  label:'🏘 村へもどる'},
+ {key:'back',  x:0,   z:10.6,  label:'🏘 アルケー村へ'},
+ {key:'next',  x:2.8, z:-9.4,  label:'⚓ 港町メロスへ'},
 ];
 const V_NPC_PORT=[
  {key:'portal',x:0,   z:-9.6,  label:'⚔ 出撃の魔法陣'},
  {key:'chest', x:-6.4,z:-2.0,  label:'💰 たからばこ'},
- {key:'back',  x:0,   z:10.6,  label:'🏘 村へもどる'},
+ {key:'back',  x:0,   z:10.6,  label:'🌲 翠の森へ'},
+ {key:'next',  x:2.8, z:-9.4,  label:'⛰ 雷鳴山へ'},
 ];
 const V_NPC_MTN=[
  {key:'portal',x:0,   z:-9.6,  label:'⚔ 出撃の魔法陣'},
  {key:'chest', x:6.2, z:3.4,   label:'💰 たからばこ'},
- {key:'back',  x:0,   z:10.6,  label:'🏘 村へもどる'},
+ {key:'back',  x:0,   z:10.6,  label:'⚓ 港町メロスへ'},
+ {key:'next',  x:-2.8,z:-9.4,  label:'🏔 凍峰へ'},
 ];
 const V_NPC_SNOW=[
  {key:'portal',x:0,   z:-9.6,  label:'⚔ 出撃の魔法陣'},
  {key:'chest', x:-5.8,z:3.0,   label:'💰 たからばこ'},
- {key:'back',  x:0,   z:10.6,  label:'🏘 村へもどる'},
+ {key:'back',  x:0,   z:10.6,  label:'⛰ 雷鳴山へ'},
+ {key:'next',  x:2.8, z:-9.4,  label:'💀 冥界の門前へ'},
 ];
 const V_NPC_UNDER=[
  {key:'portal',x:0,   z:-9.6,  label:'⚔ 出撃の魔法陣'},
  {key:'chest', x:6.0, z:-1.4,  label:'💰 たからばこ'},
- {key:'back',  x:0,   z:10.6,  label:'🏘 村へもどる'},
+ {key:'back',  x:0,   z:10.6,  label:'🏔 凍峰へ'},
+ {key:'next',  x:2.8, z:-9.4,  label:'🌳 世界樹の根元へ'},
 ];
 const V_NPC_VOLC=[
  {key:'portal',x:0,   z:-9.6,  label:'⚔ 出撃の魔法陣'},
  {key:'chest', x:-6.2,z:-2.6,  label:'💰 たからばこ'},
- {key:'back',  x:0,   z:10.6,  label:'🏘 村へもどる'},
+ {key:'back',  x:0,   z:10.6,  label:'🌳 世界樹の根元へ'},
 ];
 const V_NPC_TREE=[
  {key:'portal',x:0,   z:-8.8,  label:'⚔ 出撃の魔法陣'},
  {key:'chest', x:-6.0,z:1.0,   label:'💰 たからばこ'},
- {key:'back',  x:0,   z:10.6,  label:'🏘 村へもどる'},
+ {key:'back',  x:0,   z:10.6,  label:'💀 冥界の門前へ'},
+ {key:'next',  x:2.8, z:-8.6,  label:'🌋 終末火山へ'},
 ];
 function V_NPC_CUR(){ return V_MAP==='forest'?V_NPC_FOREST : V_MAP==='port'?V_NPC_PORT : V_MAP==='mountain'?V_NPC_MTN
   : V_MAP==='snow'?V_NPC_SNOW : V_MAP==='under'?V_NPC_UNDER : V_MAP==='tree'?V_NPC_TREE : V_MAP==='volcano'?V_NPC_VOLC : V_NPC_VILLAGE; }
@@ -7498,9 +7510,10 @@ function buildVillage(){
   // --- 主人公（Tripo製・イラスト忠実の3Dモデル） ---
   { const girl=STORY.hero&&STORY.hero.g==='f';
     const grp=vGlbChar(girl&&MODELS.hero3d_f?'hero3d_f':(MODELS.hero3d_m?'hero3d_m':'rogue_v3'), 1.8);
-    grp.position.set(0,0,8);
+    const sp0=V_SPAWN||{x:0,z:8}; V_SPAWN=null;
+    grp.position.set(sp0.x,0,sp0.z);
     villageGroup.add(grp);
-    VG={hero:{grp,kid:null,sp:null,glb:grp,x:0,z:8,tx:0,tz:8,moving:false}};
+    VG={hero:{grp,kid:null,sp:null,glb:grp,x:sp0.x,z:sp0.z,tx:sp0.x,tz:sp0.z,moving:false}};
     const fo=vFollower(); if(fo){ fo.grp.position.set(0.9,0,9); villageGroup.add(fo.grp); VG.follow={...fo,x:0.9,z:9}; }
     ambient.push(villageTick);
     VG_setupVillagers(); }   // 村人はVG生成後に配置
@@ -7576,7 +7589,7 @@ function villageTick(t){
       else n.sp.scale.y=n.baseSY;
       n.grp.position.set(n.x, nHop, n.z);
       if(n.sh) n.sh.scale.setScalar(Math.max(0.7,1-nHop*3));
-      if(performance.now()>_vnCool && Math.hypot(n.x-h.x,n.z-h.z)<1.3){
+      if(performance.now()>_vnCool && document.getElementById('ovStory').style.display==='none' && Math.hypot(n.x-h.x,n.z-h.z)<(n.def.rad||1.3)){
         _vnCool=performance.now()+2500;
         villagerTalk(n);
       }
@@ -7603,6 +7616,7 @@ function villageTick(t){
       if(r.sh) r.sh.scale.setScalar(Math.max(0.55,1-rHop*2.4));
       let safe=false;
       for(const n2 of V_NPC_CUR()){ if(Math.hypot(n2.x-h.x, n2.z-h.z)<2.4){ safe=true; break; } }   // 魔法陣・門・宝箱の近くは安全地帯
+      if(VG.bossSafe && Math.hypot(VG.bossSafe.x-h.x, VG.bossSafe.z-h.z)<3.0) safe=true;   // ボスの間合いでは野生は襲ってこない
       if(!safe && performance.now()>_encCool && dh<1.5){
         _encCool=performance.now()+3000;
         startFreeBattle(V_MAP, r.mid, r.rare);
@@ -7624,9 +7638,18 @@ function villageAct(k){
   const hud=document.getElementById('ovVillage');
   if(k==='gate'){
     if(!STORY.starter){ const hud2=document.getElementById('ovVillage'); if(hud2) hud2.style.display='none'; openChapters(); return; }   // 相棒がいないうちは物語(序章)へ直行
-    openFieldSelect(); return; }
+    enterField('forest','south'); return; }   // 陸続き: 北門を抜けるとそのまま翠の森
   if(k==='portal'){ hud.style.display='none'; openChapters(); return; }
-  if(k==='back'){ enterVillage(); return; }
+  if(k==='back'){
+    const ci=WORLD_CHAIN.indexOf(V_MAP), prev=WORLD_CHAIN[Math.max(0,ci-1)];
+    if(prev==='village'){ V_SPAWN={x:0,z:-7.8}; enterVillage(); }   // 村には北門側から帰ってくる
+    else enterField(prev,'north');
+    return; }
+  if(k==='next'){
+    const ci=WORLD_CHAIN.indexOf(V_MAP), nxt=WORLD_CHAIN[ci+1];
+    if(!nxt) return;
+    if(!vNextUnlocked()){ toast('🔒 この先はまだ危険すぎる。魔法陣から物語を進めよう'); _vnCool=performance.now()+3500; return; }
+    enterField(nxt,'south'); return; }
   if(k==='quest'){ openQuests(); return; }
   if(k==='tavern'){ openTavern(); return; }
   if(k==='chest'){
@@ -7657,6 +7680,71 @@ function elderTalk(){
   ];
   showStoryLines('🧙 長老ガイウス', lines, null);
 }
+// ======================= 章ボスのフィールド配置 =======================
+// 各フィールドで「次に挑む章」のボスが待ち構える。接触で会話→挑戦確認→開戦
+const FIELD_CHAPTERS={forest:[1], port:[2], mountain:[3,4], snow:[5], under:[6,9], tree:[7,8], volcano:[10,11]};
+const BOSS_POS={forest:{x:-3.2,z:-3.5}, port:{x:-3.5,z:-5.0}, mountain:{x:-3.5,z:-5.5}, snow:{x:-3.5,z:-5.0}, under:{x:-3.5,z:-5.0}, tree:{x:-3.5,z:-5.0}, volcano:{x:-2.6,z:-5.6}};
+const BOSS_TALK={
+ 1:[{s:'184',t:'……グ、オオ……ちかよるな……こわして、しまう……'},
+    {s:'hero',t:'あの黒い涙…苦しんでるんだ。待ってて、いま楽にしてあげる！'},
+    {s:'184',t:'……タスケ……テ……グオオオオ！！'}],
+ 2:[{s:'46',t:'ほう、貴様が噂の導い手か。私は白騎士ヴァンクロウ。この港は黙示団が接収した。'},
+    {s:'hero',t:'港のみんなを返せ！ 歌が聞こえない港なんて、港じゃない！'},
+    {s:'46',t:'良い目だ。……ならば剣で語れ。騎士の礼をもって、全力で潰してやろう。'}],
+ 3:[{s:'72',t:'ブモオオオ！ この山の雷はぜんぶ俺様のものだ！ 感電したくなければ帰りな！'},
+    {s:'hero',t:'山の雷はみんなのものだ。ふもとの村の灯りが消えて困ってるんだよ！'},
+    {s:'72',t:'ぬかせ小僧ォ！ 俺様の角の一撃、受けてみろ！'}],
+ 4:[{s:'204',t:'……大地が裂けるのは、世界が悲鳴を上げている証。小さき者よ、聞こえるか。'},
+    {s:'hero',t:'聞こえるよ。だから僕が縫い合わせる。仲間と一緒に！'},
+    {s:'204',t:'ならば証明せよ。この裂け目の底で、その覚悟の重さを！'}],
+ 5:[{s:'153',t:'……この峰の吹雪は、我が吐息。凍てつく前に立ち去るがいい。'},
+    {s:'hero',t:'「天を支える者」が泣いてるって聞いた。……君のことなんだろ？'},
+    {s:'153',t:'……知った風な口を。ならばその温もり、我が氷で試させてもらう！'}],
+ 6:[{s:'244',t:'ガルルル……ここは死者の国の門。三つの首がすべてを見ている。生者は通さん。'},
+    {s:'hero',t:'通してもらうよ。この先に、探さなきゃいけない答えがあるんだ。'},
+    {s:'244',t:'……ならば審判だ。冥界の炎を越えてみせよ！'}],
+ 7:[{s:'206',t:'世界樹が枯れる……根が黒く染まっていく……我は最後の守り人。'},
+    {s:'hero',t:'一緒に守らせて。澱を祓う方法を、僕たちは知ってるんだ。'},
+    {s:'206',t:'言葉より力を見せよ。世界樹に触れる資格、この牙で確かめる！'}],
+ 8:[{s:'163',t:'……よく来た、導い手よ。私は天の告げ手セラフィム。告白せねばならぬことがある。'},
+    {s:'hero',t:'天使さま…？ どうしてそんなに悲しい顔をしてるの？'},
+    {s:'163',t:'すべては戦いの後に。……翼の裁き、受けてみよ！'}],
+ 9:[{s:'238',t:'クク……四騎士が揃うとき、扉は開く。お前はよく来た駒……いや、「鍵」だ。'},
+    {s:'hero',t:'僕は駒でも鍵でもない、{hero}だ！ みんなの明日を返してもらう！'},
+    {s:'238',t:'ならば黙示の宴で踊れ！ 四騎士の裁き、始まりだ！'}],
+ 10:[{s:'201',t:'グオオオ……終末の祭壇は目の前だ。だが我が翼の先へは、何人たりとも行かせぬ。'},
+    {s:'hero',t:'イスカリオが待ってるんだ。世界の答え合わせをしに行かなきゃ。'},
+    {s:'201',t:'ならば示せ！ 竜の王を超える力、その小さき身体で！'}],
+ 11:[{s:'245',t:'我は終末の炎ラグナレク。すべてを灰に還し、世界を無に戻す者。'},
+    {s:'hero',t:'無に戻したら、朝ごはんの匂いも、村の笑い声もなくなっちゃうんだよ。'},
+    {s:'245',t:'……面白い。ならばその「日常」とやらの強さ、見せてみよ。最後の戦いだ！'}],
+};
+function fieldBossCh(k){ const chs=FIELD_CHAPTERS[k]||[]; const eff=window._DEBUG?99:STORY.clear;
+  return chs.find(c=>c>STORY.clear && c<=eff+1); }
+function bossTalk(ch){
+  const be=CAMPAIGN[ch].enemy.find(e=>e.boss);
+  const lines=BOSS_TALK[ch]||[{s:String(be.mid),t:'……来たか、小さき者よ。'}];
+  showStoryLines('👹 '+CAMPAIGN[ch].title, lines, ()=>bossChallenge(ch));
+}
+function bossChallenge(ch){
+  const be=CAMPAIGN[ch].enemy.find(e=>e.boss); const m=MID[be.mid];
+  const ov=document.getElementById('ovStory');
+  document.getElementById('stTitle').textContent='⚔ '+CAMPAIGN[ch].title;
+  const face=document.getElementById('stFace'); face.style.display='block';
+  document.getElementById('stFaceImg').src=IMG[String(be.mid)];
+  document.getElementById('stName').textContent=m.name;
+  const el=document.getElementById('stLine'); el.style.fontStyle='normal';
+  el.innerHTML=`<div style="margin-bottom:10px">${m.name}（Lv${m.level}）が挑戦を待っている。勝てば必ず仲間になる！<br><span class="muted" style="font-size:11px">推奨編成Lv${CAMPAIGN[ch].budget}</span></div>
+   <button class="bt go" id="bcGo" style="display:block;width:100%;margin:6px 0;padding:12px;font-size:15px">⚔ 挑む！</button>
+   <button class="bt" id="bcNo" style="display:block;width:100%;margin:6px 0;padding:10px;font-size:13px">× 準備してから来る</button>`;
+  document.getElementById('stPage').textContent='';
+  document.getElementById('stNext').style.display='none';
+  const close=()=>{ ov.style.display='none'; document.getElementById('stNext').style.display=''; _vnCool=performance.now()+2500; };
+  document.getElementById('stSkip').onclick=close;
+  document.getElementById('bcGo').onclick=()=>{ close(); startChapter(ch); };
+  document.getElementById('bcNo').onclick=close;
+  ov.style.display='flex';
+}
 // ======================= フィールド共通パーツ =======================
 function vFieldCommon(portalColor, backLabelY){
   // 出撃の魔法陣
@@ -7676,6 +7764,14 @@ function vFieldCommon(portalColor, backLabelY){
   { const g2={x:0,z:10.6};
     for(const dx of [-0.9,0.9]){ const p2=new THREE.Mesh(new THREE.BoxGeometry(0.26,1.8,0.26), new THREE.MeshLambertMaterial({map:vLogTex()})); p2.position.set(g2.x+dx,0.9,g2.z); villageGroup.add(p2); }
     const beam=new THREE.Mesh(new THREE.BoxGeometry(2.3,0.24,0.32), new THREE.MeshLambertMaterial({map:vPlankTex()})); beam.position.set(g2.x,1.85,g2.z); villageGroup.add(beam); }
+  // 次のマップへ続く門（陸続きチェーン）
+  { const nx2=V_NPC_CUR().find(n=>n.key==='next');
+    if(nx2){
+      for(const dx of [-0.9,0.9]){ const p3=new THREE.Mesh(new THREE.BoxGeometry(0.26,1.8,0.26), new THREE.MeshLambertMaterial({map:vLogTex()})); p3.position.set(nx2.x+dx,0.9,nx2.z); villageGroup.add(p3); }
+      const beam2=new THREE.Mesh(new THREE.BoxGeometry(2.3,0.24,0.32), new THREE.MeshLambertMaterial({map:vPlankTex()})); beam2.position.set(nx2.x,1.85,nx2.z); villageGroup.add(beam2);
+      vCol(nx2.x-0.9,nx2.z,0.3); vCol(nx2.x+0.9,nx2.z,0.3);
+      if(!vNextUnlocked()){ const rope=new THREE.Mesh(new THREE.BoxGeometry(2.0,0.1,0.1), new THREE.MeshLambertMaterial({color:0xb04030}));
+        rope.position.set(nx2.x,1.1,nx2.z); villageGroup.add(rope); } } }
   // 宝箱（フィールドごとの一度きりフラグ）
   const cn=V_NPC_CUR().find(n=>n.key==='chest');
   if(cn){ const opened=STORY.tut&&(STORY.tut['chest_'+V_MAP]||(V_MAP==='forest'&&STORY.tut.chest_f1));
@@ -7686,14 +7782,15 @@ function vFieldCommon(portalColor, backLabelY){
     const trim=new THREE.Mesh(new THREE.BoxGeometry(0.86,0.1,0.62), new THREE.MeshLambertMaterial({color:0xd8b040})); trim.position.y=0.5; g3.add(trim);
     g3.position.set(cn.x,0,cn.z); villageGroup.add(g3); vCol(cn.x,cn.z,0.55); }
   // ラベルと主人公
-  for(const n of V_NPC_CUR()){ const lb=makeTextSprite(n.label); lb.position.set(n.x, 2.2, n.z); villageGroup.add(lb); }
+  for(const n of V_NPC_CUR()){ const lb=makeTextSprite(n.key==='next'&&!vNextUnlocked()?'🔒 '+n.label:n.label); lb.position.set(n.x, 2.2, n.z); villageGroup.add(lb); }
   vCol(-0.9,10.6,0.3); vCol(0.9,10.6,0.3);
   { const girl=STORY.hero&&STORY.hero.g==='f';
     const grp=vGlbChar(girl&&MODELS.hero3d_f?'hero3d_f':(MODELS.hero3d_m?'hero3d_m':'rogue_v3'), 1.8);
-    grp.position.set(0,0,7.6);
+    const sp0=V_SPAWN||{x:0,z:7.6}; V_SPAWN=null;
+    grp.position.set(sp0.x,0,sp0.z);
     villageGroup.add(grp);
-    VG={hero:{grp,kid:null,sp:null,glb:grp,x:0,z:7.6,tx:0,tz:7.6,moving:false}};
-    const fo=vFollower(); if(fo){ fo.grp.position.set(0.9,0,8.4); villageGroup.add(fo.grp); VG.follow={...fo,x:0.9,z:8.4}; }
+    VG={hero:{grp,kid:null,sp:null,glb:grp,x:sp0.x,z:sp0.z,tx:sp0.x,tz:sp0.z,moving:false}};
+    const fo=vFollower(); if(fo){ fo.grp.position.set(sp0.x+0.9,0,sp0.z+0.8); villageGroup.add(fo.grp); VG.follow={...fo,x:sp0.x+0.9,z:sp0.z+0.8}; }
     ambient.push(villageTick); }
   // ===== ストーリーNPC（進行に応じてフィールドに立つ） =====
   const SNPC=[];
@@ -7729,6 +7826,29 @@ function vFieldCommon(portalColor, backLabelY){
     VG.npcs=VG.npcs||[];
     VG.npcs.push({grp:g6,sp:sp4,sh:sh3,baseSY:sp4.scale.y,trav:0,def:{name:sn.name,lines:sn.lines||[],x:sn.x,z:sn.z,rival:sn.rival},x:sn.x,z:sn.z,tx:sn.x,tz:sn.z,ph:Math.random()*9,li:0,fixed:true});
   }
+  // ===== 章ボス（大きな姿でフィールドに待ち構える） =====
+  VG.bossSafe=null;
+  { const bossCh=fieldBossCh(V_MAP);
+    const be=bossCh!=null?CAMPAIGN[bossCh].enemy.find(e=>e.boss):null;
+    if(be && IMG[String(be.mid)]){
+      const bp=BOSS_POS[V_MAP]||{x:-3.5,z:-5.0};
+      const g7=new THREE.Group();
+      const tex7=new THREE.TextureLoader().load(IMG[String(be.mid)]);
+      const sp7=new THREE.Sprite(new THREE.SpriteMaterial({map:tex7,transparent:true})); sp7.material.toneMapped=false;
+      sp7.scale.set(3.4,3.4,1); sp7.center.set(0.5,0); sp7.position.y=0.05; g7.add(sp7);
+      const aura7=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0xff4a3a,transparent:true,opacity:0.45,depthWrite:false,blending:THREE.AdditiveBlending}));
+      aura7.scale.setScalar(4.8); aura7.position.y=1.7; g7.add(aura7);
+      const sh7=new THREE.Mesh(new THREE.CircleGeometry(1.1,20), new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.32}));
+      sh7.rotation.x=-Math.PI/2; sh7.position.y=0.02; g7.add(sh7);
+      const nm7=MID[be.mid].name;
+      const lb7=makeTextSprite('👹 '+nm7+'（BOSS）'); lb7.scale.set(2.6,0.62,1); lb7.position.y=3.8; g7.add(lb7);
+      g7.position.set(bp.x,0,bp.z); villageGroup.add(g7); vCol(bp.x,bp.z,1.0);
+      const ph7=Math.random()*9;
+      ambient.push(t=>{ aura7.material.opacity=0.32+0.18*Math.sin(t*2.1+ph7); });
+      VG.bossSafe={x:bp.x,z:bp.z};
+      VG.npcs=VG.npcs||[];
+      VG.npcs.push({grp:g7,sp:sp7,sh:sh7,baseSY:sp7.scale.y,trav:0,def:{name:nm7,lines:[],bossCh,rad:2.1,x:bp.x,z:bp.z},x:bp.x,z:bp.z,tx:bp.x,tz:bp.z,ph:0,li:0,fixed:true});
+    } }
   // ===== 野生モンスター（徘徊・接触でフリーバトル） =====
   VG.roamers=[];
   const types=FIELD_TYPES[V_MAP]||['草'];
@@ -8065,9 +8185,13 @@ const FIELD_SKY={
  under:{sky:0x2a2035, fog:[0x2a2035,14,36]},
  tree:{sky:0x9fd8c8, fog:[0x9fd8c8,22,55]},
 };
-function enterField(key){
+function enterField(key, from){
   _encCool=performance.now()+2000;   // 入場直後の即エンカウント防止
+  _vnCool=performance.now()+1800;    // 入場直後の即会話防止
   V_MAP=key;
+  if(from==='north'){ const ng=V_NPC_CUR().find(n=>n.key==='next');   // 北から来たら、この地の「次の門」の手前に出る
+    V_SPAWN=ng?{x:ng.x,z:ng.z+2.2}:{x:0,z:-7.2}; }
+  else V_SPAWN={x:0,z:7.6};
   enterVillage._noMapReset=true;
   enterVillage();
   enterVillage._noMapReset=false;
@@ -8135,6 +8259,45 @@ function openFieldSelect(){
   const closeSel=()=>{ ov.style.display='none'; document.getElementById('stNext').style.display=''; document.getElementById('stSkip').textContent='⏩ スキップ'; };
   el.querySelectorAll('button').forEach(b2=>{ b2.onclick=()=>{ closeSel(); enterField(b2.dataset.f); }; });
   document.getElementById('stSkip').onclick=closeSel;
+  ov.style.display='flex';
+}
+// ======================= 世界地図（陸続きチェーンの俯瞰 + ファストトラベル） =======================
+function openWorldMap(){
+  const eff=window._DEBUG?99:STORY.clear;
+  const rows=WORLD_CHAIN.map((k,i)=>{
+    const inf=k==='village'?{name:'🏘 アルケー村',need:0}:FIELD_INFO[k];
+    const unlocked=inf.need<=eff+1;
+    const here=V_MAP===k;
+    let extra='';
+    if(k!=='village'){
+      const bc=fieldBossCh(k);
+      if(unlocked&&bc!=null){ const be=CAMPAIGN[bc].enemy.find(e=>e.boss); if(be) extra=`<span style="color:#ff9a8a;font-size:11px">👹 ${MID[be.mid].name}が待つ</span>`; }
+      else if(!unlocked) extra=`<span class="muted" style="font-size:11px">物語を進めると道が開く</span>`;
+    }
+    const conn=i<WORLD_CHAIN.length-1?`<div style="margin-left:26px;color:#3a4566;font-size:11px;line-height:1">┃</div>`:'';
+    return `<div data-map="${k}" style="display:flex;align-items:center;gap:8px;background:${here?'#1c2a44':'#141a28'};border:1px solid ${here?'#5a8adc':unlocked?'#2c3346':'#20263a'};border-radius:9px;padding:8px 12px;${unlocked?'cursor:pointer':'opacity:.42'}">
+      <span style="font-size:16px">${here?'📍':unlocked?'▶':'🔒'}</span>
+      <div style="flex:1"><b style="font-size:13px">${inf.name}</b>　${extra}</div></div>${conn}`;
+  }).join('');
+  const ov=document.getElementById('ovStory');
+  document.getElementById('stTitle').textContent='🗺 世界地図 — 大陸はひとつながり';
+  document.getElementById('stFace').style.display='none';
+  document.getElementById('stName').textContent='';
+  const el=document.getElementById('stLine'); el.style.fontStyle='normal';
+  el.innerHTML=`<div style="max-height:56vh;overflow-y:auto">${rows}</div><div class="muted" style="font-size:10px;margin-top:6px">行き先をタップで移動（ファストトラベル）。歩いて門をくぐっても行き来できる</div>`;
+  document.getElementById('stPage').textContent='';
+  document.getElementById('stNext').style.display='none';
+  document.getElementById('stSkip').textContent='× とじる';
+  const close=()=>{ ov.style.display='none'; document.getElementById('stNext').style.display=''; document.getElementById('stSkip').textContent='⏩ スキップ'; };
+  document.getElementById('stSkip').onclick=close;
+  el.querySelectorAll('[data-map]').forEach(d=>{ d.onclick=()=>{
+    const k=d.dataset.map;
+    const inf=k==='village'?{need:0}:FIELD_INFO[k];
+    if(inf.need>eff+1){ toast('🔒 まだ行けない。物語を進めよう'); return; }
+    close();
+    if(k===V_MAP) return;
+    if(k==='village') enterVillage(); else enterField(k);
+  }; });
   ov.style.display='flex';
 }
 const HUB_MODE=false;  // true=イラストの村メニュー / false=歩ける3D村
@@ -8283,6 +8446,7 @@ function boot(){
   };
   document.getElementById('vgTitle').onclick=goTitle;
   document.getElementById('btBgm').onclick=()=>{ bgmInit(); bgmToggle(); };
+  { const wm=document.getElementById('btWMap'); if(wm) wm.onclick=()=>{ if(state&&state.phase==='village') openWorldMap(); }; }
   document.getElementById('chClose').onclick=()=>{ document.getElementById('ovChapters').style.display='none'; if(STORY.hero) enterVillage(); else document.getElementById('ovTitle').style.display='flex'; };
   // ======================= ガチャ配線 =======================
   document.getElementById('btGacha').onclick=()=>{ document.getElementById('ovTitle').style.display='none'; openGacha('title'); };
@@ -8326,7 +8490,7 @@ function boot(){
   (function(){ const b2=document.getElementById('gaPull10');
     const upd=()=>{ const first=!(STORY.tut&&STORY.tut.g10); b2.innerHTML=first?'10連ガチャ <s style="opacity:.6">💎900</s> → <b>💎450</b>（初回半額！）':'10連ガチャ 💎900'; };
     upd(); window._updGa10=upd; })();
-  window._go={forest:()=>enterForest(), village:()=>enterVillage(), walk:(x,z)=>villageGoWorld(x,z), port:()=>enterField('port'), mtn:()=>enterField('mountain'), snow:()=>enterField('snow'), under:()=>enterField('under'), tree:()=>enterField('tree'), volc:()=>enterField('volcano'), enc:()=>{ if(VG&&VG.roamers&&VG.roamers[0]) villageGoWorld(VG.roamers[0].x, VG.roamers[0].z); }, quests:()=>openQuests(), pos:()=>VG&&VG.hero?[+VG.hero.x.toFixed(2),+VG.hero.z.toFixed(2)]:null, vj:()=>({a:vj.active,x:vj.x,y:vj.y})};   // デバッグ遷移
+  window._go={forest:()=>enterForest(), village:()=>enterVillage(), walk:(x,z)=>villageGoWorld(x,z), port:()=>enterField('port'), mtn:()=>enterField('mountain'), snow:()=>enterField('snow'), under:()=>enterField('under'), tree:()=>enterField('tree'), volc:()=>enterField('volcano'), enc:()=>{ if(VG&&VG.roamers&&VG.roamers[0]) villageGoWorld(VG.roamers[0].x, VG.roamers[0].z); }, quests:()=>openQuests(), wmap:()=>openWorldMap(), noenc:()=>{ if(VG&&VG.roamers) for(const r of VG.roamers){ r.grp.visible=false; r.x=999; r.z=999; r.tx=999; r.tz=999; } }, boss:()=>{ const n=(VG&&VG.npcs||[]).find(n=>n.def.bossCh!=null); return n?{ch:n.def.bossCh,x:n.x,z:n.z}:null; }, pos:()=>VG&&VG.hero?[+VG.hero.x.toFixed(2),+VG.hero.z.toFixed(2)]:null, vj:()=>({a:vj.active,x:vj.x,y:vj.y})};   // デバッグ遷移
   if(qparam('debug')){ window._DEBUG=true; toast('🔧 デバッグ: 全フィールド・全章を開放中（セーブには保存されない）'); }
   // タイトル画面の背景に村の一枚絵
   { const t=document.getElementById('ovTitle');
