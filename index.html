@@ -285,7 +285,9 @@ button.bt.fuse{background:#a24ec0}
     <div style="background:rgba(8,10,16,.88);border:1px solid #2c3346;border-radius:12px;padding:8px 12px;max-width:94vw;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;pointer-events:auto">
       <b style="color:#ffd86b;white-space:nowrap;font-size:14px">🏘 アルケー村</b>
       <span id="vgStat" style="font-size:11px;color:#8ee0ff;white-space:nowrap"></span>
-      <button class="bt" id="btWMap" style="padding:5px 9px;font-size:12px;margin-left:auto">🗺</button>
+      <button class="bt" id="btFGacha" style="padding:5px 9px;font-size:12px;margin-left:auto">🎰</button>
+      <button class="bt" id="btQuests" style="padding:5px 9px;font-size:12px">📋</button>
+      <button class="bt" id="btWMap" style="padding:5px 9px;font-size:12px">🗺</button>
       <button class="bt" id="btBgm" style="padding:5px 9px;font-size:12px">🔊</button>
       <button class="bt warn" id="vgTitle" style="padding:5px 9px;font-size:12px">🏠</button>
       <span class="muted" style="font-size:10px;line-height:1.35;flex:1 1 100%;white-space:normal">タップ/ドラッグで移動｜🚪北門から世界へ（陸続き） 🗺地図=移動 🎰祭壇=召喚 🧙長老 📖図鑑</span>
@@ -4738,7 +4740,7 @@ const GACHA_RAR_COL={N:'#8a97ad',R:'#b08ae0',SR:'#e0c060',SSR:'#ff7ab0'};
 // N=Lv1 / R=Lv2(進化形含む) / SR=Lv3+竜系 / SSR=融合体
 // シリーズパック: 章を進めるほど新しい召喚シリーズが解放される（次のマップの敵に刺さる属性順）
 const GACHA_PACKS=[
- {key:'basic', name:'はじまりの絆',   types:['炎','水','草'], need:-1, hint:'相棒たちの系譜。炎・水・草の基本パック'},
+ {key:'basic', name:'相棒の系譜',     types:null, starterPack:true, need:-1, hint:'相棒・ソヨカ・ツチノコの進化ラインだけが出る。1回1回がまっすぐ戦力になる'},
  {key:'flame', name:'紅蓮の火種',     types:['炎','風'],      need:0,  hint:'翠の森の草モンスターは炎で焼き払え'},
  {key:'volt',  name:'雷雲の胎動',     types:['雷','草'],      need:1,  hint:'港の水モンスターには雷と草が刺さる'},
  {key:'earth', name:'大地の鼓動',     types:['地','水'],      need:2,  hint:'雷鳴山の雷は地タイプで受け止めろ'},
@@ -4748,9 +4750,36 @@ const GACHA_PACKS=[
  {key:'all',   name:'めぐりあいの祭壇', types:null,           need:6,  hint:'全タイプ排出。縁の導くまま'},
  {key:'dragon',name:'竜宮の血脈',     types:['竜','氷','水'], need:8,  hint:'終末火山の炎と竜に備えよ'},
 ];
-function packOf(){ const k=STORY.gpack||'basic'; return GACHA_PACKS.find(p=>p.key===k&&STORY.clear>=p.need)||GACHA_PACKS[0]; }
+let GFIELD=null;   // フィールドHUDから開いた時=そのマップ専用ガチャ
+// マップ専用パック: この地の敵に強いタイプ + この地のボスの素材ライン
+const FIELD_COUNTER={forest:['炎','雷'], port:['雷','草'], mountain:['地','草'], snow:['炎'], under:['光','地'], tree:['炎','闇'], volcano:['水','氷']};
+function fieldGPack(map){
+  return {key:'field:'+map, name:(FIELD_INFO[map]?FIELD_INFO[map].name:'この地')+'の召喚',
+    types:FIELD_COUNTER[map]||['炎'], fieldMap:map, need:-1,
+    hint:'この地の敵に強いタイプと、この地のボスの素材ラインだけが出る'};
+}
+function fieldBossLineIds(map){
+  const out=new Set();
+  const add=(mid,g)=>{ const m=MID[mid]; if(!m||g>6) return;
+    if(m.role==='fusion'){ out.add(mid); for(const f of (m.fusion_from||[])) add(f,g+1); return; }
+    let base=m, k=0; while(base.evolves_from!=null&&k<6){ base=MID[base.evolves_from]; k++; }
+    let cur=base.id, k2=0; while(cur!=null&&k2<6){ out.add(cur); cur=MID[cur]?MID[cur].evolves_to:null; k2++; } };
+  for(const ch of (FIELD_CHAPTERS[map]||[])) for(const e of CAMPAIGN[ch].enemy){ if(e.boss) add(e.mid,0); }
+  return out;
+}
+function packOf(){
+  if(GFIELD) return fieldGPack(GFIELD);
+  const k=STORY.gpack||'basic'; return GACHA_PACKS.find(p=>p.key===k&&STORY.clear>=p.need)||GACHA_PACKS[0]; }
 function renderPacks(){
   const box=document.getElementById('gaPacks'); if(!box) return;
+  if(GFIELD){
+    const p=fieldGPack(GFIELD);
+    box.innerHTML=`<div style="flex:0 0 auto;background:#2a1a3e;border:2px solid #c060ff;border-radius:10px;padding:7px 14px;text-align:center">
+      <div style="font-size:13px;font-weight:700">🎰 ${p.name}</div>
+      <div style="font-size:10px;color:#b08ae0">${p.types.join('・')}＋ボス素材ライン</div></div>`;
+    const hint=document.getElementById('gaPackHint'); if(hint) hint.textContent='▶ '+p.hint;
+    return;
+  }
   if(!GACHA_PACKS.some(p=>p.key===(STORY.gpack||'basic')&&STORY.clear>=p.need)) STORY.gpack='basic';
   const cur=packOf();
   box.innerHTML=GACHA_PACKS.map(p=>{
@@ -4759,7 +4788,7 @@ function renderPacks(){
     return `<div data-pk="${p.key}" style="flex:0 0 auto;min-width:94px;background:${cur.key===p.key?'#2a1a3e':'#1a1226'};border:2px solid ${cur.key===p.key?'#c060ff':un?'#3a2a4a':'#241a30'};border-radius:10px;padding:7px 10px;text-align:center;${un?'cursor:pointer':'opacity:.45'};position:relative">
       ${isNew?'<div style="position:absolute;top:-7px;right:-4px;background:#ff5a8a;color:#fff;font-size:9px;font-weight:800;border-radius:6px;padding:1px 5px">NEW</div>':''}
       <div style="font-size:12px;font-weight:700;white-space:nowrap">${un?'':'🔒'}${p.name}</div>
-      <div style="font-size:10px;color:#b08ae0">${p.types?p.types.join('・'):'全タイプ'}</div>
+      <div style="font-size:10px;color:#b08ae0">${p.starterPack?'相棒ライン専用':p.types?p.types.join('・'):'全タイプ'}</div>
       ${un?'':`<div class="muted" style="font-size:9px;white-space:nowrap">${p.need===0?'序章':'第'+p.need+'章'}クリアで解放</div>`}
     </div>`;
   }).join('');
@@ -4769,9 +4798,20 @@ function renderPacks(){
     if(!p||STORY.clear<p.need){ toast('🔒 物語を進めると解放されるシリーズだ'); return; }
     STORY.gpack=p.key; STORY.tut=STORY.tut||{}; STORY.tut['pk_'+p.key]=1; saveStory(); renderPacks(); }; });
 }
+function starterFamilyIds(){
+  const bases=[STORY.starter||7, 49, 34];
+  if(!STORY.starter) bases.push(16,178);   // 相棒未選択なら3相棒とも
+  const out=new Set();
+  for(const b of bases){ let cur=b, g=0; while(cur!=null && g<6){ out.add(cur); cur=MID[cur]?MID[cur].evolves_to:null; g++; } }
+  return out;
+}
 function gachaPools(){
-  const ty=packOf().types;
-  const fit=m=> !ty || ty.includes(m.type) || (m.type2&&ty.includes(m.type2));
+  const pk=packOf();
+  let fit;
+  if(pk.starterPack){ const fam=starterFamilyIds(); fit=m=>fam.has(m.id); }   // 相棒の系譜=手持ちラインのみ
+  else if(pk.fieldMap){ const ex=fieldBossLineIds(pk.fieldMap); const ty=pk.types;
+    fit=m=> ex.has(m.id) || ty.includes(m.type) || (m.type2&&ty.includes(m.type2)); }   // マップ専用=対抗タイプ+ボス素材
+  else { const ty=pk.types; fit=m=> !ty || ty.includes(m.type) || (m.type2&&ty.includes(m.type2)); }
   const pn=[],pr=[],ps=[],px=[], fn=[],fr=[],fs=[],fx=[];
   for(const m of MONSTERS){
     let all,f2;
@@ -4797,7 +4837,7 @@ function gachaPull(pity){
   if(rar==='R'||rar==='SR'){
     const evoPool=pool.filter(id=>{ const m=MID[id];
       return m && m.evolves_from!=null && STORY.owned.includes(m.evolves_from) && !STORY.owned.includes(id); });
-    const bias = STORY.owned.length<15 ? 0.75 : 0.55;
+    const bias = packOf().starterPack ? 0.85 : (STORY.owned.length<15 ? 0.75 : 0.55);
     if(evoPool.length && Math.random()<bias) pool=evoPool;
   }
   return {id:pool[(Math.random()*pool.length)|0], rar};
@@ -4879,8 +4919,12 @@ function renderTrade(){
     };
   });
 }
-function openGacha(from){ gaFrom=from||'title'; document.getElementById('gaResult').innerHTML=''; updateGemUI(); renderPacks(); renderTrade(); document.getElementById('ovGacha').style.display='flex'; }
+function openGacha(from){ gaFrom=from||'title';
+  GFIELD=(from==='hud'&&V_MAP!=='village')?V_MAP:null;
+  document.getElementById('gaResult').innerHTML=''; updateGemUI(); renderPacks(); renderTrade(); document.getElementById('ovGacha').style.display='flex'; }
 function closeGacha(){ document.getElementById('ovGacha').style.display='none';
+  GFIELD=null;
+  if(gaFrom==='hud') return;   // フィールドHUDから: 立ち位置そのまま閉じるだけ
   if(gaFrom==='chapters') openChapters();
   else if(gaFrom==='village') enterVillage();
   else if(gaFrom==='select'){ buildSelect(); document.getElementById('ovSelect').style.display='flex'; }
@@ -6538,7 +6582,7 @@ function makeFusionCard(m){
   return d;
 }
 function buildSelect(){
-  const gb=document.getElementById('btSelGacha'); if(gb) gb.style.display=CAMP.on?'':'none';
+  const gb=document.getElementById('btSelGacha'); if(gb) gb.style.display='none';   // バトル前召喚は廃止（各マップのHUD🎰から引く）
   const h1=document.querySelector('#ovSelect h1');
   if(h1){
     if(CAMP.on && CAMP.free){
@@ -6891,9 +6935,16 @@ function endGame(winner,msg){
           btn.textContent='🎰 村の祭壇へ（召喚を試す）';
           btn.onclick=()=>{ document.getElementById('ovEnd').style.display='none'; openGacha('chapters'); };
         } else {
-          btn.textContent = last?'📜 章選択へ':'▶ 次の章へ';
+          // 既定=戦った土地に戻る（冒険の続き）。次の章へはサブボタン
+          const L=STORY.loc;
+          btn.textContent='🏕 冒険にもどる';
           btn.onclick=()=>{ document.getElementById('ovEnd').style.display='none';
-            if(last) openChapters(); else startChapter(CAMP.ch+1); };
+            if(L&&L.map&&L.map!=='village'&&FIELD_INFO[L.map]) backToField(L.map); else enterVillage(); };
+          let alt2=document.getElementById('btEndAlt');
+          if(!alt2){ alt2=document.createElement('button'); alt2.id='btEndAlt'; alt2.className='bt'; alt2.style.cssText='font-size:15px;padding:11px 20px;margin-left:8px'; btn.parentNode.appendChild(alt2); }
+          alt2.style.display='';
+          alt2.textContent = last?'📜 章選択':'▶ 次の章へ';
+          alt2.onclick=()=>{ document.getElementById('ovEnd').style.display='none'; if(last) openChapters(); else startChapter(CAMP.ch+1); };
         }
         document.getElementById('ovEnd').style.display='flex';
       });
@@ -8794,6 +8845,8 @@ function boot(){
   document.getElementById('vgTitle').onclick=goTitle;
   document.getElementById('btBgm').onclick=()=>{ bgmInit(); bgmToggle(); };
   { const wm=document.getElementById('btWMap'); if(wm) wm.onclick=()=>{ if(state&&state.phase==='village') openWorldMap(); }; }
+  { const fg=document.getElementById('btFGacha'); if(fg) fg.onclick=()=>{ if(state&&state.phase==='village') openGacha('hud'); }; }
+  { const qb=document.getElementById('btQuests'); if(qb) qb.onclick=()=>{ if(state&&state.phase==='village') openQuests(); }; }
   document.getElementById('chClose').onclick=()=>{ document.getElementById('ovChapters').style.display='none'; if(STORY.hero) enterVillage(); else document.getElementById('ovTitle').style.display='flex'; };
   // ======================= ガチャ配線 =======================
   document.getElementById('btGacha').onclick=()=>{ document.getElementById('ovTitle').style.display='none'; openGacha('title'); };
