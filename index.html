@@ -4634,6 +4634,7 @@ function VG_setupVillagers(){
 function villagerTalk(n){
   const v=n.def;
   if(v.bossCh!=null){ bossTalk(v.bossCh); return; }
+  if(v.bossDoneCh!=null){ bossDoneTalk(v.bossDoneCh); return; }
   if(v.name&&v.name.startsWith('行商人ザザ')){ openShop(); return; }
   if(v.rival){
     const rv=v.rival;
@@ -7801,22 +7802,56 @@ const BOSS_TALK={
 };
 function fieldBossCh(k){ const chs=FIELD_CHAPTERS[k]||[]; const eff=window._DEBUG?99:STORY.clear;
   return chs.find(c=>c>STORY.clear && c<=eff+1); }
+function fieldBossDone(k){ const chs=FIELD_CHAPTERS[k]||[];   // クリア済みの最後の章（和解したボス）
+  for(let i=chs.length-1;i>=0;i--){ if(chs[i]<=STORY.clear) return chs[i]; } return null; }
+// 和解後のセリフ（ボスは仲間になっている）
+const BOSS_DONE_TALK={
+ 1:[{s:'184',t:'……もう、だいじょうぶ。もり、まもる。おまえ、なかま。'},
+    {s:'184',t:'ありがとう。くろい涙は、もう流さない。'}],
+ 2:[{s:'46',t:'貴様との一戦、実に見事だった。私の剣は今、お前と共にある。'},
+    {s:'46',t:'港に歌が戻ったな。……ふ、悪くない。'}],
+ 3:[{s:'72',t:'ブモォ…お前の根性は俺様の角より硬かったぜ。'},
+    {s:'72',t:'山の雷はみんなのもんだ。好きなだけ持ってきな！'}],
+ 4:[{s:'204',t:'大地の傷は、絆で縫えるのだと知った。……見事だった。'},
+    {s:'204',t:'お前の覚悟、この背中で運んでやろう。'}],
+ 5:[{s:'153',t:'……この吹雪は、もう誰も凍えさせぬ。約束しよう。'},
+    {s:'153',t:'お前の温もりを、我が氷は覚えている。'}],
+ 6:[{s:'244',t:'ガウッ！（三つの首が、ぜんぶ嬉しそうだ）'},
+    {s:'244',t:'冥界の門は、お前にはいつでも開いている。'}],
+ 7:[{s:'206',t:'世界樹に緑が戻っていく……守り人よ、お前のおかげだ。'},
+    {s:'206',t:'根に耳を当ててみよ。世界が礼を言っている。'}],
+ 8:[{s:'163',t:'告白の続きは、いつか天空で。……今は、共に歩もう。'},
+    {s:'163',t:'翼は裁きのためでなく、守るためにある。お前が教えてくれた。'}],
+ 9:[{s:'238',t:'クク……「鍵」ではなく、扉を壊す者だったとはな。愉快だ。'},
+    {s:'238',t:'黙示の宴は終わった。次は祝いの宴といこうじゃないか。'}],
+ 10:[{s:'201',t:'竜の王を超えた者よ。我が翼は、もうお前と共にある。'},
+    {s:'201',t:'祭壇への道は開けた。……行け、答えを確かめてこい。'}],
+ 11:[{s:'245',t:'……「朝ごはんの匂い」というのを、我も知ってみたくなった。'},
+    {s:'245',t:'無に還すより、育てるほうが難しく、面白い。お前の勝ちだ。'}],
+};
+function bossDoneTalk(ch){
+  const be=CAMPAIGN[ch].enemy.find(e=>e.boss);
+  const lines=BOSS_DONE_TALK[ch]||[{s:String(be.mid),t:'……よく来たな、我が友よ。'}];
+  showStoryLines('🤝 '+MID[be.mid].name, lines, ()=>bossChallenge(ch, true));
+}
 function bossTalk(ch){
   const be=CAMPAIGN[ch].enemy.find(e=>e.boss);
   const lines=BOSS_TALK[ch]||[{s:String(be.mid),t:'……来たか、小さき者よ。'}];
   showStoryLines('👹 '+CAMPAIGN[ch].title, lines, ()=>bossChallenge(ch));
 }
-function bossChallenge(ch){
+function bossChallenge(ch, done){
   const be=CAMPAIGN[ch].enemy.find(e=>e.boss); const m=MID[be.mid];
   const ov=document.getElementById('ovStory');
-  document.getElementById('stTitle').textContent='⚔ '+CAMPAIGN[ch].title;
+  document.getElementById('stTitle').textContent=(done?'🤝 ':'⚔ ')+CAMPAIGN[ch].title;
   const face=document.getElementById('stFace'); face.style.display='block';
   document.getElementById('stFaceImg').src=IMG[String(be.mid)];
   document.getElementById('stName').textContent=m.name;
   const el=document.getElementById('stLine'); el.style.fontStyle='normal';
-  el.innerHTML=`<div style="margin-bottom:10px">${m.name}（Lv${m.level}）が挑戦を待っている。勝てば必ず仲間になる！<br><span class="muted" style="font-size:11px">推奨編成Lv${CAMPAIGN[ch].budget}</span></div>
-   <button class="bt go" id="bcGo" style="display:block;width:100%;margin:6px 0;padding:12px;font-size:15px">⚔ 挑む！</button>
-   <button class="bt" id="bcNo" style="display:block;width:100%;margin:6px 0;padding:10px;font-size:13px">× 準備してから来る</button>`;
+  el.innerHTML=`<div style="margin-bottom:10px">${done
+     ? `${m.name}は仲間になった。腕試しの再戦を受けてくれるぞ（勝てば💎40）`
+     : `${m.name}（Lv${m.level}）が挑戦を待っている。勝てば必ず仲間になる！`}<br><span class="muted" style="font-size:11px">推奨編成Lv${CAMPAIGN[ch].budget}</span></div>
+   <button class="bt go" id="bcGo" style="display:block;width:100%;margin:6px 0;padding:12px;font-size:15px">${done?'⚔ 再戦する！':'⚔ 挑む！'}</button>
+   <button class="bt" id="bcNo" style="display:block;width:100%;margin:6px 0;padding:10px;font-size:13px">${done?'× またね':'× 準備してから来る'}</button>`;
   document.getElementById('stPage').textContent='';
   document.getElementById('stNext').style.display='none';
   const close=()=>{ ov.style.display='none'; document.getElementById('stNext').style.display=''; _vnCool=performance.now()+2500; };
@@ -7908,7 +7943,8 @@ function vFieldCommon(portalColor, backLabelY){
   }
   // ===== 章ボス（大きな姿でフィールドに待ち構える） =====
   VG.bossSafe=null;
-  { const bossCh=fieldBossCh(V_MAP);
+  { let bossCh=fieldBossCh(V_MAP), bossDone=false;
+    if(bossCh==null){ const dc=fieldBossDone(V_MAP); if(dc!=null){ bossCh=dc; bossDone=true; } }
     const be=bossCh!=null?CAMPAIGN[bossCh].enemy.find(e=>e.boss):null;
     if(be && IMG[String(be.mid)]){
       const bp=BOSS_POS[V_MAP]||{x:-3.5,z:-5.0};
@@ -7916,18 +7952,18 @@ function vFieldCommon(portalColor, backLabelY){
       const tex7=new THREE.TextureLoader().load(IMG[String(be.mid)]);
       const sp7=new THREE.Sprite(new THREE.SpriteMaterial({map:tex7,transparent:true})); sp7.material.toneMapped=false;
       sp7.scale.set(3.4,3.4,1); sp7.center.set(0.5,0); sp7.position.y=0.05; g7.add(sp7);
-      const aura7=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0xff4a3a,transparent:true,opacity:0.45,depthWrite:false,blending:THREE.AdditiveBlending}));
+      const aura7=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:bossDone?0x6ae08a:0xff4a3a,transparent:true,opacity:bossDone?0.28:0.45,depthWrite:false,blending:THREE.AdditiveBlending}));
       aura7.scale.setScalar(4.8); aura7.position.y=1.7; g7.add(aura7);
       const sh7=new THREE.Mesh(new THREE.CircleGeometry(1.1,20), new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.32}));
       sh7.rotation.x=-Math.PI/2; sh7.position.y=0.02; g7.add(sh7);
       const nm7=MID[be.mid].name;
-      const lb7=makeTextSprite('👹 '+nm7+'（BOSS）'); lb7.scale.set(2.6,0.62,1); lb7.position.y=3.8; g7.add(lb7);
+      const lb7=makeTextSprite(bossDone?('🤝 '+nm7):('👹 '+nm7+'（BOSS）')); lb7.scale.set(2.6,0.62,1); lb7.position.y=3.8; g7.add(lb7);
       g7.position.set(bp.x,0,bp.z); villageGroup.add(g7); vCol(bp.x,bp.z,1.0);
       const ph7=Math.random()*9;
       ambient.push(t=>{ aura7.material.opacity=0.32+0.18*Math.sin(t*2.1+ph7); });
       VG.bossSafe={x:bp.x,z:bp.z};
       VG.npcs=VG.npcs||[];
-      VG.npcs.push({grp:g7,sp:sp7,sh:sh7,baseSY:sp7.scale.y,trav:0,def:{name:nm7,lines:[],bossCh,rad:2.1,x:bp.x,z:bp.z},x:bp.x,z:bp.z,tx:bp.x,tz:bp.z,ph:0,li:0,fixed:true});
+      VG.npcs.push({grp:g7,sp:sp7,sh:sh7,baseSY:sp7.scale.y,trav:0,def:{name:nm7,lines:[],bossCh:bossDone?null:bossCh,bossDoneCh:bossDone?bossCh:null,rad:2.1,x:bp.x,z:bp.z},x:bp.x,z:bp.z,tx:bp.x,tz:bp.z,ph:0,li:0,fixed:true});
     } }
   // ===== 野生モンスター（徘徊・接触でフリーバトル） =====
   VG.roamers=[];
@@ -8352,7 +8388,8 @@ function openWorldMap(){
     if(k!=='village'){
       const bc=fieldBossCh(k);
       if(unlocked&&bc!=null){ const be=CAMPAIGN[bc].enemy.find(e=>e.boss); if(be) extra=`<span style="color:#ff9a8a;font-size:11px">👹 ${MID[be.mid].name}が待つ</span>`; }
-      else if(!unlocked) extra=`<span class="muted" style="font-size:11px">物語を進めると道が開く</span>`;
+      else if(unlocked){ const dc=fieldBossDone(k); if(dc!=null){ const be=CAMPAIGN[dc].enemy.find(e=>e.boss); if(be) extra=`<span style="color:#7ee08a;font-size:11px">🤝 ${MID[be.mid].name}</span>`; } }
+      else extra=`<span class="muted" style="font-size:11px">物語を進めると道が開く</span>`;
     }
     const conn=i<WORLD_CHAIN.length-1?`<div style="margin-left:26px;color:#3a4566;font-size:11px;line-height:1">┃</div>`:'';
     return `<div data-map="${k}" style="display:flex;align-items:center;gap:8px;background:${here?'#1c2a44':'#141a28'};border:1px solid ${here?'#5a8adc':unlocked?'#2c3346':'#20263a'};border-radius:9px;padding:8px 12px;${unlocked?'cursor:pointer':'opacity:.42'}">
