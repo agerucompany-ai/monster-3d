@@ -4815,6 +4815,14 @@ function openQuests(){
   ov.style.display='flex';
 }
 let STORY = loadStory();
+// 既存セーブ移行: 相棒を選んでいれば相棒3ライン(相棒/ソヨカ/ツチノコ)の全進化段を必ず所持=進化先未所持を根絶
+(function migrateStarterLines(){
+  if(!STORY.starter || !Array.isArray(STORY.owned)) return;
+  const before=STORY.owned.length;
+  const addLine=(base)=>{ let c=base,g=0; while(c!=null&&g<8){ if(!STORY.owned.includes(c)) STORY.owned.push(c); c=(MID[c]?MID[c].evolves_to:null); g++; } };
+  addLine(STORY.starter); addLine(49); addLine(34);
+  if(STORY.owned.length!==before){ try{ localStorage.setItem('ms3d_story', JSON.stringify(STORY)); }catch(e){} }
+})();
 let _cloudTimer=null;
 function saveStory(){
   try{ if(typeof state!=='undefined'&&state&&state.phase==='village'&&typeof VG!=='undefined'&&VG&&VG.hero) STORY.loc={map:V_MAP,x:+VG.hero.x.toFixed(1),z:+VG.hero.z.toFixed(1)}; }catch(e){}
@@ -7261,9 +7269,11 @@ function pickStarter(cb){
     d.style.width='120px';
     d.innerHTML=`<span class="tg" style="background:${TYPE_COL[m.type]}">${m.type}</span><img src="${IMG[id]}"><div class="nm">${m.name}</div><div class="muted">HP${m.hp}/A${m.atk}</div>`;
     d.onclick=()=>{ STORY.starter=id;
-      // 相棒3ライン(相棒/ソヨカ/ツチノコ)を進化先Lv2まで全部解放=序盤から必ず進化できる
-      STORY.owned=[id, m.evolves_to, 49, MID[49].evolves_to, 34, MID[34].evolves_to].filter(x=>x!=null); saveStory();
-      toast(`${m.name}が相棒になった！（3匹とも進化先つき。すぐ進化できるぞ）`);
+      // 相棒3ライン(相棒/ソヨカ/ツチノコ)を全進化段まで解放=最後まで必ず進化できる
+      STORY.owned=[];
+      const addLine=(base)=>{ let c=base,g=0; while(c!=null&&g<8){ if(!STORY.owned.includes(c)) STORY.owned.push(c); c=(MID[c]?MID[c].evolves_to:null); g++; } };
+      addLine(id); addLine(49); addLine(34); saveStory();
+      toast(`${m.name}が相棒になった！（3ラインとも最終進化まで解放。すぐ進化できるぞ）`);
       ov.style.display='none'; cb&&cb(); };
     row.appendChild(d);
   }
