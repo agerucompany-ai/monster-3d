@@ -4675,7 +4675,10 @@ function renderGachaResult(res, refund){
       +(p.isNew?`<div style="position:absolute;top:4px;right:6px;font-weight:800;font-size:10px;color:#ffd86b">NEW!</div>`:'')
       +`<img src="${IMG[p.id]}" style="width:100%;aspect-ratio:1;object-fit:contain;border-radius:6px;background:#0d1220">`
       +`<div style="font-size:11px;font-weight:700;margin-top:3px">${m.name}</div>`
-      +`<div class="muted" style="font-size:10px">${m.type}${m.type2?'/'+m.type2:''} Lv${m.level}${p.isNew?'':` → 💎+${GACHA_DUP[p.rar]}`}</div>`;
+      +`<div class="muted" style="font-size:10px">${m.type}${m.type2?'/'+m.type2:''} Lv${m.level}${p.isNew?'':` → 💎+${GACHA_DUP[p.rar]}`}</div>`
+      +(()=>{ if(m.role==='fusion') return '<div style="font-size:9px;color:#c98adf">🔮融合で誕生</div>';
+              if(m.evolves_from!=null) return '<div style="font-size:9px;color:#ffd86b">⬆進化用（戦闘中に進化）</div>';
+              return '<div style="font-size:9px;color:#7ee08a">✅そのまま出撃OK</div>'; })();
     d.style.opacity='0'; d.style.transform='scale(0.6) rotateY(90deg)'; d.style.transition='all .28s ease-out';
     setTimeout(()=>{ d.style.opacity='1'; d.style.transform='scale(1) rotateY(0deg)';
       if(p.rar==='SSR'){ d.style.boxShadow='0 0 18px #ff7ab0, 0 0 34px #ffd84a'; seJingle('fanfare'); }
@@ -6474,7 +6477,7 @@ function beginBattle(){
   document.getElementById('ovPlace').style.display='none';
   state.phase='battle'; pickEnabled=true; clearSel();
   bgmPlay('battle');
-  if(CAMP.on){ state.energy[0]+=2; toast('✨ガイウスの祝福：気+2（序盤の進化に使おう）'); }   // ストーリーは初動支援
+  if(CAMP.on){ state.energy[0]+=3; toast('✨ガイウスの祝福：気+3（すぐに1体進化できるぞ）'); }   // ストーリーは初動支援=開幕進化可能
   const les = (CAMP.on && LESSONS[CAMP.ch] && tutOnce('lesson'+CAMP.ch)) ? LESSONS[CAMP.ch] : null;
   if(les) showStoryLines('⚔ ガイウスの助言', les, ()=>startTurn(0));
   else startTurn(0);
