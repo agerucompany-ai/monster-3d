@@ -125,7 +125,7 @@ button.bt.fuse{background:#a24ec0}
   ・<b>「気」＝進化のエネルギー</b>。盤端の🏳フラッグ獲得(+3)＆敵撃破(+1)で増える。<b>融合に気は不要</b>。<br>
   ・進化：気を使って Lv1→2(気3)/Lv2→3(気5)。敵陣最奥に到達すると無条件で1段階進化。<br>
   ・融合：素材2体（例 Lv2＋Lv2）を場で重ねるとLv3が誕生（気いらず）。<br>
-  ・城に隣接で攻城(素の攻撃力)。城の耐久は戦いの規模に連動（序盤150〜終盤1000）。城陥落 or 敵全滅 or 14ターン時の城残量で勝敗。</p>
+  ・城に隣接で攻城(素の攻撃力)。城の耐久は物語の進行に連動（序章150→第5章以降1000。攻撃1体なら約10回で陥落）。城陥落 or 敵全滅 or 14ターン時の城残量で勝敗。</p>
 
   <style>
     #ovHelp .ref{background:#141a28;border:1px solid #2c3346;border-radius:10px;padding:9px 11px;margin-top:8px;font-size:12px;line-height:1.85}
@@ -4142,8 +4142,12 @@ const FLAG_CELLS = [
 const FLAG_REWARD = 3;               // 旗1つ取得で気+3（即時）
 const EVO_COST = {1:3, 2:5};         // Lv1->2, Lv2->3
 const FUSE_COST = {2:4, 3:6};        // 融合体のlevel
-// 城の耐久は編成レベル上限(=章の規模)に連動: 序章150 → 終章990（Lv1の攻城でも序盤は現実的な選択肢に）
-function CASTLE_HP_NOW(){ return Math.max(150, Math.min(1000, 150+(LEVEL_BUDGET-3)*120)); }
+// 城の耐久: 目安=攻撃1体で10回(2体で5回)。序章150 → 第5章以降は1000で固定
+// （5章ごろにはLv3進化(攻撃~100)が並ぶため 100×10=1000）
+function CASTLE_HP_NOW(){
+  if(typeof CAMP!=='undefined' && CAMP && CAMP.on) return Math.min(1000, 150+CAMP.ch*170);   // ストーリー/野生(現在章基準)
+  return 600;   // CPU対戦・オンライン（Lv2〜3混成想定）
+}
 const MAX_TURN = 40;   // HP増で戦闘が長いので大幅延長（城陥落/全滅で終わるのが基本）
 
 // 融合インデックス: "id1,id2"(昇順) -> 融合体id
