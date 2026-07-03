@@ -6098,19 +6098,43 @@ function onPick(ev){
   ndc.x=((ev.clientX-rc.left)/rc.width)*2-1;
   ndc.y=-((ev.clientY-rc.top)/rc.height)*2+1;
   raycaster.setFromCamera(ndc,camera);
+  window._lastPickPx=[ev.clientX,ev.clientY];
   if(state.phase==='village'){
     const gs=raycaster.intersectObjects(villageWalk,false);
     if(gs.length) villageGoWorld(gs[0].point.x, gs[0].point.z);
     return;
   }
   // スプライト(ユニット)と地面タイルの両方を取得して文脈で使い分ける
+  // 本体スプライトは透明ピクセルを素通し（自分の絵の余白が1マス奥のタップを吸う問題の解消）
   let spriteCell=null;
   const us=raycaster.intersectObjects(unitGroup.children,true);
-  if(us.length){ let g=us[0].object; while(g && !sprites_has(g)) g=g.parent; if(g){ const uid=gid(g); if(uid&&state.units[uid]) spriteCell=[state.units[uid].r,state.units[uid].c]; } }
+  for(const hit of us){
+    let uid=null;
+    for(const k in sprites){ if(sprites[k].sp===hit.object){ uid=+k; break; } }   // 対象=本体のみ(ラベル・光輪は素通し)
+    if(uid==null || !state.units[uid]) continue;
+    if(sel && uid===sel.uid) continue;                                            // 選択中の自分も素通し(背後のマスを選べる)
+    if(hit.uv && spriteAlphaAt(state.units[uid].mid, sprites[uid].mat.map, hit.uv)<0.25) continue;   // 透明画素も素通し
+    spriteCell=[state.units[uid].r,state.units[uid].c]; break;
+  }
   let tileCell=null;
   const ts=raycaster.intersectObjects(tileGroup.children,false);
   for(const it of ts){ const ud=it.object.userData; if(ud && 'r' in ud){ tileCell=[ud.r,ud.c]; break; } }
   handlePick(spriteCell, tileCell);
+}
+const _alphaCache={};
+function spriteAlphaAt(mid, map, uv){
+  let e=_alphaCache[mid];
+  if(e===undefined){
+    const img=map&&map.image;
+    if(!img||!img.width) return 1;                       // 未ロード時は不透明扱い
+    const cv=document.createElement('canvas'); cv.width=cv.height=64;
+    const cx=cv.getContext('2d');
+    try{ cx.drawImage(img,0,0,64,64); e=_alphaCache[mid]=cx.getImageData(0,0,64,64).data; }
+    catch(err){ e=_alphaCache[mid]=null; }
+  }
+  if(!e) return 1;
+  const x=Math.max(0,Math.min(63,(uv.x*64)|0)), y=Math.max(0,Math.min(63,((1-uv.y)*64)|0));
+  return e[(y*64+x)*4+3]/255;
 }
 function sprites_has(g){ for(const uid in sprites) if(sprites[uid].grp===g) return true; return false; }
 function gid(g){ for(const uid in sprites) if(sprites[uid].grp===g) return +uid; return null; }
@@ -6124,9 +6148,43 @@ let selAtks=null;
 let selMove=null;      // 選択中の技
 
 function isAtkTarget(cell){ return selAtks && selAtks.some(e=>e.r===cell[0]&&e.c===cell[1]); }
+// セル指定で移動/融合/攻撃/攻城を実行（合法ならtrue）
+function actAtCell(r,c){
+  if(!sel) return false;
+  if(selMode==='move' && selMoves && canMove(sel)){
+    if(selMoves.fuse.some(p=>p[0]===r&&p[1]===c) || selMoves.move.some(p=>p[0]===r&&p[1]===c)){ pushUndo(); moveUnit(sel,r,c); reselectAfter(); return true; }
+  }
+  const ec=CASTLE[1];
+  if(r===ec.r&&c===ec.c&&castleAdjacent(sel)&&canAttack(sel)){ pushUndo(); doCastleAttack(sel); reselectAfter(); return true; }
+  const tgt=selAtks&&selAtks.find(e=>e.r===r&&e.c===c);
+  if(tgt){ pushUndo(); doAttack(sel,tgt,selMove); reselectAfter(); return true; }
+  return false;
+}
+// レイキャストで解決できなかったタップを、見かけ上いちばん近い合法マスへスナップ
+// （持ち上がった地形や自分の絵に隠れた「1マス奥」を選べるように）
+function snapAct(){
+  if(!sel || !window._lastPickPx) return false;
+  const cands=[];
+  if(selMode==='move' && selMoves && canMove(sel)){ for(const p of selMoves.move){ if(p[0]===sel.r&&p[1]===sel.c) continue; cands.push(p); } for(const p of selMoves.fuse) cands.push(p); }
+  if(selAtks) for(const e of selAtks) cands.push([e.r,e.c]);
+  if(castleAdjacent(sel)&&canAttack(sel)) cands.push([CASTLE[1].r,CASTLE[1].c]);
+  if(!cands.length) return false;
+  const rc=renderer.domElement.getBoundingClientRect();
+  const proj=(r,c,y)=>{ const w=cell2world(r,c); const v=new THREE.Vector3(w.x,y+cellH(r,c),w.z).project(camera); return [rc.left+(v.x+1)/2*rc.width, rc.top+(-v.y+1)/2*rc.height]; };
+  const a=proj(5,5,0), b=proj(5,6,0), cellPx=Math.max(24, Math.hypot(a[0]-b[0],a[1]-b[1]));
+  let best=null, bd=cellPx*0.55;
+  const dbgArr=[];
+  for(const p of cands){ const q=proj(p[0],p[1],0.05);
+    const d=Math.hypot(q[0]-window._lastPickPx[0], q[1]-window._lastPickPx[1]);
+    dbgArr.push([p[0],p[1],+d.toFixed(1)]);
+    if(d<bd){ bd=d; best=p; } }
+  window._snapLog={px:window._lastPickPx.slice(), cellPx:+cellPx.toFixed(1), best, cands:dbgArr.slice(0,10)};
+  return best ? actAtCell(best[0],best[1]) : false;
+}
 function isCastleTarget(cell){ const ec=CASTLE[1]; return cell[0]===ec.r&&cell[1]===ec.c && sel && castleAdjacent(sel) && canAttack(sel); }
 
 function handlePick(sc, tc){
+  window._pickLog={sc,tc,mode:selMode,sel:sel?sel.uid:null};
   if(state.phase==='place'){ const t=tc||sc; if(t) placeTap(t[0],t[1]); return; }
   if(state.phase!=='battle' || state.cur!==0) return;
 
@@ -6135,7 +6193,7 @@ function handlePick(sc, tc){
     const t = tc || sc;
     if(t){
       if(selMoves.fuse.some(p=>p[0]===t[0]&&p[1]===t[1])){ pushUndo(); moveUnit(sel,t[0],t[1]); reselectAfter(); return; }
-      if(selMoves.move.some(p=>p[0]===t[0]&&p[1]===t[1])){ pushUndo(); moveUnit(sel,t[0],t[1]); reselectAfter(); return; }
+      if(!(t[0]===sel.r&&t[1]===sel.c) && selMoves.move.some(p=>p[0]===t[0]&&p[1]===t[1])){ pushUndo(); moveUnit(sel,t[0],t[1]); reselectAfter(); return; }
       // 敵・城を直接タップ → 攻撃ボタンを押さなくてもそのまま攻撃（隣の敵が殴りにくい問題の解消）
       const cand=(sc&&isAtkTarget(sc))?sc:(tc&&isAtkTarget(tc))?tc:(sc&&isCastleTarget(sc))?sc:(tc&&isCastleTarget(tc))?tc:null;
       if(cand){
@@ -6150,6 +6208,7 @@ function handlePick(sc, tc){
         selectUnit(u); return;
       }
     }
+    if(snapAct()) return;   // 隠れた合法マスへのタップを画面距離で救済
     return; // 範囲外タップは無視（誤操作で解除しない）
   }
   // 攻撃モード：敵スプライト優先で当てる
@@ -6162,6 +6221,7 @@ function handlePick(sc, tc){
       if(tgt){ pushUndo(); doAttack(sel,tgt,selMove); reselectAfter(); return; }
     }
     const t=sc||tc; if(t){ const u=unitAt(t[0],t[1]); if(u&&u.owner===0&&u.uid!==sel.uid){ selectUnit(u); return; } }
+    if(snapAct()) return;
     return;
   }
   // 選択モード：自ユニットを選ぶ（スプライト優先→地面）
@@ -6172,7 +6232,8 @@ function handlePick(sc, tc){
   clearSel();
 }
 function recompute(){ if(!sel){selMoves=null;selAtks=null;return;} selMoves = canMove(sel)?moveTargets(sel):{move:[],fuse:[]}; selAtks=attackTargets(sel, selMove?selMove.range:null); }
-function selectUnit(u){ sel=u; selMove=(movesFor(u)[0]||null); recompute(); selMode = canMove(u)?'move':'attack'; drawSelHL(); updateUI(); }
+function setSelGhost(uid){ for(const k in sprites){ const s=sprites[k]; const o=(+k===uid)?0.55:1; if(s.mat.opacity!==o) s.mat.opacity=o; } }
+function selectUnit(u){ sel=u; selMove=(movesFor(u)[0]||null); recompute(); selMode = canMove(u)?'move':'attack'; setSelGhost(u.uid); drawSelHL(); updateUI(); }
 function setMode(mode){
   if(!sel) return;
   if(mode==='evolve'){ pushUndo(); if(evolveUnit(sel,false)) reselectAfter(); else undoStack.pop(); return; }
@@ -6196,7 +6257,7 @@ function drawSelHL(){
     if(isAreaTerrain(sel)) for(const x of areaTargets(sel)) addHL(x.r,x.c, x.owner===0?0xffc020:0xff5040, 0.5);   // 味方巻込=黄警告
     if(castleAdjacent(sel)&&canAttack(sel)){ const ec=CASTLE[1]; addHL(ec.r,ec.c,0xff8040,0.6); } }
 }
-function clearSel(){ sel=null; selMode='none'; selMoves=null; selAtks=null; selMove=null; clearHL(); syncUnits(); updateUI(); }
+function clearSel(){ sel=null; selMode='none'; selMoves=null; selAtks=null; selMove=null; setSelGhost(null); clearHL(); syncUnits(); updateUI(); }
 
 // ---- 待った（1手戻す）----
 let undoStack=[];
@@ -8909,6 +8970,23 @@ window.__game={
   get state(){return state;}, MID, FUSE_IDX,
   start(team){ document.getElementById('btStart').onclick(); if(team){chosen=team.slice(0,5);} else randomTeam(); enterPlace(); autoPlace(); beginBattle(); return alive(0).length; },
   click(r,c){ handlePick([r,c],[r,c]); },
+  sync(){ syncUnits(); },
+  rayDebug(px,py){ const rc=renderer.domElement.getBoundingClientRect();
+    ndc.x=((px-rc.left)/rc.width)*2-1; ndc.y=-((py-rc.top)/rc.height)*2+1;
+    raycaster.setFromCamera(ndc,camera);
+    const us=raycaster.intersectObjects(unitGroup.children,true);
+    const ts2=raycaster.intersectObjects(tileGroup.children,false).slice(0,3).map(h=>({kind:'tile',r:h.object.userData.r,c:h.object.userData.c,d:+h.distance.toFixed(2)}));
+    return ts2.concat(us.slice(0,6).map(h=>{ let uid=null,kind='?';
+      for(const k in sprites){ const s=sprites[k];
+        if(s.sp===h.object){uid=+k;kind='body';break;}
+        if(s.lsp===h.object){uid=+k;kind='label';break;}
+        if(s.glow===h.object){uid=+k;kind='glow';break;}
+        if(s.ring===h.object){uid=+k;kind='ring';break;}
+        if(s.disc===h.object){uid=+k;kind='disc';break;}
+        if(s.aura===h.object){uid=+k;kind='aura';break;} }
+      const a=(kind==='body'&&h.uv&&state.units[uid])?spriteAlphaAt(state.units[uid].mid,sprites[uid].mat.map,h.uv):null;
+      return {kind,uid,d:+h.distance.toFixed(2),uv:h.uv?[+h.uv.x.toFixed(2),+h.uv.y.toFixed(2)]:null,alpha:a!=null?+a.toFixed(2):null,type:h.object.type}; })); },
+  pt(r,c,y){ const w=cell2world(r,c); const v=new THREE.Vector3(w.x,(y||0)+cellH(r,c),w.z).project(camera); const rc=renderer.domElement.getBoundingClientRect(); return [rc.left+(v.x+1)/2*rc.width, rc.top+(-v.y+1)/2*rc.height]; },
   mode(m){ setMode(m); },
   selUid(){ return sel?sel.uid:null; },
   undo(){ doUndo(); }, undoLen(){ return undoStack.length; }, resign(){ doResign(); },
