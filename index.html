@@ -4767,6 +4767,13 @@ function villagerTalk(n){
   if(v.bossCh!=null){ bossTalk(v.bossCh); return; }
   if(v.bossDoneCh!=null){ bossDoneTalk(v.bossDoneCh); return; }
   if(v.name&&v.name.startsWith('行商人ザザ')){ openShop(); return; }
+  if(v.gift){   // 道中の一度きりギフト(鉱石=ジェム)
+    STORY.tut=STORY.tut||{};
+    if(STORY.tut['gift_'+v.gift]){ showStoryLines('⚒ '+v.name, [{s:'narr',t:`${v.name}「もう鉱石は渡した。あとは自分の腕で鍛えな」`}], null); return; }
+    STORY.tut['gift_'+v.gift]=1; STORY.gems+=(v.giftGems||100); saveStory(); seJingle('gem');
+    showStoryLines('⚒ '+v.name, (v.scene||[]).concat([{s:'narr',t:`💎+${v.giftGems||100} を受け取った！（所持💎${STORY.gems}）`}]), null); return;
+  }
+  if(v.scene){ showStoryLines('📜 '+v.name, v.scene, null); return; }   // 道中の物語イベント
   if(v.rival){
     const rv=v.rival;
     const wins=(STORY.stats&&STORY.stats.rv&&STORY.stats.rv[rv.key])||0;
@@ -8496,6 +8503,45 @@ function vFieldCommon(portalColor, backLabelY){
   if(V_MAP==='tree') SNPC.push({img:CHARS.elder, name:'長老ガイウス', x:5.0, z:-6.5, lines:[
     'わしも来ておるよ。この大樹には、若い頃に何度も救われた。',
     '根に耳を当ててみよ。世界の鼓動が聞こえる。']});
+  // ===== 道中イベント(story_design.md準拠・進行で出現) =====
+  // 【道中】港のイベント: 迷宮都市への導き
+  if(V_MAP==='port' && STORY.clear<2) SNPC.push({img:IMG['17'], name:'港の漁師トリトン', x:5.4, z:5.2, scene:[
+    {s:'17', t:'よう、旅の導い手。エーゲの海はいい凪だが……人の心は荒れてらぁ。'},
+    {s:'17', t:'北の丘に迷宮都市がある。地下の大迷宮で、牛頭の巨人が暴れ出してな。'},
+    {s:'17', t:'迷い込んだ奴は誰も帰ってこねえ。だが、あんたなら——出口になれるかもしれん。'},
+    {s:'hero', t:'迷宮の牛頭王……ミノタウロス。淀みに呑まれてるんだね。行ってみる。'},
+    {s:'17', t:'気をつけな。迷宮は、恐れを喰って大きくなる。心を平らにして進むんだぜ。'}]});
+  // 【道中】神託の社: 次の目的地(古戦場のティタン)を予言し、根源の伏線を撒く
+  if(V_MAP==='mountain' && STORY.clear>=3 && STORY.clear<5) SNPC.push({img:IMG['165'], name:'神託の巫女ピュティア', x:5.6, z:5.4, scene:[
+    {s:'165', t:'……よくぞ参られた、境界の子。社の炎が、あなたを待っておりました。'},
+    {s:'narr', t:'巫女の瞳が白く濁り、遠い声が彼女の口を借りて響いた。'},
+    {s:'165', t:'『神々より古き者、目覚めん。忘れられし古戦場に、山は起き上がる』。'},
+    {s:'hero', t:'神々より古い……？ それって、いったい。'},
+    {s:'165', t:'『そは始まりの断片。淀みの源は一つ。三つの世界に降る穢れは、同じ井戸から汲まれし水』。'},
+    {s:'165', t:'……境界の子よ。あなたが淀みを鎮められるのは、あなた自身が「境界」の側の存在だから。'},
+    {s:'hero', t:'僕が、境界の側の存在……。'},
+    {s:'165', t:'その意味を知る日は、旅の果てに。今は行きなさい。古戦場の巨神が、あなたを試すでしょう。'}]});
+  // 【道中】戦士の館: オーディン・トールとの初接触(最終章の共闘への布石)
+  if(V_MAP==='snow' && STORY.clear>=12 && STORY.clear<19){
+    SNPC.push({img:IMG['75'], name:'隻眼の神王オーディン', x:-5.6, z:5.0, scene:[
+      {s:'75', t:'……来たか、境界の子。我が二羽の鴉が、お前の旅をずっと見ておった。'},
+      {s:'75', t:'ギリシャの巨神、エジプトの三神、そして北欧の終末。すべて同じ淀みの子だ。'},
+      {s:'hero', t:'オーディン……なら、一緒に戦ってくれるの？'},
+      {s:'75', t:'今はまだだ。我らは「終末の日」に備え、この館を離れられぬ。運命がそう定めておる。'},
+      {s:'75', t:'だがその日が来たら——世界樹の根が最も昏く染まる刻、我とトールは必ず駆けつけよう。'},
+      {s:'75', t:'約束だ。それまで、お前はお前の旅を征け。絆を、一つでも多く結んでな。'}]});
+    SNPC.push({img:IMG['249'], name:'雷神トール', x:5.6, z:4.6, scene:[
+      {s:'249', t:'はっはっは！ お前が噂の導い手か。小さいのに、いい面構えだ！'},
+      {s:'249', t:'おれの雷槌ミョルニルはな、投げても必ず手元に還ってくる。忠義ってやつだ。'},
+      {s:'249', t:'お前が結んだ絆も、きっとそうだ。どんなに遠くへ飛んでも、必ずお前の元へ還る。'},
+      {s:'hero', t:'……ありがとう、トール。最後の戦い、待ってるよ。'},
+      {s:'249', t:'おうよ！ 世界樹の根で吠えな。おれとオヤジ殿が、雷になって落ちてやる！'}]});
+  }
+  // 【道中】鍛冶の番人: 一度だけ鉱石(💎)を分けてくれる(装備強化の代替)
+  if((V_MAP==='snow'||V_MAP==='mountain')) SNPC.push({img:IMG['41'], name:'坑道の鍛冶番アイアンガ', x:-6.0, z:4.4, gift:'smith', giftGems:120, scene:[
+    {s:'41', t:'……客か。この坑道で、わしは千年ハンマーを振っておる。'},
+    {s:'41', t:'導い手よ、お前のモンスターたちは、いい鋼の匂いがする。鍛え甲斐のある絆だ。'},
+    {s:'41', t:'旅の足しにな。……坑道の鉱石を分けてやろう。祭壇で新しい仲間を呼ぶがいい。'}]});
   // 日替わりライバル冒険者（勝負を挑んでくる）
   { const rv=rivalOfField(V_MAP);
     if(rv && CHARS[rv.key]){
@@ -8512,7 +8558,7 @@ function vFieldCommon(portalColor, backLabelY){
     const lb2=makeTextSprite('💬 '+sn.name); lb2.scale.set(1.9,0.48,1); lb2.position.y=2.0; g6.add(lb2);
     g6.position.set(sn.x,0,sn.z); villageGroup.add(g6); vCol(sn.x,sn.z,0.5);
     VG.npcs=VG.npcs||[];
-    VG.npcs.push({grp:g6,sp:sp4,sh:sh3,baseSY:sp4.scale.y,trav:0,def:{name:sn.name,lines:sn.lines||[],x:sn.x,z:sn.z,rival:sn.rival},x:sn.x,z:sn.z,tx:sn.x,tz:sn.z,ph:Math.random()*9,li:0,fixed:true});
+    VG.npcs.push({grp:g6,sp:sp4,sh:sh3,baseSY:sp4.scale.y,trav:0,def:{name:sn.name,lines:sn.lines||[],x:sn.x,z:sn.z,rival:sn.rival,scene:sn.scene,gift:sn.gift,giftGems:sn.giftGems},x:sn.x,z:sn.z,tx:sn.x,tz:sn.z,ph:Math.random()*9,li:0,fixed:true});
   }
   // ===== 章ボス（大きな姿でフィールドに待ち構える） =====
   VG.bossSafe=null;
@@ -8574,8 +8620,13 @@ function vFieldCommon(portalColor, backLabelY){
   // ===== 野生モンスター（徘徊・接触でフリーバトル） =====
   VG.roamers=[];
   const types=FIELD_TYPES[V_MAP]||['草'];
-  const rpool=MONSTERS.filter(m=>m.role!=='fusion' && types.includes(m.type) && m.level<=2);
-  for(let i=0;i<7;i++){
+  // 崩れゆく境界: 火山でスルト撃破(ch18=clear>=18)後は、歪んだ世界で過去の大ボスの残影が徘徊する
+  const ghostMode=(V_MAP==='volcano' && STORY.clear>=18);
+  const ghostIds=[254,84,262,204,153,46,72,201].filter(id=>MID[id]&&IMG[String(id)]);
+  const rpool0=MONSTERS.filter(m=>m.role!=='fusion' && types.includes(m.type) && m.level<=2);
+  const rpool=ghostMode ? ghostIds.map(id=>MID[id]) : rpool0;
+  const roamN=ghostMode?4:7;
+  for(let i=0;i<roamN;i++){
     const m=rpool[(Math.random()*rpool.length)|0]; if(!m) break;
     const grp2=new THREE.Group();
     const tex=new THREE.TextureLoader().load(IMG[String(m.id)]);
@@ -8586,9 +8637,10 @@ function vFieldCommon(portalColor, backLabelY){
     let rx,rz,tries=0;
     do{ rx=(Math.random()-0.5)*20; rz=(Math.random()-0.5)*15; tries++; }while(tries<20 && (Math.abs(rx)<2.2&&rz>-8||rz>6.8||rz<-8));
     grp2.position.set(rx,0,rz);
-    const rare=Math.random()<0.12;
-    if(rare){ sp3.scale.set(1.5,1.5,1);
-      const aura=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0xffd84a,transparent:true,opacity:0.55,depthWrite:false,blending:THREE.AdditiveBlending}));
+    const rare=ghostMode?true:(Math.random()<0.12);
+    if(ghostMode){ sp3.scale.set(2.0,2.0,1); }   // 残影ボスは大きめ
+    if(rare){ if(!ghostMode) sp3.scale.set(1.5,1.5,1);
+      const aura=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:ghostMode?0x9a5cff:0xffd84a,transparent:true,opacity:0.55,depthWrite:false,blending:THREE.AdditiveBlending}));
       aura.scale.setScalar(2.2); aura.position.y=0.75; grp2.add(aura);
       const ph2=Math.random()*9; ambient.push(t=>{ aura.material.opacity=0.4+0.25*Math.sin(t*3+ph2); }); }
     villageGroup.add(grp2);
@@ -9368,7 +9420,7 @@ function boot(){
   (function(){ const b2=document.getElementById('gaPull10');
     const upd=()=>{ const first=!(STORY.tut&&STORY.tut.g10); b2.innerHTML=first?'10連ガチャ <s style="opacity:.6">💎900</s> → <b>💎450</b>（初回半額！）':'10連ガチャ 💎900'; };
     upd(); window._updGa10=upd; })();
-  window._go={forest:()=>enterForest(), village:()=>enterVillage(), walk:(x,z)=>villageGoWorld(x,z), port:()=>enterField('port'), mtn:()=>enterField('mountain'), snow:()=>enterField('snow'), under:()=>enterField('under'), tree:()=>enterField('tree'), volc:()=>enterField('volcano'), enc:()=>{ if(VG&&VG.roamers&&VG.roamers[0]) villageGoWorld(VG.roamers[0].x, VG.roamers[0].z); }, quests:()=>openQuests(), wmap:()=>openWorldMap(), rv:(k)=>{const r=rivalOfField(k); return r?r.name:null}, picks:()=>VG&&VG.pickups?VG.pickups.filter(p=>!p.got).map(p=>[+p.x.toFixed(1),+p.z.toFixed(1)]):null, noenc:()=>{ if(VG&&VG.roamers) for(const r of VG.roamers){ r.grp.visible=false; r.x=999; r.z=999; r.tx=999; r.tz=999; } }, boss:()=>{ const n=(VG&&VG.npcs||[]).find(n=>n.def.bossCh!=null); return n?{ch:n.def.bossCh,x:n.x,z:n.z}:null; }, pos:()=>VG&&VG.hero?[+VG.hero.x.toFixed(2),+VG.hero.z.toFixed(2)]:null, vj:()=>({a:vj.active,x:vj.x,y:vj.y})};   // デバッグ遷移
+  window._go={forest:()=>enterForest(), village:()=>enterVillage(), walk:(x,z)=>villageGoWorld(x,z), port:()=>enterField('port'), mtn:()=>enterField('mountain'), snow:()=>enterField('snow'), under:()=>enterField('under'), tree:()=>enterField('tree'), volc:()=>enterField('volcano'), enc:()=>{ if(VG&&VG.roamers&&VG.roamers[0]) villageGoWorld(VG.roamers[0].x, VG.roamers[0].z); }, quests:()=>openQuests(), wmap:()=>openWorldMap(), npcs:()=>(VG&&VG.npcs||[]).map(n=>n.def.name), roamers:()=>(VG&&VG.roamers||[]).map(r=>MID[r.mid]?MID[r.mid].name:r.mid), talkNpc:(nm)=>{const n=(VG&&VG.npcs||[]).find(n=>n.def.name.includes(nm)); if(n){villagerTalk(n);return true;} return false;}, rv:(k)=>{const r=rivalOfField(k); return r?r.name:null}, picks:()=>VG&&VG.pickups?VG.pickups.filter(p=>!p.got).map(p=>[+p.x.toFixed(1),+p.z.toFixed(1)]):null, noenc:()=>{ if(VG&&VG.roamers) for(const r of VG.roamers){ r.grp.visible=false; r.x=999; r.z=999; r.tx=999; r.tz=999; } }, boss:()=>{ const n=(VG&&VG.npcs||[]).find(n=>n.def.bossCh!=null); return n?{ch:n.def.bossCh,x:n.x,z:n.z}:null; }, pos:()=>VG&&VG.hero?[+VG.hero.x.toFixed(2),+VG.hero.z.toFixed(2)]:null, vj:()=>({a:vj.active,x:vj.x,y:vj.y})};   // デバッグ遷移
   if(qparam('debug')){ window._DEBUG=true; toast('🔧 デバッグ: 全フィールド・全章を開放中（セーブには保存されない）'); }
   // タイトル画面の背景に村の一枚絵
   { const t=document.getElementById('ovTitle');
