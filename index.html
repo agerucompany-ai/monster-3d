@@ -203,6 +203,9 @@ button.bt.fuse{background:#a24ec0}
     <p class="muted" style="margin:0 0 4px">ジェムを祭壇に捧げるとモンスターが仲間になる（＝ガチャ）。💎ジェムは<b>ストーリーの章クリア</b>や<b>対戦勝利</b>で貯まる。ダブりは自動でジェムに変換（N=20/R=50/SR=200/SSR=400）。</p>
     <p class="muted" style="margin:0 0 10px">排出率: <b style="color:#ff7ab0">SSR 3%</b>（融合体）/ <b style="color:#e0c060">SR 7%</b>（Lv3・竜系）/ <b style="color:#b08ae0">R 30%</b>（Lv2）/ N 60%（Lv1）。10連は<b>R以上1枠確定</b>。<br>✨<b>縁ガチャ</b>: R/SRは<b>手持ちモンスターの進化先が優先して当たる</b>（序盤はさらに優遇）— 育てたい子の進化系が揃いやすい！</p>
     <p class="muted" style="margin:0 0 10px">⚠ <b>進化には進化先の所持</b>、<b>融合には融合体の所持</b>が必要。ボスを使うにも進化前/素材が要る——集めてこそ強くなる！</p>
+    <div style="font-weight:700;font-size:13px;color:#ffd86b;margin:2px 0 4px">📦 召喚シリーズ <span class="muted" style="font-size:10px">（章クリアで新シリーズ解放。選んだシリーズの属性が出る）</span></div>
+    <div id="gaPacks" style="display:flex;gap:8px;overflow-x:auto;padding:6px 2px;margin:0 0 2px"></div>
+    <div id="gaPackHint" class="muted" style="font-size:11px;margin:0 0 10px"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button class="bt go" id="gaPull1" style="font-size:16px;padding:12px 22px">1回引く 💎100</button>
       <button class="bt" id="gaPull10" style="font-size:16px;padding:12px 22px;background:#8c2a6a">10連ガチャ 💎900</button>
@@ -4564,14 +4567,17 @@ function openTavern(){
 }
 // ======================= アイテムとショップ =======================
 const ITEMS={
- heal:{name:'回復薬',   icon:'🧪', price:40, desc:'味方1体のHPを50%回復（戦闘中に使用）'},
- full:{name:'霊薬エリク', icon:'✨', price:90, desc:'味方1体のHPを全回復（戦闘中に使用）'},
- ki:  {name:'気の水晶', icon:'💠', price:60, desc:'使うと気+3（戦闘中いつでも）'},
+ heal:{name:'回復薬',   icon:'🧪', price:40, sell:20, desc:'味方1体のHPを50%回復（戦闘中に使用）'},
+ full:{name:'霊薬エリク', icon:'✨', price:90, sell:45, desc:'味方1体のHPを全回復（戦闘中に使用）'},
+ ki:  {name:'気の水晶', icon:'💠', price:60, sell:30, desc:'使うと気+3（戦闘中いつでも）'},
+ shard:{name:'星のかけら', icon:'🌟', sell:25, desc:'フィールドに落ちている結晶。道具屋に売れる'},
+ scale:{name:'竜のうろこ', icon:'🐲', sell:80, desc:'めったに落ちていない逸品。道具屋で高く売れる'},
 };
 function openShop(){
   const rows=[];
-  rows.push(`<div style="color:#e0c8a0;font-size:12px;margin-bottom:6px">ザザ「へっへ、いいものあるよ！ 戦闘中に使える道具だ」</div>`);
+  rows.push(`<div style="color:#e0c8a0;font-size:12px;margin-bottom:6px">ザザ「へっへ、いいものあるよ！ 拾いものの買い取りもやってるぜ」</div>`);
   for(const [k,it] of Object.entries(ITEMS)){
+    if(it.price==null) continue;
     const have=STORY.items[k]||0;
     rows.push(`<div style="display:flex;align-items:center;gap:8px;background:#141a28;border:1px solid #2c3346;border-radius:8px;padding:8px 10px;margin:4px 0">
       <span style="font-size:22px">${it.icon}</span>
@@ -4579,6 +4585,18 @@ function openShop(){
       <div class="muted" style="font-size:11px">${it.desc}</div></div>
       <button class="bt go" data-buy="${k}" style="padding:7px 12px;font-size:12px">💎${it.price}</button>
     </div>`);
+  }
+  const sellables=Object.entries(ITEMS).filter(([k,it])=>it.sell&&(STORY.items[k]||0)>0);
+  if(sellables.length){
+    rows.push(`<div style="font-weight:700;font-size:13px;margin:10px 0 2px;color:#ffd86b">📤 売る（フィールドの拾いものも歓迎）</div>`);
+    for(const [k,it] of sellables){
+      rows.push(`<div style="display:flex;align-items:center;gap:8px;background:#1a2214;border:1px solid #2c3a26;border-radius:8px;padding:8px 10px;margin:4px 0">
+        <span style="font-size:22px">${it.icon}</span>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">${it.name} <span class="muted" style="font-size:10px">所持×${STORY.items[k]}</span></div>
+        <div class="muted" style="font-size:11px">${it.desc}</div></div>
+        <button class="bt" data-sellit="${k}" style="padding:7px 12px;font-size:12px;background:#4a6a2a">売る 💎+${it.sell}</button>
+      </div>`);
+    }
   }
   const ov=document.getElementById('ovStory');
   document.getElementById('stTitle').textContent='🎒 ザザの道具屋';
@@ -4596,6 +4614,12 @@ function openShop(){
       if(STORY.gems<it.price){ toast('ジェムが足りない！'); return; }
       STORY.gems-=it.price; STORY.items[k]=(STORY.items[k]||0)+1; saveStory(); seJingle('gem');
       toast(`${it.icon}${it.name}を購入！（所持×${STORY.items[k]}）`); openShop(); };
+  });
+  el.querySelectorAll('button[data-sellit]').forEach(b2=>{
+    b2.onclick=()=>{ const k=b2.dataset.sellit, it=ITEMS[k];
+      if((STORY.items[k]||0)<1) return;
+      STORY.items[k]--; STORY.gems+=it.sell; saveStory(); seJingle('gem');
+      toast(`${it.icon}${it.name}を売った！ 💎+${it.sell}（所持💎${STORY.gems}）`); openShop(); };
   });
   ov.style.display='flex';
 }
@@ -4712,15 +4736,54 @@ const GACHA_DUP={N:20,R:50,SR:200,SSR:400};   // ダブり→ジェム変換
 const GACHA_RAR_COL={N:'#8a97ad',R:'#b08ae0',SR:'#e0c060',SSR:'#ff7ab0'};
 // 進化先・融合体も「集めないと使えない」ので全モンスターがガチャ排出対象
 // N=Lv1 / R=Lv2(進化形含む) / SR=Lv3+竜系 / SSR=融合体
+// シリーズパック: 章を進めるほど新しい召喚シリーズが解放される（次のマップの敵に刺さる属性順）
+const GACHA_PACKS=[
+ {key:'basic', name:'はじまりの絆',   types:['炎','水','草'], need:-1, hint:'相棒たちの系譜。炎・水・草の基本パック'},
+ {key:'flame', name:'紅蓮の火種',     types:['炎','風'],      need:0,  hint:'翠の森の草モンスターは炎で焼き払え'},
+ {key:'volt',  name:'雷雲の胎動',     types:['雷','草'],      need:1,  hint:'港の水モンスターには雷と草が刺さる'},
+ {key:'earth', name:'大地の鼓動',     types:['地','水'],      need:2,  hint:'雷鳴山の雷は地タイプで受け止めろ'},
+ {key:'gale',  name:'風緑の息吹',     types:['風','草'],      need:3,  hint:'裂け目の地の巨人には草と風'},
+ {key:'frost', name:'白銀の吐息',     types:['氷','炎'],      need:4,  hint:'凍峰の氷には炎を。氷は竜狩りの布石'},
+ {key:'holy',  name:'聖光の啓示',     types:['光','闇'],      need:5,  hint:'冥界の闇は光で払え'},
+ {key:'all',   name:'めぐりあいの祭壇', types:null,           need:6,  hint:'全タイプ排出。縁の導くまま'},
+ {key:'dragon',name:'竜宮の血脈',     types:['竜','氷','水'], need:8,  hint:'終末火山の炎と竜に備えよ'},
+];
+function packOf(){ const k=STORY.gpack||'basic'; return GACHA_PACKS.find(p=>p.key===k&&STORY.clear>=p.need)||GACHA_PACKS[0]; }
+function renderPacks(){
+  const box=document.getElementById('gaPacks'); if(!box) return;
+  if(!GACHA_PACKS.some(p=>p.key===(STORY.gpack||'basic')&&STORY.clear>=p.need)) STORY.gpack='basic';
+  const cur=packOf();
+  box.innerHTML=GACHA_PACKS.map(p=>{
+    const un=STORY.clear>=p.need;
+    const isNew=un&&!(STORY.tut&&STORY.tut['pk_'+p.key])&&p.key!=='basic';
+    return `<div data-pk="${p.key}" style="flex:0 0 auto;min-width:94px;background:${cur.key===p.key?'#2a1a3e':'#1a1226'};border:2px solid ${cur.key===p.key?'#c060ff':un?'#3a2a4a':'#241a30'};border-radius:10px;padding:7px 10px;text-align:center;${un?'cursor:pointer':'opacity:.45'};position:relative">
+      ${isNew?'<div style="position:absolute;top:-7px;right:-4px;background:#ff5a8a;color:#fff;font-size:9px;font-weight:800;border-radius:6px;padding:1px 5px">NEW</div>':''}
+      <div style="font-size:12px;font-weight:700;white-space:nowrap">${un?'':'🔒'}${p.name}</div>
+      <div style="font-size:10px;color:#b08ae0">${p.types?p.types.join('・'):'全タイプ'}</div>
+      ${un?'':`<div class="muted" style="font-size:9px;white-space:nowrap">${p.need===0?'序章':'第'+p.need+'章'}クリアで解放</div>`}
+    </div>`;
+  }).join('');
+  const hint=document.getElementById('gaPackHint'); if(hint) hint.textContent=`▶ ${cur.name} — ${cur.hint}`;
+  box.querySelectorAll('[data-pk]').forEach(d=>{ d.onclick=()=>{
+    const p=GACHA_PACKS.find(x=>x.key===d.dataset.pk);
+    if(!p||STORY.clear<p.need){ toast('🔒 物語を進めると解放されるシリーズだ'); return; }
+    STORY.gpack=p.key; STORY.tut=STORY.tut||{}; STORY.tut['pk_'+p.key]=1; saveStory(); renderPacks(); }; });
+}
 function gachaPools(){
-  const pn=[],pr=[],ps=[],px=[];
+  const ty=packOf().types;
+  const fit=m=> !ty || ty.includes(m.type) || (m.type2&&ty.includes(m.type2));
+  const pn=[],pr=[],ps=[],px=[], fn=[],fr=[],fs=[],fx=[];
   for(const m of MONSTERS){
-    if(m.role==='fusion'){ px.push(m.id); continue; }
-    if(m.type==='竜'){ ps.push(m.id); continue; }
-    if(m.level===1) pn.push(m.id);
-    else if(m.level===2) pr.push(m.id);
-    else ps.push(m.id); }
-  return {N:pn,R:pr,SR:ps,SSR:px};
+    let all,f2;
+    if(m.role==='fusion'){ all=px; f2=fx; }
+    else if(m.type==='竜'){ all=ps; f2=fs; }
+    else if(m.level===1){ all=pn; f2=fn; }
+    else if(m.level===2){ all=pr; f2=fr; }
+    else { all=ps; f2=fs; }
+    all.push(m.id); if(fit(m)) f2.push(m.id);
+  }
+  // パック内に該当レア度がいなければ全体から（空振り防止）
+  return {N:fn.length?fn:pn, R:fr.length?fr:pr, SR:fs.length?fs:ps, SSR:fx.length?fx:px};
 }
 function gachaPull(pity){
   const P=gachaPools(); const r=Math.random();
@@ -4816,7 +4879,7 @@ function renderTrade(){
     };
   });
 }
-function openGacha(from){ gaFrom=from||'title'; document.getElementById('gaResult').innerHTML=''; updateGemUI(); renderTrade(); document.getElementById('ovGacha').style.display='flex'; }
+function openGacha(from){ gaFrom=from||'title'; document.getElementById('gaResult').innerHTML=''; updateGemUI(); renderPacks(); renderTrade(); document.getElementById('ovGacha').style.display='flex'; }
 function closeGacha(){ document.getElementById('ovGacha').style.display='none';
   if(gaFrom==='chapters') openChapters();
   else if(gaFrom==='village') enterVillage();
@@ -6818,9 +6881,11 @@ function endGame(winner,msg){
       showStoryLines(ch.title, ch.win, ()=>{
         t.textContent='🎉 章クリア！';
         const bossImgs=ch.enemy.filter(e=>e.boss).map(e=>`<img src="${IMG[String(e.mid)]||''}" style="width:76px;height:76px;object-fit:contain;background:#0d1220;border-radius:10px;border:2px solid #d8b040;margin:3px">`).join('');
+        const npk=first?GACHA_PACKS.find(p=>p.need===CAMP.ch):null;
         b.innerHTML = msg
           + (newly.length?`<br><div style="margin:6px 0">${bossImgs}</div>🎁 ボス <b>${newly.join('・')}</b> が仲間になった！（進化前/素材を集めると出撃可能）`:'')
-          + `<br>💎 ジェム +${gems}${first?'（初回クリア）':''} → 所持💎${STORY.gems}`;
+          + `<br>💎 ジェム +${gems}${first?'（初回クリア）':''} → 所持💎${STORY.gems}`
+          + (npk?`<br>🎰 <b style="color:#ff8ab0">新召喚シリーズ「${npk.name}」（${npk.types?npk.types.join('・'):'全タイプ'}）解放！</b>`:'');
         const last = CAMP.ch>=CAMPAIGN.length-1;
         if(CAMP.ch===0 && tutOnce('t_altar')){   // 序章クリア後は祭壇に誘導して召喚を体験させる
           btn.textContent='🎰 村の祭壇へ（召喚を試す）';
@@ -7761,6 +7826,21 @@ function villageTick(t){
       }
     }
   }
+  // 落ちものアイテムの取得
+  if(VG.pickups){
+    for(const p of VG.pickups){
+      if(p.got) continue;
+      if(Math.hypot(p.x-h.x, p.z-h.z)<0.9){
+        p.got=true; p.grp.visible=false;
+        const q=qState(); q['pk_'+V_MAP+'_'+p.i]=1;
+        const r2=Math.random();
+        const k2 = r2<0.40?'heal' : r2<0.55?'ki' : r2<0.63?'full' : r2<0.90?'shard' : 'scale';
+        STORY.items[k2]=(STORY.items[k2]||0)+1; saveStory(); seJingle('gem');
+        const it=ITEMS[k2];
+        toast(`${it.icon} ${it.name} を拾った！${it.price==null?`（道具屋で💎${it.sell}で売れる）`:''}`);
+      }
+    }
+  }
   // 野生モンスターの徘徊と接触エンカウント
   if(VG.roamers){
     for(const r of VG.roamers){
@@ -8049,6 +8129,28 @@ function vFieldCommon(portalColor, backLabelY){
       VG.bossSafe={x:bp.x,z:bp.z};
       VG.npcs=VG.npcs||[];
       VG.npcs.push({grp:g7,sp:sp7,sh:sh7,baseSY:sp7.scale.y,trav:0,def:{name:nm7,lines:[],bossCh:bossDone?null:bossCh,bossDoneCh:bossDone?bossCh:null,rad:2.1,x:bp.x,z:bp.z},x:bp.x,z:bp.z,tx:bp.x,tz:bp.z,ph:0,li:0,fixed:true});
+    } }
+  // ===== 落ちているアイテム（日替わり・拾うと道具/換金アイテム） =====
+  VG.pickups=[];
+  { const q=qState();
+    for(let i=0;i<4;i++){
+      if(q['pk_'+V_MAP+'_'+i]) continue;   // 今日はもう拾った
+      let h=0; const s=qToday()+V_MAP;
+      for(let j=0;j<s.length;j++) h=(h*31+s.charCodeAt(j))|0;
+      h=Math.imul(h^(i*2654435761), 40503)|0; h=Math.imul(h^(h>>>13), 2246822519)|0;   // iを強く混ぜて4点を散らす
+      const rx=((Math.abs(h)%1700)/100-8.5), rz=((Math.abs(h>>>9)%1300)/100-6.5);
+      let bad=false;
+      for(const n of V_NPC_CUR()){ if(Math.hypot(n.x-rx,n.z-rz)<2.2){ bad=true; break; } }
+      if(VG.bossSafe && Math.hypot(VG.bossSafe.x-rx,VG.bossSafe.z-rz)<2.6) bad=true;
+      if(bad) continue;
+      const g8=new THREE.Group();
+      const gl8=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0xffe98a,transparent:true,opacity:0.8,depthWrite:false,blending:THREE.AdditiveBlending}));
+      gl8.scale.setScalar(0.9); gl8.position.y=0.35; g8.add(gl8);
+      const lb8=makeTextSprite('❔'); lb8.scale.set(0.55,0.55,1); lb8.position.y=0.9; g8.add(lb8);
+      g8.position.set(rx,0,rz); villageGroup.add(g8);
+      const ph8=Math.random()*9;
+      ambient.push(t=>{ gl8.position.y=0.3+0.12*Math.sin(t*2.5+ph8); gl8.material.opacity=0.55+0.3*Math.sin(t*3+ph8); });
+      VG.pickups.push({grp:g8, x:rx, z:rz, i});
     } }
   // ===== 野生モンスター（徘徊・接触でフリーバトル） =====
   VG.roamers=[];
@@ -8783,7 +8885,7 @@ function boot(){
   (function(){ const b2=document.getElementById('gaPull10');
     const upd=()=>{ const first=!(STORY.tut&&STORY.tut.g10); b2.innerHTML=first?'10連ガチャ <s style="opacity:.6">💎900</s> → <b>💎450</b>（初回半額！）':'10連ガチャ 💎900'; };
     upd(); window._updGa10=upd; })();
-  window._go={forest:()=>enterForest(), village:()=>enterVillage(), walk:(x,z)=>villageGoWorld(x,z), port:()=>enterField('port'), mtn:()=>enterField('mountain'), snow:()=>enterField('snow'), under:()=>enterField('under'), tree:()=>enterField('tree'), volc:()=>enterField('volcano'), enc:()=>{ if(VG&&VG.roamers&&VG.roamers[0]) villageGoWorld(VG.roamers[0].x, VG.roamers[0].z); }, quests:()=>openQuests(), wmap:()=>openWorldMap(), rv:(k)=>{const r=rivalOfField(k); return r?r.name:null}, noenc:()=>{ if(VG&&VG.roamers) for(const r of VG.roamers){ r.grp.visible=false; r.x=999; r.z=999; r.tx=999; r.tz=999; } }, boss:()=>{ const n=(VG&&VG.npcs||[]).find(n=>n.def.bossCh!=null); return n?{ch:n.def.bossCh,x:n.x,z:n.z}:null; }, pos:()=>VG&&VG.hero?[+VG.hero.x.toFixed(2),+VG.hero.z.toFixed(2)]:null, vj:()=>({a:vj.active,x:vj.x,y:vj.y})};   // デバッグ遷移
+  window._go={forest:()=>enterForest(), village:()=>enterVillage(), walk:(x,z)=>villageGoWorld(x,z), port:()=>enterField('port'), mtn:()=>enterField('mountain'), snow:()=>enterField('snow'), under:()=>enterField('under'), tree:()=>enterField('tree'), volc:()=>enterField('volcano'), enc:()=>{ if(VG&&VG.roamers&&VG.roamers[0]) villageGoWorld(VG.roamers[0].x, VG.roamers[0].z); }, quests:()=>openQuests(), wmap:()=>openWorldMap(), rv:(k)=>{const r=rivalOfField(k); return r?r.name:null}, picks:()=>VG&&VG.pickups?VG.pickups.filter(p=>!p.got).map(p=>[+p.x.toFixed(1),+p.z.toFixed(1)]):null, noenc:()=>{ if(VG&&VG.roamers) for(const r of VG.roamers){ r.grp.visible=false; r.x=999; r.z=999; r.tx=999; r.tz=999; } }, boss:()=>{ const n=(VG&&VG.npcs||[]).find(n=>n.def.bossCh!=null); return n?{ch:n.def.bossCh,x:n.x,z:n.z}:null; }, pos:()=>VG&&VG.hero?[+VG.hero.x.toFixed(2),+VG.hero.z.toFixed(2)]:null, vj:()=>({a:vj.active,x:vj.x,y:vj.y})};   // デバッグ遷移
   if(qparam('debug')){ window._DEBUG=true; toast('🔧 デバッグ: 全フィールド・全章を開放中（セーブには保存されない）'); }
   // タイトル画面の背景に村の一枚絵
   { const t=document.getElementById('ovTitle');
