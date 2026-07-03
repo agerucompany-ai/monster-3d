@@ -6136,6 +6136,14 @@ function handlePick(sc, tc){
     if(t){
       if(selMoves.fuse.some(p=>p[0]===t[0]&&p[1]===t[1])){ pushUndo(); moveUnit(sel,t[0],t[1]); reselectAfter(); return; }
       if(selMoves.move.some(p=>p[0]===t[0]&&p[1]===t[1])){ pushUndo(); moveUnit(sel,t[0],t[1]); reselectAfter(); return; }
+      // 敵・城を直接タップ → 攻撃ボタンを押さなくてもそのまま攻撃（隣の敵が殴りにくい問題の解消）
+      const cand=(sc&&isAtkTarget(sc))?sc:(tc&&isAtkTarget(tc))?tc:(sc&&isCastleTarget(sc))?sc:(tc&&isCastleTarget(tc))?tc:null;
+      if(cand){
+        const ec=CASTLE[1];
+        if(cand[0]===ec.r&&cand[1]===ec.c){ pushUndo(); doCastleAttack(sel); reselectAfter(); return; }
+        const tgt=selAtks.find(e=>e.r===cand[0]&&e.c===cand[1]);
+        if(tgt){ pushUndo(); doAttack(sel,tgt,selMove); reselectAfter(); return; }
+      }
       const u=unitAt(t[0],t[1]);
       if(u&&u.owner===0&&u.uid!==sel.uid){
         if(fusionResult(sel,u)==null) toast(`${mon(sel).name}と${mon(u).name}は融合の組合せじゃない`);
@@ -6180,7 +6188,10 @@ function drawSelHL(){
   if(!sel) return;
   addHL(sel.r,sel.c,0xffe089,0.5);
   if(selMode==='move' && selMoves){ for(const [r,c] of selMoves.move) addHL(r,c,0xff3838,0.5);   // 移動=赤(海でも見える)
-    for(const [r,c] of selMoves.fuse) addHL(r,c,0xc060ff,0.65); }                                   // 融合=紫
+    for(const [r,c] of selMoves.fuse) addHL(r,c,0xc060ff,0.65);                                     // 融合=紫
+    if(selAtks) for(const e of selAtks) addHL(e.r,e.c,0xff8030,0.6);                                // 射程内の敵=橙(直接タップで攻撃)
+    if(isAreaTerrain(sel)) for(const x of areaTargets(sel)) addHL(x.r,x.c, x.owner===0?0xffc020:0xff8030, 0.4);
+    if(castleAdjacent(sel)&&canAttack(sel)){ const ec=CASTLE[1]; addHL(ec.r,ec.c,0xff8040,0.65); } }
   if(selMode==='attack'){ if(selAtks) for(const e of selAtks) addHL(e.r,e.c,0xff5040,0.55);
     if(isAreaTerrain(sel)) for(const x of areaTargets(sel)) addHL(x.r,x.c, x.owner===0?0xffc020:0xff5040, 0.5);   // 味方巻込=黄警告
     if(castleAdjacent(sel)&&canAttack(sel)){ const ec=CASTLE[1]; addHL(ec.r,ec.c,0xff8040,0.6); } }
@@ -6309,7 +6320,7 @@ function updateUI(){
       ac.appendChild(mkbt('✖ 解除','',true,clearSel));
     }
   } else {
-    sd.innerHTML='<span class="muted">自分のモンスター（🔵）をタップ → そのまま赤マスで移動／ボタンで攻撃・進化</span>';
+    sd.innerHTML='<span class="muted">自分のモンスター（🔵）をタップ → 赤マス=移動・<b>敵や城を直接タップ=攻撃</b>・ボタンで進化</span>';
   }
   // 下段：待った・降参・ターン終了
   if(CAMP.on && !ONLINE && (STORY.items.ki||0)>0)
