@@ -8446,7 +8446,7 @@ function vFieldCommon(portalColor, backLabelY){
       const bp=BOSS_POS[V_MAP]||{x:-3.5,z:-5.0};
       const g7=new THREE.Group();
       let sp7=null;
-      if(MODELS['b'+be.mid]){
+      if(MODELS['b'+be.mid] && !bossDone){   // 現役ボスのみ3Dモデル。和解後(クリア済)は軽い2Dビルボードで残す
         // フル3Dモデルのボス（静的+ゆっくり旋回・呼吸）
         const mg=vGlbChar('b'+be.mid, 3.2);
         const brot=({})['b'+be.mid]||0;   // 南(プレイヤー側)向き。モデル毎の補正はここ
