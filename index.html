@@ -176,6 +176,10 @@ button.bt.fuse{background:#a24ec0}
       <button class="bt" id="gaPull10" style="font-size:16px;padding:12px 22px;background:#8c2a6a">10連ガチャ 💎900</button>
     </div>
     <div id="gaResult" style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px"></div>
+    <div style="margin-top:16px;border-top:1px solid #3a2a4a;padding-top:10px">
+      <b style="color:#ffd86b">🔁 交換所</b><span class="muted" style="font-size:11px">　同じモンスターのダブり<b>5体分</b>→進化ラインのLv2／<b>10体分</b>→Lv3と交換</span>
+      <div id="gaTrade" style="margin-top:8px"></div>
+    </div>
   </div>
 </div>
 
@@ -4338,7 +4342,7 @@ const CAMPAIGN = [
    {"s": "elder", "t": "うむ。帰ろうぞ、大導師どの。村の祭壇で、皆が待っておる。"}]}
 ];
 // ストーリー進行状態（localStorage永続化）
-function loadStory(){ try{ const s=JSON.parse(localStorage.getItem('ms3d_story')||'null'); if(s&&Array.isArray(s.owned)){ s.gems=s.gems||0; s.exp=s.exp||{}; s.tut=s.tut||{}; s.q=s.q||{}; return s; } }catch(e){} return {clear:-1, owned:[], starter:null, gems:0, exp:{}, tut:{}, q:{}}; }
+function loadStory(){ try{ const s=JSON.parse(localStorage.getItem('ms3d_story')||'null'); if(s&&Array.isArray(s.owned)){ s.gems=s.gems||0; s.exp=s.exp||{}; s.tut=s.tut||{}; s.q=s.q||{}; s.dups=s.dups||{}; s.items=s.items||{}; return s; } }catch(e){} return {clear:-1, owned:[], starter:null, gems:0, exp:{}, tut:{}, q:{}, dups:{}, items:{}}; }
 // ======================= ライバル冒険者（トレーナー戦） =======================
 const RIVALS=[
  {key:'rv_kenshi', name:'剣士ロディ', types:['炎'],
@@ -4525,6 +4529,43 @@ function openTavern(){
   document.getElementById('stSkip').onclick=close;
   ov.style.display='flex';
 }
+// ======================= アイテムとショップ =======================
+const ITEMS={
+ heal:{name:'回復薬',   icon:'🧪', price:40, desc:'味方1体のHPを50%回復（戦闘中に使用）'},
+ full:{name:'霊薬エリク', icon:'✨', price:90, desc:'味方1体のHPを全回復（戦闘中に使用）'},
+ ki:  {name:'気の水晶', icon:'💠', price:60, desc:'使うと気+3（戦闘中いつでも）'},
+};
+function openShop(){
+  const rows=[];
+  rows.push(`<div style="color:#e0c8a0;font-size:12px;margin-bottom:6px">ザザ「へっへ、いいものあるよ！ 戦闘中に使える道具だ」</div>`);
+  for(const [k,it] of Object.entries(ITEMS)){
+    const have=STORY.items[k]||0;
+    rows.push(`<div style="display:flex;align-items:center;gap:8px;background:#141a28;border:1px solid #2c3346;border-radius:8px;padding:8px 10px;margin:4px 0">
+      <span style="font-size:22px">${it.icon}</span>
+      <div style="flex:1"><div style="font-size:13px;font-weight:700">${it.name} <span class="muted" style="font-size:10px">所持×${have}</span></div>
+      <div class="muted" style="font-size:11px">${it.desc}</div></div>
+      <button class="bt go" data-buy="${k}" style="padding:7px 12px;font-size:12px">💎${it.price}</button>
+    </div>`);
+  }
+  const ov=document.getElementById('ovStory');
+  document.getElementById('stTitle').textContent='🎒 ザザの道具屋';
+  document.getElementById('stFace').style.display='none';
+  document.getElementById('stName').textContent='';
+  const el=document.getElementById('stLine'); el.style.fontStyle='normal';
+  el.innerHTML=`<div style="max-height:52vh;overflow-y:auto">${rows.join('')}</div>`;
+  document.getElementById('stPage').textContent=`💎${STORY.gems}`;
+  document.getElementById('stNext').style.display='none';
+  document.getElementById('stSkip').textContent='× でる';
+  const close=()=>{ ov.style.display='none'; document.getElementById('stNext').style.display=''; document.getElementById('stSkip').textContent='⏩ スキップ'; };
+  document.getElementById('stSkip').onclick=close;
+  el.querySelectorAll('button[data-buy]').forEach(b2=>{
+    b2.onclick=()=>{ const k=b2.dataset.buy, it=ITEMS[k];
+      if(STORY.gems<it.price){ toast('ジェムが足りない！'); return; }
+      STORY.gems-=it.price; STORY.items[k]=(STORY.items[k]||0)+1; saveStory(); seJingle('gem');
+      toast(`${it.icon}${it.name}を購入！（所持×${STORY.items[k]}）`); openShop(); };
+  });
+  ov.style.display='flex';
+}
 // ======================= 村人NPC =======================
 const VILLAGERS=[
  {key:'np_okami', name:'宿屋の女将', x:-5.2,z:-4.2, lines:[
@@ -4535,10 +4576,7 @@ const VILLAGERS=[
    'ぼくも早く継ぎの儀やりたいなー！ 相棒はぜったい炎のやつ！',
    'ねえねえ、竜って本当にいるの？ 図鑑で見たんだ！',
    'えいっ、えいっ！（木の剣を振っている）']},
- {key:'np_merchant', name:'行商人ザザ', x:6.0,z:0.8, lines:[
-   'ジェムかい？ 掲示板のクエストをこなすのが一番だね。毎日リセットされるよ。',
-   '祭壇の召喚は10連がお得だよ。R以上1枠確定ってやつさ。',
-   'ダブっても自動でジェムに変わる。無駄がない、いい祭壇だ。']},
+ {key:'np_merchant', name:'行商人ザザ（道具屋）', x:6.0,z:0.8, lines:[]},
  {key:'np_granny', name:'薬師のバアバ', x:-4.6,z:4.0, lines:[
    '腰が痛うてねぇ…昔は世界樹の若葉を煎じて飲んだもんじゃ。',
    '黙示団…あの黒い者たちには気をつけるんじゃよ。',
@@ -4562,6 +4600,7 @@ function VG_setupVillagers(){
 }
 function villagerTalk(n){
   const v=n.def;
+  if(v.name&&v.name.startsWith('行商人ザザ')){ openShop(); return; }
   if(v.rival){
     const rv=v.rival;
     const wins=(STORY.stats&&STORY.stats.rv&&STORY.stats.rv[rv.key])||0;
@@ -4656,7 +4695,7 @@ function doGacha(n){
     const p=gachaPull(pity);
     if(p.rar!=='N') gotRplus=true;
     p.isNew=!STORY.owned.includes(p.id);
-    if(p.isNew) STORY.owned.push(p.id); else { refund+=GACHA_DUP[p.rar]; }
+    if(p.isNew) STORY.owned.push(p.id); else { refund+=GACHA_DUP[p.rar]; STORY.dups[p.id]=(STORY.dups[p.id]||0)+1; }
     res.push(p);
   }
   if(first10){ STORY.tut=STORY.tut||{}; STORY.tut.g10=1; }
@@ -4691,7 +4730,38 @@ function renderGachaResult(res, refund){
 }
 function updateGemUI(){ const e=document.getElementById('gemCount'); if(e) e.textContent=`　💎 ${STORY.gems}`; }
 let gaFrom='title';
-function openGacha(from){ gaFrom=from||'title'; document.getElementById('gaResult').innerHTML=''; updateGemUI(); document.getElementById('ovGacha').style.display='flex'; }
+function renderTrade(){
+  const box=document.getElementById('gaTrade'); if(!box) return;
+  const rows=[];
+  for(const [idStr,n] of Object.entries(STORY.dups||{})){
+    if(n<5) continue;
+    const m=MID[+idStr]; if(!m) continue;
+    const lv2=m.evolves_to!=null?MID[m.evolves_to]:null;
+    const lv3=lv2&&lv2.evolves_to!=null?MID[lv2.evolves_to]:null;
+    const opts=[];
+    if(lv2&&!STORY.owned.includes(lv2.id)&&n>=5) opts.push({cost:5,tgt:lv2});
+    if(lv3&&!STORY.owned.includes(lv3.id)&&n>=10) opts.push({cost:10,tgt:lv3});
+    if(!opts.length) continue;
+    rows.push(`<div style="display:flex;align-items:center;gap:8px;background:#1a1226;border:1px solid #3a2a4a;border-radius:8px;padding:6px 10px;margin:4px 0">
+      <img src="${IMG[idStr]||''}" style="width:36px;height:36px;object-fit:contain">
+      <span style="font-size:12px;flex:1">${m.name} <b style="color:#8ee0ff">×${n}</b></span>
+      ${opts.map(o=>`<button class="bt go" data-src="${idStr}" data-tgt="${o.tgt.id}" data-cost="${o.cost}" style="padding:6px 10px;font-size:11px">${o.cost}体分→${o.tgt.name}(Lv${o.tgt.level})</button>`).join('')}
+    </div>`);
+  }
+  box.innerHTML=rows.length?rows.join(''):'<span class="muted" style="font-size:11px">交換できるダブりがまだありません（ガチャのダブりが貯まると出ます）</span>';
+  box.querySelectorAll('button').forEach(b2=>{
+    b2.onclick=()=>{
+      const src=+b2.dataset.src, tgt=+b2.dataset.tgt, cost=+b2.dataset.cost;
+      if((STORY.dups[src]||0)<cost) return;
+      STORY.dups[src]-=cost;
+      if(!STORY.owned.includes(tgt)) STORY.owned.push(tgt);
+      saveStory(); seJingle('gem');
+      toast(`🔁 ${MID[src].name}×${cost} → ${MID[tgt].name} を入手！`);
+      renderTrade(); updateGemUI();
+    };
+  });
+}
+function openGacha(from){ gaFrom=from||'title'; document.getElementById('gaResult').innerHTML=''; updateGemUI(); renderTrade(); document.getElementById('ovGacha').style.display='flex'; }
 function closeGacha(){ document.getElementById('ovGacha').style.display='none';
   if(gaFrom==='chapters') openChapters();
   else if(gaFrom==='village') enterVillage();
@@ -6148,6 +6218,17 @@ function updateUI(){
       ac.appendChild(tip);
       const atkOk = canAttack(sel) && (selAtks.length || (castleAdjacent(sel)&&canAttack(sel)));
       ac.appendChild(mkbt(`⚔️ 攻撃${sel.acted?'(済)':''}`,'go', !!atkOk, ()=>setMode('attack')));
+      // アイテム（ストーリー/フリーのみ・オンライン不可）
+      if(CAMP.on && !ONLINE){
+        if((STORY.items.heal||0)>0 && sel.hp<sel.maxhp)
+          ac.appendChild(mkbt(`🧪回復薬×${STORY.items.heal}`,'evo', !sel.acted, ()=>{ pushUndo();
+            const h2=Math.min(sel.maxhp-sel.hp, Math.round(sel.maxhp*0.5)); sel.hp+=h2; STORY.items.heal--; saveStory();
+            floatText(sel.r,sel.c,'+'+h2,'#7ee08a'); sel.acted=true; toast(`🧪回復薬！ HP+${h2}`); syncUnits(); updateUI(); }));
+        if((STORY.items.full||0)>0 && sel.hp<sel.maxhp)
+          ac.appendChild(mkbt(`✨霊薬×${STORY.items.full}`,'evo', !sel.acted, ()=>{ pushUndo();
+            const h2=sel.maxhp-sel.hp; sel.hp=sel.maxhp; STORY.items.full--; saveStory();
+            floatText(sel.r,sel.c,'+'+h2,'#bfffe0'); sel.acted=true; toast(`✨霊薬エリク！ 全回復`); syncUnits(); updateUI(); }));
+      }
       // 光タイプ：回復・浄化（攻撃の代わりに味方/自分を癒やす）
       if(uHasType(sel,'光')){
         const woundOk = canAttack(sel) && healTargets(sel).some(a=>a.hp<a.maxhp);
@@ -6178,6 +6259,9 @@ function updateUI(){
     sd.innerHTML='<span class="muted">自分のモンスター（🔵）をタップ → そのまま赤マスで移動／ボタンで攻撃・進化</span>';
   }
   // 下段：待った・降参・ターン終了
+  if(CAMP.on && !ONLINE && (STORY.items.ki||0)>0)
+    ac.appendChild(mkbt(`💠気の水晶×${STORY.items.ki}（気+3）`,'evo', state.cur===0, ()=>{ pushUndo();
+      STORY.items.ki--; saveStory(); state.energy[0]+=3; toast('💠気の水晶！ 気+3'); updateUI(); }));
   if(!ONLINE) ac.appendChild(mkbt('↶ 待った','', state.cur===0 && undoStack.length>0, doUndo));
   ac.appendChild(mkbt('🏳 降参','', state.cur===0, doResign));
   ac.appendChild(mkbt('ターン終了','warn', state.cur===0, endTurn));
