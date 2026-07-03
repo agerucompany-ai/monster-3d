@@ -125,7 +125,7 @@ button.bt.fuse{background:#a24ec0}
   ・<b>「気」＝進化のエネルギー</b>。盤端の🏳フラッグ獲得(+3)＆敵撃破(+1)で増える。<b>融合に気は不要</b>。<br>
   ・進化：気を使って Lv1→2(気3)/Lv2→3(気5)。敵陣最奥に到達すると無条件で1段階進化。<br>
   ・融合：素材2体（例 Lv2＋Lv2）を場で重ねるとLv3が誕生（気いらず）。<br>
-  ・城(耐久1000)に隣接で攻城(素の攻撃力)。城陥落 or 敵全滅 or 14ターン時の城残量で勝敗。</p>
+  ・城に隣接で攻城(素の攻撃力)。城の耐久は戦いの規模に連動（序盤150〜終盤1000）。城陥落 or 敵全滅 or 14ターン時の城残量で勝敗。</p>
 
   <style>
     #ovHelp .ref{background:#141a28;border:1px solid #2c3346;border-radius:10px;padding:9px 11px;margin-top:8px;font-size:12px;line-height:1.85}
@@ -4142,7 +4142,8 @@ const FLAG_CELLS = [
 const FLAG_REWARD = 3;               // 旗1つ取得で気+3（即時）
 const EVO_COST = {1:3, 2:5};         // Lv1->2, Lv2->3
 const FUSE_COST = {2:4, 3:6};        // 融合体のlevel
-const CASTLE_HP = 1000;
+// 城の耐久は編成レベル上限(=章の規模)に連動: 序章150 → 終章990（Lv1の攻城でも序盤は現実的な選択肢に）
+function CASTLE_HP_NOW(){ return Math.max(150, Math.min(1000, 150+(LEVEL_BUDGET-3)*120)); }
 const MAX_TURN = 40;   // HP増で戦闘が長いので大幅延長（城陥落/全滅で終わるのが基本）
 
 // 融合インデックス: "id1,id2"(昇順) -> 融合体id
@@ -4989,7 +4990,7 @@ let state = null;
 let uidSeq = 1;
 function newState(){
   return {phase:'title', turn:1, cur:0, board:grid(()=>null), units:{},
-          energy:[0,0], terrain:genTerrain(), castleHP:{0:CASTLE_HP,1:CASTLE_HP},
+          energy:[0,0], terrain:genTerrain(), castleHP:{0:CASTLE_HP_NOW(),1:CASTLE_HP_NOW()},
           flags: FLAG_CELLS.map(([r,c])=>({r,c,owner:-1})), items: genItems() };
 }
 const HEAL_RATIO = 0.5;   // 回復アイテムでmaxHPの50%回復
@@ -9055,7 +9056,7 @@ function tryAssembleStart(){
   state.units={}; state.board=grid(()=>null); uidSeq=1;
   for(const p of mine) addUnit(0,p.mid,p.r,p.c);
   for(const p of guestPlacement){ const r=N-1-p.r, c=N-1-p.c; if(!unitAt(r,c)) addUnit(1,p.mid,r,c); }
-  state.energy=[0,0]; state.castleHP={0:CASTLE_HP,1:CASTLE_HP};
+  state.energy=[0,0]; state.castleHP={0:CASTLE_HP_NOW(),1:CASTLE_HP_NOW()};
   state.turn=1; state.cur=0; state.phase='battle';
   document.getElementById('ovPlace').style.display='none';
   pickEnabled=true; clearSel();
