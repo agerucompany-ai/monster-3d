@@ -4396,10 +4396,10 @@ function rivalOfField(fieldKey){
   const d=qToday(); let h=0;
   const str=d+fieldKey;
   for(let i=0;i<str.length;i++){ h=(h*31+str.charCodeAt(i))|0; }
-  const idx=Math.abs(h)%(RIVALS.length+1);   // 1/4で不在
-  return idx<RIVALS.length ? RIVALS[idx] : null;
+  return RIVALS[Math.abs(h)%RIVALS.length];   // 毎日どのフィールドにも必ず1人（日替わり）
 }
 function startRivalBattle(rv){
+  saveStory();   // 立ち位置を記録
   const chRef=Math.min(STORY.clear+1, CAMPAIGN.length-1);
   CAMP={on:true, ch:chRef, free:true, field:V_MAP, rivalKey:rv.key};
   LEVEL_BUDGET=CAMPAIGN[chRef].budget;
@@ -4685,7 +4685,9 @@ function openQuests(){
 }
 let STORY = loadStory();
 let _cloudTimer=null;
-function saveStory(){ try{ localStorage.setItem('ms3d_story', JSON.stringify(STORY)); }catch(e){}
+function saveStory(){
+  try{ if(typeof state!=='undefined'&&state&&state.phase==='village'&&typeof VG!=='undefined'&&VG&&VG.hero) STORY.loc={map:V_MAP,x:+VG.hero.x.toFixed(1),z:+VG.hero.z.toFixed(1)}; }catch(e){}
+  try{ localStorage.setItem('ms3d_story', JSON.stringify(STORY)); }catch(e){}
   if(STORY.cloud&&STORY.cloud.id&&!_cloudTimer){ _cloudTimer=setTimeout(()=>{ _cloudTimer=null; cloudPush(true); }, 45000); } }   // 45秒スロットルで自動クラウド保存
 function cloudApi(){ return (qparam('api')||DEFAULT_WS.replace(/^wss:/,'https:').replace(/^ws:/,'http:')); }
 async function cloudReq(method, path, body){
@@ -5188,6 +5190,7 @@ function doAttack(att, def, move){
     floatText(t.r,t.c,`-${dmg}`, advType?'#ffd24a':(weakHit?'#aab4c0':(t.owner===0?'#ff7a5a':'#ffb0a0')));
     if(!msg) msg=`${m.name}の「${move.n}」→ ${mon(t).name} に ${dmg}`+(advType?' ⚡弱点!':'')+(weakHit?' 🛡いまひとつ':'')+(advTerr?' 🌳地形+':'')+(targets.length>1?` 他${targets.length-1}体`:'');
     if(t.hp<=0){ killUnit(t); kills++;
+      if(t.owner===1) state.killLv=(state.killLv||0)+mon(t).level;   // 敗北時の比例報酬用
       if(t.isBoss){ state.energy[att.owner]+=2; toast(`👑 ボス ${mon(t).name} を撃破！気+3`); }
       else toast(`${mon(t).name} を撃破！気+1`);
       if(CAMP.on && att.owner===0) addExp(baseFormId(att.mid), t.isBoss?60:20); }
@@ -5252,7 +5255,9 @@ function applyStatusTick(u){
   // 凍結/マヒ：移動マス・攻撃範囲が最小化(effMove/effRangeで処理)。ここは3ターン自然治癒のカウントのみ
   if(u.freeze>0){ floatText(u.r,u.c,'凍結','#9fe8ff'); u.freeze--; }
   if(u.para>0){ floatText(u.r,u.c,'マヒ','#fff060'); u.para--; }
-  if(u.hp<=0){ const opp=1-u.owner; killUnit(u); state.energy[opp]+=(u.isBoss?3:1); toast(`${u.isBoss?'👑 ボス ':''}${mon(u).name} は状態異常で力尽きた`); }
+  if(u.hp<=0){ const opp=1-u.owner; killUnit(u); state.energy[opp]+=(u.isBoss?3:1);
+    if(u.owner===1) state.killLv=(state.killLv||0)+mon(u).level;
+    toast(`${u.isBoss?'👑 ボス ':''}${mon(u).name} は状態異常で力尽きた`); }
 }
 // 炎タイプの攻撃でやけどを治す：攻撃を受けた対象＋攻撃した炎モンスターに隣接する全員(敵味方問わず)
 function cureBurnByFire(att, targets){
@@ -6261,12 +6266,12 @@ function clearSel(){ sel=null; selMode='none'; selMoves=null; selAtks=null; selM
 
 // ---- 待った（1手戻す）----
 let undoStack=[];
-function snapshot(){ return JSON.stringify({units:state.units, board:state.board, energy:state.energy, flags:state.flags, items:state.items, castleHP:state.castleHP, uidSeq}); }
+function snapshot(){ return JSON.stringify({units:state.units, board:state.board, energy:state.energy, flags:state.flags, items:state.items, castleHP:state.castleHP, killLv:state.killLv||0, uidSeq}); }
 function pushUndo(){ if(state.cur!==0||state.phase!=='battle')return; undoStack.push(snapshot()); if(undoStack.length>40)undoStack.shift(); }
 function doUndo(){
   if(!undoStack.length){ toast('待ったできる手がない'); return; }
   const s=JSON.parse(undoStack.pop());
-  state.units=s.units; state.board=s.board; state.energy=s.energy; state.flags=s.flags; state.items=s.items; state.castleHP=s.castleHP; uidSeq=s.uidSeq;
+  state.units=s.units; state.board=s.board; state.energy=s.energy; state.flags=s.flags; state.items=s.items; state.castleHP=s.castleHP; state.killLv=s.killLv||0; uidSeq=s.uidSeq;
   sel=null; selMode='none'; selMoves=null; selAtks=null; selMove=null; clearHL();
   buildStructures(); syncUnits(); updateUI();
   toast('待った（1手戻した）');
@@ -6754,6 +6759,7 @@ function defaultAgain(){
   buildTerrain(); buildStructures(); syncUnits(); fit();
   document.getElementById('ovTitle').style.display='flex';
 }
+function backToField(fld){ const L=STORY.loc; enterField(fld, null, (L&&L.map===fld)?L:null); }   // バトル前の立ち位置へ戻る
 function endGame(winner,msg){
   state.phase='end'; pickEnabled=false; clearHL();
   if(ONLINE&&isHost()) netSendOver(winner,msg);
@@ -6779,16 +6785,19 @@ function endGame(winner,msg){
       btn.onclick=()=>{ document.getElementById('ovEnd').style.display='none'; startFreeBattle(fld, null); };
     } else {
       t.textContent='💀 敗北…';
-      b.innerHTML=(rv?`<div style="color:#9aa3b8;margin-bottom:4px">${rv.name}「${rv.loseL}」</div>`:'')+msg;
+      const g2=Math.round((state.killLv||0)*6);
+      if(g2>0){ STORY.gems+=g2; saveStory(); }
+      b.innerHTML=(rv?`<div style="color:#9aa3b8;margin-bottom:4px">${rv.name}「${rv.loseL}」</div>`:'')+msg
+        +(g2>0?`<br>💎+${g2}（倒した敵のぶん・所持💎${STORY.gems}）`:'');
       btn.textContent='🏕 フィールドへ戻る';
-      btn.onclick=()=>{ document.getElementById('ovEnd').style.display='none'; enterField(fld); };
+      btn.onclick=()=>{ document.getElementById('ovEnd').style.display='none'; backToField(fld); };
     }
     let alt=document.getElementById('btEndAlt');
     if(!alt){ alt=document.createElement('button'); alt.id='btEndAlt'; alt.className='bt'; alt.style.cssText='font-size:15px;padding:11px 20px;margin-left:8px';
       document.getElementById('btAgain').parentNode.appendChild(alt); }
     alt.style.display='';
     alt.textContent='🏕 フィールドへ戻る';
-    alt.onclick=()=>{ document.getElementById('ovEnd').style.display='none'; enterField(fld); };
+    alt.onclick=()=>{ document.getElementById('ovEnd').style.display='none'; backToField(fld); };
     document.getElementById('ovEnd').style.display='flex';
     return;
   }
@@ -6824,7 +6833,10 @@ function endGame(winner,msg){
         document.getElementById('ovEnd').style.display='flex';
       });
     } else {
-      t.textContent='💀 敗北…'; b.textContent=msg+'（編成やゲットで手持ちを鍛え直そう）';
+      t.textContent='💀 敗北…';
+      const g2=(state.killLv||0)*8;
+      if(g2>0){ STORY.gems+=g2; saveStory(); }
+      b.innerHTML=msg+'（編成やゲットで手持ちを鍛え直そう）'+(g2>0?`<br>💎+${g2}（倒した敵のぶん・所持💎${STORY.gems}）`:'');
       btn.textContent='🔁 もう一度挑戦';
       btn.onclick=()=>{ document.getElementById('ovEnd').style.display='none'; startChapter(CAMP.ch); };
       document.getElementById('ovEnd').style.display='flex';
@@ -6834,6 +6846,7 @@ function endGame(winner,msg){
   t.textContent = winner===0?'🎉 勝利！': winner===1?'💀 敗北…':'引き分け';
   let extra='';
   if(winner===0){ const g=ONLINE?50:30; STORY.gems+=g; saveStory(); extra=`　💎+${g}（所持💎${STORY.gems}）`; }   // 対戦勝利でもジェム
+  else if(!ONLINE){ const g2=Math.round((state.killLv||0)*5); if(g2>0){ STORY.gems+=g2; saveStory(); extra=`　💎+${g2}（倒した敵のぶん・所持💎${STORY.gems}）`; } }
   b.textContent = msg+extra;
   btn.textContent='もう一度'; btn.onclick=defaultAgain;
   document.getElementById('ovEnd').style.display='flex';
@@ -7770,9 +7783,9 @@ function villageTick(t){
       let safe=false;
       for(const n2 of V_NPC_CUR()){ if(Math.hypot(n2.x-h.x, n2.z-h.z)<2.4){ safe=true; break; } }   // 魔法陣・門・宝箱の近くは安全地帯
       if(VG.bossSafe && Math.hypot(VG.bossSafe.x-h.x, VG.bossSafe.z-h.z)<3.0) safe=true;   // ボスの間合いでは野生は襲ってこない
-      if(!safe && performance.now()>_encCool && dh<1.5){
-        _encCool=performance.now()+3000;
-        startFreeBattle(V_MAP, r.mid, r.rare);
+      if(!safe && performance.now()>_encCool && dh<1.5 && document.getElementById('ovStory').style.display==='none'){
+        _encCool=performance.now()+8000;
+        encounterPrompt(r);
         return;
       }
     }
@@ -7928,7 +7941,7 @@ function bossChallenge(ch, done){
   document.getElementById('stNext').style.display='none';
   const close=()=>{ ov.style.display='none'; document.getElementById('stNext').style.display=''; _vnCool=performance.now()+2500; };
   document.getElementById('stSkip').onclick=close;
-  document.getElementById('bcGo').onclick=()=>{ close(); startChapter(ch); };
+  document.getElementById('bcGo').onclick=()=>{ saveStory(); close(); startChapter(ch); };
   document.getElementById('bcNo').onclick=close;
   ov.style.display='flex';
 }
@@ -8373,11 +8386,12 @@ const FIELD_SKY={
  under:{sky:0x2a2035, fog:[0x2a2035,14,36]},
  tree:{sky:0x9fd8c8, fog:[0x9fd8c8,22,55]},
 };
-function enterField(key, from){
+function enterField(key, from, at){
   _encCool=performance.now()+2000;   // 入場直後の即エンカウント防止
   _vnCool=performance.now()+1800;    // 入場直後の即会話防止
   V_MAP=key;
-  if(from==='north'){ const ng=V_NPC_CUR().find(n=>n.key==='next');   // 北から来たら、この地の「次の門」の手前に出る
+  if(at&&typeof at.x==='number') V_SPAWN={x:at.x,z:at.z};             // 中断位置に復帰
+  else if(from==='north'){ const ng=V_NPC_CUR().find(n=>n.key==='next');   // 北から来たら、この地の「次の門」の手前に出る
     V_SPAWN=ng?{x:ng.x,z:ng.z+2.2}:{x:0,z:-7.2}; }
   else V_SPAWN={x:0,z:7.6};
   enterVillage._noMapReset=true;
@@ -8390,11 +8404,43 @@ function enterField(key, from){
 }
 function enterForest(){ enterField('forest'); }
 // ======================= フリーバトル（野生モンスター戦・ジェム稼ぎ） =======================
+// 遭遇時の選択: 戦う / にげる
+function encounterPrompt(r){
+  const m=MID[r.mid];
+  vj.active=false; vj.x=0; vj.y=0;
+  if(VG&&VG.hero){ VG.hero.moving=false; VG.hero.tx=VG.hero.x; VG.hero.tz=VG.hero.z; }
+  seJingle('enc');
+  const ov=document.getElementById('ovStory');
+  document.getElementById('stTitle').textContent='⚔ 野生モンスター！';
+  const face=document.getElementById('stFace'); face.style.display='block';
+  document.getElementById('stFaceImg').src=IMG[String(r.mid)]||'';
+  document.getElementById('stName').textContent=m?m.name:'？？？';
+  const el=document.getElementById('stLine'); el.style.fontStyle='normal';
+  el.innerHTML=`<div style="margin-bottom:10px">野生の <b>${m?m.name:'モンスター'}</b>${r.rare?'<span style="color:#ffd24a">（✨レア！報酬3倍）</span>':''} が現れた！</div>
+   <button class="bt go" id="encGo" style="display:block;width:100%;margin:6px 0;padding:12px;font-size:15px">⚔ 戦う！</button>
+   <button class="bt" id="encRun" style="display:block;width:100%;margin:6px 0;padding:10px;font-size:13px">🏃 にげる</button>`;
+  document.getElementById('stPage').textContent='';
+  document.getElementById('stNext').style.display='none';
+  const close=()=>{ ov.style.display='none'; document.getElementById('stNext').style.display=''; };
+  const doRun=()=>{
+    close();
+    _encCool=performance.now()+6000;   // しばらくエンカ無効
+    if(VG&&VG.hero&&r){ const h=VG.hero; const dx=r.x-h.x, dz=r.z-h.z, dd=Math.hypot(dx,dz)||1;
+      r.x=Math.max(-10,Math.min(10, r.x+dx/dd*5)); r.z=Math.max(-7.5,Math.min(7.5, r.z+dz/dd*5));
+      r.tx=r.x; r.tz=r.z; }
+    toast('🏃 うまく逃げ切った！');
+  };
+  document.getElementById('stSkip').onclick=doRun;
+  document.getElementById('encGo').onclick=()=>{ close(); startFreeBattle(V_MAP, r.mid, r.rare); };
+  document.getElementById('encRun').onclick=doRun;
+  ov.style.display='flex';
+}
 function startFreeBattle(fieldKey, encMid, rare){
   if(!MONSTERS.some(m=>isSelectable(m)&&STORY.owned.includes(m.id))){
     toast('⚠ 出撃できる仲間がいない！ まずは物語で相棒を見つけよう');
     return;
   }
+  saveStory();   // 立ち位置を記録（バトル後ここへ戻る）
   vj.active=false; vj.x=0; vj.y=0;
   { const j=document.getElementById('joy'); if(j) j.style.display='none'; }
   const chRef=Math.min(STORY.clear+1, CAMPAIGN.length-1);
@@ -8463,6 +8509,9 @@ function openWorldMap(){
       else if(unlocked){ const dc=fieldBossDone(k); if(dc!=null){ const be=CAMPAIGN[dc].enemy.find(e=>e.boss); if(be) extra=`<span style="color:#7ee08a;font-size:11px">🤝 ${MID[be.mid].name}</span>`; } }
       else extra=`<span class="muted" style="font-size:11px">物語を進めると道が開く</span>`;
     }
+    if(k!=='village'&&unlocked){ const rv=rivalOfField(k);
+      if(rv){ const beat=qState()['rw_'+rv.key];
+        extra+=`　<span style="color:${beat?'#7ee08a':'#8ab4ff'};font-size:11px">${beat?'✅':'⚔'} ${rv.name}</span>`; } }
     const conn=i<WORLD_CHAIN.length-1?`<div style="margin-left:26px;color:#3a4566;font-size:11px;line-height:1">┃</div>`:'';
     return `<div data-map="${k}" style="display:flex;align-items:center;gap:8px;background:${here?'#1c2a44':'#141a28'};border:1px solid ${here?'#5a8adc':unlocked?'#2c3346':'#20263a'};border-radius:9px;padding:8px 12px;${unlocked?'cursor:pointer':'opacity:.42'}">
       <span style="font-size:16px">${here?'📍':unlocked?'▶':'🔒'}</span>
@@ -8633,7 +8682,12 @@ function boot(){
   // ======================= ストーリーモード配線 =======================
   document.getElementById('btStory').onclick=()=>{
     document.getElementById('ovTitle').style.display='none';
-    if(!STORY.hero) pickHero(enterVillage); else enterVillage();   // 3Dのアルケー村へ
+    if(!STORY.hero){ pickHero(enterVillage); return; }
+    // 前回の中断位置から再開（未解放マップなら村へ）
+    const L=STORY.loc;
+    const eff=window._DEBUG?99:STORY.clear;
+    if(L&&L.map&&L.map!=='village'&&FIELD_INFO[L.map]&&FIELD_INFO[L.map].need<=eff+1){ enterField(L.map, null, L); }
+    else { if(L&&L.map==='village'&&typeof L.x==='number') V_SPAWN={x:L.x,z:L.z}; enterVillage(); }
   };
   document.getElementById('vgTitle').onclick=goTitle;
   document.getElementById('btBgm').onclick=()=>{ bgmInit(); bgmToggle(); };
@@ -8729,7 +8783,7 @@ function boot(){
   (function(){ const b2=document.getElementById('gaPull10');
     const upd=()=>{ const first=!(STORY.tut&&STORY.tut.g10); b2.innerHTML=first?'10連ガチャ <s style="opacity:.6">💎900</s> → <b>💎450</b>（初回半額！）':'10連ガチャ 💎900'; };
     upd(); window._updGa10=upd; })();
-  window._go={forest:()=>enterForest(), village:()=>enterVillage(), walk:(x,z)=>villageGoWorld(x,z), port:()=>enterField('port'), mtn:()=>enterField('mountain'), snow:()=>enterField('snow'), under:()=>enterField('under'), tree:()=>enterField('tree'), volc:()=>enterField('volcano'), enc:()=>{ if(VG&&VG.roamers&&VG.roamers[0]) villageGoWorld(VG.roamers[0].x, VG.roamers[0].z); }, quests:()=>openQuests(), wmap:()=>openWorldMap(), noenc:()=>{ if(VG&&VG.roamers) for(const r of VG.roamers){ r.grp.visible=false; r.x=999; r.z=999; r.tx=999; r.tz=999; } }, boss:()=>{ const n=(VG&&VG.npcs||[]).find(n=>n.def.bossCh!=null); return n?{ch:n.def.bossCh,x:n.x,z:n.z}:null; }, pos:()=>VG&&VG.hero?[+VG.hero.x.toFixed(2),+VG.hero.z.toFixed(2)]:null, vj:()=>({a:vj.active,x:vj.x,y:vj.y})};   // デバッグ遷移
+  window._go={forest:()=>enterForest(), village:()=>enterVillage(), walk:(x,z)=>villageGoWorld(x,z), port:()=>enterField('port'), mtn:()=>enterField('mountain'), snow:()=>enterField('snow'), under:()=>enterField('under'), tree:()=>enterField('tree'), volc:()=>enterField('volcano'), enc:()=>{ if(VG&&VG.roamers&&VG.roamers[0]) villageGoWorld(VG.roamers[0].x, VG.roamers[0].z); }, quests:()=>openQuests(), wmap:()=>openWorldMap(), rv:(k)=>{const r=rivalOfField(k); return r?r.name:null}, noenc:()=>{ if(VG&&VG.roamers) for(const r of VG.roamers){ r.grp.visible=false; r.x=999; r.z=999; r.tx=999; r.tz=999; } }, boss:()=>{ const n=(VG&&VG.npcs||[]).find(n=>n.def.bossCh!=null); return n?{ch:n.def.bossCh,x:n.x,z:n.z}:null; }, pos:()=>VG&&VG.hero?[+VG.hero.x.toFixed(2),+VG.hero.z.toFixed(2)]:null, vj:()=>({a:vj.active,x:vj.x,y:vj.y})};   // デバッグ遷移
   if(qparam('debug')){ window._DEBUG=true; toast('🔧 デバッグ: 全フィールド・全章を開放中（セーブには保存されない）'); }
   // タイトル画面の背景に村の一枚絵
   { const t=document.getElementById('ovTitle');
