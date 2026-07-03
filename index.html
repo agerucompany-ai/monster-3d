@@ -6685,7 +6685,7 @@ function mkbt(label,cls,enabled,fn){ const b=document.createElement('button'); b
 // ======================= 編成・配置画面 =======================
 let chosen=[];    // 選んだmid配列
 // 出撃できる最大体数: 序盤2体 → 3章クリアごとに+1 → 最大6体。CPU/オンラインは6固定
-function teamCap(){ if(!CAMP.on || ONLINE) return 6; const cleared=Math.max(0, STORY.clear+1); return Math.min(6, 2+Math.floor(cleared/3)); }
+function teamCap(){ return 6; }   // 出撃は最大6体。実際の体数はLEVEL_BUDGET(章ごとのLv合計)が自然に制御=章を進めるほど増える
 let placeList=[]; // 配置待ち [{mid, placed:false}]
 let LEVEL_BUDGET = 5;   // 編成のレベル合計上限（Lv1=1点/Lv2=2点。ストーリーでは章ごとに変動）
 // 編成で選べる：Lv1全部 ＋ 最初からLv2の単体だけ（進化でなるLv2=evolves_fromありは不可）
@@ -7024,7 +7024,10 @@ function cpuPlace(){
 }
 
 function beginBattle(){
-  document.getElementById('ovPlace').style.display='none';
+  for(const id of ['ovPlace','ovDetail','ovStory','ovVillage','ovGacha','ovCatalog','ovChapters','ovPreview','ovSelect']){ const e=document.getElementById(id); if(e) e.style.display='none'; }
+  { const j=document.getElementById('joy'); if(j) j.style.display='none'; }
+  vj.active=false; vj.x=0; vj.y=0;
+  setBoardVisible(true);
   state.phase='battle'; pickEnabled=true; clearSel();
   bgmPlay('battle');
   if(CAMP.on){ state.energy[0]+=3; toast('✨ガイウスの祝福：気+3（すぐに1体進化できるぞ）'); }   // ストーリーは初動支援=開幕進化可能
