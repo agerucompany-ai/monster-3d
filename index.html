@@ -6304,7 +6304,11 @@ function isCastleTarget(cell){ const ec=CASTLE[1]; return cell[0]===ec.r&&cell[1
 function handlePick(sc, tc){
   window._pickLog={sc,tc,mode:selMode,sel:sel?sel.uid:null};
   if(state.phase==='place'){ const t=tc||sc; if(t) placeTap(t[0],t[1]); return; }
-  if(state.phase!=='battle' || state.cur!==0) return;
+  if(state.phase!=='battle') return;
+  if(state.cur!==0){   // 相手のターン中でも、ユニットをタップすれば情報は見られる
+    const t=sc||tc; if(t){ const u=unitAt(t[0],t[1]); if(u) showMonsterDetail(u.mid, u); }
+    return;
+  }
 
   // 移動モード：地面セル優先（背の高い駒の手前マスもちゃんと押せる）
   if(sel && selMode==='move'){
@@ -6325,6 +6329,7 @@ function handlePick(sc, tc){
         if(fusionResult(sel,u)==null) toast(`${mon(sel).name}と${mon(u).name}は融合の組合せじゃない`);
         selectUnit(u); return;
       }
+      if(u&&u.owner!==0){ showMonsterDetail(u.mid, u); return; }   // 射程外の敵=モンスター情報
     }
     if(snapAct()) return;   // 隠れた合法マスへのタップを画面距離で救済
     return; // 範囲外タップは無視（誤操作で解除しない）
@@ -6338,7 +6343,9 @@ function handlePick(sc, tc){
       const tgt=selAtks.find(e=>e.r===cand[0]&&e.c===cand[1]);
       if(tgt){ pushUndo(); doAttack(sel,tgt,selMove); reselectAfter(); return; }
     }
-    const t=sc||tc; if(t){ const u=unitAt(t[0],t[1]); if(u&&u.owner===0&&u.uid!==sel.uid){ selectUnit(u); return; } }
+    const t=sc||tc; if(t){ const u=unitAt(t[0],t[1]);
+      if(u&&u.owner===0&&u.uid!==sel.uid){ selectUnit(u); return; }
+      if(u&&u.owner!==0){ showMonsterDetail(u.mid, u); return; } }   // 射程外の敵=モンスター情報
     if(snapAct()) return;
     return;
   }
@@ -6347,6 +6354,7 @@ function handlePick(sc, tc){
   if(sc){ const u=unitAt(sc[0],sc[1]); if(u&&u.owner===0) pickU=u; }
   if(!pickU && tc){ const u=unitAt(tc[0],tc[1]); if(u&&u.owner===0) pickU=u; }
   if(pickU){ selectUnit(pickU); return; }
+  { const t=sc||tc; if(t){ const u=unitAt(t[0],t[1]); if(u&&u.owner!==0){ showMonsterDetail(u.mid, u); return; } } }   // 敵タップ=モンスター情報
   clearSel();
 }
 function recompute(){ if(!sel){selMoves=null;selAtks=null;return;} selMoves = canMove(sel)?moveTargets(sel):{move:[],fuse:[]}; selAtks=attackTargets(sel, selMove?selMove.range:null); }
@@ -6648,8 +6656,13 @@ function evoChain(id){ const names=[]; let cur=id; const seen={};
   while(cur!=null && !seen[cur]){ seen[cur]=1; names.push(`${MID[cur].name}(Lv${MID[cur].level})`); cur=MID[cur].evolves_to; }
   return names;
 }
-function showMonsterDetail(id){
+function showMonsterDetail(id, u){
   const m=MID[id]; const box=document.getElementById('detailBox');
+  let unitRow='';
+  if(u){
+    const st=[]; if(u.poison)st.push('🟣毒'); if(u.burn)st.push('🔥やけど'); if(u.freeze)st.push('❄凍結'); if(u.para)st.push('⚡マヒ');
+    unitRow=`<div class="row" style="background:#241a2a;border-radius:6px;padding:2px 6px"><span>${u.owner===0?'🔵味方':'🔴敵'}${u.isBoss?'👑BOSS':''} 現在HP</span><b>${u.hp}/${u.maxhp}${st.length?'　'+st.join(' '):''}</b></div>`;
+  }
   const rb=rangeBase(m); const rng = rb>=2?`2マス(遠隔・威力-22%)`:'隣接1マス';
   const arr=MOVES[m.type]||[];
   const isFusion = m.role==='fusion';
@@ -6680,6 +6693,7 @@ function showMonsterDetail(id){
     `<div class="hd"><img src="${IMG[id]}"><div><h3>${m.name}${m.archetype?` <span style="font-size:12px;color:#9be1ff;font-weight:700">${m.archetype}</span>`:''}</h3>`
     +`<div class="muted">${m.type}${m.type2?'/'+m.type2:''}（${m.type_alias}） / Lv${m.level}</div></div></div>`
     +((m.desc||m.profile)?`<div class="chain" style="color:#e0d2a4;font-style:italic;margin:6px 0 0">${m.desc||('「'+m.profile+'」')}</div>`:'')
+    +unitRow
     +`<div class="row"><span>HP</span><b>${m.hp}</b></div>`
     +`<div class="row"><span>こうげき</span><b>${m.atk}</b></div>`
     +`<div class="row"><span>防御（被ダメ軽減）</span><b>-${Math.round(defReductionM(m)*100)}%</b></div>`
@@ -9205,6 +9219,7 @@ window.__game={
   pt(r,c,y){ const w=cell2world(r,c); const v=new THREE.Vector3(w.x,(y||0)+cellH(r,c),w.z).project(camera); const rc=renderer.domElement.getBoundingClientRect(); return [rc.left+(v.x+1)/2*rc.width, rc.top+(-v.y+1)/2*rc.height]; },
   mode(m){ setMode(m); },
   selUid(){ return sel?sel.uid:null; },
+  selAtksDbg(){ return {mode:selMode, atks:selAtks?selAtks.map(e=>[e.r,e.c]):null, mv:selMove?selMove.n+'/'+selMove.range:null}; },
   undo(){ doUndo(); }, undoLen(){ return undoStack.length; }, resign(){ doResign(); },
   fxCount(){ return effects.length; }, evolveU(uid,free){ const u=state.units[uid]; return u?evolveUnit(u,!!free):false; },
   moves(uid){ const u=state.units[uid]; return u?movesFor(u).map(x=>({n:x.n,range:x.range,multi:x.multi,p:+x.p.toFixed(2)})):null; },
