@@ -5584,8 +5584,28 @@ function evolveUnit(u, free){
 }
 
 // ======================= ターン進行 =======================
+// 盤の整合性を修復: board配列とユニット座標のズレ(ワープ/ゴースト)を検出して直す
+function repairBoard(){
+  const nb=grid(()=>null); let fixed=0;
+  for(const uid in state.units){ const u=state.units[uid];
+    if(u.r<0||u.c<0||u.r>=N||u.c>=N||u.hp<=0){ delete state.units[uid]; fixed++; continue; }   // 盤外/死亡ゴースト除去
+    if(nb[u.r][u.c] && nb[u.r][u.c]!==+uid){                                                     // 2体が同マス=重なり衝突
+      let done=false;                                                                            // 近い空きマスへ退避
+      for(let rad=1;rad<=3&&!done;rad++)for(let dr=-rad;dr<=rad&&!done;dr++)for(let dc=-rad;dc<=rad&&!done;dc++){
+        const rr=u.r+dr, cc=u.c+dc; if(rr<0||cc<0||rr>=N||cc>=N)continue; if(nb[rr][cc])continue;
+        u.r=rr; u.c=cc; nb[rr][cc]=+uid; done=true; fixed++; }
+      if(!done){ delete state.units[uid]; fixed++; }
+      continue;
+    }
+    nb[u.r][u.c]=+uid;
+  }
+  state.board=nb;
+  if(fixed) syncUnits();
+  return fixed;
+}
 function startTurn(side){
   if(side===0){ const d=document.getElementById('ovDetail'); if(d) d.style.display='none'; }
+  repairBoard();   // ターン開始ごとに盤を健全化(重なり/ゴースト/盤外を修復)
   state.cur=side;
   // 旗はアイテム式（取得時に即気）なので毎ターン収入は無し
   for(const u of alive(side)){ u.moved=false; u.acted=false; }
