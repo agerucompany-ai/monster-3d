@@ -5582,6 +5582,7 @@ function evolveUnit(u, free){
 
 // ======================= ターン進行 =======================
 function startTurn(side){
+  if(side===0){ const d=document.getElementById('ovDetail'); if(d) d.style.display='none'; }
   state.cur=side;
   // 旗はアイテム式（取得時に即気）なので毎ターン収入は無し
   for(const u of alive(side)){ u.moved=false; u.acted=false; }
