@@ -4827,7 +4827,7 @@ function baseFormId(mid){ let m=MID[mid]; let guard=0; while(m && m.evolves_from
 // 系譜チェック: そのモンスターを出撃させるのに必要な「前提」を全部持っているか
 // 進化系→進化前を全所持 / 融合体→素材2体を所持（ボスだけ仲間にしても前提が無いと使えない）
 function lineOK(m){
-  if(!CAMP.on) return true;
+  if(ONLINE) return true;
   if(m.role==='fusion') return (m.fusion_from||[]).every(id=>STORY.owned.includes(id));
   let cur=m, g=0;
   while(cur && cur.evolves_from!=null && g<6){ cur=MID[cur.evolves_from]; g++; if(cur && !STORY.owned.includes(cur.id)) return false; }
@@ -5107,8 +5107,8 @@ function fusionResult(a,b){
   if(!campFusionOK()) return null;   // ストーリー第4章「融合解放」まで封印
   const k=[a.mid,b.mid].sort((x,y)=>x-y).join(',');
   const fid=(k in FUSE_IDX)? FUSE_IDX[k] : null;
-  // ストーリー: 融合後のモンスターを集めていないと融合できない（ガチャSSR/ボス加入で収集）
-  if(fid!=null && CAMP.on && a.owner===0 && !STORY.owned.includes(fid)) return null;
+  // 融合後のモンスターを集めていないと融合できない（オンラインのみ無制限）
+  if(fid!=null && !ONLINE && a.owner===0 && !STORY.owned.includes(fid)) return null;
   return fid;
 }
 function attackTargets(u, range){
@@ -5330,8 +5330,8 @@ function tryFusion(a, b, r, c){
 function evolveUnit(u, free){
   if(!free && netGuestIntercept('evolve',{uid:u.uid})) return false;
   const m=mon(u); if(m.evolves_to==null) return false;
-  // ストーリー: 進化先を集めていないと進化できない（ガチャで収集）
-  if(CAMP.on && u.owner===0 && !STORY.owned.includes(m.evolves_to)){
+  // 進化先を集めていないと進化できない（ガチャで収集。オンラインのみ無制限）
+  if(!ONLINE && u.owner===0 && !STORY.owned.includes(m.evolves_to)){
     if(!free) toast(`進化先「${MID[m.evolves_to].name}」を未所持！🎰ガチャで集めよう`);
     return false;
   }
@@ -6291,7 +6291,7 @@ function updateUI(){
       if(m.evolves_to!=null){
         const cost=EVO_COST[m.level]; const nm=MID[m.evolves_to];
         let ok=true, why='';
-        if(CAMP.on && !STORY.owned.includes(m.evolves_to)){ ok=false; why='(未所持🎰)'; }
+        if(!ONLINE && !STORY.owned.includes(m.evolves_to)){ ok=false; why='(未所持🎰)'; }
         else if(sel.moved||sel.acted){ ok=false; why='(行動済)'; }
         else if(state.energy[0]<cost){ ok=false; why=`(気${state.energy[0]}/${cost})`; }
         ac.appendChild(mkbt(`⬆ 進化→${nm.name} 気${cost}${why}`,'evo', ok, ()=>setMode('evolve')));
@@ -6343,11 +6343,28 @@ function makeCard(m){
   const mv0=(MOVES[m.type]||[])[0];
   const rng=rangeBase(m)>=2?'射程2':'隣接';
   const badge=sel?'':`<span class="badge">Lv${m.level}</span>`;
+  const owned=STORY.owned.includes(m.id);
+  // 所持チップ（オンラインは所持の概念がないので非表示）
+  const ownChip = ONLINE ? '' : (owned
+    ? `<div style="color:#7ee08a;font-size:9px;font-weight:700">✓ 所持</div>`
+    : `<div style="color:#95a0b8;font-size:9px">未所持🎰</div>`);
+  // 戦闘中に進化できるか（進化先の所持で判定）
+  let evoLine='';
+  if(m.evolves_to!=null && sel){
+    const e1=MID[m.evolves_to], o1=ONLINE||STORY.owned.includes(e1.id);
+    const e2=e1.evolves_to!=null?MID[e1.evolves_to]:null, o2=e2?(ONLINE||STORY.owned.includes(e2.id)):false;
+    const chain=`${e1.name}${o1?'✓':'✕'}${e2?`→${e2.name}${o2?'✓':'✕'}`:''}`;
+    evoLine=`<div style="color:${o1?'#7ee08a':'#ffb36b'};font-size:9px">${o1?'⬆進化できる: ':'⬆進化先が未所持: '}${chain}</div>`;
+  }
+  else if(!sel && owned && m.role!=='fusion' && m.evolves_from!=null && lineOK(m))
+    evoLine=`<div class="muted" style="font-size:9px">⬆戦闘中の進化で登場</div>`;
   d.innerHTML=`<span class="tg" style="background:${TYPE_COL[m.type]}">${m.type}</span>`
     +`<button class="info">ℹ</button>${badge}`
-    +`<img src="${IMG[m.id]}"><div class="nm">${m.name}</div>`
+    +`<img src="${IMG[m.id]}"${owned||ONLINE?'':' style="filter:grayscale(.85);opacity:.55"'}><div class="nm">${m.name}</div>`
+    +ownChip
+    +evoLine
     +(CAMP.on&&expGrade(baseFormId(m.id))>0?`<div style="color:#ffd86b;font-size:9px">⭐グレード${expGrade(baseFormId(m.id))} (+${3*expGrade(baseFormId(m.id))}%)</div>`:'')
-    +(CAMP.on&&STORY.owned.includes(m.id)&&!lineOK(m)?`<div style="color:#ff9a7a;font-size:9px">🔒${m.role==='fusion'?'素材未所持':'進化前未所持'}</div>`:'')
+    +(!ONLINE&&owned&&!lineOK(m)?`<div style="color:#ff9a7a;font-size:9px">🔒${m.role==='fusion'?'素材未所持':'進化前未所持'}</div>`:'')
     +(m.archetype?`<div class="muted" style="color:#9bb8e0;font-size:9px">${m.archetype}</div>`:'')
     +`<div class="muted">Lv${m.level} HP${m.hp}/A${m.atk}</div>`
     +`<div class="mv">${mv0?mv0.n:''}・${rng}${m.multi_target?'・範囲':''}</div>`;
@@ -6364,10 +6381,16 @@ function makeFusionCard(m){
   const d=document.createElement('div'); d.className='pcard locked fus';
   const fm=m.fusion_from||[];
   const a=fm[0]!=null?MID[fm[0]]:null, b=fm[1]!=null?MID[fm[1]]:null;
-  const recipe=(a&&b)? `${a.name}(${a.type}) ＋ ${b.name}(${b.type})` : '';
+  const ownM=id=>STORY.owned.includes(id);
+  const recipe=(a&&b)? (ONLINE ? `${a.name}(${a.type}) ＋ ${b.name}(${b.type})`
+    : `${a.name}${ownM(a.id)?'✓':'✕'}(${a.type}) ＋ ${b.name}${ownM(b.id)?'✓':'✕'}(${b.type})`) : '';
+  const fOwned=ownM(m.id);
   d.innerHTML=`<span class="tg" style="background:${TYPE_COL[m.type]}">${m.type}</span>`
     +`<button class="info">ℹ</button><span class="badge">Lv${m.level}</span>`
-    +`<img src="${IMG[m.id]}"><div class="nm">${m.name}</div>`
+    +`<img src="${IMG[m.id]}"${fOwned||ONLINE?'':' style="filter:grayscale(.85);opacity:.55"'}><div class="nm">${m.name}</div>`
+    +(ONLINE?'':(fOwned
+      ?`<div style="color:#7ee08a;font-size:9px;font-weight:700">✓ 所持（場で融合できる）</div>`
+      :`<div style="color:#ffb36b;font-size:9px">未所持🎰（融合には本体の所持が必要）</div>`))
     +`<div class="recipe">${recipe} →</div>`;
   d.onclick=()=>showMonsterDetail(m.id);
   d.querySelector('.info').onclick=(ev)=>{ ev.stopPropagation(); showMonsterDetail(m.id); };
@@ -6389,7 +6412,9 @@ function buildSelect(){
   const sd0=document.getElementById('selDesc');
   if(sd0) sd0.innerHTML = CAMP.on
     ? `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで。配置できるのは<b>手持ちのLv1と単体Lv2だけ</b>。進化形・融合体（ボス含む）は配置不可＝<b>戦闘中に進化/融合させて出す</b>。ただし<b>進化先・融合体を🎰召喚で仲間にしていないと発動しない</b>（所持💎${STORY.gems}）${campFusionOK()?'':'。融合は第4章で解放'}。戦うほど⭐グレードUP（HP/攻撃+3%ずつ）。`
-    : `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで（Lv2を入れると体数は減る）。Lv3単体・融合体は選べない（場で進化・融合して入手）。タイプで絞り込み可。`;
+    : ONLINE
+    ? `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで（Lv2を入れると体数は減る）。Lv3単体・融合体は選べない（場で進化・融合して入手）。タイプで絞り込み可。`
+    : `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで。出撃も<b>戦闘中の進化・融合も手持ちのモンスターのみ</b>（🎰召喚で収集、所持💎${STORY.gems}）。カードの<span style="color:#7ee08a">✓所持/⬆進化できる</span>・<span style="color:#ffb36b">未所持</span>表示を参考に。`;
   const tabs=document.getElementById('selTabs'); tabs.innerHTML='';
   const mk=(key,label)=>{ const b=document.createElement('button'); b.textContent=label; b.className=(selFilter===key?'on':''); b.onclick=()=>{selFilter=key; buildSelect();}; tabs.appendChild(b); };
   mk('all','全'); TYPES.forEach(t=>mk(t,t));
