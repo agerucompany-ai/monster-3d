@@ -7514,7 +7514,9 @@ function villageTick(t){
       }
       r.grp.position.set(r.x, rHop, r.z);
       if(r.sh) r.sh.scale.setScalar(Math.max(0.55,1-rHop*2.4));
-      if(performance.now()>_encCool && dh<1.5){
+      let safe=false;
+      for(const n2 of V_NPC_CUR()){ if(Math.hypot(n2.x-h.x, n2.z-h.z)<2.4){ safe=true; break; } }   // 魔法陣・門・宝箱の近くは安全地帯
+      if(!safe && performance.now()>_encCool && dh<1.5){
         _encCool=performance.now()+3000;
         startFreeBattle(V_MAP, r.mid, r.rare);
         return;
@@ -7533,7 +7535,9 @@ function villageArrive(){
 }
 function villageAct(k){
   const hud=document.getElementById('ovVillage');
-  if(k==='gate'){ openFieldSelect(); return; }
+  if(k==='gate'){
+    if(!STORY.starter){ const hud2=document.getElementById('ovVillage'); if(hud2) hud2.style.display='none'; openChapters(); return; }   // 相棒がいないうちは物語(序章)へ直行
+    openFieldSelect(); return; }
   if(k==='portal'){ hud.style.display='none'; openChapters(); return; }
   if(k==='back'){ enterVillage(); return; }
   if(k==='quest'){ openQuests(); return; }
@@ -7988,6 +7992,10 @@ function enterField(key){
 function enterForest(){ enterField('forest'); }
 // ======================= フリーバトル（野生モンスター戦・ジェム稼ぎ） =======================
 function startFreeBattle(fieldKey, encMid, rare){
+  if(!MONSTERS.some(m=>isSelectable(m)&&STORY.owned.includes(m.id))){
+    toast('⚠ 出撃できる仲間がいない！ まずは物語で相棒を見つけよう');
+    return;
+  }
   vj.active=false; vj.x=0; vj.y=0;
   { const j=document.getElementById('joy'); if(j) j.style.display='none'; }
   const chRef=Math.min(STORY.clear+1, CAMPAIGN.length-1);
