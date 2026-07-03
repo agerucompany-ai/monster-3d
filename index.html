@@ -4145,8 +4145,9 @@ const FUSE_COST = {2:4, 3:6};        // 融合体のlevel
 // 城の耐久: 目安=攻撃1体で10回(2体で5回)。序章150 → 第5章以降は1000で固定
 // （5章ごろにはLv3進化(攻撃~100)が並ぶため 100×10=1000）
 function CASTLE_HP_NOW(){
+  if(typeof ONLINE!=='undefined' && ONLINE) return 1000;   // オンライン対戦は常に1000
   if(typeof CAMP!=='undefined' && CAMP && CAMP.on) return Math.min(1000, 150+CAMP.ch*170);   // ストーリー/野生(現在章基準)
-  return 600;   // CPU対戦・オンライン（Lv2〜3混成想定）
+  return 600;   // CPU対戦（Lv2〜3混成想定）
 }
 const MAX_TURN = 40;   // HP増で戦闘が長いので大幅延長（城陥落/全滅で終わるのが基本）
 
