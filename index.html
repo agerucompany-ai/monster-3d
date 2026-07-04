@@ -5280,7 +5280,7 @@ function closeGacha(){ document.getElementById('ovGacha').style.display='none';
   else if(gaFrom==='select'){ buildSelect(); document.getElementById('ovSelect').style.display='flex'; }
   else document.getElementById('ovTitle').style.display='flex'; }
 let CAMP = {on:false, ch:0};   // 現在プレイ中の章
-function campFusionOK(){ return !CAMP.on || CAMP.ch>=4; }   // 第4章で融合解放
+function campFusionOK(){ return !CAMP.on || CAMP.ch>=6; }   // 融合は第6章=サディーム(エジプト)入国で解放
 function ownMon(id){ if(!STORY.owned.includes(id)){ STORY.owned.push(id); saveStory(); return true; } return false; }
 // 進化ラインの基本形（Lv1まで進化を遡る）
 function baseFormId(mid){ let m=MID[mid]; let guard=0; while(m && m.evolves_from!=null && guard<6){ m=MID[m.evolves_from]; guard++; } return m?m.id:mid; }
@@ -5584,7 +5584,7 @@ function moveTargets(u){
   return {move:res, fuse};
 }
 function fusionResult(a,b){
-  if(!campFusionOK()) return null;   // ストーリー第4章「融合解放」まで封印
+  if(!campFusionOK()) return null;   // ストーリー第6章(サディーム入国)「融合解放」まで封印
   // 3体融合: 3体目が隣接している時だけ成立
   const tr=tripleRecipe(a.mid,b.mid);
   if(tr){
@@ -7144,7 +7144,7 @@ function buildSelect(){
   }
   const sd0=document.getElementById('selDesc');
   if(sd0) sd0.innerHTML = CAMP.on
-    ? `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで。配置できるのは<b>手持ちのLv1と単体Lv2だけ</b>。進化形・融合体（ボス含む）は配置不可＝<b>戦闘中に進化/融合させて出す</b>。ただし<b>進化先・融合体を🎰召喚で仲間にしていないと発動しない</b>（所持💎${STORY.gems}）${campFusionOK()?'':'。融合は第4章で解放'}。戦うほど⭐グレードUP（HP/攻撃+3%ずつ）。`
+    ? `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで。配置できるのは<b>手持ちのLv1と単体Lv2だけ</b>。進化形・融合体（ボス含む）は配置不可＝<b>戦闘中に進化/融合させて出す</b>。ただし<b>進化先・融合体を🎰召喚で仲間にしていないと発動しない</b>（所持💎${STORY.gems}）${campFusionOK()?'':'。融合は第6章（サディーム入国）で解放'}。戦うほど⭐グレードUP（HP/攻撃+3%ずつ）。`
     : ONLINE
     ? `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで（Lv2を入れると体数は減る）。Lv3単体・融合体は選べない（場で進化・融合して入手）。タイプで絞り込み可。`
     : `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで。出撃も<b>戦闘中の進化・融合も手持ちのモンスターのみ</b>（🎰召喚で収集、所持💎${STORY.gems}）。カードの<span style="color:#7ee08a">✓所持/⬆進化できる</span>・<span style="color:#ffb36b">未所持</span>表示を参考に。`;
@@ -7474,7 +7474,7 @@ function endGame(winner,msg){
     if(winner===0){
       // ボスは必ず仲間になる
       const newly=[];
-      for(const e of ch.enemy){ if(e.boss && e.mid!==246){ const isNew=!STORY.owned.includes(e.mid); grantLine(e.mid); if(isNew) newly.push(MID[e.mid].name); } }   // ボス+進化前ラインごと付与(ニーズヘッグは浄化のみ)
+      for(const e of ch.enemy){ if(e.boss && e.mid!==246){ if(ownMon(e.mid)) newly.push(MID[e.mid].name); } }   // ボスは単体でのみ仲間に(素材/進化前は自分で集める。ニーズヘッグは浄化のみ)
       // ジェム: 初回クリアは大きく、再挑戦でも少し
       for(const u of alive(0)) addExp(baseFormId(u.mid), 30);   // 生き残りに経験値
       const first = STORY.clear<CAMP.ch;
@@ -7651,7 +7651,7 @@ function openChapters(){
     d.style.cssText=`background:#141a28;border:1px solid ${cleared?'#3a7a4a':unlocked?'#5a6a9c':'#2c3346'};border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;${unlocked?'cursor:pointer':'opacity:.45'}`;
     const bossNames=ch.enemy.filter(e=>e.boss).map(e=>MID[e.mid].name).join('・');
     d.innerHTML=`<span style="font-size:20px">${cleared?'✅':unlocked?'▶️':'🔒'}</span>`
-      +`<div style="flex:1"><b>${ch.title}</b><br><span class="muted" style="font-size:12px">🗺${THEME_JP[ch.theme]||ch.theme}・編成Lv${ch.budget}${bossNames?`・BOSS: ${bossNames}（勝てば仲間に！）`:''}${i===4?'・🔮融合解放':''}</span></div>`;
+      +`<div style="flex:1"><b>${ch.title}</b><br><span class="muted" style="font-size:12px">🗺${THEME_JP[ch.theme]||ch.theme}・編成Lv${ch.budget}${bossNames?`・BOSS: ${bossNames}（勝てば仲間に！）`:''}${i===6?'・🔮融合解放':''}</span></div>`;
     if(unlocked) d.onclick=()=>startChapter(i);
     list.appendChild(d);
   });
