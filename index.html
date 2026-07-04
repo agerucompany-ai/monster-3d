@@ -4151,7 +4151,13 @@ const FUSE_COST = {2:4, 3:6};        // 融合体のlevel
 // （5章ごろにはLv3進化(攻撃~100)が並ぶため 100×10=1000）
 function CASTLE_HP_NOW(){
   if(typeof ONLINE!=='undefined' && ONLINE) return 1000;   // オンライン対戦は常に1000
-  if(typeof CAMP!=='undefined' && CAMP && CAMP.on) return Math.min(1000, 150+CAMP.ch*170);   // ストーリー/野生(現在章基準)
+  if(typeof CAMP!=='undefined' && CAMP && CAMP.on){
+    const c=CAMP.ch||0;
+    if(c<=5)  return 400+c*60;          // ギリシャ(森/港/山 ch1〜5): 460〜700
+    if(c<=12) return 700+(c-5)*80;      // エジプト(冥所 ch6〜12): 780〜1260
+    if(c<=19) return 1300+(c-12)*100;   // 北欧(雪原/世界樹 ch13〜19): 1400〜2000
+    return 2200;                         // 終末(ムスペル ch20)
+  }
   return 600;   // CPU対戦（Lv2〜3混成想定）
 }
 const MAX_TURN = 40;   // HP増で戦闘が長いので大幅延長（城陥落/全滅で終わるのが基本）
@@ -5018,7 +5024,7 @@ function gachaPull(pity){
   if(rar==='R'||rar==='SR'){
     const evoPool=pool.filter(id=>{ const m=MID[id];
       return m && m.evolves_from!=null && STORY.owned.includes(m.evolves_from) && !STORY.owned.includes(id); });
-    const bias = packOf().starterPack ? 0.85 : (STORY.owned.length<15 ? 0.75 : 0.55);
+    const bias = packOf().starterPack ? 0.92 : (STORY.owned.length<20 ? 0.85 : 0.65);
     if(evoPool.length && Math.random()<bias) pool=evoPool;
   }
   return {id:pool[(Math.random()*pool.length)|0], rar};
@@ -5028,9 +5034,10 @@ function doGacha(n){
   const cost = n===10?(first10?450:GACHA10_COST):GACHA_COST;
   if(STORY.gems<cost){ toast(`ジェム不足（💎${STORY.gems}/${cost}）ストーリーや対戦で稼ごう`); return; }
   STORY.gems-=cost;
+  const PULLS=n*3;   // 1回=3体・10連=30体
   const res=[]; let gotRplus=false, refund=0;
-  for(let k=0;k<n;k++){
-    const pity=(n===10 && k===n-1 && !gotRplus);   // 10連最終枠はR以上確定
+  for(let k=0;k<PULLS;k++){
+    const pity=(n===10 && k===PULLS-1 && !gotRplus);   // 10連最終枠はR以上確定
     const p=gachaPull(pity);
     if(p.rar!=='N') gotRplus=true;
     p.isNew=!STORY.owned.includes(p.id);
@@ -5206,6 +5213,17 @@ function lineOK(m){
   let cur=m, g=0;
   while(cur && cur.evolves_from!=null && g<6){ cur=MID[cur.evolves_from]; g++; if(cur && !STORY.owned.includes(cur.id)) return false; }
   return true;
+}
+// ボスを仲間にした時: その進化ライン(と融合素材ラインの全段)を所持にして即戦力化
+function grantLine(mid){
+  let added=false;
+  const addOne=(id)=>{ if(id!=null && MID[id] && !STORY.owned.includes(id)){ STORY.owned.push(id); added=true; } };
+  const walk=(id,depth)=>{ const m=MID[id]; if(!m||depth>8) return; addOne(id);
+    if(m.role==='fusion'){ for(const f of (m.fusion_from||[])) walk(f,depth+1); }
+    let cur=m,g=0; while(cur && cur.evolves_from!=null && g<8){ cur=MID[cur.evolves_from]; g++; if(cur) addOne(cur.id); } };
+  walk(mid,0);
+  if(added) saveStory();
+  return added;
 }
 // ======================= レベル上げ（EXP/グレード） =======================
 // 撃破+20xp(ボス+60)・章クリア時の生存+30xp。100xpごとにグレード+1(最大10)＝HP/攻撃+3%ずつ
@@ -5905,29 +5923,29 @@ function aiOneUnit(u){
   }
   let atk=attackTargets(u);
   if(atk.length && canAttack(u)){ atk.sort((a,b)=>a.hp-b.hp); doAttack(u, atk[0]); return; }
-  if(castleAdjacent(u) && canAttack(u)){ doCastleAttack(u); return; }
   if(!canMove(u)) return;
   const {move,fuse}=moveTargets(u);
   if(fuse.length){ moveUnit(u,fuse[0][0],fuse[0][1]); return; }   // 融合は気不要
   if(!move.length){ return; }
   const cc=CASTLE[0];
   let target=null;
-  // ①未取得の旗を最優先: 最寄りの旗へ近づく(踏めれば取得。気=進化の燃料なのでまず取りに行く)
+  // ①すぐ近く(距離3以内)の未取得の旗だけ拾う(気=進化の燃料)
   if(state.flags.length){
     let nf=null,nd=1e9;
     for(const f of state.flags){ const d=Math.abs(u.r-f.r)+Math.abs(u.c-f.c); if(d<nd){nd=d;nf=f;} }
-    if(nf){ let best=1e9; for(const [r,c] of move){ const d=Math.abs(r-nf.r)+Math.abs(c-nf.c); if(d<best){best=d;target=[r,c];} } }
+    if(nf && nd<=3){ let best=1e9; for(const [r,c] of move){ const d=Math.abs(r-nf.r)+Math.abs(c-nf.c); if(d<best){best=d;target=[r,c];} } }
   }
-  // ②旗がもう無ければ敵城へ前進
-  if(!target){ let best=1e9; for(const [r,c] of move){ const d=Math.abs(r-cc.r)+Math.abs(c-cc.c); if(d<best){best=d;target=[r,c];} } }
+  // ②基本はプレイヤーのモンスターを狩る=最寄りの敵ユニットへ前進(城は攻めない)
+  if(!target){
+    const foes=alive(0); let goal=cc;
+    if(foes.length){ let nfoe=null,nd=1e9; for(const f of foes){ const d=Math.abs(u.r-f.r)+Math.abs(u.c-f.c); if(d<nd){nd=d;nfoe=f;} } if(nfoe) goal=nfoe; }
+    let best=1e9; for(const [r,c] of move){ const d=Math.abs(r-goal.r)+Math.abs(c-goal.c); if(d<best){best=d;target=[r,c];} }
+  }
   if(target){
     moveUnit(u, target[0], target[1]);
     toast(`CPU：${mon(u).name} が前進`);
     const u2=state.units[u.uid];
-    if(u2){
-      if(castleAdjacent(u2)&&canAttack(u2)){ doCastleAttack(u2); }
-      else { const a2=attackTargets(u2); if(a2.length){ a2.sort((x,y)=>x.hp-y.hp); doAttack(u2,a2[0]); } }
-    }
+    if(u2){ const a2=attackTargets(u2); if(a2.length){ a2.sort((x,y)=>x.hp-y.hp); doAttack(u2,a2[0]); } }   // 動いた先で敵ユニットのみ攻撃
   }
 }
 
@@ -7333,7 +7351,7 @@ function endGame(winner,msg){
     if(winner===0){
       // ボスは必ず仲間になる
       const newly=[];
-      for(const e of ch.enemy){ if(e.boss && e.mid!==246 && ownMon(e.mid)) newly.push(MID[e.mid].name); }   // ニーズヘッグは仲間にならない(浄化のみ)
+      for(const e of ch.enemy){ if(e.boss && e.mid!==246){ const isNew=!STORY.owned.includes(e.mid); grantLine(e.mid); if(isNew) newly.push(MID[e.mid].name); } }   // ボス+進化前ラインごと付与(ニーズヘッグは浄化のみ)
       // ジェム: 初回クリアは大きく、再挑戦でも少し
       for(const u of alive(0)) addExp(baseFormId(u.mid), 30);   // 生き残りに経験値
       const first = STORY.clear<CAMP.ch;
@@ -7574,6 +7592,7 @@ const V_NPC_VILLAGE=[
 ];
 const V_NPC_FOREST=[
  {key:'portal',x:0,   z:-10.0, label:'⚔ 出撃の魔法陣'},
+ {key:'altar', x:-6.4,z:1.5,   label:'🎰 召喚の祭壇'},
  {key:'chest', x:5.6, z:1.2,   label:'💰 たからばこ'},
  {key:'back',  x:0,   z:10.6,  label:'🏘 アルケー村へ'},
  {key:'next',  x:2.8, z:-9.4,  label:'⚓ エーゲの港町へ'},
@@ -7592,12 +7611,14 @@ const V_NPC_MTN=[
 ];
 const V_NPC_SNOW=[
  {key:'portal',x:0,   z:-9.6,  label:'⚔ 出撃の魔法陣'},
+ {key:'altar', x:6.0, z:1.5,   label:'🎰 召喚の祭壇'},
  {key:'chest', x:-5.8,z:3.0,   label:'💰 たからばこ'},
  {key:'back',  x:0,   z:10.6,  label:'🏜 王家の冥所へ'},
  {key:'next',  x:2.8, z:-9.4,  label:'🌳 世界樹へ'},
 ];
 const V_NPC_UNDER=[
  {key:'portal',x:0,   z:-9.6,  label:'⚔ 出撃の魔法陣'},
+ {key:'altar', x:-6.2,z:2.0,   label:'🎰 召喚の祭壇'},
  {key:'chest', x:6.0, z:-1.4,  label:'💰 たからばこ'},
  {key:'back',  x:0,   z:10.6,  label:'⛰ 神々の山道へ'},
  {key:'next',  x:2.8, z:-9.4,  label:'🏔 北欧の雪原へ'},
@@ -8465,7 +8486,7 @@ function villageAct(k){
   if(k==='gate'){
     if(!STORY.starter){ const hud2=document.getElementById('ovVillage'); if(hud2) hud2.style.display='none'; openChapters(); return; }   // 相棒がいないうちは物語(序章)へ直行
     enterField('forest','south'); return; }   // 陸続き: 北門を抜けるとそのまま翠の森
-  if(k==='portal'){ hud.style.display='none'; openChapters(); return; }
+  if(k==='portal'){ hud.style.display='none'; const c=fieldNextChapter(V_MAP); if(c!=null) startChapter(c); else openChapters(); return; }
   if(k==='back'){
     const ci=WORLD_CHAIN.indexOf(V_MAP), prev=WORLD_CHAIN[Math.max(0,ci-1)];
     if(prev==='village'){ V_SPAWN={x:0,z:-7.8}; enterVillage(); }   // 村には北門側から帰ってくる
@@ -8485,7 +8506,7 @@ function villageAct(k){
     toast('💰 たからばこを開けた！ 💎+30'); 
     const st=document.getElementById('vgStat'); if(st) st.textContent=`💎${STORY.gems}・仲間${STORY.owned.length}体`;
     return; }
-  else if(k==='altar'){ hud.style.display='none'; openGacha('village'); }
+  else if(k==='altar'){ if(V_MAP==='village'){ hud.style.display='none'; openGacha('village'); } else { openGacha('hud'); } }
   else if(k==='book'){ hud.style.display='none'; window.catFrom='village'; buildCatalog(null); document.getElementById('ovCatalog').style.display='flex'; }
   else if(k==='elder') elderTalk();
 }
@@ -8572,6 +8593,11 @@ const BOSS_TALK={
     {s:'hero',t:'泡じゃない、全部本物だ。三つの神話の絆で、君を止める！'},
     {s:'263',t:'ナラバ見セテミヨ、境界ノ子。世界ノ全テヲ懸ケテ——最終決戦ダ。'}],
 };
+function fieldNextChapter(k){ const chs=FIELD_CHAPTERS[k]||[]; const eff=window._DEBUG?99:STORY.clear;
+  const nxt=chs.find(c=>c>STORY.clear && c<=eff+1);   // 未クリアで解放済みの最初の章
+  if(nxt!=null) return nxt;
+  const done=chs.filter(c=>c<=STORY.clear);           // 全クリア済みなら最後の章を再挑戦
+  return done.length?done[done.length-1]:(chs.length?chs[0]:null); }
 function fieldBossCh(k){ const chs=FIELD_CHAPTERS[k]||[]; const eff=window._DEBUG?99:STORY.clear;
   return chs.find(c=>c>STORY.clear && c<=eff+1); }
 function fieldBossDone(k){ const chs=FIELD_CHAPTERS[k]||[];   // クリア済みの最後の章（和解したボス）
@@ -8851,11 +8877,16 @@ function vFieldCommon(portalColor, backLabelY){
   // 崩れゆく境界: 火山でスルト撃破(ch18=clear>=18)後は、歪んだ世界で過去の大ボスの残影が徘徊する
   const ghostMode=(V_MAP==='volcano' && STORY.clear>=18);
   const ghostIds=[254,84,262,204,153,46,72,201].filter(id=>MID[id]&&IMG[String(id)]);
-  const rpool0=MONSTERS.filter(m=>m.role!=='fusion' && types.includes(m.type) && m.level<=2);
+  const rlist=FIELD_ROAM[V_MAP];
+  const rpool0=rlist ? rlist.map(id=>MID[id]).filter(Boolean)
+                     : MONSTERS.filter(m=>m.role!=='fusion' && types.includes(m.type) && m.level<=2);
   const rpool=ghostMode ? ghostIds.map(id=>MID[id]) : rpool0;
-  const roamN=ghostMode?4:7;
+  const roamN=ghostMode?4:(V_MAP==='forest'?5:7);   // 序盤(森)は少なめ
   for(let i=0;i<roamN;i++){
-    const m=rpool[(Math.random()*rpool.length)|0]; if(!m) break;
+    let m;
+    if(!ghostMode && V_MAP==='snow' && i===0 && MID[130]) m=MID[130];   // 北欧では必ずフェンリルが徘徊
+    else m=rpool[(Math.random()*rpool.length)|0];
+    if(!m) break;
     const grp2=new THREE.Group();
     const tex=new THREE.TextureLoader().load(IMG[String(m.id)]);
     const sp3=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true})); sp3.material.toneMapped=false;
@@ -9227,6 +9258,16 @@ const FIELD_INFO={
  volcano:  {name:'🌋 ムスペルヘイム', need:17, hint:'燃える国。炎の巨人スルトの領地'},
 };
 const FIELD_TYPES={forest:['草','風'], port:['水'], mountain:['雷'], snow:['氷'], under:['地','闇'], tree:['草','地'], volcano:['炎','竜']};
+// 各フィールドの野生モンスター(厳選): 序盤ほど種類を絞る。北欧にフェンリル(129,130)。
+const FIELD_ROAM={
+  forest:  [31,32,49,50,178,179],                // 英雄の樹海=草/風(相棒圏・少なめ)
+  port:    [16,17,19,20,24,25,110,111],          // エーゲ=水
+  mountain:[67,68,70,71,34,35,40,41],            // 神々の山道=雷/地
+  under:   [117,118,85,86,88,89,257],            // 王家の冥所=地/闇(エジプト)
+  snow:    [151,152,22,23,154,155,129,130,261],  // 北欧の雪原=氷+フェンリル(ガストル129/フェンリル130)+ヴァルグル261
+  tree:    [181,182,183,184,173,174],            // 世界樹=草/地
+  volcano: [1,2,4,5,192,193,198,199],            // ムスペル=炎/竜
+};
 const FIELD_BTHEME={forest:'forest', port:'coast', mountain:'mountain', snow:'snow', under:'desert', tree:'worldtree', volcano:'volcano'};
 const FIELD_SKY={
  volcano:{sky:0x3a1a12, fog:[0x3a1a12,16,40]},
