@@ -4660,21 +4660,51 @@ function qState(){
   return STORY.q;
 }
 function qBump(key,n){ const q=qState(); q[key]=(q[key]||0)+(n||1); saveStory(); }
+function statBump(key,n){ STORY.stats=STORY.stats||{}; STORY.stats[key]=(STORY.stats[key]||0)+(n||1); saveStory(); }   // 通算(生涯)統計
+function statOf(k){ return (STORY.stats&&STORY.stats[k])||0; }
+function qYesterday(){ const d=new Date(); d.setDate(d.getDate()-1); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function loginTick(){   // 起動時に1回: 連続ログイン日数を更新
+  STORY.streak=STORY.streak||{days:0,last:null,claimed:null};
+  const today=qToday();
+  if(STORY.streak.last!==today){
+    STORY.streak.days = (STORY.streak.last===qYesterday()) ? (STORY.streak.days||0)+1 : 1;
+    STORY.streak.last=today;
+    STORY.stats=STORY.stats||{}; STORY.stats.maxStreak=Math.max(STORY.stats.maxStreak||0, STORY.streak.days);
+    saveStory();
+  }
+}
+const STREAK_REWARDS=[30,40,50,70,90,120,200];   // 1〜7日目、以降は200固定
+function streakRewardFor(day){ return STREAK_REWARDS[Math.min(Math.max(day,1)-1, STREAK_REWARDS.length-1)]; }
+function streakClaimable(){ STORY.streak=STORY.streak||{}; return STORY.streak.last===qToday() && STORY.streak.claimed!==qToday(); }
 const DAILY_QUESTS=[
- {id:'win1',  name:'野生モンスターに1勝', need:q=>q.wins>=1, reward:60},
- {id:'win3',  name:'野生モンスターに3勝', need:q=>q.wins>=3, reward:120},
- {id:'riv1',  name:'冒険者との勝負に1勝', need:q=>(q.rivals||0)>=1, reward:80},
- {id:'sum1',  name:'召喚を1回行う',       need:q=>q.summons>=1, reward:50},
+ {id:'win2',  name:'野生モンスターに2勝',            need:q=>(q.wins||0)>=2,     reward:60,  prog:q=>[q.wins||0,2]},
+ {id:'sum1',  name:'召喚（ガチャ）を1回行う',         need:q=>(q.summons||0)>=1,  reward:50,  prog:q=>[q.summons||0,1]},
+ {id:'fuse1', name:'融合を1回成立させる',            need:q=>(q.fuseD||0)>=1,    reward:70,  prog:q=>[q.fuseD||0,1]},
+ {id:'weak2', name:'弱点を突く攻撃を2回',            need:q=>(q.weakD||0)>=2,    reward:70,  prog:q=>[q.weakD||0,2]},
+ {id:'terr1', name:'地形効果を発動（雷×海／炎×森）', need:q=>(q.terrainD||0)>=1, reward:90,  prog:q=>[q.terrainD||0,1]},
+ {id:'riv1',  name:'冒険者との勝負に1勝',            need:q=>(q.rivals||0)>=1,   reward:80,  prog:q=>[q.rivals||0,1]},
 ];
-const MILESTONES=[
- {id:'col10',  name:'図鑑10体達成',  need:()=>STORY.owned.length>=10,  reward:100},
- {id:'col25',  name:'図鑑25体達成',  need:()=>STORY.owned.length>=25,  reward:200},
- {id:'col50',  name:'図鑑50体達成',  need:()=>STORY.owned.length>=50,  reward:400},
- {id:'col100', name:'図鑑100体達成', need:()=>STORY.owned.length>=100, reward:800},
- {id:'ch3',    name:'第3章クリア',   need:()=>STORY.clear>=3, reward:150},
- {id:'ch6',    name:'第6章クリア',   need:()=>STORY.clear>=6, reward:250},
- {id:'ch9',    name:'第9章クリア',   need:()=>STORY.clear>=9, reward:350},
-];
+// --- 実績ヘルパ ---
+function completedLines(){ let n=0;   // 進化するライン(基本形→最終)を全段所持した本数
+  for(const m of MONSTERS){ if(m.role==='fusion'||m.evolves_from!=null) continue;
+    let c=m.id, all=true, len=0; while(c!=null&&len<9){ if(!STORY.owned.includes(c)){all=false;break;} len++; const mm=MID[c]; c=mm?mm.evolves_to:null; }
+    if(all&&len>=2) n++; }
+  return n; }
+function packComplete(pk){ const info=packDropInfo(pk); if(!info||!info.ids) return false; return info.ids.every(id=>STORY.owned.includes(id)); }
+const _MS=[];
+[[1,80],[3,150],[6,250],[9,350],[12,500],[16,700],[20,1500]].forEach(x=>_MS.push({cat:'prog',id:'ch'+x[0],name:x[0]>=20?'全章クリア（終末を越える）':'第'+x[0]+'章クリア',need:()=>STORY.clear>=x[0],reward:x[1],prog:()=>[Math.min(STORY.clear+1,x[0]),x[0]]}));
+[[5,80],[10,120],[25,220],[50,400],[100,700],[150,1000],[200,1400],[252,2500]].forEach(x=>_MS.push({cat:'col',id:'col'+x[0],name:'図鑑'+x[0]+'体を集める',need:()=>STORY.owned.length>=x[0],reward:x[1],prog:()=>[STORY.owned.length,x[0]]}));
+[[1,150],[5,400],[15,1000],[30,2200]].forEach(x=>_MS.push({cat:'line',id:'line'+x[0],name:'進化ラインを'+x[0]+'本コンプリート',need:()=>completedLines()>=x[0],reward:x[1],prog:()=>[completedLines(),x[0]]}));
+[[1,80],[10,220],[30,550]].forEach(x=>_MS.push({cat:'fuse',id:'fuseT'+x[0],name:'融合を通算'+x[0]+'回',need:()=>statOf('fuse')>=x[0],reward:x[1],prog:()=>[statOf('fuse'),x[0]]}));
+[[20,150],[60,400],[150,900]].forEach(x=>_MS.push({cat:'weak',id:'weakT'+x[0],name:'弱点を通算'+x[0]+'回つく',need:()=>statOf('weak')>=x[0],reward:x[1],prog:()=>[statOf('weak'),x[0]]}));
+[[3,120],[15,350],[40,800]].forEach(x=>_MS.push({cat:'terr',id:'terrT'+x[0],name:'地形効果を通算'+x[0]+'回発動',need:()=>statOf('terrain')>=x[0],reward:x[1],prog:()=>[statOf('terrain'),x[0]]}));
+[[3,100],[7,300],[14,700],[30,2000]].forEach(x=>_MS.push({cat:'streak',id:'strk'+x[0],name:x[0]+'日連続ログインを達成',need:()=>((STORY.stats&&STORY.stats.maxStreak)||0)>=x[0],reward:x[1],prog:()=>[(STORY.stats&&STORY.stats.maxStreak)||0,x[0]]}));
+function getMS(){   // ガチャコンプ実績はGACHA_PACKS確定後に動的生成
+  const packs=GACHA_PACKS.filter(p=>p.lines).map(p=>({cat:'pack',id:'pk_'+p.key,name:'「'+p.name+'」を全コンプ',need:()=>packComplete(p),reward:600,
+    prog:()=>{ const info=packDropInfo(p); const own=info.ids.filter(id=>STORY.owned.includes(id)).length; return [own,info.ids.length]; }}));
+  return _MS.concat(packs);
+}
+const MS_SECTIONS=[['streak','🔥 連続ログイン実績'],['prog','📖 物語の歩み'],['col','📚 図鑑コレクション'],['line','🧬 進化ラインの完成'],['fuse','🔮 融合の探求'],['weak','⚡ 弱点マスター'],['terr','🌊 地形術の達人'],['pack','🎰 召喚シリーズ収集']];
 // ======================= 称号 =======================
 function heroTitle(){
   const st=STORY.stats||{}; const fw=st.fw||0; const col=STORY.owned.length; const cl=STORY.clear;
@@ -4692,7 +4722,8 @@ function heroTitle(){
 function questClaimables(){
   const q=qState(); let n=0;
   for(const d of DAILY_QUESTS) if(d.need(q)&&!q.claimed[d.id]) n++;
-  for(const m of MILESTONES) if(m.need()&&!q.ms[m.id]) n++;
+  for(const m of getMS()) if(m.need()&&!q.ms[m.id]) n++;
+  if(streakClaimable()) n++;
   return n;
 }
 // ======================= 酒場（ライバル目撃情報・戦績） =======================
@@ -4853,40 +4884,53 @@ function villagerTalk(n){
   const line=v.lines[n.li%v.lines.length]; n.li++;
   showStoryLines('💬 '+v.name, [{s:'narr',t:`${v.name}「${line}」`}], null);
 }
+function qRow(def, kind, done, got){
+  let bar='';
+  if(def.prog){ try{ const p=def.prog(qState()); const c=Math.min(p[0],p[1]), g=p[1], pct=Math.max(4,Math.min(100,Math.round(p[0]/g*100)));
+    bar=`<div style="margin-top:3px;height:5px;background:#0d1220;border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${done?'#3fae5a':'#c8912e'}"></div></div><div class="muted" style="font-size:9.5px">${c}/${g}</div>`; }catch(e){} }
+  return `<div style="display:flex;align-items:center;gap:8px;background:#141a28;border:1px solid ${got?'#2c3346':done?'#3a7a4a':'#2c3346'};border-radius:8px;padding:8px 10px;margin:4px 0">
+    <span style="flex:1;font-size:12.5px;${got?'opacity:.5':''}">${def.name}${bar}</span>
+    ${got?'<span class="muted" style="font-size:11px">✅受取済</span>':done?`<button class="bt go" data-${kind}="${def.id}" style="padding:6px 12px;font-size:12px">💎${def.reward}</button>`:`<span class="muted" style="font-size:11px">未達成</span>`}
+  </div>`;
+}
 function openQuests(){
-  const q=qState();
+  const q=qState(); STORY.streak=STORY.streak||{days:0,last:null};
+  const claimN=questClaimables();
   const rows=[];
-  rows.push('<div style="font-weight:800;color:#ffd86b;margin:4px 0">📅 今日のクエスト（毎日リセット）</div>');
-  for(const d of DAILY_QUESTS){
-    const done=d.need(q), got=q.claimed[d.id];
-    rows.push(`<div style="display:flex;align-items:center;gap:8px;background:#141a28;border:1px solid ${got?'#2c3346':done?'#3a7a4a':'#2c3346'};border-radius:8px;padding:8px 10px;margin:4px 0">
-      <span style="flex:1;font-size:13px;${got?'opacity:.5':''}">${d.name}</span>
-      ${got?'<span class="muted">受取済</span>':done?`<button class="bt go" data-q="${d.id}" style="padding:6px 12px;font-size:12px">💎${d.reward} 受取</button>`:`<span class="muted" style="font-size:12px">未達成</span>`}
-    </div>`);
-  }
-  rows.push('<div style="font-weight:800;color:#ffd86b;margin:10px 0 4px">🏆 実績（1回きり）</div>');
-  for(const m of MILESTONES){
-    const done=m.need(), got=q.ms[m.id];
-    rows.push(`<div style="display:flex;align-items:center;gap:8px;background:#141a28;border:1px solid ${got?'#2c3346':done?'#3a7a4a':'#2c3346'};border-radius:8px;padding:8px 10px;margin:4px 0">
-      <span style="flex:1;font-size:13px;${got?'opacity:.5':''}">${m.name}</span>
-      ${got?'<span class="muted">受取済</span>':done?`<button class="bt go" data-m="${m.id}" style="padding:6px 12px;font-size:12px">💎${m.reward} 受取</button>`:`<span class="muted" style="font-size:12px">未達成</span>`}
-    </div>`);
+  // --- 連続ログインボーナス ---
+  const sd=STORY.streak.days||0, rw=streakRewardFor(sd), canS=streakClaimable();
+  rows.push('<div style="font-weight:800;color:#ff9a5a;margin:2px 0 4px">🔥 連続ログインボーナス</div>');
+  rows.push(`<div style="display:flex;align-items:center;gap:8px;background:#1c1420;border:1px solid ${canS?'#c8912e':'#2c3346'};border-radius:8px;padding:9px 11px;margin:4px 0">
+    <span style="flex:1;font-size:13px"><b style="color:#ffd86b">${sd}日</b>連続ログイン中！ 今日のボーナス💎${rw}<br><span class="muted" style="font-size:10px">7日目以降は毎日💎200。1日でも空くとリセット</span></span>
+    ${canS?`<button class="bt go" data-strk="1" style="padding:6px 12px;font-size:12px">💎${rw} 受取</button>`:'<span class="muted" style="font-size:11px">✅受取済</span>'}
+  </div>`);
+  // --- デイリー ---
+  rows.push('<div style="font-weight:800;color:#ffd86b;margin:12px 0 4px">📅 今日のクエスト（毎日0時リセット）</div>');
+  for(const d of DAILY_QUESTS) rows.push(qRow(d,'q',d.need(q),q.claimed[d.id]));
+  // --- 実績(カテゴリ別) ---
+  const MS=getMS();
+  for(const [cat,title] of MS_SECTIONS){
+    const items=MS.filter(m=>m.cat===cat); if(!items.length) continue;
+    rows.push(`<div style="font-weight:800;color:#ffd86b;margin:12px 0 4px">${title}</div>`);
+    for(const m of items) rows.push(qRow(m,'m',m.need(),q.ms[m.id]));
   }
   const ov=document.getElementById('ovStory');
-  document.getElementById('stTitle').textContent='📋 クエスト掲示板';
+  document.getElementById('stTitle').textContent='📋 クエスト掲示板'+(claimN?` （受取可能 ${claimN}）`:'');
   document.getElementById('stFace').style.display='none';
   document.getElementById('stName').textContent='';
   const el=document.getElementById('stLine'); el.style.fontStyle='normal';
-  el.innerHTML=`<div style="max-height:52vh;overflow-y:auto">${rows.join('')}</div>`;
+  el.innerHTML=`<div class="muted" style="font-size:11px;margin-bottom:6px">クエストに沿って遊べば💎が貯まり、物語も進む。焦らず"今できること"から。</div><div style="max-height:56vh;overflow-y:auto">${rows.join('')}</div>`;
   document.getElementById('stPage').textContent=`💎${STORY.gems}`;
   document.getElementById('stNext').style.display='none';
   document.getElementById('stSkip').textContent='× とじる';
   const close=()=>{ ov.style.display='none'; document.getElementById('stNext').style.display=''; document.getElementById('stSkip').textContent='⏩ スキップ'; };
   document.getElementById('stSkip').onclick=close;
-  el.querySelectorAll('button[data-q]').forEach(b2=>{ b2.onclick=()=>{ const d=DAILY_QUESTS.find(x=>x.id===b2.dataset.q);
+  el.querySelectorAll('button[data-strk]').forEach(b2=>{ b2.onclick=()=>{ if(!streakClaimable())return;
+    const r=streakRewardFor(STORY.streak.days||1); STORY.streak.claimed=qToday(); STORY.gems+=r; saveStory(); seJingle('gem'); toast(`🔥 連続ログイン💎+${r}！（所持💎${STORY.gems}）`); openQuests(); }; });
+  el.querySelectorAll('button[data-q]').forEach(b2=>{ b2.onclick=()=>{ const d=DAILY_QUESTS.find(x=>x.id===b2.dataset.q); if(!d||!d.need(qState())||qState().claimed[d.id])return;
     qState().claimed[d.id]=1; STORY.gems+=d.reward; saveStory(); seJingle('gem'); toast(`💎+${d.reward}！（所持💎${STORY.gems}）`); openQuests(); }; });
-  el.querySelectorAll('button[data-m]').forEach(b2=>{ b2.onclick=()=>{ const m=MILESTONES.find(x=>x.id===b2.dataset.m);
-    qState().ms[m.id]=1; STORY.gems+=m.reward; saveStory(); seJingle('gem'); toast(`💎+${m.reward}！（所持💎${STORY.gems}）`); openQuests(); }; });
+  el.querySelectorAll('button[data-m]').forEach(b2=>{ b2.onclick=()=>{ const m=getMS().find(x=>x.id===b2.dataset.m); if(!m||!m.need()||qState().ms[m.id])return;
+    qState().ms[m.id]=1; STORY.gems+=m.reward; saveStory(); seJingle('gem'); toast(`🏆 ${m.name} 達成！💎+${m.reward}（所持💎${STORY.gems}）`); openQuests(); }; });
   ov.style.display='flex';
 }
 let STORY = loadStory();
@@ -4898,6 +4942,7 @@ let STORY = loadStory();
   addLine(STORY.starter); addLine(49); addLine(34);
   if(STORY.owned.length!==before){ try{ localStorage.setItem('ms3d_story', JSON.stringify(STORY)); }catch(e){} }
 })();
+try{ loginTick(); }catch(e){}   // 連続ログイン日数の更新
 let _cloudTimer=null;
 function saveStory(){
   try{ if(typeof state!=='undefined'&&state&&state.phase==='village'&&typeof VG!=='undefined'&&VG&&VG.hero) STORY.loc={map:V_MAP,x:+VG.hero.x.toFixed(1),z:+VG.hero.z.toFixed(1)}; }catch(e){}
@@ -5603,6 +5648,10 @@ function doAttack(att, def, move){
   const advType = def && typeBonusM(m, mon(def))>0;                        // タイプ相性(弱点)発動?
   const weakHit = def && typePenaltyM(m, mon(def))<0;                      // 苦手相手(-20%)?
   const advTerr = terrBonusM(m, state.terrain[att.r][att.c])>0;            // 地形ボーナス発動?
+  if(att.owner===0 && !ONLINE){   // クエスト計測: 弱点/地形効果
+    if(advType){ qBump('weakD'); statBump('weak'); }
+    if(isAreaTerrain(att)){ qBump('terrainD'); statBump('terrain'); }
+  }
   if(advType) floatText(att.r, att.c, '弱点をつく!', '#ffe070');
   if(att.owner===0){
     if(advType && tutOnce('t_adv')) tutToast('💡弱点を突いた！ 相性の良い攻撃は+20%＆相手の防御をほぼ貫通する');
@@ -5806,6 +5855,7 @@ function moveUnit(u, r, c){
 function tryFusion(a, b, r, c){
   const fid=fusionResult(a,b);
   if(fid==null){ toast('融合できない組み合わせ'); return; }
+  if(a.owner===0 && !ONLINE){ qBump('fuseD'); statBump('fuse'); }   // クエスト計測: 融合
   const ca=TYPE_HEX[mon(a).type], cb=TYPE_HEX[mon(b).type];
   const u3=tripleRecipe(a.mid,b.mid)?tripleThird(a,b):null;   // 3体融合の3体目（除去前に確定）
   // 素材除外→融合体（気は不要）
