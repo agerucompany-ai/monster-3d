@@ -209,8 +209,7 @@ button.bt.fuse{background:#a24ec0}
     <div id="gaPackHint" class="muted" style="font-size:11px;margin:0 0 6px"></div>
     <div id="gaDrops" style="margin:0 0 12px"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <button class="bt go" id="gaPull1" style="font-size:16px;padding:12px 22px">1回引く 💎100</button>
-      <button class="bt" id="gaPull10" style="font-size:16px;padding:12px 22px;background:#8c2a6a">10連ガチャ 💎900</button>
+      <button class="bt go" id="gaPull1" style="font-size:16px;padding:12px 22px">召喚する（3体） 💎100</button>
     </div>
     <div id="gaResult" style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px"></div>
     <div style="margin-top:16px;border-top:1px solid #3a2a4a;padding-top:10px">
@@ -4154,9 +4153,9 @@ function CASTLE_HP_NOW(){
   if(typeof ONLINE!=='undefined' && ONLINE) return 1000;   // オンライン対戦は常に1000
   if(typeof CAMP!=='undefined' && CAMP && CAMP.on){
     const c=CAMP.ch||0;
-    if(c<=5)  return 400+c*60;          // ギリシャ(森/港/山 ch1〜5): 460〜700
-    if(c<=12) return 700+(c-5)*80;      // エジプト(冥所 ch6〜12): 780〜1260
-    if(c<=19) return 1300+(c-12)*100;   // 北欧(雪原/世界樹 ch13〜19): 1400〜2000
+    if(c<=5)  return 400+c*60;          // エーレア(森/港/山 ch1〜5): 460〜700
+    if(c<=12) return 700+(c-5)*80;      // サディーム(冥所 ch6〜12): 780〜1260
+    if(c<=19) return 1300+(c-12)*100;   // ニヴル(雪原/世界樹 ch13〜19): 1400〜2000
     return 2200;                         // 終末(ムスペル ch20)
   }
   return 600;   // CPU対戦（Lv2〜3混成想定）
@@ -4218,11 +4217,11 @@ const CAMPAIGN = [
    {"s": "narr", "t": "倒れたモンスターの体から黒い靄が抜け、瞳に光が戻った。"},
    {"s": "hero", "t": "……ついてくるの？ ふふ、じゃあ一緒に行こう。"},
    {"s": "elder", "t": "討伐は浄化、浄化は仲間化。それがお前の力じゃ。祭壇に祈れば、さらに縁が繋がるぞ。"},
-   {"s": "elder", "t": "西の海の向こう——青き空のギリシャで、怪物たちが暴れ始めたと聞く。まずはそこじゃ。"},
+   {"s": "elder", "t": "西の海の向こう——青き空のエーレアで、怪物たちが暴れ始めたと聞く。まずはそこじゃ。"},
    {"s": "narr", "t": "倒したはずの影の妖精が、そっと{hero}の後ろについてきた。旅の、最初の絆だった。"}]},
  {title:"第1章 黄金の獅子", theme:'forest', budget:4,
   intro:[
-   {"s": "narr", "t": "ギリシャ・ネメアの平原。白い神殿が輝き、エーゲの風が吹く。だが村人は怯えていた。"},
+   {"s": "narr", "t": "エーレア・ネメアの平原。白い神殿が輝き、エーゲの風が吹く。だが村人は怯えていた。"},
    {"s": "hero", "t": "青い空に、白い柱……すごい、絵本で見た英雄の国だ！"},
    {"s": "narr", "t": "丘の上に、黄金の毛皮の巨獅子が立っていた。その目は黒く淀んでいる。"},
    {"s": "250", "t": "グルルル……我が毛皮に、刃は通らぬ。英雄気取りの小僧が、また一人。"},
@@ -4283,7 +4282,7 @@ const CAMPAIGN = [
    {"s": "253", "t": "……石にしてきたのは、私を化け物と呼ぶ目。あなたの目は、違ったわね。"},
    {"s": "elder", "t": "だが妙じゃ。彼女の淀みは、獅子とも九頭竜とも……「同じ匂い」がする。"},
    {"s": "narr", "t": "そのとき、大地が唸った。忘れられた古戦場で、封印が破られた音だった。"},
-   {"s": "hero", "t": "同じ匂いの淀み……ギリシャの怪物みんなが、ひとつの「何か」に呑まれてるってこと？"},
+   {"s": "hero", "t": "同じ匂いの淀み……エーレアの怪物みんなが、ひとつの「何か」に呑まれてるってこと？"},
    {"s": "elder", "t": "……分からぬ。じゃがその「ひとつ」を突き止めねば、この旅は終わらぬ気がするのう。"}]},
  {title:"第5章 忘れられた古戦場", theme:'rift', budget:6,
   intro:[
@@ -4293,20 +4292,20 @@ const CAMPAIGN = [
    {"s": "254", "t": "淀ミ？ フ……アレハ「始マリ」ノ滴ダ。オ前タチハ何モ知ラヌ。"},
    {"s": "hero", "t": "何を知らないっていうんだ。……教えてもらう、力ずくでも！"},
    {"s": "narr", "t": "巨神の一歩ごとに大地が裂け、古い神殿の柱が塵になって崩れ落ちていく。"},
-   {"s": "elder", "t": "総力戦じゃ！ ギリシャで結んだ絆、すべてをぶつけよ！"}],
+   {"s": "elder", "t": "総力戦じゃ！ エーレアで結んだ絆、すべてをぶつけよ！"}],
   enemy:[{mid:254,boss:true},{mid:45},{mid:44},{mid:117}],
   win:[
    {"s": "narr", "t": "巨神は膝をつき、崩れながら——笑った。"},
    {"s": "254", "t": "見事ダ、小サキ者。ダガ覚エテオケ。……コレハ終ワリデハナイ。スベテノ「始マリ」ガ、ジキニ戻ル。"},
    {"s": "hero", "t": "始まりが、戻る……？ ガイウス、どういう意味？"},
    {"s": "elder", "t": "分からぬ。じゃが世界樹の枝が、また一本枯れ落ちた。……見よ、裂け目の向こうに黄金の砂が見える。"},
-   {"s": "narr", "t": "枯れ枝の裂け目から、エジプト——死と復活の国への道が開いた。"},
+   {"s": "narr", "t": "枯れ枝の裂け目から、サディーム——死と復活の国への道が開いた。"},
    {"s": "hero", "t": "「始まりが戻る」……ティタンも、そう言い残した。ねえ長老様、この旅、どこまで続くんだろう。"},
    {"s": "elder", "t": "分からぬ。じゃが一つだけ確かじゃ——お前は、独りではない。さあ、砂の国へ。"}]},
  {title:"第6章 黄金の隊商路", theme:'desert', budget:7,
   intro:[
-   {"s": "narr", "t": "エジプト。見渡す限りの黄金の砂と、遠くに霞む巨大神殿。空気が静かで、荘厳だった。"},
-   {"s": "hero", "t": "ギリシャとは全然違う……時間まで、ゆっくり流れてるみたいだ。"},
+   {"s": "narr", "t": "サディーム。見渡す限りの黄金の砂と、遠くに霞む巨大神殿。空気が静かで、荘厳だった。"},
+   {"s": "hero", "t": "エーレアとは全然違う……時間まで、ゆっくり流れてるみたいだ。"},
    {"s": "narr", "t": "隊商の悲鳴。砂嵐が渦を巻き、その中から長い口吻の獣が現れた。"},
    {"s": "255", "t": "……嵐ハ我、我ハ嵐。ココヲ通ルナラ、置イテイケ。命以外ノ全テヲ。"},
    {"s": "elder", "t": "砂の獣セテク。実体は砂嵐の中——よく狙うのじゃぞ。"},
@@ -4391,7 +4390,7 @@ const CAMPAIGN = [
   win:[
    {"s": "247", "t": "……二度目の死は、存外に暖かい。裁きは下った——「復活に値する魂」である。"},
    {"s": "247", "t": "頂へ行け。太陽神殿の頂点に、我らの長がいる。……この国で最も強く、最も眩しい。"},
-   {"s": "hero", "t": "エジプト最強……ラー、太陽の神。"},
+   {"s": "hero", "t": "サディーム最強……ラー、太陽の神。"},
    {"s": "elder", "t": "二柱までが、お前を認めた。……{hero}、お前はもう、ただの村の子ではないのう。"}]},
  {title:"第12章 太陽神殿の頂", theme:'sky', budget:9,
   intro:[
@@ -4407,12 +4406,12 @@ const CAMPAIGN = [
    {"s": "84", "t": "……認めよう。だが勇者よ、一つ伝えねばならぬ。お前が鎮めてきた淀み——"},
    {"s": "84", "t": "あれは我ら三神の暴走でも、ティタンの企みでもない。世界の「外」から漏れている。"},
    {"s": "hero", "t": "世界の、外……。"},
-   {"s": "elder", "t": "世界樹の枝が、また枯れた。次の道は……雪と終末の国、北欧じゃ。"},
-   {"s": "hero", "t": "世界の外から漏れる淀み……。ギリシャも、エジプトも、みんなその「外」の穢れだったんだ。"},
+   {"s": "elder", "t": "世界樹の枝が、また枯れた。次の道は……雪と終末の国、ニヴルじゃ。"},
+   {"s": "hero", "t": "世界の外から漏れる淀み……。エーレアも、サディームも、みんなその「外」の穢れだったんだ。"},
    {"s": "84", "t": "行け、境界の子。北の果てで、世界の「終わり」がお前を待っている。恐れるな——お前は、境界の側だ。"}]},
  {title:"第13章 霜の巨人", theme:'snow', budget:9,
   intro:[
-   {"s": "narr", "t": "北欧。空は重く、雪は深い。辺境の集落が、巨大な足跡に沿って潰されていた。"},
+   {"s": "narr", "t": "ニヴル。空は重く、雪は深い。辺境の集落が、巨大な足跡に沿って潰されていた。"},
    {"s": "hero", "t": "寒い……！ それにこの国、空気が張り詰めてる。まるで何かを待ってるみたいに。"},
    {"s": "elder", "t": "「終末」を、じゃよ。この国の神話は、世界の終わりが予言されておる。"},
    {"s": "260", "t": "……小サイ者ドモガ、騒ガシイ。冬ハ我ノ季節。眠リヲ妨ゲルナ。"},
@@ -4492,7 +4491,7 @@ const CAMPAIGN = [
    {"s": "262", "t": "予言ハ果タサレル。世界ハ焼ケ、海ニ沈ミ、ソシテ——「始マリ」ガ戻ル。"},
    {"s": "hero", "t": "また「始まり」……！ ティタンと同じことを言うんだね。教えてよ、始まりって何！"},
    {"s": "262", "t": "知リタクバ、我ガ炎ヲ越エテミヨ。世界最後ノ夜ノ、向コウ側デ教エテヤロウ。"},
-   {"s": "elder", "t": "北欧の総決算じゃ！ この国で結んだ絆、全てを束ねよ！"},
+   {"s": "elder", "t": "ニヴルの総決算じゃ！ この国で結んだ絆、全てを束ねよ！"},
    {"s": "hero", "t": "終末の向こう側に、答えがあるなら。……僕は、その扉を必ずこじ開ける！"}],
   enemy:[{mid:262,boss:true},{mid:11},{mid:12},{mid:90}],
   win:[
@@ -4500,7 +4499,7 @@ const CAMPAIGN = [
    {"s": "262", "t": "……我ガ炎ヲ越エタカ。ナラバ答エヲヤロウ。我ラ大ボスガ撒イタ淀ミハ、我ラノ物デハナイ。"},
    {"s": "262", "t": "全テハ「原初ノ混沌」——全テノ神話ガ生マレル前ノ根源カラ、漏レ出テイタ。"},
    {"s": "262", "t": "ソシテ漏レ口ヲ齧リ広ゲテイル者ガイル。世界樹ノ根ノ奈落——行ケ、境界ノ子。"},
-   {"s": "narr", "t": "そのとき、空が割れた。ギリシャの神殿と、エジプトの砂と、北欧の雪が——混ざり始めた。"},
+   {"s": "narr", "t": "そのとき、空が割れた。エーレアの神殿と、サディームの砂と、ニヴルの雪が——混ざり始めた。"},
    {"s": "elder", "t": "世界の境界が、崩れ始めておる……！ 急げ、{hero}！ 根の奈落へ！"}]},
  {title:"第19章 根の奈落", theme:'underworld', budget:10,
   intro:[
@@ -4533,7 +4532,7 @@ const CAMPAIGN = [
    {"s": "elder", "t": "どの神話にも属さぬのは、全ての神話を守るため。それがお前の出自の、真実じゃ。"},
    {"s": "hero", "t": "……ずっと不思議だった。でも今は分かる。僕がここに立ってるのは、偶然じゃない。"},
    {"s": "263", "t": "泡ヨ、混沌ニ抗ウカ。ヨカロウ——三ツノ神話ノ記憶ゴト、呑ミ込ンデヤル。"},
-   {"s": "hero", "t": "みんな、行くよ！ ギリシャの、エジプトの、北欧の——僕らの旅の全てで！"},
+   {"s": "hero", "t": "みんな、行くよ！ エーレアの、サディームの、ニヴルの——僕らの旅の全てで！"},
    {"s": "75", "t": "雷は我らが。地は巨神が。海は大蛇が。——境界の子よ、お前は「絆」を撃て！"},
    {"s": "narr", "t": "三つの神話のすべての仲間が、勇者の背後で吼えた。混沌の無に、初めて「色」が満ちる。"}],
   enemy:[{mid:263,boss:true},{mid:254},{mid:262},{mid:259}],
@@ -4977,7 +4976,7 @@ const GACHA_PACKS=[
  {key:'basic', name:'相棒の系譜',     types:null, starterPack:true, need:-1, hint:'相棒・ソヨカ・ツチノコの進化ラインだけが出る。1回1回がまっすぐ戦力になる'},
  {key:'flame', name:'紅蓮の火種',     types:['炎','風'], need:0,  lines:[1,4,7,106,49,52],       fusions:[13,100,143], hint:'樹海の草モンスターは炎で焼き払え'},
  {key:'volt',  name:'雷雲の胎動',     types:['雷','草'], need:1,  lines:[67,70,78,31,178],       fusions:[82,135,201], hint:'エーゲの水モンスターには雷と草'},
- {key:'earth', name:'大地の鼓動',     types:['地','水'], need:2,  lines:[34,40,117,16,19],       fusions:[175,251,187],hint:'ギリシャの怪物は地と水で迎え撃て'},
+ {key:'earth', name:'大地の鼓動',     types:['地','水'], need:2,  lines:[34,40,117,16,19],       fusions:[175,251,187],hint:'エーレアの怪物は地と水で迎え撃て'},
  {key:'gale',  name:'風緑の息吹',     types:['風','草'], need:4,  lines:[49,52,129,31,181,183],  fusions:[28,116,141], hint:'古戦場の巨神には草と風。フェンリルもここから'},
  {key:'frost', name:'白銀の吐息',     types:['氷','炎'], need:6,  lines:[22,37,151,4,9],         fusions:[260,234,131],hint:'砂漠の熱には氷を、闇の墓所には炎を'},
  {key:'holy',  name:'聖光の啓示',     types:['光','闇'], need:8,  lines:[55,73,161,85,88],       fusions:[84,258,253], hint:'冥所の闇は光で払え'},
@@ -5006,8 +5005,8 @@ function packOf(){
   const k=STORY.gpack||'basic'; return GACHA_PACKS.find(p=>p.key===k&&STORY.clear>=p.need)||GACHA_PACKS[0]; }
 function packDropInfo(pk){
   if(!pk) return {ids:[]};
-  if(pk.starterPack) return {ids:[...starterFamilyIds()], note:'相棒として選んだ系統だけが出る'};
-  if(pk.fieldMap) return {ids:[...fieldBossLineIds(pk.fieldMap)], note:'＋この地の対抗タイプ（'+(pk.types||[]).join('・')+'）も排出'};
+  if(pk.starterPack) return {ids:[...starterFamilyIds()].filter(id=>!GACHA_BAN.has(id)), note:'相棒として選んだ系統だけが出る'};
+  if(pk.fieldMap) return {ids:[...fieldBossLineIds(pk.fieldMap)].filter(id=>!GACHA_BAN.has(id)), note:'＋この地の対抗タイプ（'+(pk.types||[]).join('・')+'）も排出'};
   if(pk.lines) return {ids:[...packLineIds(pk)]};
   return {ids:null, note:'このシリーズは全モンスターが対象（縁ガチャで手持ちの進化先を優先）'};
 }
@@ -5019,13 +5018,14 @@ function renderDropList(box,pk){
   const rlab=m=> m.role==='fusion'?'SSR' : ((m.type==='竜'||m.level===3)?'SR' : m.level===2?'R':'N');
   const list=info.ids.map(id=>MID[id]).filter(Boolean).sort((a,b)=>rank(a)-rank(b)||a.id-b.id);
   const chips=list.map(m=>{ const owned=STORY.owned.includes(m.id);
-    return `<div title="${m.name}" style="width:52px;text-align:center;position:relative">`
+    return `<div data-mid="${m.id}" title="${m.name}" style="width:52px;text-align:center;position:relative;cursor:pointer">`
       +`<img src="${IMG[m.id]}" style="width:44px;height:44px;object-fit:contain;background:#0d1220;border-radius:7px;border:1.5px solid ${GACHA_RAR_COL[rlab(m)]};${owned?'':'filter:grayscale(.55);opacity:.72'}">`
       +(owned?'<div style="position:absolute;top:-4px;right:1px;font-size:10px">✅</div>':'')
       +`<div style="font-size:8.5px;line-height:1.05;margin-top:1px;color:#cdd6e6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div></div>`; }).join('');
   box.innerHTML=`<div style="font-weight:700;font-size:11px;color:#b08ae0;margin:2px 0 4px">🎯 このシリーズの排出モンスター（${list.length}種・✅=所持）</div>`
     +(info.note?`<div class="muted" style="font-size:10px;margin-bottom:5px">${info.note}</div>`:'')
     +`<div style="display:flex;flex-wrap:wrap;gap:5px;max-height:200px;overflow-y:auto;background:#150e22;border:1px solid #2c2038;border-radius:8px;padding:7px">${chips}</div>`;
+  box.querySelectorAll('[data-mid]').forEach(d=>{ d.onclick=()=>showMonsterDetail(+d.dataset.mid); });   // タップで図鑑詳細
 }
 function renderPacks(){
   const box=document.getElementById('gaPacks'); if(!box) return;
@@ -5057,9 +5057,10 @@ function renderPacks(){
     if(!p||STORY.clear<p.need){ toast('🔒 物語を進めると解放されるシリーズだ'); return; }
     STORY.gpack=p.key; STORY.tut=STORY.tut||{}; STORY.tut['pk_'+p.key]=1; saveStory(); renderPacks(); }; });
 }
+const GACHA_BAN=(()=>{ const s=new Set([244,245,246,247,267]); try{ CAMPAIGN.forEach(ch=>ch.enemy.forEach(e=>{ if(e.boss) s.add(e.mid); })); }catch(_){} return s; })();   // ボス系はガチャに出さない（撃破で仲間に）
 function packLineIds(pk){ const out=new Set();
-  for(const b of (pk.lines||[])){ let c=b,g=0; while(c!=null&&g<6){ out.add(c); c=MID[c]?MID[c].evolves_to:null; g++; } }
-  for(const f of (pk.fusions||[])) out.add(f);
+  for(const b of (pk.lines||[])){ let c=b,g=0; while(c!=null&&g<6){ if(!GACHA_BAN.has(c)) out.add(c); c=MID[c]?MID[c].evolves_to:null; g++; } }
+  for(const f of (pk.fusions||[])) if(!GACHA_BAN.has(f)) out.add(f);
   return out; }
 function starterFamilyIds(){
   const bases=[STORY.starter||7, 49, 34];
@@ -5078,6 +5079,7 @@ function gachaPools(){
   else { const ty=pk.types; fit=m=> !ty || ty.includes(m.type) || (m.type2&&ty.includes(m.type2)); }
   const pn=[],pr=[],ps=[],px=[], fn=[],fr=[],fs=[],fx=[];
   for(const m of MONSTERS){
+    if(GACHA_BAN.has(m.id)) continue;   // ボスはガチャ排出プールから除外
     let all,f2;
     if(m.role==='fusion'){ all=px; f2=fx; }
     else if(m.type==='竜'){ all=ps; f2=fs; }
@@ -7533,7 +7535,7 @@ const ENDING_A=[
  {"s":"hero","t":"僕は——円環を繋ぐ。世界は続く。いつかまた終末が来るとしても、そのたびに誰かが立ち上がる。"},
  {"s":"263","t":"……「再生ノ約束サレタ輪」カ。ヨカロウ。ナラバ我ハ根源ニ還リ、静カニ次ノ神話ヲ夢見ヨウ。"},
  {"s":"narr","t":"混沌は渦を収め、世界の底で眠りについた。三つの神話世界に、境界と平和が戻った。"},
- {"s":"75","t":"良い選択だ、境界の子よ。滅びと再生の輪——それこそ、我ら北欧の神話が語り継いだ真理。"},
+ {"s":"75","t":"良い選択だ、境界の子よ。滅びと再生の輪——それこそ、我らニヴルの神話が語り継いだ真理。"},
  {"s":"elder","t":"帰ろうぞ、{hero}。世界樹の麓で、皆が待っておる。……ああ、良い旅じゃった。"},
  {"s":"narr","t":"—— END A『円環の守り手』——　旅は終わり、そして世界は続いていく。"}];
 const ENDING_B=[
@@ -7700,7 +7702,7 @@ function vResolve(nx,nz){
 }
 let V_MAP='village';   // 'village' | 'forest' | ...
 let V_SPAWN=null;      // 次のマップ構築時の主人公スポーン位置（門から入った側に出る）
-const WORLD_CHAIN=['village','forest','port','mountain','under','snow','tree','volcano'];   // 村→ギリシャ→エジプト→北欧→ムスペルヘイム
+const WORLD_CHAIN=['village','forest','port','mountain','under','snow','tree','volcano'];   // 村→エーレア→サディーム→ニヴル→ムスペルヘイム
 function vNextUnlocked(){ const i=WORLD_CHAIN.indexOf(V_MAP); const nxt=WORLD_CHAIN[i+1]; if(!nxt) return false;
   const eff=window._DEBUG?99:STORY.clear; return FIELD_INFO[nxt].need<=eff+1; }
 const V_NPC_VILLAGE=[
@@ -7751,7 +7753,7 @@ const V_NPC_UNDER=[
  {key:'warp',  to:'suntemple', x:7.0,z:-4.5, label:'☀ 太陽神殿の頂へ'},
  {key:'chest', x:6.0, z:-1.4,  label:'💰 たからばこ'},
  {key:'back',  x:0,   z:10.6,  label:'⛰ 神々の山道へ'},
- {key:'next',  x:2.8, z:-9.4,  label:'🏔 北欧の雪原へ'},
+ {key:'next',  x:2.8, z:-9.4,  label:'🏔 ニヴルの雪原へ'},
 ];
 const V_NPC_PYRAMID=[
  {key:'warp', to:'under',  x:0,   z:10.2, label:'🚪 冥所へ戻る'},
@@ -7774,7 +7776,7 @@ const V_NPC_TREE=[
  {key:'portal',x:0,   z:-8.8,  label:'⚔ 出撃の魔法陣'},
  {key:'warp', to:'abyss', x:6.2,z:1.0, label:'🕳 根の奈落へ'},
  {key:'chest', x:-6.0,z:1.0,   label:'💰 たからばこ'},
- {key:'back',  x:0,   z:10.6,  label:'🏔 北欧の雪原へ'},
+ {key:'back',  x:0,   z:10.6,  label:'🏔 ニヴルの雪原へ'},
  {key:'next',  x:2.8, z:-8.6,  label:'🌋 終末火山へ'},
 ];
 const V_NPC_SUB={
@@ -8021,7 +8023,7 @@ const V_STONE_PAL=['#8d8d95','#7d7d85','#9a9aa2','#84848c'];
 function vStoneTex(rx,ry){ return vPixTex(V_STONE_PAL, rx, ry); }
 function vLeafTex(){ return vPixTex(['#3d7a2e','#346a26','#468a36','#2e6220'], 2); }
 function vLogTex(){ return vPixTex(['#6d5230','#5f4728','#7a5c36'], 1, 2); }
-// ===== ギリシャ建築(白大理石) =====
+// ===== エーレア建築(白大理石) =====
 function vMarbleM(){ return new THREE.MeshLambertMaterial({map:vPixTex(['#f2ede2','#e8e2d4','#faf6ec','#dcd6c6'],3)}); }
 function vGreekColumn(px,pz,h,tilt){   // 溝彫り風の柱(基部+柱身+柱頭)。tilt指定で倒壊柱
   const m=vMarbleM(); const g=new THREE.Group();
@@ -8599,8 +8601,8 @@ function villageTick(t){
       }
     }
   }
-  // 野生モンスターの徘徊と接触エンカウント
-  if(VG.roamers){
+  // 野生モンスターの徘徊と接触エンカウント（オーバーレイ表示中は完全停止＝クエスト/地図中に突っ込んでくるバグ修正）
+  if(VG.roamers && !fieldPaused()){
     for(const r of VG.roamers){
       if(!r.grp.parent) continue;
       const dh=Math.hypot(r.x-h.x, r.z-h.z);
@@ -8632,6 +8634,12 @@ function villageTick(t){
 }
 let _encCool=0;
 let _vnCool=0;
+function fieldPaused(){   // フィールドの上に選択画面(クエスト/地図/ガチャ/図鑑等)が出ている間は野生を止める
+  for(const id of ['ovStory','ovGacha','ovCatalog','ovChapters','ovSelect','ovPlace','ovDetail','ovPreview','ovEnd','ovTitle']){
+    const e=document.getElementById(id); if(e && e.style.display && e.style.display!=='none') return true;
+  }
+  return false;
+}
 function villageNear(){
   if(performance.now()<_vnCool) return;
   for(const n of V_NPC){ if(Math.hypot(n.x-VG.hero.x, n.z-VG.hero.z)<=1.6){ _vnCool=performance.now()+1200; villageAct(n.key, n); return; } }
@@ -8704,7 +8712,7 @@ const BOSS_TALK={
     {s:'hero',t:'君を化け物にしてるのは淀みだ。その呪い、僕が解く！'},
     {s:'253',t:'……優しい目。嫌いよ、そういうの。石になってしまえ！'}],
  5:[{s:'254',t:'我ハ神々ヨリ古キ者。小サキ者ヨ、原初ノ力ノ前ニ跪ケ。'},
-    {s:'hero',t:'跪かない。ギリシャで結んだ絆、全部連れて来たから！'},
+    {s:'hero',t:'跪かない。エーレアで結んだ絆、全部連れて来たから！'},
     {s:'254',t:'ナラバ砕ケ。山ヲ砕クヨウニ、オ前タチヲ砕コウ。'}],
  6:[{s:'255',t:'……嵐ハ我、我ハ嵐。置イテイケ、命以外ノ全テヲ。'},
     {s:'hero',t:'隊商のみんなの荷物、返してもらうよ。嵐の真ん中の君ごと鎮める！'},
@@ -8923,7 +8931,7 @@ function vFieldCommon(portalColor, backLabelY){
   if(V_MAP==='snow' && STORY.clear>=12 && STORY.clear<19){
     SNPC.push({img:IMG['75'], name:'隻眼の神王オーディン', x:-5.6, z:5.0, scene:[
       {s:'75', t:'……来たか、境界の子。我が二羽の鴉が、お前の旅をずっと見ておった。'},
-      {s:'75', t:'ギリシャの巨神、エジプトの三神、そして北欧の終末。すべて同じ淀みの子だ。'},
+      {s:'75', t:'エーレアの巨神、サディームの三神、そしてニヴルの終末。すべて同じ淀みの子だ。'},
       {s:'hero', t:'オーディン……なら、一緒に戦ってくれるの？'},
       {s:'75', t:'今はまだだ。我らは「終末の日」に備え、この館を離れられぬ。運命がそう定めておる。'},
       {s:'75', t:'だがその日が来たら——世界樹の根が最も昏く染まる刻、我とトールは必ず駆けつけよう。'},
@@ -9045,7 +9053,7 @@ function vFieldCommon(portalColor, backLabelY){
   const roamN=ghostMode?4:(V_MAP==='forest'?5:7);   // 序盤(森)は少なめ
   for(let i=0;i<roamN;i++){
     let m;
-    if(!ghostMode && V_MAP==='snow' && i===0 && MID[130]) m=MID[130];   // 北欧では必ずフェンリルが徘徊
+    if(!ghostMode && V_MAP==='snow' && i===0 && MID[130]) m=MID[130];   // ニヴルでは必ずフェンリルが徘徊
     else m=rpool[(Math.random()*rpool.length)|0];
     if(!m) break;
     const grp2=new THREE.Group();
@@ -9564,7 +9572,7 @@ function buildForest(){
     const seg=new THREE.Mesh(new THREE.PlaneGeometry(1.9,1.35), new THREE.MeshLambertMaterial({map:vPixTex(['#b99a64','#a5854e','#c7a973','#96773f'],2)}));
     seg.rotation.x=-Math.PI/2;
     seg.position.set(x,0.02+i*0.0004,z); villageGroup.add(seg); }
-  // 森に眠るギリシャの神殿遺跡と英雄像
+  // 森に眠るエーレアの神殿遺跡と英雄像
   vGreekTemple(-7,4.6, 0.5);
   vGreekStatue(5.6,4.8, -0.7);
   vGreekColumn(-6.0,7.2, 1.2);
@@ -9587,11 +9595,11 @@ function buildForest(){
   vFieldCommon(0xc07aff);
 }
 const FIELD_INFO={
- forest:   {name:'🌲 英雄の樹海',     need:0,  hint:'ギリシャの緑。怪物と英雄志願者の国'},
+ forest:   {name:'🌲 英雄の樹海',     need:0,  hint:'エーレアの緑。怪物と英雄志願者の国'},
  port:     {name:'⚓ エーゲの港町',   need:1,  hint:'白い神殿と青い海。迷宮都市への玄関'},
  mountain: {name:'⛰ 神々の山道',     need:3,  hint:'石化の神殿と古戦場へ続く山道'},
- under:    {name:'🏜 王家の冥所',     need:5,  hint:'エジプト。黄金の砂とピラミッドの国'},
- snow:     {name:'🏔 北欧の雪原',     need:12, hint:'終末の予言の国。霜の巨人が眠る'},
+ under:    {name:'🏜 王家の冥所',     need:5,  hint:'サディーム。黄金の砂とピラミッドの国'},
+ snow:     {name:'🏔 ニヴルの雪原',     need:12, hint:'終末の予言の国。霜の巨人が眠る'},
  tree:     {name:'🌳 世界樹ユグドラシル', need:15, hint:'三つの世界を支える大樹の根元'},
  volcano:  {name:'🌋 ムスペルヘイム', need:17, hint:'燃える国。炎の巨人スルトの領地'},
  pyramid:  {name:'🔺 大ピラミッド', need:5, hint:'王家の玄室。黄金の石棺が眠る'},
@@ -9608,13 +9616,13 @@ const FIELD_INFO={
  surt:     {name:'🔥 スルトの玉座', need:17, hint:'炎の巨人が剣を研ぐ溶岩の間'},
 };
 const FIELD_TYPES={forest:['草','風'], port:['水'], mountain:['雷'], snow:['氷'], under:['地','闇'], tree:['草','地'], volcano:['炎','竜'], pyramid:['地','闇'], shrine:['闇','地'], cave:['地','草'], laby:['水','地'], petri:['雷','光'], ironwood:['氷','風'], abyss:['闇','地'], chaos:['竜','闇'], olympus:['光','雷'], valhalla:['光','氷'], suntemple:['光','炎'], surt:['炎','竜']};
-// 各フィールドの野生モンスター(厳選): 序盤ほど種類を絞る。北欧にフェンリル(129,130)。
+// 各フィールドの野生モンスター(厳選): 序盤ほど種類を絞る。ニヴルにフェンリル(129,130)。
 const FIELD_ROAM={
   forest:  [31,32,49,50,178,179],                // 英雄の樹海=草/風(相棒圏・少なめ)
   port:    [16,17,19,20,24,25,110,111],          // エーゲ=水
   mountain:[67,68,70,71,34,35,40,41],            // 神々の山道=雷/地
-  under:   [117,118,85,86,88,89,257],            // 王家の冥所=地/闇(エジプト)
-  snow:    [151,152,22,23,154,155,129,130,261],  // 北欧の雪原=氷+フェンリル(ガストル129/フェンリル130)+ヴァルグル261
+  under:   [117,118,85,86,88,89,257],            // 王家の冥所=地/闇(サディーム)
+  snow:    [151,152,22,23,154,155,129,130,261],  // ニヴルの雪原=氷+フェンリル(ガストル129/フェンリル130)+ヴァルグル261
   tree:    [181,182,183,184,173,174],            // 世界樹=草/地
   volcano: [1,2,4,5,192,193,198,199],            // ムスペル=炎/竜
   pyramid: [117,118,85,86,88,89,255,257],        // 大ピラミッド内部=地/闇
@@ -9753,12 +9761,12 @@ function openWorldMap(){
   const NODE_POS={ village:[0.13,0.09], forest:[0.34,0.15], port:[0.50,0.31], mountain:[0.73,0.15],
     under:[0.83,0.40], snow:[0.18,0.52], tree:[0.31,0.72], volcano:[0.58,0.88] };
   const REGIONS=[
-    {name:'ギリシャ', col:'#3f7a4a', fields:['village','forest','port','mountain'], cx:0.45,cy:0.15,r:0.40},
-    {name:'エジプト', col:'#bfa040', fields:['under'], cx:0.82,cy:0.42,r:0.21},
-    {name:'北欧',     col:'#5a7ab0', fields:['snow','tree'], cx:0.24,cy:0.62,r:0.31},
+    {name:'エーレア', col:'#3f7a4a', fields:['village','forest','port','mountain'], cx:0.45,cy:0.15,r:0.40},
+    {name:'サディーム', col:'#bfa040', fields:['under'], cx:0.82,cy:0.42,r:0.21},
+    {name:'ニヴル',     col:'#5a7ab0', fields:['snow','tree'], cx:0.24,cy:0.62,r:0.31},
     {name:'ムスペル', col:'#a83c28', fields:['volcano'], cx:0.58,cy:0.88,r:0.20},
   ];
-  // 進路(分岐ルート): ギリシャ(森→港→山)→エジプト→ギリシャの海(港)へ戻る→海路で北欧→世界樹→ムスペル
+  // 進路(分岐ルート): エーレア(森→港→山)→サディーム→エーレアの海(港)へ戻る→海路でニヴル→世界樹→ムスペル
   const MAP_EDGES=[ ['village','forest'],['forest','port'],['port','mountain'],['mountain','under'],
     ['under','port','sea'],['port','snow','sea'],['snow','tree'],['tree','volcano'] ];
   const info=(k)=> k==='village'?{name:'🏘 アルケー村',need:0}:FIELD_INFO[k];
@@ -9798,7 +9806,7 @@ function openWorldMap(){
 
   // 進路のパス(分岐): 陸路=金の道 / 海路=青い波線+⛵。解放済み=実線、未解放=霞んだ点線
   const px=(k)=>NODE_POS[k][0]*W, py=(k)=>NODE_POS[k][1]*H;
-  // 先に「ギリシャの海」を港ハブの周りに描く
+  // 先に「エーレアの海」を港ハブの周りに描く
   { const cx=px('port'), cy=py('port');
     const sg=g.createRadialGradient(cx,cy+8,6,cx,cy+8,W*0.30); sg.addColorStop(0,'#5a9ad033'); sg.addColorStop(1,'#5a9ad000');
     g.fillStyle=sg; g.beginPath(); g.arc(cx,cy+8,W*0.30,0,7); g.fill(); }
@@ -9814,7 +9822,7 @@ function openWorldMap(){
     if(sea&&open){ g.font='13px sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText('⛵', mx, my); g.textBaseline='alphabetic'; }
   });
   g.font='italic 10px sans-serif'; g.fillStyle='#2f6fae'; g.globalAlpha=0.75; g.textAlign='center';
-  g.fillText('～ ギリシャの海 ～', 0.34*W, 0.42*H); g.globalAlpha=1;
+  g.fillText('～ エーレアの海 ～', 0.34*W, 0.42*H); g.globalAlpha=1;
   // 神話圏ラベル
   g.font='bold 11px sans-serif'; g.textAlign='center';
   for(const R of REGIONS){ g.fillStyle=R.col; g.globalAlpha=0.85;
@@ -10120,12 +10128,8 @@ function boot(){
   document.getElementById('chGacha').onclick=()=>{ document.getElementById('ovChapters').style.display='none'; openGacha('chapters'); };
   document.getElementById('btSelGacha').onclick=()=>{ document.getElementById('ovSelect').style.display='none'; openGacha('select'); };
   document.getElementById('gaPull1').onclick=()=>doGacha(1);
-  document.getElementById('gaPull10').onclick=()=>doGacha(10);
   { const bg=document.getElementById('gaBuyGem'); if(bg) bg.onclick=openGemShop; }
-  // 初回10連は半額表示
-  (function(){ const b2=document.getElementById('gaPull10');
-    const upd=()=>{ const first=!(STORY.tut&&STORY.tut.g10); b2.innerHTML=first?'10連ガチャ <s style="opacity:.6">💎900</s> → <b>💎450</b>（初回半額！）':'10連ガチャ 💎900'; };
-    upd(); window._updGa10=upd; })();
+  window._updGa10=()=>{};   // 10連は廃止（1回=3体に集約）
   window._go={forest:()=>enterForest(), village:()=>enterVillage(), walk:(x,z)=>villageGoWorld(x,z), port:()=>enterField('port'), mtn:()=>enterField('mountain'), snow:()=>enterField('snow'), under:()=>enterField('under'), pyr:()=>enterField('pyramid'), shr:()=>enterField('shrine'), cave:()=>enterField('cave'), laby:()=>enterField('laby'), petri:()=>enterField('petri'), ironwood:()=>enterField('ironwood'), abyss:()=>enterField('abyss'), chaos:()=>enterField('chaos'), olympus:()=>enterField('olympus'), valhalla:()=>enterField('valhalla'), suntemple:()=>enterField('suntemple'), surt:()=>enterField('surt'), tree:()=>enterField('tree'), volc:()=>enterField('volcano'), enc:()=>{ if(VG&&VG.roamers&&VG.roamers[0]) villageGoWorld(VG.roamers[0].x, VG.roamers[0].z); }, quests:()=>openQuests(), wmap:()=>openWorldMap(), npcs:()=>(VG&&VG.npcs||[]).map(n=>n.def.name), roamers:()=>(VG&&VG.roamers||[]).map(r=>MID[r.mid]?MID[r.mid].name:r.mid), talkNpc:(nm)=>{const n=(VG&&VG.npcs||[]).find(n=>n.def.name.includes(nm)); if(n){villagerTalk(n);return true;} return false;}, rv:(k)=>{const r=rivalOfField(k); return r?r.name:null}, picks:()=>VG&&VG.pickups?VG.pickups.filter(p=>!p.got).map(p=>[+p.x.toFixed(1),+p.z.toFixed(1)]):null, noenc:()=>{ if(VG&&VG.roamers) for(const r of VG.roamers){ r.grp.visible=false; r.x=999; r.z=999; r.tx=999; r.tz=999; } }, boss:()=>{ const n=(VG&&VG.npcs||[]).find(n=>n.def.bossCh!=null); return n?{ch:n.def.bossCh,x:n.x,z:n.z}:null; }, pos:()=>VG&&VG.hero?[+VG.hero.x.toFixed(2),+VG.hero.z.toFixed(2)]:null, vj:()=>({a:vj.active,x:vj.x,y:vj.y})};   // デバッグ遷移
   if(qparam('debug')){ window._DEBUG=true; toast('🔧 デバッグ: 全フィールド・全章を開放中（セーブには保存されない）'); }
   // タイトル画面の背景に村の一枚絵
