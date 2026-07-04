@@ -197,7 +197,8 @@ button.bt.fuse{background:#a24ec0}
 <div class="overlay" id="ovGacha" style="display:none;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;background:#12091a">
   <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #3a2a4a;flex:0 0 auto">
     <b style="font-size:17px">🎰 モンスター召喚の祭壇</b><span id="gemCount" style="font-size:14px;color:#8ee0ff;font-weight:700"></span>
-    <button class="bt" id="gaClose" style="margin-left:auto;padding:8px 14px">× 閉じる</button>
+    <button class="bt go" id="gaBuyGem" style="margin-left:auto;padding:8px 12px;background:#c8912e;font-size:12px">💎 ジェム購入</button>
+    <button class="bt" id="gaClose" style="padding:8px 14px">× 閉じる</button>
   </div>
   <div style="flex:1 1 auto;overflow-y:auto;padding:14px">
     <p class="muted" style="margin:0 0 4px">ジェムを祭壇に捧げるとモンスターが仲間になる（＝ガチャ）。💎ジェムは<b>ストーリーの章クリア</b>や<b>対戦勝利</b>で貯まる。ダブりは自動でジェムに変換（N=20/R=50/SR=200/SSR=400）。</p>
@@ -5099,6 +5100,89 @@ function renderTrade(){
     };
   });
 }
+// ======================= 💎ジェムショップ(課金・購入コード方式) =======================
+const GEM_PACKS=[
+  {gems:120,  bonus:0,   yen:160,  url:''},
+  {gems:400,  bonus:40,  yen:490,  url:''},
+  {gems:900,  bonus:120, yen:980,  url:'', pop:true},
+  {gems:2000, bonus:400, yen:1960, url:''},
+  {gems:3200, bonus:900, yen:2940, url:'', best:true},
+];
+function openGemShop(){
+  const ov=document.getElementById('ovStory');
+  document.getElementById('stTitle').textContent='💎 ジェムショップ';
+  document.getElementById('stFace').style.display='none';
+  document.getElementById('stName').textContent='';
+  const logged = STORY.cloud&&STORY.cloud.id;
+  const rows=GEM_PACKS.map((p,i)=>{
+    const total=p.gems+p.bonus;
+    const badge=p.best?'<span style="background:#e0492e;color:#fff;font-size:9px;font-weight:800;border-radius:5px;padding:1px 5px">お得</span>':p.pop?'<span style="background:#2e8ce0;color:#fff;font-size:9px;font-weight:800;border-radius:5px;padding:1px 5px">人気</span>':'';
+    return `<div style="display:flex;align-items:center;gap:8px;background:#141a28;border:1px solid ${p.best?'#e0a040':'#2c3346'};border-radius:10px;padding:9px 11px;margin:5px 0">
+      <div style="font-size:22px">💎</div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:800">${total.toLocaleString()} ジェム ${badge}</div>
+      <div class="muted" style="font-size:10px">${p.bonus?`基本${p.gems}＋ボーナス${p.bonus}`:'基本パック'}</div></div>
+      <button class="bt go" data-pack="${i}" style="padding:8px 12px;font-size:13px;background:#c8912e">¥${p.yen.toLocaleString()}</button>
+    </div>`;
+  }).join('');
+  const el=document.getElementById('stLine'); el.style.fontStyle='normal';
+  el.innerHTML=`<div style="max-height:56vh;overflow-y:auto">
+    <div class="muted" style="font-size:11px;margin-bottom:6px">ジェムでモンスターを召喚(ガチャ)できます。${logged?'購入分は今のクラウドID残高に加算されます。':'⚠ 先に「☁データ引き継ぎ」でIDを発行しておくと、購入分が確実に保存されます。'}</div>
+    ${rows}
+    <div style="font-weight:700;font-size:13px;margin:12px 0 4px;color:#ffd86b">🎟 購入コードを引き換え</div>
+    <div class="muted" style="font-size:10px;margin-bottom:4px">決済後に発行されるコードを入力するとジェムが付与されます。</div>
+    <div style="display:flex;gap:6px">
+      <input id="gsCode" placeholder="XXXX-XXXX-XXXX" style="flex:1;background:#0d1220;color:#fff;border:1px solid #2c3346;border-radius:8px;padding:9px;font-size:13px">
+      <button class="bt go" id="gsRedeem" style="padding:9px 14px;font-size:13px">引き換え</button>
+    </div>
+    <div style="margin-top:12px;text-align:center"><a id="gsLegal" style="color:#8ab4ff;font-size:11px;text-decoration:underline;cursor:pointer">特定商取引法・資金決済法に基づく表記</a></div>
+  </div>`;
+  document.getElementById('stPage').textContent=`💎${STORY.gems}`;
+  document.getElementById('stNext').style.display='none';
+  document.getElementById('stSkip').textContent='× とじる';
+  const close=()=>{ ov.style.display='none'; document.getElementById('stNext').style.display=''; document.getElementById('stSkip').textContent='⏩ スキップ'; };
+  document.getElementById('stSkip').onclick=close;
+  el.querySelectorAll('button[data-pack]').forEach(b=>{ b.onclick=()=>{ const p=GEM_PACKS[+b.dataset.pack];
+    if(p.url){ open(p.url,'_blank'); toast('決済ページを開きました。購入後のコードを引き換えてください'); }
+    else toast('🛠 決済リンクは準備中です（Stripe設定後に有効化）。当面は購入コードでの付与に対応'); }; });
+  document.getElementById('gsRedeem').onclick=redeemGemCode;
+  document.getElementById('gsLegal').onclick=openLegal;
+  ov.style.display='flex';
+}
+async function redeemGemCode(){
+  const code=(document.getElementById('gsCode').value||'').trim();
+  if(!code){ toast('コードを入力してください'); return; }
+  const b=document.getElementById('gsRedeem'); b.disabled=true; b.textContent='…';
+  try{
+    const body={code}; if(STORY.cloud&&STORY.cloud.id){ body.id=STORY.cloud.id; body.pin=STORY.cloud.pin; }
+    const d=await cloudReq('POST','/api/shop/redeem',body);
+    STORY.gems=(STORY.gems||0)+d.gems; saveStory();
+    if(STORY.cloud&&STORY.cloud.id) cloudPush(true);
+    seJingle('gem');
+    toast(`✅ 💎+${d.gems} 付与！（所持💎${STORY.gems}${d.cloudAdded?'・クラウド保存済み':''}）`);
+    document.getElementById('stPage').textContent=`💎${STORY.gems}`;
+    updateGemUI&&updateGemUI(); document.getElementById('gsCode').value='';
+  }catch(e){ toast('引き換え失敗: '+e.message); }
+  b.disabled=false; b.textContent='引き換え';
+}
+function openLegal(){
+  const ov=document.getElementById('ovStory');
+  document.getElementById('stTitle').textContent='📄 特定商取引法・資金決済法に基づく表記';
+  const el=document.getElementById('stLine'); el.style.fontStyle='normal';
+  el.innerHTML=`<div style="max-height:60vh;overflow-y:auto;font-size:11px;line-height:1.7;color:#cdd6e6">
+    <b style="color:#ffd86b">■ 特定商取引法に基づく表記</b><br>
+    ・販売事業者: （事業者名を記載）<br>・運営責任者: （氏名）<br>・所在地: （請求があれば遅滞なく開示）<br>・連絡先: （メール）<br>
+    ・販売価格: 各ジェムパックに表示（税込）<br>・支払方法: クレジットカード等（Stripe）<br>・引渡時期: 決済完了後、購入コードの引き換えで即時付与<br>
+    ・返品/キャンセル: デジタル商品の性質上、付与後の返金は不可<br><br>
+    <b style="color:#ffd86b">■ 資金決済法に基づく表記（前払式支払手段）</b><br>
+    ・名称: ジェム（ゲーム内通貨）<br>・使用範囲: 本アプリ内のモンスター召喚等<br>・有効期限: 最終利用日から一定期間（規約に定める）<br>
+    ・未使用残高の払い戻し: 原則不可（法令に定める場合を除く）<br>・利用上の注意: 換金・第三者への譲渡はできません<br><br>
+    <span class="muted">※ 上記は雛形です。実際の課金開始前に事業者情報を確定してください。</span>
+    </div>`;
+  document.getElementById('stPage').textContent='';
+  document.getElementById('stSkip').textContent='← もどる';
+  document.getElementById('stSkip').onclick=()=>openGemShop();
+  ov.style.display='flex';
+}
 function openGacha(from){ gaFrom=from||'title';
   GFIELD=(from==='hud'&&V_MAP!=='village')?V_MAP:null;
   document.getElementById('gaResult').innerHTML=''; updateGemUI(); renderPacks(); renderTrade(); document.getElementById('ovGacha').style.display='flex'; }
@@ -9622,6 +9706,7 @@ function boot(){
   document.getElementById('btSelGacha').onclick=()=>{ document.getElementById('ovSelect').style.display='none'; openGacha('select'); };
   document.getElementById('gaPull1').onclick=()=>doGacha(1);
   document.getElementById('gaPull10').onclick=()=>doGacha(10);
+  { const bg=document.getElementById('gaBuyGem'); if(bg) bg.onclick=openGemShop; }
   // 初回10連は半額表示
   (function(){ const b2=document.getElementById('gaPull10');
     const upd=()=>{ const first=!(STORY.tut&&STORY.tut.g10); b2.innerHTML=first?'10連ガチャ <s style="opacity:.6">💎900</s> → <b>💎450</b>（初回半額！）':'10連ガチャ 💎900'; };

@@ -145,6 +145,89 @@ async function handleCloud(req, res, url) {
 }
 
 // ---- HTTP（ヘルスチェック + クラウドセーブAPI） ----
+// ============================================================
+// ジェムショップ: 購入コード方式(Stripe Payment Links対応)
+//   POST /api/shop/gen    {adminKey, gems, count}          → コードをcount枚発行(管理用)
+//   POST /api/shop/redeem {code, id?, pin?}                → コードを引き換え→gems付与(単回)
+// コードは saves/codes.json (GitHubプライベートrepo) に永続化。メモリはキャッシュ。
+// ADMIN_KEY 未設定なら発行APIは無効(引き換えは可)。
+// ============================================================
+const ADMIN_KEY = process.env.ADMIN_KEY || "";
+let codesCache = null;  // {code: {gems, used, usedAt}}
+async function ghLoadCodes() {
+  if (!SAVES_TOKEN || !SAVES_REPO) return {};
+  const r = await fetch(`${GH_API}/repos/${SAVES_REPO}/contents/shop/codes.json`, { headers: ghHeaders });
+  if (r.status === 404) return { __sha: null, codes: {} };
+  if (!r.ok) throw new Error("gh codes get " + r.status);
+  const d = await r.json();
+  return { __sha: d.sha, codes: JSON.parse(Buffer.from(d.content, "base64").toString("utf8")) };
+}
+async function ghStoreCodes(codes, sha) {
+  if (!SAVES_TOKEN || !SAVES_REPO) return null;
+  const body = { message: "shop codes", content: Buffer.from(JSON.stringify(codes)).toString("base64") };
+  if (sha) body.sha = sha;
+  const r = await fetch(`${GH_API}/repos/${SAVES_REPO}/contents/shop/codes.json`, { method: "PUT", headers: { ...ghHeaders, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error("gh codes put " + r.status);
+  const d = await r.json();
+  return d.content && d.content.sha;
+}
+async function loadCodes() {
+  if (codesCache) return codesCache;
+  const g = await ghLoadCodes().catch(() => ({ __sha: null, codes: {} }));
+  codesCache = { sha: g.__sha, codes: g.codes || {} };
+  return codesCache;
+}
+const CODE_CH = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function genShopCode() {
+  let s = "";
+  for (let i = 0; i < 12; i++) s += CODE_CH[crypto.randomInt(CODE_CH.length)];
+  return s.slice(0, 4) + "-" + s.slice(4, 8) + "-" + s.slice(8);
+}
+function normCode(raw) { return String(raw || "").toUpperCase().replace(/[^A-Z0-9]/g, "").replace(/^(.{4})(.{4})(.{4})$/, "$1-$2-$3"); }
+
+async function handleShop(req, res, url) {
+  const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "?").split(",")[0].trim();
+  if (rateLimited(ip)) return sendJson(res, 429, { error: "しばらく待ってから再試行してください" });
+
+  // 管理: コード発行
+  if (req.method === "POST" && url.pathname === "/api/shop/gen") {
+    let body; try { body = await readBody(req); } catch (e) { return sendJson(res, 400, { error: e.message }); }
+    if (!ADMIN_KEY || body.adminKey !== ADMIN_KEY) return sendJson(res, 403, { error: "管理キーが違います" });
+    const gems = Math.max(1, Math.min(100000, parseInt(body.gems) || 0));
+    const count = Math.max(1, Math.min(200, parseInt(body.count) || 1));
+    const store = await loadCodes();
+    const issued = [];
+    for (let i = 0; i < count; i++) { let c = genShopCode(); while (store.codes[c]) c = genShopCode(); store.codes[c] = { gems, used: false }; issued.push(c); }
+    try { store.sha = await ghStoreCodes(store.codes, store.sha); } catch (e) { console.log("codes store fail", e.message); }
+    return sendJson(res, 200, { issued, gems, count });
+  }
+
+  // 引き換え
+  if (req.method === "POST" && url.pathname === "/api/shop/redeem") {
+    let body; try { body = await readBody(req); } catch (e) { return sendJson(res, 400, { error: e.message }); }
+    const code = normCode(body.code);
+    const store = await loadCodes();
+    const rec = store.codes[code];
+    if (!rec) return sendJson(res, 404, { error: "コードが見つかりません" });
+    if (rec.used) return sendJson(res, 409, { error: "このコードは使用済みです" });
+    rec.used = true; rec.usedAt = Date.now();
+    // クラウドセーブに直接加算(id+pinがあれば)
+    let cloudAdded = false, cloudTotal = null;
+    if (body.id && body.pin) {
+      const id = normId(body.id);
+      const srec = await loadRec(id);
+      if (srec && pinHash(id, body.pin) === srec.pinHash && srec.data) {
+        srec.data.gems = (srec.data.gems || 0) + rec.gems;
+        try { srec.sha = await ghStore(id, { pinHash: srec.pinHash, data: srec.data }, srec.sha); cloudAdded = true; cloudTotal = srec.data.gems; } catch (e) { console.log("cloud add fail", e.message); }
+      }
+    }
+    try { store.sha = await ghStoreCodes(store.codes, store.sha); } catch (e) { console.log("codes update fail", e.message); }
+    return sendJson(res, 200, { gems: rec.gems, cloudAdded, cloudTotal });
+  }
+
+  return sendJson(res, 404, { error: "not found" });
+}
+
 const httpServer = http.createServer((req, res) => {
   const url = new URL(req.url, "http://x");
   if (req.method === "OPTIONS") {
@@ -159,6 +242,10 @@ const httpServer = http.createServer((req, res) => {
   }
   if (url.pathname.startsWith("/api/cloud")) {
     handleCloud(req, res, url).catch((e) => { console.log("cloud error", e); sendJson(res, 500, { error: "server error" }); });
+    return;
+  }
+  if (url.pathname.startsWith("/api/shop")) {
+    handleShop(req, res, url).catch((e) => { console.log("shop error", e); sendJson(res, 500, { error: "server error" }); });
     return;
   }
   if (url.pathname === "/health" || url.pathname === "/") {
