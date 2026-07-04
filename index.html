@@ -5602,11 +5602,16 @@ function moveUnit(u, r, c){
   const hi=(state.items||[]).findIndex(it=>it.r===r&&it.c===c);
   if(hi>=0){
     state.items.splice(hi,1);
-    const heal=Math.round(u.maxhp*HEAL_RATIO), before=u.hp;
-    u.hp=Math.min(u.maxhp, u.hp+heal); const got=u.hp-before;
     if(structGroup) buildStructures();
-    healFx(r,c); floatText(r,c,`+${got}`, '#5fe070');
-    toast(u.owner===0?`💚回復アイテム！ HP+${got}`:'CPUが回復アイテム取得');
+    if(u.owner===0 && !ONLINE){   // プレイヤー: 回復薬を1つ拾う(その場では回復せず、コマンドで好きな時に使える)
+      STORY.items=STORY.items||{}; STORY.items.heal=(STORY.items.heal||0)+1; saveStory();
+      healFx(r,c); floatText(r,c,'🧪+1', '#7ee08a');
+      toast(`🧪回復薬を拾った！（所持×${STORY.items.heal}・味方を選んでコマンドで使用）`); updateUI();
+    } else {   // CPU/オンラインはアイテムを持てないので従来通り即回復
+      const heal=Math.round(u.maxhp*HEAL_RATIO), before=u.hp; u.hp=Math.min(u.maxhp, u.hp+heal); const got=u.hp-before;
+      healFx(r,c); floatText(r,c,`+${got}`, '#5fe070');
+      toast(u.owner===0?`💚回復！ HP+${got}`:'CPUが回復');
+    }
   }
   // 位置進化: 敵home行から距離≤1
   if(Math.abs(r-HOME[1-u.owner])<=1) evolveUnit(u, true);
@@ -5767,8 +5772,14 @@ function aiOneUnit(u){
   if(fuse.length){ moveUnit(u,fuse[0][0],fuse[0][1]); return; }   // 融合は気不要
   if(!move.length){ return; }
   const cc=CASTLE[0];
-  let target=null,bestF=1e9;
-  for(const f of state.flags){ if(f.owner!==me){ for(const [r,c] of move){ if(r===f.r&&c===f.c){ const d=Math.abs(r-f.r)+Math.abs(c-f.c); if(d<bestF){bestF=d;target=[r,c];}}}}}
+  let target=null;
+  // ①未取得の旗を最優先: 最寄りの旗へ近づく(踏めれば取得。気=進化の燃料なのでまず取りに行く)
+  if(state.flags.length){
+    let nf=null,nd=1e9;
+    for(const f of state.flags){ const d=Math.abs(u.r-f.r)+Math.abs(u.c-f.c); if(d<nd){nd=d;nf=f;} }
+    if(nf){ let best=1e9; for(const [r,c] of move){ const d=Math.abs(r-nf.r)+Math.abs(c-nf.c); if(d<best){best=d;target=[r,c];} } }
+  }
+  // ②旗がもう無ければ敵城へ前進
   if(!target){ let best=1e9; for(const [r,c] of move){ const d=Math.abs(r-cc.r)+Math.abs(c-cc.c); if(d<best){best=d;target=[r,c];} } }
   if(target){
     moveUnit(u, target[0], target[1]);
@@ -6696,8 +6707,8 @@ function updateUI(){
       ac.appendChild(tip);
       const atkOk = canAttack(sel) && (selAtks.length || (castleAdjacent(sel)&&canAttack(sel)));
       ac.appendChild(mkbt(`⚔️ 攻撃${sel.acted?'(済)':''}`,'go', !!atkOk, ()=>setMode('attack')));
-      // アイテム（ストーリー/フリーのみ・オンライン不可）
-      if(CAMP.on && !ONLINE){
+      // アイテム（オンライン以外は表示。盤上で拾った回復薬も使える）
+      if(!ONLINE){
         if((STORY.items.heal||0)>0 && sel.hp<sel.maxhp)
           ac.appendChild(mkbt(`🧪回復薬×${STORY.items.heal}`,'evo', !sel.acted, ()=>{ pushUndo();
             const h2=Math.min(sel.maxhp-sel.hp, Math.round(sel.maxhp*0.5)); sel.hp+=h2; STORY.items.heal--; saveStory();
@@ -6737,7 +6748,7 @@ function updateUI(){
     sd.innerHTML='<span class="muted">自分のモンスター（🔵）をタップ → 赤マス=移動・<b>敵や城を直接タップ=攻撃</b>・ボタンで進化</span>';
   }
   // 下段：待った・降参・ターン終了
-  if(CAMP.on && !ONLINE && (STORY.items.ki||0)>0)
+  if(!ONLINE && (STORY.items.ki||0)>0)
     ac.appendChild(mkbt(`💠気の水晶×${STORY.items.ki}（気+3）`,'evo', state.cur===0, ()=>{ pushUndo();
       STORY.items.ki--; saveStory(); state.energy[0]+=3; toast('💠気の水晶！ 気+3'); updateUI(); }));
   if(!ONLINE) ac.appendChild(mkbt('↶ 待った','', state.cur===0 && undoStack.length>0, doUndo));
