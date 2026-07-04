@@ -6198,16 +6198,22 @@ function addZone(row,col){
 }
 function buildStructures(){
   while(structGroup.children.length) structGroup.remove(structGroup.children[0]);
-  // 城
+  // 城（高い塔＝タップしやすい大きな的。塔全体がその城マスのタップ判定になる）
   for(const o of [0,1]){
-    const cc=CASTLE[o], w=cell2world(cc.r,cc.c);
+    const cc=CASTLE[o], w=cell2world(cc.r,cc.c), h=cellH(cc.r,cc.c);
     const col = o===0?0x3a63b0:0xb03a3a;
-    const base=new THREE.Mesh(new THREE.BoxGeometry(0.92,0.5,0.92),new THREE.MeshStandardMaterial({color:col}));
-    base.position.set(w.x,0.25,w.z); structGroup.add(base);
-    const top=new THREE.Mesh(new THREE.BoxGeometry(0.62,0.4,0.62),new THREE.MeshStandardMaterial({color:col}));
-    top.position.set(w.x,0.7,w.z); structGroup.add(top);
-    const flagp=new THREE.Mesh(new THREE.ConeGeometry(0.16,0.32,4),new THREE.MeshStandardMaterial({color:0xffe089}));
-    flagp.position.set(w.x,1.06,w.z); structGroup.add(flagp);
+    const stone=new THREE.MeshStandardMaterial({color:col,roughness:0.82});
+    const gold=new THREE.MeshStandardMaterial({color:0xffe089});
+    const cg=new THREE.Group(); cg.position.set(w.x,h,w.z);
+    const base=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.9,0.9),stone); base.position.y=0.45; cg.add(base);
+    const mid=new THREE.Mesh(new THREE.BoxGeometry(0.66,0.62,0.66),stone); mid.position.y=1.16; cg.add(mid);
+    for(const dx of [-0.24,0,0.24]) for(const dz of [-0.24,0.24]){   // 城壁の凹凸(バトルメント)
+      const b=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.24,0.15),stone); b.position.set(dx,1.56,dz); cg.add(b); }
+    const crown=new THREE.Mesh(new THREE.ConeGeometry(0.19,0.32,4),gold); crown.position.y=1.78; crown.rotation.y=Math.PI/4; cg.add(crown);
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.55,6),new THREE.MeshStandardMaterial({color:0xeeeeee})); pole.position.y=2.05; cg.add(pole);
+    const flag=new THREE.Mesh(new THREE.PlaneGeometry(0.42,0.27),new THREE.MeshBasicMaterial({color:col,side:THREE.DoubleSide})); flag.position.set(0.23,2.16,0); cg.add(flag);
+    cg.traverse(m=>{ if(m.isMesh) m.userData.castleCell={r:cc.r,c:cc.c}; });   // 塔のどこを触ってもこの城マス
+    structGroup.add(cg);
   }
   // フラッグ
   for(const f of state.flags){
@@ -6329,10 +6335,14 @@ function syncUnits(){
     s.aura.material.opacity = lv===3?0.9:0;                  // Lv3だけ金オーラ
     // ラベル更新
     drawLabel(s.lcv.getContext('2d'),u,mon(u)); s.ltex.needsUpdate=true;
-    // 選択/行動済みの見た目
+    // 選択/行動済みの見た目（行動を終えた駒は薄く＆裏レイヤーへ＝重なっても手前の駒を選びやすい）
     const seld = (sel && sel.uid===u.uid);
-    s.ring.material.opacity = seld?1:0.95;
-    s.sp.material.opacity = (u.owner===0 && u.acted)?0.5:1;   // 行動終了は半透明
+    const done = (u.owner===0 && u.moved && u.acted);
+    s.ring.material.opacity = seld?1:(done?0.35:0.95);
+    if(s.disc) s.disc.material.opacity = done?0.12:0.3;
+    s.sp.material.opacity = done?0.36 : ((u.owner===0 && u.acted)?0.62 : 1);
+    const ro = seld?6 : (done? -4 : 0);
+    s.sp.renderOrder=ro; if(s.lsp){ s.lsp.renderOrder=ro+1; s.lsp.material.opacity=done?0.5:1; } if(s.glow) s.glow.renderOrder=ro-1;
   }
 }
 function markSprite(uid,kind){ /* 即時消去はsyncで処理 */ }
@@ -6621,18 +6631,27 @@ function onPick(ev){
   // 本体スプライトは透明ピクセルを素通し（自分の絵の余白が1マス奥のタップを吸う問題の解消）
   let spriteCell=null;
   const us=raycaster.intersectObjects(unitGroup.children,true);
+  const hitU=[];
   for(const hit of us){
     let uid=null;
     for(const k in sprites){ if(sprites[k].sp===hit.object){ uid=+k; break; } }   // 対象=本体のみ(ラベル・光輪は素通し)
     if(uid==null || !state.units[uid]) continue;
     if(sel && uid===sel.uid) continue;                                            // 選択中の自分も素通し(背後のマスを選べる)
     if(hit.uv && spriteAlphaAt(state.units[uid].mid, sprites[uid].mat.map, hit.uv)<0.25) continue;   // 透明画素も素通し
-    spriteCell=[state.units[uid].r,state.units[uid].c]; break;
+    hitU.push(state.units[uid]);
+  }
+  if(hitU.length){
+    const isDone=u=>u.owner===0 && u.moved && u.acted;   // 行動を終えた自軍は最後回し=後ろのアクティブな駒を優先選択
+    const act=hitU.find(u=>!isDone(u)); const chosen=act||hitU[0];
+    spriteCell=[chosen.r,chosen.c];
   }
   let tileCell=null;
   const ts=raycaster.intersectObjects(tileGroup.children,false);
   for(const it of ts){ const ud=it.object.userData; if(ud && 'r' in ud){ tileCell=[ud.r,ud.c]; break; } }
-  handlePick(spriteCell, tileCell);
+  let castleCell=null;   // 城の塔をタップ→その城マス(攻城しやすく)
+  { const cs=raycaster.intersectObjects(structGroup.children,true);
+    for(const hit of cs){ const cc=hit.object.userData&&hit.object.userData.castleCell; if(cc){ castleCell=[cc.r,cc.c]; break; } } }
+  handlePick(spriteCell, castleCell||tileCell);
 }
 const _alphaCache={};
 function spriteAlphaAt(mid, map, uv){
