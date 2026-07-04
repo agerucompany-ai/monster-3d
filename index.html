@@ -9598,14 +9598,17 @@ function openFieldSelect(){
 function openWorldMap(){
   const eff=window._DEBUG?99:STORY.clear;
   // ノード配置(canvasに対する割合)と神話圏
-  const NODE_POS={ village:[0.16,0.085], forest:[0.44,0.135], port:[0.72,0.205], mountain:[0.77,0.375],
-    under:[0.47,0.470], snow:[0.20,0.600], tree:[0.47,0.720], volcano:[0.74,0.855] };
+  const NODE_POS={ village:[0.13,0.09], forest:[0.34,0.15], port:[0.50,0.31], mountain:[0.73,0.15],
+    under:[0.83,0.40], snow:[0.18,0.52], tree:[0.31,0.72], volcano:[0.58,0.88] };
   const REGIONS=[
-    {name:'ギリシャ', col:'#3f7a4a', fields:['village','forest','port','mountain'], cx:0.52,cy:0.20,r:0.42},
-    {name:'エジプト', col:'#bfa040', fields:['under'], cx:0.47,cy:0.47,r:0.24},
-    {name:'北欧',     col:'#5a7ab0', fields:['snow','tree'], cx:0.33,cy:0.66,r:0.34},
-    {name:'ムスペル', col:'#a83c28', fields:['volcano'], cx:0.74,cy:0.855,r:0.22},
+    {name:'ギリシャ', col:'#3f7a4a', fields:['village','forest','port','mountain'], cx:0.45,cy:0.15,r:0.40},
+    {name:'エジプト', col:'#bfa040', fields:['under'], cx:0.82,cy:0.42,r:0.21},
+    {name:'北欧',     col:'#5a7ab0', fields:['snow','tree'], cx:0.24,cy:0.62,r:0.31},
+    {name:'ムスペル', col:'#a83c28', fields:['volcano'], cx:0.58,cy:0.88,r:0.20},
   ];
+  // 進路(分岐ルート): ギリシャ(森→港→山)→エジプト→ギリシャの海(港)へ戻る→海路で北欧→世界樹→ムスペル
+  const MAP_EDGES=[ ['village','forest'],['forest','port'],['port','mountain'],['mountain','under'],
+    ['under','port','sea'],['port','snow','sea'],['snow','tree'],['tree','volcano'] ];
   const info=(k)=> k==='village'?{name:'🏘 アルケー村',need:0}:FIELD_INFO[k];
   const unlockedOf=(k)=> info(k).need<=eff+1;
 
@@ -9641,16 +9644,25 @@ function openWorldMap(){
   g.strokeStyle='#5a86a8'; g.lineWidth=3; g.globalAlpha=0.5;
   g.beginPath(); g.roundRect(4,4,W-8,H-8,12); g.stroke(); g.globalAlpha=1;
 
-  // チェーンのパス(解放済みは金の実線、未解放は霞んだ点線)
+  // 進路のパス(分岐): 陸路=金の道 / 海路=青い波線+⛵。解放済み=実線、未解放=霞んだ点線
   const px=(k)=>NODE_POS[k][0]*W, py=(k)=>NODE_POS[k][1]*H;
-  for(let i=0;i<WORLD_CHAIN.length-1;i++){ const a=WORLD_CHAIN[i], b=WORLD_CHAIN[i+1];
+  // 先に「ギリシャの海」を港ハブの周りに描く
+  { const cx=px('port'), cy=py('port');
+    const sg=g.createRadialGradient(cx,cy+8,6,cx,cy+8,W*0.30); sg.addColorStop(0,'#5a9ad033'); sg.addColorStop(1,'#5a9ad000');
+    g.fillStyle=sg; g.beginPath(); g.arc(cx,cy+8,W*0.30,0,7); g.fill(); }
+  MAP_EDGES.forEach((e,i)=>{ const a=e[0], b=e[1], sea=e[2]==='sea';
     const open=unlockedOf(a)&&unlockedOf(b);
-    g.beginPath(); g.moveTo(px(a),py(a));
-    const mx=(px(a)+px(b))/2, my=(py(a)+py(b))/2 + (i%2?18:-18);
-    g.quadraticCurveTo(mx,my,px(b),py(b));
-    g.lineWidth=open?4:2.5; g.strokeStyle=open?'#c8912e':'#9a8a6a'; g.setLineDash(open?[]:[5,6]);
-    g.globalAlpha=open?0.9:0.5; g.stroke(); g.setLineDash([]); g.globalAlpha=1;
-  }
+    const ax=px(a),ay=py(a),bx=px(b),by=py(b), dx=bx-ax, dy=by-ay, len=Math.hypot(dx,dy)||1;
+    const off=(sea?26:15)*((i%2)?1:-1), mx=(ax+bx)/2 - dy/len*off, my=(ay+by)/2 + dx/len*off;
+    g.beginPath(); g.moveTo(ax,ay); g.quadraticCurveTo(mx,my,bx,by);
+    g.lineWidth=open?(sea?3.5:4):2.4;
+    g.strokeStyle=open?(sea?'#3f7ec0':'#c8912e'):'#9a8a6a';
+    g.setLineDash(open?(sea?[7,5]:[]):[5,6]); g.globalAlpha=open?0.9:0.45; g.stroke();
+    g.setLineDash([]); g.globalAlpha=1;
+    if(sea&&open){ g.font='13px sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText('⛵', mx, my); g.textBaseline='alphabetic'; }
+  });
+  g.font='italic 10px sans-serif'; g.fillStyle='#2f6fae'; g.globalAlpha=0.75; g.textAlign='center';
+  g.fillText('～ ギリシャの海 ～', 0.34*W, 0.42*H); g.globalAlpha=1;
   // 神話圏ラベル
   g.font='bold 11px sans-serif'; g.textAlign='center';
   for(const R of REGIONS){ g.fillStyle=R.col; g.globalAlpha=0.85;
