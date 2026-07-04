@@ -9207,44 +9207,106 @@ function openFieldSelect(){
 // ======================= 世界地図（陸続きチェーンの俯瞰 + ファストトラベル） =======================
 function openWorldMap(){
   const eff=window._DEBUG?99:STORY.clear;
-  const rows=WORLD_CHAIN.map((k,i)=>{
-    const inf=k==='village'?{name:'🏘 アルケー村',need:0}:FIELD_INFO[k];
-    const unlocked=inf.need<=eff+1;
-    const here=V_MAP===k;
-    let extra='';
-    if(k!=='village'){
-      const bc=fieldBossCh(k);
-      if(unlocked&&bc!=null){ const be=CAMPAIGN[bc].enemy.find(e=>e.boss); if(be) extra=`<span style="color:#ff9a8a;font-size:11px">👹 ${MID[be.mid].name}が待つ</span>`; }
-      else if(unlocked){ const dc=fieldBossDone(k); if(dc!=null){ const be=CAMPAIGN[dc].enemy.find(e=>e.boss); if(be) extra=`<span style="color:#7ee08a;font-size:11px">🤝 ${MID[be.mid].name}</span>`; } }
-      else extra=`<span class="muted" style="font-size:11px">物語を進めると道が開く</span>`;
-    }
-    if(k!=='village'&&unlocked){ const rv=rivalOfField(k);
-      if(rv){ const beat=qState()['rw_'+rv.key];
-        extra+=`　<span style="color:${beat?'#7ee08a':'#8ab4ff'};font-size:11px">${beat?'✅':'⚔'} ${rv.name}</span>`; } }
-    const conn=i<WORLD_CHAIN.length-1?`<div style="margin-left:26px;color:#3a4566;font-size:11px;line-height:1">┃</div>`:'';
-    return `<div data-map="${k}" style="display:flex;align-items:center;gap:8px;background:${here?'#1c2a44':'#141a28'};border:1px solid ${here?'#5a8adc':unlocked?'#2c3346':'#20263a'};border-radius:9px;padding:8px 12px;${unlocked?'cursor:pointer':'opacity:.42'}">
-      <span style="font-size:16px">${here?'📍':unlocked?'▶':'🔒'}</span>
-      <div style="flex:1"><b style="font-size:13px">${inf.name}</b>　${extra}</div></div>${conn}`;
-  }).join('');
+  // ノード配置(canvasに対する割合)と神話圏
+  const NODE_POS={ village:[0.16,0.085], forest:[0.44,0.135], port:[0.72,0.205], mountain:[0.77,0.375],
+    under:[0.47,0.470], snow:[0.20,0.600], tree:[0.47,0.720], volcano:[0.74,0.855] };
+  const REGIONS=[
+    {name:'ギリシャ', col:'#3f7a4a', fields:['village','forest','port','mountain'], cx:0.52,cy:0.20,r:0.42},
+    {name:'エジプト', col:'#bfa040', fields:['under'], cx:0.47,cy:0.47,r:0.24},
+    {name:'北欧',     col:'#5a7ab0', fields:['snow','tree'], cx:0.33,cy:0.66,r:0.34},
+    {name:'ムスペル', col:'#a83c28', fields:['volcano'], cx:0.74,cy:0.855,r:0.22},
+  ];
+  const info=(k)=> k==='village'?{name:'🏘 アルケー村',need:0}:FIELD_INFO[k];
+  const unlockedOf=(k)=> info(k).need<=eff+1;
+
   const ov=document.getElementById('ovStory');
-  document.getElementById('stTitle').textContent='🗺 世界地図 — 大陸はひとつながり';
+  document.getElementById('stTitle').textContent='🗺 世界地図';
   document.getElementById('stFace').style.display='none';
   document.getElementById('stName').textContent='';
   const el=document.getElementById('stLine'); el.style.fontStyle='normal';
-  el.innerHTML=`<div style="max-height:56vh;overflow-y:auto">${rows}</div><div class="muted" style="font-size:10px;margin-top:6px">行き先をタップで移動（ファストトラベル）。歩いて門をくぐっても行き来できる</div>`;
+  const W=Math.min(360, Math.floor((innerWidth||360)*0.82)), H=Math.round(W*1.42);
+  el.innerHTML=`<div id="wmWrap" style="position:relative;width:${W}px;height:${H}px;margin:0 auto">
+    <canvas id="wmCanvas" width="${W*2}" height="${H*2}" style="width:${W}px;height:${H}px;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.5)"></canvas>
+    </div><div class="muted" style="font-size:10px;margin-top:6px;text-align:center">拠点をタップで移動（ファストトラベル）。歩いて門をくぐっても行き来できる</div>`;
   document.getElementById('stPage').textContent='';
   document.getElementById('stNext').style.display='none';
   document.getElementById('stSkip').textContent='× とじる';
   const close=()=>{ ov.style.display='none'; document.getElementById('stNext').style.display=''; document.getElementById('stSkip').textContent='⏩ スキップ'; };
   document.getElementById('stSkip').onclick=close;
-  el.querySelectorAll('[data-map]').forEach(d=>{ d.onclick=()=>{
-    const k=d.dataset.map;
-    const inf=k==='village'?{need:0}:FIELD_INFO[k];
-    if(inf.need>eff+1){ toast('🔒 まだ行けない。物語を進めよう'); return; }
-    close();
-    if(k===V_MAP) return;
-    if(k==='village') enterVillage(); else enterField(k);
-  }; });
+
+  const cv=document.getElementById('wmCanvas'), g=cv.getContext('2d'); g.scale(2,2);
+  // 羊皮紙
+  const bg=g.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#efe3c4'); bg.addColorStop(1,'#e2d2a8');
+  g.fillStyle=bg; g.fillRect(0,0,W,H);
+  // 紙のシミ
+  g.globalAlpha=0.06; g.fillStyle='#7a5a2a';
+  for(let i=0;i<40;i++){ const x=(Math.sin(i*12.9)*0.5+0.5)*W, y=(Math.sin(i*7.7+2)*0.5+0.5)*H, r=3+((i*13)%9);
+    g.beginPath(); g.arc(x,y,r,0,7); g.fill(); }
+  g.globalAlpha=1;
+  // 神話圏の色ウォッシュ
+  for(const R of REGIONS){ const cx=R.cx*W, cy=R.cy*H, rr=R.r*W;
+    const rg=g.createRadialGradient(cx,cy,rr*0.2,cx,cy,rr); rg.addColorStop(0,R.col+'55'); rg.addColorStop(1,R.col+'00');
+    g.fillStyle=rg; g.beginPath(); g.arc(cx,cy,rr,0,7); g.fill(); }
+  // 海の縁取り(全体を島っぽく)
+  g.strokeStyle='#5a86a8'; g.lineWidth=3; g.globalAlpha=0.5;
+  g.beginPath(); g.roundRect(4,4,W-8,H-8,12); g.stroke(); g.globalAlpha=1;
+
+  // チェーンのパス(解放済みは金の実線、未解放は霞んだ点線)
+  const px=(k)=>NODE_POS[k][0]*W, py=(k)=>NODE_POS[k][1]*H;
+  for(let i=0;i<WORLD_CHAIN.length-1;i++){ const a=WORLD_CHAIN[i], b=WORLD_CHAIN[i+1];
+    const open=unlockedOf(a)&&unlockedOf(b);
+    g.beginPath(); g.moveTo(px(a),py(a));
+    const mx=(px(a)+px(b))/2, my=(py(a)+py(b))/2 + (i%2?18:-18);
+    g.quadraticCurveTo(mx,my,px(b),py(b));
+    g.lineWidth=open?4:2.5; g.strokeStyle=open?'#c8912e':'#9a8a6a'; g.setLineDash(open?[]:[5,6]);
+    g.globalAlpha=open?0.9:0.5; g.stroke(); g.setLineDash([]); g.globalAlpha=1;
+  }
+  // 神話圏ラベル
+  g.font='bold 11px sans-serif'; g.textAlign='center';
+  for(const R of REGIONS){ g.fillStyle=R.col; g.globalAlpha=0.85;
+    g.fillText('◈ '+R.name, R.cx*W, R.cy*H - R.r*W*0.62); g.globalAlpha=1; }
+
+  // ノード描画 + クリック領域
+  const nodeBtns=[];
+  for(const k of WORLD_CHAIN){
+    const inf=info(k), un=unlockedOf(k), here=(V_MAP===k);
+    const x=px(k), y=py(k);
+    const em=(inf.name.match(/^\S+/)||[''])[0];           // 先頭の絵文字
+    const nm=inf.name.replace(/^\S+\s*/,'');
+    // 台座円
+    g.beginPath(); g.arc(x,y,15,0,7);
+    g.fillStyle=here?'#2a3a5e':un?'#2c2418':'#6b6152'; g.globalAlpha=un?1:0.6; g.fill(); g.globalAlpha=1;
+    g.lineWidth=3; g.strokeStyle=here?'#7ec8ff':un?'#d8b24a':'#4a463a'; g.stroke();
+    // アイコン(絵文字)
+    g.font='15px sans-serif'; g.textAlign='center'; g.textBaseline='middle';
+    g.globalAlpha=un?1:0.5; g.fillText(un?em:'🔒', x, y+1); g.globalAlpha=1;
+    g.textBaseline='alphabetic';
+    // 現在地マーカー
+    if(here){ g.beginPath(); g.arc(x,y,20,0,7); g.strokeStyle='#7ec8ff'; g.lineWidth=2; g.globalAlpha=0.7; g.stroke(); g.globalAlpha=1;
+      g.font='12px sans-serif'; g.fillStyle='#7ec8ff'; g.fillText('📍', x, y-22); }
+    // ボス印
+    let boss='';
+    if(k!=='village'&&un){ const bc=fieldBossCh(k);
+      if(bc!=null){ const be=CAMPAIGN[bc].enemy.find(e=>e.boss); if(be) boss='👹'; }
+      else { const dc=fieldBossDone(k); if(dc!=null) boss='🤝'; } }
+    if(boss){ g.font='12px sans-serif'; g.fillText(boss, x+16, y-10); }
+    // 名前ラベル
+    g.font='bold 10.5px sans-serif'; g.textAlign='center';
+    const tw=g.measureText(nm).width;
+    g.fillStyle='rgba(20,16,8,.8)'; g.beginPath(); g.roundRect(x-tw/2-4, y+18, tw+8, 15, 4); g.fill();
+    g.fillStyle=un?'#f4e8c8':'#a89878'; g.fillText(nm, x, y+29);
+    nodeBtns.push({k,x,y,un,need:inf.need});
+  }
+
+  // クリック用の透明ボタンを重ねる
+  const wrap=document.getElementById('wmWrap');
+  for(const nb of nodeBtns){
+    const b=document.createElement('div');
+    b.style.cssText=`position:absolute;left:${nb.x-24}px;top:${nb.y-24}px;width:48px;height:52px;cursor:pointer`;
+    b.onclick=()=>{ if(nb.need>eff+1){ toast('🔒 まだ行けない。物語を進めよう'); return; }
+      close(); if(nb.k===V_MAP) return; if(nb.k==='village') enterVillage(); else enterField(nb.k); };
+    wrap.appendChild(b);
+  }
   ov.style.display='flex';
 }
 const HUB_MODE=false;  // true=イラストの村メニュー / false=歩ける3D村
