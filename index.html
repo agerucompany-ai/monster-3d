@@ -4081,9 +4081,9 @@ const POISON_FRAC = 0.07;   // 毒：毎ターン最大HPの7%
 const BURN_FRAC   = 0.07;   // やけど：毎ターン最大HPの7%（炎タイプの攻撃で治る）
 function procChance(level){ return 0.30 + 0.08*Math.max(0,(level-1)); }  // Lv1:30% Lv2:38% Lv3:46%
 const TERR = ['plain','forest','wasteland','sea'];
-const TERR_JP = {plain:'平原',forest:'森',wasteland:'荒地',sea:'海',lava:'溶岩',snow:'雪原'};
-const TERR_HEX = {plain:0x83c258, forest:0x2c6a3a, wasteland:0xc39a57, sea:0x265f9e, lava:0x3a1206, snow:0xdde8f2};
-const TERR_BONUS = {forest:['炎','風','草'], wasteland:['地','闇'], sea:['水','雷','氷'], plain:[], lava:['炎','竜'], snow:['氷','光']};   // 草=森/氷=海・雪原/竜=溶岩でも+20%
+const TERR_JP = {plain:'平原',forest:'森',wasteland:'荒地',sea:'海',lava:'溶岩',snow:'雪原',gloom:'瘴気',cloud:'島雲',seacloud:'海雲'};
+const TERR_HEX = {plain:0x83c258, forest:0x2c6a3a, wasteland:0xc39a57, sea:0x265f9e, lava:0x3a1206, snow:0xdde8f2, gloom:0x4a2e5e};
+const TERR_BONUS = {forest:['炎','風','草'], wasteland:['地','闇'], sea:['水','雷','氷'], plain:[], lava:['炎','竜'], snow:['氷','光'], gloom:['闇','地']};   // 草=森/氷=海・雪原/竜=溶岩でも+20%
 let mapType='normal';   // 'normal' | 'volcano'
 let campTheme=null;     // ストーリー章のマップテーマ（nullなら通常生成）
 
@@ -4194,7 +4194,8 @@ const CAMP_THEMES = {
   snow:      {base:'snow',      blobs:[['wasteland',3,7],['forest',2,5]],  river:1},
   underworld:{base:'wasteland', blobs:[['lava',4,8]],                      river:0},
   worldtree: {base:'forest',    blobs:[['plain',4,8]],                     river:1},
-  sky:       {base:'plain',     blobs:[['forest',2,5]],                    river:0},
+  sky:       {base:'plain',     blobs:[['sea',4,7]],                       river:0},   // 天空: 島雲(平原)+海雲(海)。森/荒野なし
+  gloom:     {base:'gloom',     blobs:[['wasteland',3,6],['lava',1,3]],     river:0},   // 瘴気の冥室(闇が地形効果)
   desert:    {base:'plain',     blobs:[['mountain',2,5],['forest',1,3]],   river:0},
 };
 const THEME_JP = {forest:'翠の森',coast:'港湾',mountain:'雷鳴山',rift:'大地の裂け目',snow:'凍峰',underworld:'冥界',worldtree:'世界樹の根元',sky:'天空聖堂',volcano:'火山',desert:'黄金の砂漠'};
@@ -5497,16 +5498,18 @@ function effRange(u){ const m=mon(u);
   let R = rangeBase(m);                                                  // Lv1=隣接 / Lv2+はデータ射程
   if((hasType(m,'水')||hasType(m,'氷')) && nearTerrain(u,'sea')) R+=1;   // 水/氷：海に隣接/上で射程+1
   if((hasType(m,'炎')||hasType(m,'草')) && nearTerrain(u,'forest')) R+=1;// 炎/草：森に隣接/上で射程+1
+  if(hasType(m,'闇') && nearTerrain(u,'gloom')) R+=1;                    // 闇：瘴気に隣接/上で射程+1
   return R;
 }
 function effMulti(u){ const m=mon(u);
   if(hasType(m,'炎') && nearTerrain(u,'forest')) return true; // 炎×森：その範囲を全体攻撃
   if(hasType(m,'雷') && nearTerrain(u,'sea')) return true;    // 雷×海：海上の敵 全員に通電（範囲攻撃）
+  if(hasType(m,'闇') && nearTerrain(u,'gloom')) return true;  // 闇×瘴気：瘴気の者 全員に呪詛（範囲攻撃）
   return !!m.multi_target;
 }
 // 地形範囲攻撃か（雷×海・炎×森＝味方も巻き込む）
 function isAreaTerrain(u){ const m=mon(u);
-  return (hasType(m,'雷')&&nearTerrain(u,'sea')) || (hasType(m,'炎')&&nearTerrain(u,'forest')); }
+  return (hasType(m,'雷')&&nearTerrain(u,'sea')) || (hasType(m,'炎')&&nearTerrain(u,'forest')) || (hasType(m,'闇')&&nearTerrain(u,'gloom')); }
 // 攻撃者が接している“ひと続きの地形”のマス集合（連結成分・4方向）
 function connectedTerr(u, terr){
   const seen=new Set(), stack=[];
@@ -5533,6 +5536,12 @@ function areaTargets(u){
       if(fw.has(x.r+','+x.c)) res.push(x); }   // 攻撃者と“ひと続きの森”にいる者だけ延焼（離れた森・森の外は巻き込まない）
     return res;
   }
+  if(hasType(m,'闇') && nearTerrain(u,'gloom')){
+    const gl=connectedTerr(u,'gloom'), res=[];
+    for(const x of Object.values(state.units)){ if(x.uid===u.uid)continue;
+      if(gl.has(x.r+','+x.c)) res.push(x); }   // ひと続きの瘴気にいる者を呪詛（味方巻込）
+    return res;
+  }
   return attackTargets(u);   // 通常multi_targetは敵のみ
 }
 // 攻撃範囲ボーナスの説明（発動中のみ）
@@ -5542,6 +5551,7 @@ function traitNote(u){ const m=mon(u);
   if((hasType(m,'水')||hasType(m,'氷')) && nearTerrain(u,'sea')) out.push('海:射程+1');
   if((hasType(m,'炎')||hasType(m,'草')) && nearTerrain(u,'forest')) out.push('森:射程+1'+(hasType(m,'炎')?'&全体(味方巻込)':''));
   if(hasType(m,'雷') && nearTerrain(u,'sea')) out.push('海:海上の敵全員に通電(味方巻込)');
+  if(hasType(m,'闇') && nearTerrain(u,'gloom')) out.push('瘴気:射程+1&瘴気の者全員に呪詛(味方巻込)');
   return out.join(' / ');
 }
 function alive(owner){ return Object.values(state.units).filter(u=>u.owner===owner); }
@@ -6100,12 +6110,17 @@ const BATTLE_PAL={
  sea:['#2f6fae','#3a7cbc','#2a62a0','#4a8cc8'],
  lava:['#3a1206','#4a1a08','#2e0d04','#551f0a'],
  snow:['#dde8f2','#d2dfeb','#e8f0f8','#c8d6e4'],
+ gloom:['#4a2e5e','#3f2650','#553468','#341f45'],
 };
+// 天空テーマの雲描画: 平原→島雲(白) / 海→海雲(淡い青)
+const CLOUD_PAL={ plain:['#f2f6fb','#e8eef6','#ffffff','#dfe8f2'], sea:['#a8cdec','#bcd8f2','#96c0e4','#c8e2f6'] };
 const _btMats={};
 function battleTileMat(terr, inside){
-  const key=terr+(inside?'':'_o');
+  const sky=(campTheme==='sky');
+  const key=terr+(inside?'':'_o')+(sky?'_c':'');
   if(_btMats[key]) return _btMats[key];
-  const m=new THREE.MeshStandardMaterial({map:vPixTex(BATTLE_PAL[terr]||BATTLE_PAL.plain,1), roughness:0.98, metalness:0});
+  const pal=(sky && CLOUD_PAL[terr]) ? CLOUD_PAL[terr] : (BATTLE_PAL[terr]||BATTLE_PAL.plain);
+  const m=new THREE.MeshStandardMaterial({map:vPixTex(pal,1), roughness:sky?0.7:0.98, metalness:0});
   if(!inside) m.color.setScalar(0.82);   // 盤外は暗く
   _btMats[key]=m; return m;
 }
@@ -6140,13 +6155,19 @@ function buildTerrain(){
     const seed=(r+99)*7+(c+99)*13;
     if(terr==='forest') addTrees(w.x,h,w.z,seed);
     else if(terr==='wasteland') addRocks(w.x,h,w.z,seed);
-    else if(terr==='plain'){ if(inside||seed%2===0){ addGrass(w.x,h,w.z,seed); if(seed%3===0) addFlowers(w.x,h,w.z,seed); } }
+    else if(terr==='plain'){ if(campTheme!=='sky' && (inside||seed%2===0)){ addGrass(w.x,h,w.z,seed); if(seed%3===0) addFlowers(w.x,h,w.z,seed); } }
     else if(terr==='lava') addLava(w.x,h,w.z,seed);
     else if(terr==='snow'){ if(seed%3===0) addRocks(w.x,h,w.z,seed); }
+    else if(terr==='gloom'){ if(seed%2===0) addRocks(w.x,h,w.z,seed); }
     if(terr==='sea') addWater(w.x,h,w.z,seed);
   }
   addZone(HOME[0], 0x2f6bd0); addZone(HOME[1], 0xd0432f);
   if(mapType==='volcano'){ buildVolcano(); if(baseMat) baseMat.color.setHex(0x241813); }   // 火山は奥に山＋地盤を暗く
+  else if(campTheme==='sky'){ if(baseMat) baseMat.color.setHex(0xcfe0f2);   // 天空=雲海に浮かぶ盤
+    const ctr=cell2world((N-1)/2,(N-1)/2);
+    for(let i=0;i<12;i++){ const ang=i/12*6.283, rad=N*0.62+((i*3)%4);
+      const pf=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0xffffff,transparent:true,opacity:0.5,depthWrite:false}));
+      pf.scale.setScalar(3+((i*5)%4)); pf.position.set(ctr.x+Math.cos(ang)*rad, -0.4-((i*7)%5)*0.35, ctr.z+Math.sin(ang)*rad); decoGroup.add(pf); } }
   else { addFireflies(); if(baseMat) baseMat.color.setHex(0x2f4028); }
   decoGroup.traverse(o=>{ if(o.isMesh && o.material && o.material.type!=='MeshBasicMaterial') o.castShadow=true; });
 }
@@ -9561,7 +9582,7 @@ const FIELD_ROAM={
   abyss:   [85,86,88,89,95,96],                  // 根の奈落=闇
   chaos:   [192,193,198,199,85,86],              // 原初の混沌=竜/闇
 };
-const FIELD_BTHEME={forest:'forest', port:'coast', mountain:'mountain', snow:'snow', under:'desert', tree:'worldtree', volcano:'volcano', pyramid:'desert', shrine:'desert', cave:'rift', laby:'rift', petri:'sky', ironwood:'snow', abyss:'underworld', chaos:'volcano'};
+const FIELD_BTHEME={forest:'forest', port:'coast', mountain:'mountain', snow:'snow', under:'desert', tree:'worldtree', volcano:'volcano', pyramid:'gloom', shrine:'gloom', cave:'rift', laby:'rift', petri:'sky', ironwood:'snow', abyss:'underworld', chaos:'volcano'};
 const FIELD_SKY={
  volcano:{sky:0x3a1a12, fog:[0x3a1a12,16,40]},
  snow:{sky:0xdfe9f2, fog:[0xdfe9f2,18,44]},
