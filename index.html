@@ -206,7 +206,8 @@ button.bt.fuse{background:#a24ec0}
     <p class="muted" style="margin:0 0 10px">⚠ <b>進化には進化先の所持</b>、<b>融合には融合体の所持</b>が必要。ボスを使うにも進化前/素材が要る——集めてこそ強くなる！</p>
     <div style="font-weight:700;font-size:13px;color:#ffd86b;margin:2px 0 4px">📦 召喚シリーズ <span class="muted" style="font-size:10px">（章クリアで新シリーズ解放。選んだシリーズの属性が出る）</span></div>
     <div id="gaPacks" style="display:flex;gap:8px;overflow-x:auto;padding:6px 2px;margin:0 0 2px"></div>
-    <div id="gaPackHint" class="muted" style="font-size:11px;margin:0 0 10px"></div>
+    <div id="gaPackHint" class="muted" style="font-size:11px;margin:0 0 6px"></div>
+    <div id="gaDrops" style="margin:0 0 12px"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button class="bt go" id="gaPull1" style="font-size:16px;padding:12px 22px">1回引く 💎100</button>
       <button class="bt" id="gaPull10" style="font-size:16px;padding:12px 22px;background:#8c2a6a">10連ガチャ 💎900</button>
@@ -4928,14 +4929,14 @@ const GACHA_RAR_COL={N:'#8a97ad',R:'#b08ae0',SR:'#e0c060',SSR:'#ff7ab0'};
 // シリーズパック: 章を進めるほど新しい召喚シリーズが解放される（次のマップの敵に刺さる属性順）
 const GACHA_PACKS=[
  {key:'basic', name:'相棒の系譜',     types:null, starterPack:true, need:-1, hint:'相棒・ソヨカ・ツチノコの進化ラインだけが出る。1回1回がまっすぐ戦力になる'},
- {key:'flame', name:'紅蓮の火種',     types:['炎','風'],      need:0,  hint:'樹海の草モンスターは炎で焼き払え'},
- {key:'volt',  name:'雷雲の胎動',     types:['雷','草'],      need:1,  hint:'エーゲの水モンスターには雷と草'},
- {key:'earth', name:'大地の鼓動',     types:['地','水'],      need:2,  hint:'ギリシャの怪物は地と水で迎え撃て'},
- {key:'gale',  name:'風緑の息吹',     types:['風','草'],      need:4,  hint:'古戦場の巨神には草と風'},
- {key:'frost', name:'白銀の吐息',     types:['氷','炎'],      need:6,  hint:'砂漠の熱には氷を、闇の墓所には炎を'},
- {key:'holy',  name:'聖光の啓示',     types:['光','闇'],      need:8,  hint:'冥所の闇は光で払え'},
- {key:'all',   name:'めぐりあいの祭壇', types:null,           need:11, hint:'全タイプ排出。縁の導くまま'},
- {key:'dragon',name:'竜宮の血脈',     types:['竜','氷','水'], need:14, hint:'終末の巨人と混沌に備えよ'},
+ {key:'flame', name:'紅蓮の火種',     types:['炎','風'], need:0,  lines:[1,4,7,106,49,52],       fusions:[13,100,143], hint:'樹海の草モンスターは炎で焼き払え'},
+ {key:'volt',  name:'雷雲の胎動',     types:['雷','草'], need:1,  lines:[67,70,78,31,178],       fusions:[82,135,201], hint:'エーゲの水モンスターには雷と草'},
+ {key:'earth', name:'大地の鼓動',     types:['地','水'], need:2,  lines:[34,40,117,16,19],       fusions:[175,251,187],hint:'ギリシャの怪物は地と水で迎え撃て'},
+ {key:'gale',  name:'風緑の息吹',     types:['風','草'], need:4,  lines:[49,52,129,31,181,183],  fusions:[28,116,141], hint:'古戦場の巨神には草と風。フェンリルもここから'},
+ {key:'frost', name:'白銀の吐息',     types:['氷','炎'], need:6,  lines:[22,37,151,4,9],         fusions:[260,234,131],hint:'砂漠の熱には氷を、闇の墓所には炎を'},
+ {key:'holy',  name:'聖光の啓示',     types:['光','闇'], need:8,  lines:[55,73,161,85,88],       fusions:[84,258,253], hint:'冥所の闇は光で払え'},
+ {key:'all',   name:'めぐりあいの祭壇', types:null,      need:11, hint:'全タイプ排出。縁の導くまま'},
+ {key:'dragon',name:'竜宮の血脈',     types:['竜','氷','水'], need:14, lines:[192,195,198,151,16], fusions:[241,246,252], hint:'終末の巨人と混沌に備えよ'},
 ];
 let GFIELD=null;   // フィールドHUDから開いた時=そのマップ専用ガチャ
 // マップ専用パック: この地の敵に強いタイプ + この地のボスの素材ライン
@@ -4957,6 +4958,29 @@ function fieldBossLineIds(map){
 function packOf(){
   if(GFIELD) return fieldGPack(GFIELD);
   const k=STORY.gpack||'basic'; return GACHA_PACKS.find(p=>p.key===k&&STORY.clear>=p.need)||GACHA_PACKS[0]; }
+function packDropInfo(pk){
+  if(!pk) return {ids:[]};
+  if(pk.starterPack) return {ids:[...starterFamilyIds()], note:'相棒として選んだ系統だけが出る'};
+  if(pk.fieldMap) return {ids:[...fieldBossLineIds(pk.fieldMap)], note:'＋この地の対抗タイプ（'+(pk.types||[]).join('・')+'）も排出'};
+  if(pk.lines) return {ids:[...packLineIds(pk)]};
+  return {ids:null, note:'このシリーズは全モンスターが対象（縁ガチャで手持ちの進化先を優先）'};
+}
+function renderDropList(box,pk){
+  if(!box||!pk) return;
+  const info=packDropInfo(pk);
+  if(info.ids==null){ box.innerHTML='<div class="muted" style="font-size:11px;background:#1a1226;border:1px solid #2c2038;border-radius:8px;padding:8px 10px">🎯 '+info.note+'</div>'; return; }
+  const rank=m=> m.role==='fusion'?0 : ((m.type==='竜'||m.level===3)?1 : m.level===2?2 : 3);
+  const rlab=m=> m.role==='fusion'?'SSR' : ((m.type==='竜'||m.level===3)?'SR' : m.level===2?'R':'N');
+  const list=info.ids.map(id=>MID[id]).filter(Boolean).sort((a,b)=>rank(a)-rank(b)||a.id-b.id);
+  const chips=list.map(m=>{ const owned=STORY.owned.includes(m.id);
+    return `<div title="${m.name}" style="width:52px;text-align:center;position:relative">`
+      +`<img src="${IMG[m.id]}" style="width:44px;height:44px;object-fit:contain;background:#0d1220;border-radius:7px;border:1.5px solid ${GACHA_RAR_COL[rlab(m)]};${owned?'':'filter:grayscale(.55);opacity:.72'}">`
+      +(owned?'<div style="position:absolute;top:-4px;right:1px;font-size:10px">✅</div>':'')
+      +`<div style="font-size:8.5px;line-height:1.05;margin-top:1px;color:#cdd6e6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div></div>`; }).join('');
+  box.innerHTML=`<div style="font-weight:700;font-size:11px;color:#b08ae0;margin:2px 0 4px">🎯 このシリーズの排出モンスター（${list.length}種・✅=所持）</div>`
+    +(info.note?`<div class="muted" style="font-size:10px;margin-bottom:5px">${info.note}</div>`:'')
+    +`<div style="display:flex;flex-wrap:wrap;gap:5px;max-height:200px;overflow-y:auto;background:#150e22;border:1px solid #2c2038;border-radius:8px;padding:7px">${chips}</div>`;
+}
 function renderPacks(){
   const box=document.getElementById('gaPacks'); if(!box) return;
   if(GFIELD){
@@ -4965,6 +4989,7 @@ function renderPacks(){
       <div style="font-size:13px;font-weight:700">🎰 ${p.name}</div>
       <div style="font-size:10px;color:#b08ae0">${p.types.join('・')}＋ボス素材ライン</div></div>`;
     const hint=document.getElementById('gaPackHint'); if(hint) hint.textContent='▶ '+p.hint;
+    renderDropList(document.getElementById('gaDrops'), p);
     return;
   }
   if(!GACHA_PACKS.some(p=>p.key===(STORY.gpack||'basic')&&STORY.clear>=p.need)) STORY.gpack='basic';
@@ -4980,11 +5005,16 @@ function renderPacks(){
     </div>`;
   }).join('');
   const hint=document.getElementById('gaPackHint'); if(hint) hint.textContent=`▶ ${cur.name} — ${cur.hint}`;
+  renderDropList(document.getElementById('gaDrops'), cur);
   box.querySelectorAll('[data-pk]').forEach(d=>{ d.onclick=()=>{
     const p=GACHA_PACKS.find(x=>x.key===d.dataset.pk);
     if(!p||STORY.clear<p.need){ toast('🔒 物語を進めると解放されるシリーズだ'); return; }
     STORY.gpack=p.key; STORY.tut=STORY.tut||{}; STORY.tut['pk_'+p.key]=1; saveStory(); renderPacks(); }; });
 }
+function packLineIds(pk){ const out=new Set();
+  for(const b of (pk.lines||[])){ let c=b,g=0; while(c!=null&&g<6){ out.add(c); c=MID[c]?MID[c].evolves_to:null; g++; } }
+  for(const f of (pk.fusions||[])) out.add(f);
+  return out; }
 function starterFamilyIds(){
   const bases=[STORY.starter||7, 49, 34];
   if(!STORY.starter) bases.push(16,178);   // 相棒未選択なら3相棒とも
@@ -4998,6 +5028,7 @@ function gachaPools(){
   if(pk.starterPack){ const fam=starterFamilyIds(); fit=m=>fam.has(m.id); }   // 相棒の系譜=手持ちラインのみ
   else if(pk.fieldMap){ const ex=fieldBossLineIds(pk.fieldMap); const ty=pk.types;
     fit=m=> ex.has(m.id) || ty.includes(m.type) || (m.type2&&ty.includes(m.type2)); }   // マップ専用=対抗タイプ+ボス素材
+  else if(pk.lines){ const set=packLineIds(pk); fit=m=>set.has(m.id); }   // 厳選シリーズ=指定系統+融合のみ
   else { const ty=pk.types; fit=m=> !ty || ty.includes(m.type) || (m.type2&&ty.includes(m.type2)); }
   const pn=[],pr=[],ps=[],px=[], fn=[],fr=[],fs=[],fx=[];
   for(const m of MONSTERS){
