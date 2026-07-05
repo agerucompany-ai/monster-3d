@@ -5045,7 +5045,7 @@ const GACHA_PACKS=[
 ];
 let GFIELD=null;   // フィールドHUDから開いた時=そのマップ専用ガチャ
 // マップ専用パック: この地の敵に強いタイプ + この地のボスの素材ライン
-const FIELD_COUNTER={euro:['炎','雷'], road:['炎','雷'], plain:['水','氷'], swamp:['雷','草'], castle:['地','草'], lake:['雷','草'], alps:['炎','雷'], forest:['氷','水'], port:['雷','草'], mountain:['地','草'], snow:['炎'], under:['光','地'], tree:['炎','闇'], volcano:['水','氷']};
+const FIELD_COUNTER={euro:['炎','雷'], road:['炎','雷'], plain:['水','氷'], swamp:['雷','草'], castle:['地','草'], lake:['雷','草'], alps:['炎','雷'], forest:['氷','水'], port:['雷','草'], mountain:['地','草'], snow:['炎'], under:['光','地'], gate:['草','水'], tomb:['光','炎'], canyon:['草','水'], nightriver:['雷','草'], throne:['光','炎'], sunpeak:['闇','水'], tree:['炎','闇'], volcano:['水','氷']};
 function fieldGPack(map){
   return {key:'field:'+map, name:(FIELD_INFO[map]?FIELD_INFO[map].name:'この地')+'の召喚',
     types:FIELD_COUNTER[map]||['炎'], fieldMap:map, need:-1,
@@ -7766,7 +7766,7 @@ function vResolve(nx,nz){
 }
 let V_MAP='village';   // 'village' | 'forest' | ...
 let V_SPAWN=null;      // 次のマップ構築時の主人公スポーン位置（門から入った側に出る）
-const WORLD_CHAIN=['village','euro','road','castle','lake','alps','plain','forest','port','swamp','mountain','under','snow','tree','volcano'];   // 村→エーレア→サディーム→ニヴル→ムスペルヘイム
+const WORLD_CHAIN=['village','euro','road','castle','lake','alps','plain','forest','port','swamp','mountain','under','gate','tomb','canyon','nightriver','throne','sunpeak','snow','tree','volcano'];   // 村→エーレア→サディーム→ニヴル→ムスペルヘイム
 function vNextUnlocked(){ const i=WORLD_CHAIN.indexOf(V_MAP); const nxt=WORLD_CHAIN[i+1]; if(!nxt) return false;
   const eff=window._DEBUG?99:STORY.clear; return FIELD_INFO[nxt].need<=eff+1; }
 const V_NPC_VILLAGE=[
@@ -7839,7 +7839,7 @@ const V_NPC_SNOW=[
  {key:'warp', to:'valhalla', x:6.0,z:-4.5, label:'⚔ 戦士の館ヴァルハラへ'},
  {key:'altar', x:6.0, z:1.5,   label:'🎰 召喚の祭壇'},
  {key:'chest', x:-5.8,z:3.0,   label:'💰 たからばこ'},
- {key:'back',  x:0,   z:10.6,  label:'🏜 王家の冥所へ'},
+ {key:'back',  x:0,   z:10.6,  label:'☀ 太陽神殿の頂へ'},
  {key:'next',  x:2.8, z:-9.4,  label:'🌳 世界樹へ'},
 ];
 const V_NPC_UNDER=[
@@ -7849,8 +7849,20 @@ const V_NPC_UNDER=[
  {key:'warp',  to:'suntemple', x:7.0,z:-4.5, label:'☀ 太陽神殿の頂へ'},
  {key:'chest', x:6.0, z:-1.4,  label:'💰 たからばこ'},
  {key:'back',  x:0,   z:10.6,  label:'⛰ 神々の山道へ'},
- {key:'next',  x:2.8, z:-9.4,  label:'🏔 ニヴルの雪原へ'},
+ {key:'next',  x:2.8, z:-9.4,  label:'🦁 スフィンクスの門へ'},
 ];
+const V_NPC_GATE=[
+ {key:'chest',x:-6,z:1.5,label:'💰 たからばこ'},{key:'back',x:0,z:10.6,label:'🏜 王家の冥所へ'},{key:'next',x:2.8,z:-9.4,label:'⚰ 王家の墓所へ'}];
+const V_NPC_TOMB=[
+ {key:'chest',x:-6,z:1.5,label:'💰 副葬品の箱'},{key:'back',x:0,z:10.6,label:'🦁 門へ'},{key:'next',x:2.8,z:-9.4,label:'🗿 巨神像の峡谷へ'}];
+const V_NPC_CANYON=[
+ {key:'chest',x:-6,z:1.5,label:'💰 たからばこ'},{key:'back',x:0,z:10.6,label:'⚰ 王家の墓所へ'},{key:'next',x:2.8,z:-9.4,label:'🌊 夜の大河へ'}];
+const V_NPC_NIGHTRIVER=[
+ {key:'chest',x:-6,z:1.5,label:'💰 たからばこ'},{key:'back',x:0,z:10.6,label:'🗿 峡谷へ'},{key:'next',x:2.8,z:-9.4,label:'👑 冥王の玉座へ'}];
+const V_NPC_THRONE=[
+ {key:'chest',x:-6,z:1.5,label:'💰 秘宝'},{key:'back',x:0,z:10.6,label:'🌊 夜の大河へ'},{key:'next',x:2.8,z:-9.4,label:'☀ 太陽神殿の頂へ'}];
+const V_NPC_SUNPEAK=[
+ {key:'chest',x:-6,z:1.5,label:'💰 たからばこ'},{key:'back',x:0,z:10.6,label:'👑 冥王の玉座へ'},{key:'next',x:2.8,z:-9.4,label:'🏔 ニヴルの雪原へ'}];
 const V_NPC_PYRAMID=[
  {key:'warp', to:'under',  x:0,   z:10.2, label:'🚪 冥所へ戻る'},
  {key:'warp', to:'shrine', x:0,   z:-8.4, label:'⬇ さらに地下へ（地下祭殿）'},
@@ -7886,7 +7898,7 @@ const V_NPC_SUB={
  surt:     [{key:'warp',to:'volcano', x:0,z:10.2,label:'🚪 火山へ戻る'},{key:'chest',x:-5.5,z:-2,label:'💰 巨神の遺宝'}],
 };
 function V_NPC_CUR(){ if(V_NPC_SUB[V_MAP]) return V_NPC_SUB[V_MAP]; return V_MAP==='euro'?V_NPC_EURO : V_MAP==='road'?V_NPC_ROAD : V_MAP==='plain'?V_NPC_PLAIN : V_MAP==='swamp'?V_NPC_SWAMP : V_MAP==='castle'?V_NPC_CASTLE : V_MAP==='lake'?V_NPC_LAKE : V_MAP==='alps'?V_NPC_ALPS : V_MAP==='forest'?V_NPC_FOREST : V_MAP==='port'?V_NPC_PORT : V_MAP==='mountain'?V_NPC_MTN
-  : V_MAP==='snow'?V_NPC_SNOW : V_MAP==='under'?V_NPC_UNDER : V_MAP==='pyramid'?V_NPC_PYRAMID : V_MAP==='shrine'?V_NPC_SHRINE : V_MAP==='tree'?V_NPC_TREE : V_MAP==='volcano'?V_NPC_VOLC : V_NPC_VILLAGE; }
+  : V_MAP==='snow'?V_NPC_SNOW : V_MAP==='gate'?V_NPC_GATE : V_MAP==='tomb'?V_NPC_TOMB : V_MAP==='canyon'?V_NPC_CANYON : V_MAP==='nightriver'?V_NPC_NIGHTRIVER : V_MAP==='throne'?V_NPC_THRONE : V_MAP==='sunpeak'?V_NPC_SUNPEAK : V_MAP==='under'?V_NPC_UNDER : V_MAP==='pyramid'?V_NPC_PYRAMID : V_MAP==='shrine'?V_NPC_SHRINE : V_MAP==='tree'?V_NPC_TREE : V_MAP==='volcano'?V_NPC_VOLC : V_NPC_VILLAGE; }
 const V_NPC={ some:f=>V_NPC_CUR().some(f), forEach:f=>V_NPC_CUR().forEach(f), filter:f=>V_NPC_CUR().filter(f), [Symbol.iterator](){ return V_NPC_CUR()[Symbol.iterator](); } };
 function setBoardVisible(v){ for(const g of [tileGroup,gridGroup,structGroup,decoGroup,unitGroup,fxGroup]) if(g) g.visible=v; }
 function vMat(c,r){ return new THREE.MeshStandardMaterial({color:c,roughness:r==null?0.95:r,metalness:0}); }
@@ -8796,8 +8808,8 @@ function elderTalk(){
 }
 // ======================= 章ボスのフィールド配置 =======================
 // 各フィールドで「次に挑む章」のボスが待ち構える。接触で会話→挑戦確認→開戦
-const FIELD_CHAPTERS={euro:[1], road:[2], castle:[3], lake:[4], alps:[5], plain:[6], forest:[7], port:[8], swamp:[9], mountain:[10], under:[11,12,14,15,16], pyramid:[13], suntemple:[17], snow:[18,19,20], tree:[21,24], volcano:[22,23,25]};
-const BOSS_POS={euro:{x:-3.2,z:-4.5}, road:{x:-3.2,z:-4.5}, castle:{x:0,z:-6.8}, lake:{x:-3.5,z:-5.0}, alps:{x:-3.0,z:-5.5}, plain:{x:-3.2,z:-4.5}, forest:{x:-3.2,z:-3.5}, port:{x:-3.5,z:-5.0}, swamp:{x:-3.5,z:-5.0}, mountain:{x:-3.5,z:-5.5}, snow:{x:-3.5,z:-5.0}, under:{x:-3.5,z:-5.0}, tree:{x:-3.5,z:-5.0}, pyramid:{x:-3.2,z:-5.5}, suntemple:{x:-3.2,z:-5.5}, volcano:{x:-2.6,z:-5.6}};
+const FIELD_CHAPTERS={euro:[1], road:[2], castle:[3], lake:[4], alps:[5], plain:[6], forest:[7], port:[8], swamp:[9], mountain:[10], under:[11], gate:[12], tomb:[13], canyon:[14], nightriver:[15], throne:[16], sunpeak:[17], snow:[18,19,20], tree:[21,24], volcano:[22,23,25]};
+const BOSS_POS={euro:{x:-3.2,z:-4.5}, road:{x:-3.2,z:-4.5}, castle:{x:0,z:-6.8}, lake:{x:-3.5,z:-5.0}, alps:{x:-3.0,z:-5.5}, plain:{x:-3.2,z:-4.5}, forest:{x:-3.2,z:-3.5}, port:{x:-3.5,z:-5.0}, swamp:{x:-3.5,z:-5.0}, mountain:{x:-3.5,z:-5.5}, snow:{x:-3.5,z:-5.0}, under:{x:-3.5,z:-5.0}, gate:{x:-3.2,z:-5.0}, tomb:{x:-3.2,z:-5.0}, canyon:{x:-3.2,z:-5.0}, nightriver:{x:-3.2,z:-5.0}, throne:{x:-3.2,z:-5.0}, sunpeak:{x:-3.2,z:-5.0}, tree:{x:-3.5,z:-5.0}, pyramid:{x:-3.2,z:-5.5}, suntemple:{x:-3.2,z:-5.5}, volcano:{x:-2.6,z:-5.6}};
 const BOSS_TALK={
  1:[{s:'185',t:'……ぷにゅ。ここは、ぼくの、はらっぱ……とおさない、ぞ……'},
     {s:'hero',t:'寝ぼけてるだけだよね。ごめん、ちょっとだけ本気でいくよ！'},
@@ -9852,6 +9864,40 @@ const SCENES={
      for(let i=0;i<8;i++){ const f=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0x8aaa7a,transparent:true,opacity:0.22,depthWrite:false,blending:THREE.AdditiveBlending})); f.scale.setScalar(2.6);
        const ox=(Math.random()-0.5)*20,oz=(Math.random()-0.5)*20, ph=i*1.3; f.position.set(ox,0.8,oz); G.add(f);
        ambient.push(t=>{ f.material.opacity=0.14+0.1*Math.sin(t*0.8+ph); f.position.x=ox+Math.sin(t*0.3+ph)*0.8; }); } } },
+ // --- エジプト(コライダーは全て|x|>5=中央通路は常に空き) ---
+ gate:{ ground:['#e8d9a8','#dccf9a','#f0e4b6','#d0c288'], gs:20, portal:0xffe070,
+   decorate:(G)=>{ const st=new THREE.MeshLambertMaterial({map:vStoneTex(2,3),color:0xd8c68a});
+     for(const sx of [-6.5,6.5]){ const pil=new THREE.Mesh(new THREE.BoxGeometry(1.4,6,1.4),st); pil.position.set(sx,3,-7); G.add(pil); vCol(sx,-7,0.9);
+       const cap=new THREE.Mesh(new THREE.BoxGeometry(1.9,0.6,1.9),new THREE.MeshLambertMaterial({color:0xc8b578})); cap.position.set(sx,6.2,-7); G.add(cap);
+       const sph=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.7,2.2),new THREE.MeshLambertMaterial({color:0xd0bd80})); sph.position.set(sx,0.4,-4.5); G.add(sph); vCol(sx,-4.5,0.9); }
+     for(const [dx,dz,r] of [[-8,3,2.6],[8,4,2.4],[-7.5,7,2.0],[8,-8,2.2]]){ const d=new THREE.Mesh(new THREE.SphereGeometry(r,10,8,0,6.283,0,Math.PI/2),new THREE.MeshLambertMaterial({color:0xe0d19a})); d.scale.y=0.35; d.position.set(dx,0,dz); G.add(d); } } },
+ tomb:{ ground:['#cabd94','#bdb086','#d6c99e','#b0a37a'], gs:16, portal:0xffcc50,
+   decorate:(G)=>{ const marble=new THREE.MeshLambertMaterial({color:0xd8cc9e});
+     for(const sx of [-6.5,6.5]) for(const dz of [-4,2]){ const ob=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.5,4.2,4),marble); ob.position.set(sx,2.1,dz); ob.rotation.y=0.78; G.add(ob); vCol(sx,dz,0.55); }
+     for(const [sx,sz] of [[-7,6],[7,6]]){ const sar=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.9,2.4),new THREE.MeshLambertMaterial({color:0xcaa84a})); sar.position.set(sx,0.45,sz); G.add(sar); vCol(sx,sz,0.9); }
+     for(const [sx,sz] of [[-6,-8],[6,-8]]){ const fl=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0xff9a30,transparent:true,opacity:0.8,depthWrite:false,blending:THREE.AdditiveBlending})); fl.scale.setScalar(1.0); fl.position.set(sx,1.6,sz); G.add(fl); const ph=sx; ambient.push(t=>{ fl.material.opacity=0.55+0.3*Math.sin(t*7+ph); }); } } },
+ canyon:{ ground:['#c07a4a','#b06a3e','#cc8654','#a05c34'], gs:18, portal:0xff9a50,
+   decorate:(G)=>{ const rock=new THREE.MeshLambertMaterial({map:vStoneTex(3,2),color:0x9a5a34});
+     for(const [sx,sw] of [[-9,3.5],[9,3.5],[-8.5,3],[8.5,3]]){ const cliff=new THREE.Mesh(new THREE.BoxGeometry(sw,7,4),rock); cliff.position.set(sx,3.5,(sx>0?-3:5)); G.add(cliff); vCol(sx,(sx>0?-3:5),2.0); }
+     // 崩れた巨神像の脚
+     for(const sx of [-6,6]){ const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.9,4,8),new THREE.MeshLambertMaterial({color:0xbfa878})); leg.position.set(sx,2,-8); G.add(leg); vCol(sx,-8,0.9);
+       const foot=new THREE.Mesh(new THREE.BoxGeometry(1.4,0.5,2.0),new THREE.MeshLambertMaterial({color:0xbfa878})); foot.position.set(sx,0.25,-7); G.add(foot); } } },
+ nightriver:{ ground:['#2a3348','#242c40','#313a52','#1e2436'], gs:16, portal:0x6aa0ff,
+   decorate:(G)=>{
+     const water=new THREE.Mesh(new THREE.PlaneGeometry(6,26),new THREE.MeshLambertMaterial({color:0x1e3a6a,transparent:true,opacity:0.8})); water.rotation.x=-Math.PI/2; water.position.set(8.5,0.04,0); G.add(water);
+     for(const [sx,sz] of [[-7,-5],[7.5,4],[-6.5,6]]){ const boat=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.4,2.6),new THREE.MeshLambertMaterial({map:vPlankTex()})); boat.position.set(sx,0.3,sz); G.add(boat); vCol(sx,sz,0.8); }
+     for(let i=0;i<18;i++){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0xfff0c0,transparent:true,opacity:0.7,depthWrite:false,blending:THREE.AdditiveBlending})); s.scale.setScalar(0.2); s.position.set((Math.random()-0.5)*28,6+Math.random()*4,(Math.random()-0.5)*28); G.add(s); const ph=i; ambient.push(t=>{ s.material.opacity=0.3+0.4*Math.abs(Math.sin(t*0.8+ph)); }); } } },
+ throne:{ ground:['#3a3040','#332a38','#423648','#2c2432'], gs:14, portal:0xb060ff,
+   decorate:(G)=>{ const dark=new THREE.MeshLambertMaterial({color:0x2a2230});
+     for(const sx of [-6.5,6.5]) for(const dz of [-5,1,6]){ const c=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.56,4.4,10),new THREE.MeshLambertMaterial({color:0x4a3f52})); c.position.set(sx,2.2,dz); G.add(c); vCol(sx,dz,0.56); }
+     for(const [sx,sz] of [[-6,-8],[6,-8]]){ const br=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.3,0.7,8),dark); br.position.set(sx,0.9,sz); G.add(br);
+       const gl=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0xb060ff,transparent:true,opacity:0.7,depthWrite:false,blending:THREE.AdditiveBlending})); gl.scale.setScalar(1.4); gl.position.set(sx,1.6,sz); G.add(gl); const ph=sx; ambient.push(t=>{ gl.material.opacity=0.4+0.3*Math.sin(t*3+ph); }); } } },
+ sunpeak:{ ground:['#efe6c8','#e6dcb8','#f6efd6','#dcd0aa'], gs:20, portal:0xffe070,
+   decorate:(G)=>{ const white=new THREE.MeshLambertMaterial({color:0xf4eeda});
+     for(const sx of [-7,7]) for(const dz of [-5,1,7]){ const c=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.5,4.6,12),white); c.position.set(sx,2.3,dz); G.add(c); vCol(sx,dz,0.5); }
+     const disc=new THREE.Mesh(new THREE.CircleGeometry(2.0,32),new THREE.MeshBasicMaterial({color:0xffd24a})); disc.position.set(0,4.6,-11.5); G.add(disc);
+     const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0xffe070,transparent:true,opacity:0.7,depthWrite:false,blending:THREE.AdditiveBlending})); halo.scale.setScalar(8); halo.position.set(0,4.6,-11.5); G.add(halo);
+     ambient.push(t=>{ halo.material.opacity=0.5+0.25*Math.sin(t*2); }); } },
 };
 function buildForest(){
   if(villageGroup){ scene.remove(villageGroup); }
@@ -9901,6 +9947,12 @@ const FIELD_INFO={
  swamp:    {name:'🌿 レルネーの沼',   need:9,  hint:'毒の霧が立ちこめる沼沢。九頭の水竜が潜む'},
  mountain: {name:'⛰ 神々の山道',     need:10, hint:'古戦場の巨神が眠る神々の山道'},
  under:    {name:'🏜 王家の冥所',     need:11, hint:'サディーム。黄金の砂とピラミッドの国'},
+ gate:     {name:'🦁 スフィンクスの門', need:12, hint:'謎を問う人面獅子の門'},
+ tomb:     {name:'⚰ 王家の墓所',     need:13, hint:'魂を計る秤の間。番人と魔獣が待つ'},
+ canyon:   {name:'🗿 巨神像の峡谷',   need:14, hint:'砕けた巨神像の谷。柱の獣が眠る'},
+ nightriver:{name:'🌊 夜の大河',     need:15, hint:'太陽の船が渡る夜の川。大蛇が潜む'},
+ throne:   {name:'👑 冥王の玉座',     need:16, hint:'冥き玉座の間。死と復活の柱'},
+ sunpeak:  {name:'☀ 太陽神殿の頂',   need:17, hint:'雲海の頂。太陽神ラーガが君臨する'},
  snow:     {name:'🏔 ニヴルの雪原',     need:18, hint:'終末の予言の国。霜の巨人が眠る'},
  tree:     {name:'🌳 世界樹ユグドラシル', need:21, hint:'三つの世界を支える大樹の根元'},
  volcano:  {name:'🌋 ムスペルヘイム', need:22, hint:'燃える国。炎の巨人スルヴァの領地'},
@@ -9917,7 +9969,7 @@ const FIELD_INFO={
  suntemple:{name:'☀ 太陽神殿の頂', need:17,  hint:'雲海の頂。太陽神ラーガが君臨する'},
  surt:     {name:'🔥 スルヴァの玉座', need:22, hint:'炎の巨人が剣を研ぐ溶岩の間'},
 };
-const FIELD_TYPES={euro:['草','風'], road:['草','風'], plain:['草','炎'], swamp:['水','闇'], castle:['雷','地'], lake:['水','氷'], alps:['氷','水'], forest:['草','風'], port:['水'], mountain:['雷','地'], snow:['氷'], under:['地','闇'], tree:['草','地'], volcano:['炎','竜'], pyramid:['地','闇'], shrine:['闇','地'], cave:['地','草'], laby:['水','地'], petri:['雷','光'], ironwood:['氷','風'], abyss:['闇','地'], chaos:['竜','闇'], olympus:['光','雷'], valhalla:['光','氷'], suntemple:['光','炎'], surt:['炎','竜']};
+const FIELD_TYPES={euro:['草','風'], road:['草','風'], plain:['草','炎'], swamp:['水','闇'], castle:['雷','地'], lake:['水','氷'], alps:['氷','水'], forest:['草','風'], port:['水'], mountain:['雷','地'], snow:['氷'], under:['地','闇'], gate:['光','地'], tomb:['闇','地'], canyon:['地'], nightriver:['水','闇'], throne:['闇','地'], sunpeak:['光','炎'], tree:['草','地'], volcano:['炎','竜'], pyramid:['地','闇'], shrine:['闇','地'], cave:['地','草'], laby:['水','地'], petri:['雷','光'], ironwood:['氷','風'], abyss:['闇','地'], chaos:['竜','闇'], olympus:['光','雷'], valhalla:['光','氷'], suntemple:['光','炎'], surt:['炎','竜']};
 // 各フィールドの野生モンスター(厳選): 序盤ほど種類を絞る。ニヴルにフェンガロ(129,130)。
 const FIELD_ROAM={
   euro:    [31,32,49,50,178,63],
@@ -9931,6 +9983,12 @@ const FIELD_ROAM={
   port:    [16,17,19,20,24,25,110,111],          // エーゲ=水
   mountain:[67,68,70,71,34,35,40,41],            // 神々の山道=雷/地
   under:   [117,118,85,86,88,89,96],            // 王家の冥所=地/闇(サディーム)
+  gate:    [117,118,55,56,95,96],
+  tomb:    [95,96,97,98,88,89],
+  canyon:  [117,118,40,41,85,86],
+  nightriver:[16,17,88,89,95,96],
+  throne:  [95,96,97,98,88,89],
+  sunpeak: [161,162,55,56,73,74],
   snow:    [151,152,22,23,154,155,129],          // ニヴルの雪原=氷。狼ガストル129が徘徊(フェンガロ/ヴァルグルは章ボスなので野生除外)
   tree:    [181,182,183,184,173,174],            // 世界樹=草/地
   volcano: [1,2,4,5,192,193,198,199],            // ムスペル=炎/竜
@@ -9947,7 +10005,7 @@ const FIELD_ROAM={
   suntemple:[161,162,55,56,7,8],                 // 太陽神殿=光/炎
   surt:    [1,2,4,5,192,193],                    // スルヴァの玉座=炎/竜
 };
-const FIELD_BTHEME={euro:'forest', road:'forest', plain:'forest', swamp:'coast', castle:'rift', lake:'coast', alps:'snow', forest:'forest', port:'coast', mountain:'mountain', snow:'snow', under:'desert', tree:'worldtree', volcano:'volcano', pyramid:'gloom', shrine:'gloom', cave:'rift', laby:'rift', petri:'sky', ironwood:'snow', abyss:'underworld', chaos:'volcano', olympus:'sky', valhalla:'snow', suntemple:'sky', surt:'volcano'};
+const FIELD_BTHEME={euro:'forest', road:'forest', plain:'forest', swamp:'coast', castle:'rift', lake:'coast', alps:'snow', forest:'forest', port:'coast', mountain:'mountain', snow:'snow', under:'desert', gate:'desert', tomb:'gloom', canyon:'desert', nightriver:'coast', throne:'gloom', sunpeak:'sky', tree:'worldtree', volcano:'volcano', pyramid:'gloom', shrine:'gloom', cave:'rift', laby:'rift', petri:'sky', ironwood:'snow', abyss:'underworld', chaos:'volcano', olympus:'sky', valhalla:'snow', suntemple:'sky', surt:'volcano'};
 const FIELD_SKY={
  alps:{sky:0xdfe9f2, fog:[0xdfe9f2,18,44]},
  volcano:{sky:0x3a1a12, fog:[0x3a1a12,16,40]},
@@ -10440,7 +10498,7 @@ function boot(){
   document.getElementById('gaPull1').onclick=()=>doGacha(1);
   { const bg=document.getElementById('gaBuyGem'); if(bg) bg.onclick=openGemShop; }
   window._updGa10=()=>{};   // 10連は廃止（1回=3体に集約）
-  window._go={forest:()=>enterForest(), village:()=>enterVillage(), walk:(x,z)=>villageGoWorld(x,z), euro:()=>enterField('euro'), road:()=>enterField('road'), plain:()=>enterField('plain'), swamp:()=>enterField('swamp'), castle:()=>enterField('castle'), lake:()=>enterField('lake'), alps:()=>enterField('alps'), port:()=>enterField('port'), mtn:()=>enterField('mountain'), snow:()=>enterField('snow'), under:()=>enterField('under'), pyr:()=>enterField('pyramid'), shr:()=>enterField('shrine'), cave:()=>enterField('cave'), laby:()=>enterField('laby'), petri:()=>enterField('petri'), ironwood:()=>enterField('ironwood'), abyss:()=>enterField('abyss'), chaos:()=>enterField('chaos'), olympus:()=>enterField('olympus'), valhalla:()=>enterField('valhalla'), suntemple:()=>enterField('suntemple'), surt:()=>enterField('surt'), tree:()=>enterField('tree'), volc:()=>enterField('volcano'), enc:()=>{ if(VG&&VG.roamers&&VG.roamers[0]) villageGoWorld(VG.roamers[0].x, VG.roamers[0].z); }, quests:()=>openQuests(), wmap:()=>openWorldMap(), npcs:()=>(VG&&VG.npcs||[]).map(n=>n.def.name), roamers:()=>(VG&&VG.roamers||[]).map(r=>MID[r.mid]?MID[r.mid].name:r.mid), talkNpc:(nm)=>{const n=(VG&&VG.npcs||[]).find(n=>n.def.name.includes(nm)); if(n){villagerTalk(n);return true;} return false;}, rv:(k)=>{const r=rivalOfField(k); return r?r.name:null}, picks:()=>VG&&VG.pickups?VG.pickups.filter(p=>!p.got).map(p=>[+p.x.toFixed(1),+p.z.toFixed(1)]):null, noenc:()=>{ if(VG&&VG.roamers) for(const r of VG.roamers){ r.grp.visible=false; r.x=999; r.z=999; r.tx=999; r.tz=999; } }, boss:()=>{ const n=(VG&&VG.npcs||[]).find(n=>n.def.bossCh!=null); return n?{ch:n.def.bossCh,x:n.x,z:n.z}:null; }, pos:()=>VG&&VG.hero?[+VG.hero.x.toFixed(2),+VG.hero.z.toFixed(2)]:null, vj:()=>({a:vj.active,x:vj.x,y:vj.y})};   // デバッグ遷移
+  window._go={forest:()=>enterForest(), village:()=>enterVillage(), walk:(x,z)=>villageGoWorld(x,z), euro:()=>enterField('euro'), road:()=>enterField('road'), plain:()=>enterField('plain'), swamp:()=>enterField('swamp'), castle:()=>enterField('castle'), lake:()=>enterField('lake'), alps:()=>enterField('alps'), port:()=>enterField('port'), mtn:()=>enterField('mountain'), snow:()=>enterField('snow'), under:()=>enterField('under'), gate:()=>enterField('gate'), tomb:()=>enterField('tomb'), canyon:()=>enterField('canyon'), nightriver:()=>enterField('nightriver'), throne:()=>enterField('throne'), sunpeak:()=>enterField('sunpeak'), pyr:()=>enterField('pyramid'), shr:()=>enterField('shrine'), cave:()=>enterField('cave'), laby:()=>enterField('laby'), petri:()=>enterField('petri'), ironwood:()=>enterField('ironwood'), abyss:()=>enterField('abyss'), chaos:()=>enterField('chaos'), olympus:()=>enterField('olympus'), valhalla:()=>enterField('valhalla'), suntemple:()=>enterField('suntemple'), surt:()=>enterField('surt'), tree:()=>enterField('tree'), volc:()=>enterField('volcano'), enc:()=>{ if(VG&&VG.roamers&&VG.roamers[0]) villageGoWorld(VG.roamers[0].x, VG.roamers[0].z); }, quests:()=>openQuests(), wmap:()=>openWorldMap(), npcs:()=>(VG&&VG.npcs||[]).map(n=>n.def.name), roamers:()=>(VG&&VG.roamers||[]).map(r=>MID[r.mid]?MID[r.mid].name:r.mid), talkNpc:(nm)=>{const n=(VG&&VG.npcs||[]).find(n=>n.def.name.includes(nm)); if(n){villagerTalk(n);return true;} return false;}, rv:(k)=>{const r=rivalOfField(k); return r?r.name:null}, picks:()=>VG&&VG.pickups?VG.pickups.filter(p=>!p.got).map(p=>[+p.x.toFixed(1),+p.z.toFixed(1)]):null, noenc:()=>{ if(VG&&VG.roamers) for(const r of VG.roamers){ r.grp.visible=false; r.x=999; r.z=999; r.tx=999; r.tz=999; } }, boss:()=>{ const n=(VG&&VG.npcs||[]).find(n=>n.def.bossCh!=null); return n?{ch:n.def.bossCh,x:n.x,z:n.z}:null; }, pos:()=>VG&&VG.hero?[+VG.hero.x.toFixed(2),+VG.hero.z.toFixed(2)]:null, vj:()=>({a:vj.active,x:vj.x,y:vj.y})};   // デバッグ遷移
   if(qparam('debug')){ window._DEBUG=true; toast('🔧 デバッグ: 全フィールド・全章を開放中（セーブには保存されない）'); }
   // タイトル画面の背景に村の一枚絵
   { const t=document.getElementById('ovTitle');
