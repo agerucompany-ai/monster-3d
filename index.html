@@ -4194,8 +4194,9 @@ const CAMP_THEMES = {
   sky:       {base:'plain',     blobs:[['sea',4,7]],                       river:0},   // 天空: 島雲(平原)+海雲(海)。森/荒野なし
   gloom:     {base:'gloom',     blobs:[['wasteland',3,6],['lava',1,3]],     river:0},   // 瘴気の冥室(闇が地形効果)
   desert:    {base:'plain',     blobs:[['mountain',2,5],['forest',1,3]],   river:0},
+  castle:    {base:'wasteland', blobs:[['plain',3,7],['mountain',1,3]],    river:0},   // 室内石床の迷宮(溶岩なし)
 };
-const THEME_JP = {forest:'翠の森',coast:'港湾',mountain:'雷鳴山',rift:'大地の裂け目',snow:'凍峰',underworld:'冥界',worldtree:'世界樹の根元',sky:'天空聖堂',volcano:'火山',desert:'黄金の砂漠'};
+const THEME_JP = {forest:'翠の森',coast:'港湾',mountain:'雷鳴山',rift:'大地の裂け目',snow:'凍峰',underworld:'冥界',worldtree:'世界樹の根元',sky:'天空聖堂',volcano:'火山',desert:'黄金の砂漠',castle:'石造りの迷宮'};
 // 章データ。enemy: {mid, boss?}配列。reward: 加入モンスターid配列。theme:'volcano'は火山マップ流用
 const CAMPAIGN = [
  {title:"序章 境界の子", theme:'forest', budget:3,
@@ -4242,7 +4243,7 @@ const CAMPAIGN = [
    {"s": "62", "t": "ふう……久しぶりに、優しい風だ。あなた、相性を分かっているのね。"},
    {"s": "hero", "t": "弱点を突けば、大きい相手にも勝てる……! これ、すごく大事なことだ。"},
    {"s": "elder", "t": "その通り。さて、街道の先に古い城が見える。中は入り組んでおる——迷わず進めるかな？"}]},
- {title:"第3章 古城の迷宮", theme:'rift', budget:5,
+ {title:"第3章 古城の迷宮", theme:'castle', budget:5,
   intro:[
    {"s": "narr", "t": "蔦に覆われた古城。中は石壁の入り組んだ迷宮で、松明の灯りだけが道を示していた。"},
    {"s": "elder", "t": "こうした入り組んだ地では、慌てず道を選ぶことじゃ。行き止まりも、また道の一部よ。"},
@@ -5948,9 +5949,16 @@ function tryFusion(a, b, r, c){
   toast(`${u3?'⚡3体融合!! ':'融合！ '}${MID[fid].name} 誕生！`);
   afterAction();
 }
+// 序盤(欧州=5章クリアまで)はLv3進化を封印＝「1進化目まで」のバランス。以降で解禁
+function evoLvCap(){ return (CAMP.on && !ONLINE && STORY.clear<5) ? 2 : 3; }
 function evolveUnit(u, free){
   if(!free && netGuestIntercept('evolve',{uid:u.uid})) return false;
   const m=mon(u); if(m.evolves_to==null) return false;
+  // 序盤の進化上限(Lv2まで)。Lv2→Lv3はまだできない
+  if(MID[m.evolves_to] && MID[m.evolves_to].level>evoLvCap()){
+    if(!free && u.owner===0) toast('まだ2段階目の進化は早い…物語を進めれば解禁される');
+    return false;
+  }
   // 進化先を集めていないと進化できない（ガチャで収集。オンラインのみ無制限）
   if(!ONLINE && u.owner===0 && !STORY.owned.includes(m.evolves_to)){
     if(!free) toast(`進化先「${MID[m.evolves_to].name}」を未所持！🎰ガチャで集めよう`);
@@ -7072,7 +7080,8 @@ function updateUI(){
       if(m.evolves_to!=null){
         const cost=EVO_COST[m.level]; const nm=MID[m.evolves_to];
         let ok=true, why='';
-        if(!ONLINE && !STORY.owned.includes(m.evolves_to)){ ok=false; why='(未所持🎰)'; }
+        if(nm.level>evoLvCap()){ ok=false; why='(物語を進めて解禁)'; }
+        else if(!ONLINE && !STORY.owned.includes(m.evolves_to)){ ok=false; why='(未所持🎰)'; }
         else if(sel.moved||sel.acted){ ok=false; why='(行動済)'; }
         else if(state.energy[0]<cost){ ok=false; why=`(気${state.energy[0]}/${cost})`; }
         ac.appendChild(mkbt(`⬆ 進化→${nm.name} 気${cost}${why}`,'evo', ok, ()=>setMode('evolve')));
@@ -10045,7 +10054,7 @@ const FIELD_ROAM={
   suntemple:[161,162,55,56,7,8],                 // 太陽神殿=光/炎
   surt:    [1,2,4,5,192,193],                    // スルヴァの玉座=炎/竜
 };
-const FIELD_BTHEME={euro:'forest', road:'forest', plain:'forest', swamp:'coast', castle:'rift', lake:'coast', alps:'snow', forest:'forest', port:'coast', mountain:'mountain', snow:'snow', under:'desert', gate:'desert', tomb:'gloom', canyon:'desert', nightriver:'coast', throne:'gloom', sunpeak:'sky', tree:'worldtree', volcano:'volcano', ironforest:'snow', sea:'coast', wasteland:'volcano', roots:'underworld', void:'volcano', pyramid:'gloom', shrine:'gloom', cave:'rift', laby:'rift', petri:'sky', ironwood:'snow', abyss:'underworld', chaos:'volcano', olympus:'sky', valhalla:'snow', suntemple:'sky', surt:'volcano'};
+const FIELD_BTHEME={euro:'forest', road:'forest', plain:'forest', swamp:'coast', castle:'castle', lake:'coast', alps:'snow', forest:'forest', port:'coast', mountain:'mountain', snow:'snow', under:'desert', gate:'desert', tomb:'gloom', canyon:'desert', nightriver:'coast', throne:'gloom', sunpeak:'sky', tree:'worldtree', volcano:'volcano', ironforest:'snow', sea:'coast', wasteland:'volcano', roots:'underworld', void:'volcano', pyramid:'gloom', shrine:'gloom', cave:'rift', laby:'rift', petri:'sky', ironwood:'snow', abyss:'underworld', chaos:'volcano', olympus:'sky', valhalla:'snow', suntemple:'sky', surt:'volcano'};
 const FIELD_SKY={
  alps:{sky:0xdfe9f2, fog:[0xdfe9f2,18,44]},
  volcano:{sky:0x3a1a12, fog:[0x3a1a12,16,40]},
@@ -10777,6 +10786,9 @@ function resetOnline(){ ONLINE=false; IAMHOST=false; hostPlacedFlag=false; guest
 // ======================= デバッグフック =======================
 window.__game={
   get state(){return state;}, MID, FUSE_IDX,
+  startCh(i){ startChapter(i); return CAMP.ch; },
+  terrStats(){ const f={}; for(const row of state.terrain) for(const t of row) f[t]=(f[t]||0)+1; return f; },
+  evoCap(){ return evoLvCap(); },
   openGa(){ openGacha('village'); return true; },
   packInfo(){ return GACHA_PACKS.map(p=>({k:p.key, drops:[...packLineIds(p)].map(id=>MID[id]&&MID[id].name)})); },
   start(team){ document.getElementById('btStart').onclick(); if(team){chosen=team.slice(0,5);} else randomTeam(); enterPlace(); autoPlace(); beginBattle(); return alive(0).length; },
