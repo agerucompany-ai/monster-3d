@@ -4994,12 +4994,12 @@ function openQuests(){
   ov.style.display='flex';
 }
 let STORY = loadStory();
-// 既存セーブ移行: 相棒を選んでいれば相棒3ライン(相棒/ソヨカ/イシコロ)の全進化段を必ず所持=進化先未所持を根絶
+// 既存セーブ移行: 相棒を選んでいれば開始付与は相棒3種(相棒/ソヨカ風/クレイド地)のLv1基本形のみ
 (function migrateStarterLines(){
   if(!STORY.starter || !Array.isArray(STORY.owned)) return;
   const before=STORY.owned.length;
-  const addLine=(base)=>{ let c=base,g=0; while(c!=null&&g<8){ if(!STORY.owned.includes(c)) STORY.owned.push(c); c=(MID[c]?MID[c].evolves_to:null); g++; } };
-  addLine(STORY.starter); addLine(49); addLine(31);
+  const addBase=(g)=>{ if(g!=null && !STORY.owned.includes(g)) STORY.owned.push(g); };
+  addBase(STORY.starter); addBase(49); addBase(40);
   if(STORY.owned.length!==before){ try{ localStorage.setItem('ms3d_story', JSON.stringify(STORY)); }catch(e){} }
 })();
 try{ loginTick(); }catch(e){}   // 連続ログイン日数の更新
@@ -5125,7 +5125,7 @@ function packLineIds(pk){ const out=new Set();
   for(const f of (pk.fusions||[])) if(!GACHA_BAN.has(f)) out.add(f);
   return out; }
 function starterFamilyIds(){
-  const bases=[STORY.starter||1, 49, 31];
+  const bases=[STORY.starter||1, 49, 40];
   if(!STORY.starter) bases.push(178,70);   // 相棒未選択なら3御三家とも
   const out=new Set();
   for(const b of bases){ let cur=b, g=0; while(cur!=null && g<6){ out.add(cur); cur=MID[cur]?MID[cur].evolves_to:null; g++; } }
@@ -7694,10 +7694,10 @@ function pickStarter(cb){
     d.style.width='120px';
     d.innerHTML=`<span class="tg" style="background:${TYPE_COL[m.type]}">${m.type}</span><img src="${IMG[id]}"><div class="nm">${m.name}</div><div class="muted">HP${m.hp}/A${m.atk}</div>`;
     d.onclick=()=>{ STORY.starter=id;
-      // 相棒3ライン(相棒/ソヨカ/イシコロ)を全進化段まで解放=最後まで必ず進化できる
+      // 相棒3種(相棒/ソヨカ風/クレイド地)のLv1基本形のみ付与(進化形は集める)
       STORY.owned=[];
-      const addLine=(base)=>{ let c=base,g=0; while(c!=null&&g<8){ if(!STORY.owned.includes(c)) STORY.owned.push(c); c=(MID[c]?MID[c].evolves_to:null); g++; } };
-      addLine(id); addLine(49); addLine(31); saveStory();
+      const addBase=(g)=>{ if(g!=null && !STORY.owned.includes(g)) STORY.owned.push(g); };
+      addBase(id); addBase(49); addBase(40); saveStory();   // 開始時はLv1のみ。進化形はガチャ/戦闘で集める
       toast(`${m.name}が相棒になった！（3ラインとも最終進化まで解放。すぐ進化できるぞ）`);
       ov.style.display='none'; cb&&cb(); };
     row.appendChild(d);
