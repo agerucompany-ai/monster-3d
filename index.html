@@ -9765,7 +9765,7 @@ function buildAlps(){
   // 周囲を囲む白銀の峰
   for(const [px,pz,ph2] of [[-10,-9,9],[-3,-13,11],[5,-12,10],[11,-7,8.5],[-11,2,7],[10,4,7.5]]){
     const snow=new THREE.MeshLambertMaterial({color:0xf4f9ff});
-    const pk=new THREE.Mesh(new THREE.ConeGeometry(ph2*0.62,ph2,7), snow); pk.position.set(px,ph2/2,pz); villageGroup.add(pk); vCol(px,pz,ph2*0.5);
+    const pk=new THREE.Mesh(new THREE.ConeGeometry(ph2*0.62,ph2,7), snow); pk.position.set(px,ph2/2,pz); villageGroup.add(pk); vCol(px,pz,ph2*0.22);   // 峰の当たり判定は小さめ(門を塞がない)
     const rock=new THREE.Mesh(new THREE.ConeGeometry(ph2*0.66,ph2*0.7,7), new THREE.MeshLambertMaterial({color:0x8a94a2})); rock.position.set(px,ph2*0.35,pz); villageGroup.add(rock); }
   // 氷柱・氷塊
   for(let i=0;i<10;i++){ const x=(Math.random()-0.5)*22, z=(Math.random()-0.5)*20; if(Math.hypot(x,z)>13||Math.abs(x)<1.8&&z>-11) continue;
