@@ -7431,23 +7431,30 @@ function cpuPlace(){
     const team=CAMP.rivalKey ? rivalEnemyTeam(RIVALS.find(r=>r.key===CAMP.rivalKey)) : freeEnemyTeam();
     const pw=CAMP.rivalPow||1;
     const mook=!CAMP.rivalKey && !CAMP.rare;   // 通常の野生=雑魚補正（テンポよく勝てる）
+    // 野生/レア/ライバル(剣士・魔女・狩人)は必ずストーリーボスより弱く。進行段階のボスHP/攻撃を基準に上限クランプ
+    const refCh=Math.min(STORY.clear+1, CAMPAIGN.length-1);
+    const rb=MID[(CAMPAIGN[refCh].enemy.find(e=>e.boss)||{}).mid];
+    const capHP = rb ? Math.round(rb.hp*Math.min(2.1,1.4+0.06*refCh)*0.8) : 1e9;    // ボスHPの80%が上限
+    const capAtk= rb ? rb.atk*Math.min(1.45,1.1+0.03*refCh)*0.85 : 1e9;             // ボス攻撃の85%が上限
     team.forEach((e,i)=>{ if(i<spots.length){ const [r,c]=spots[i]; const u=addUnit(1,e.mid,r,c);
       if(mook){ u.maxhp=u.hp=Math.round(u.maxhp*0.72); u.atkX=0.85; }
-      if(pw>1){ const pwc=Math.min(1.25,pw); u.maxhp=u.hp=Math.round(u.maxhp*pwc); u.atkX=(u.atkX||1)*pwc; }   // リベンジ強化はHP/攻撃とも×1.25まで(ストーリーボスを超えない)
-      if(e.boss){ u.isBoss=true; u.maxhp=u.hp=Math.round(u.maxhp*1.12); u.atkX=(u.atkX||1)*1.06; } } });   // 野生/剣士の主役は控えめ強化(ボスが最強格)
+      if(pw>1){ const pwc=Math.min(1.25,pw); u.maxhp=u.hp=Math.round(u.maxhp*pwc); u.atkX=(u.atkX||1)*pwc; }
+      if(e.boss){ u.isBoss=true; }   // レア/ライバルの主役は「印」だけ=HP/攻撃の上乗せなし
+      if(u.maxhp>capHP){ u.maxhp=u.hp=capHP; }                                      // ストーリーボス超え防止(HP)
+      const mAtk=mon(u).atk||1; if(mAtk*(u.atkX||1)>capAtk) u.atkX=capAtk/mAtk;      // 同(攻撃)
+    } });
     return;
   }
   if(CAMP.on){
     // ストーリー: 章の固定敵編成。ボスは城に近い順で配置し、章が進むほどHP/攻撃を強化
     const cc=CASTLE[1];
-    const hpX = Math.min(2.7, 1.9+0.08*CAMP.ch);    // ボスHP: 序盤×1.9 → 終章×2.7
-    const atX = Math.min(1.6, 1.2+0.035*CAMP.ch);   // ボス攻撃: ×1.2 → ×1.6
-    const minBossHP = 500 + CAMP.ch*130;            // 素HPが低いボスも各章の壁になるHP下限(ch1=630…ch10=1800)
+    const hpX = Math.min(2.1, 1.4+0.06*CAMP.ch);    // ボスHP: 序盤×1.4 → 終章×2.1(元の値)
+    const atX = Math.min(1.45, 1.1+0.03*CAMP.ch);   // ボス攻撃: ×1.1 → ×1.45(元の値)
     const spots=castleArea(1).filter(([r,c])=>!unitAt(r,c))
       .sort((a,b)=>(Math.abs(a[0]-cc.r)+Math.abs(a[1]-cc.c))-(Math.abs(b[0]-cc.r)+Math.abs(b[1]-cc.c)));
     const team=[...CAMPAIGN[CAMP.ch].enemy].sort((a,b)=>(b.boss?1:0)-(a.boss?1:0));
     team.forEach((e,i)=>{ if(i<spots.length){ const [r,c]=spots[i]; const u=addUnit(1,e.mid,r,c);
-      if(e.boss){ u.isBoss=true; u.maxhp=u.hp=Math.max(Math.round(u.maxhp*hpX), minBossHP); u.atkX=atX; } } });
+      if(e.boss){ u.isBoss=true; u.maxhp=u.hp=Math.round(u.maxhp*hpX); u.atkX=atX; } } });
     return;
   }
   const team=pickCpuTeam();
@@ -10788,6 +10795,9 @@ function resetOnline(){ ONLINE=false; IAMHOST=false; hostPlacedFlag=false; guest
 window.__game={
   get state(){return state;}, MID, FUSE_IDX,
   startCh(i){ startChapter(i); return CAMP.ch; },
+  startRival(key){ V_MAP=V_MAP||'euro'; const rv=RIVALS.find(r=>r.key===key)||RIVALS[0]; startRivalBattle(rv); return rv.name; },
+  startRare(field){ V_MAP=field||'euro'; CAMP={on:true,ch:Math.min(STORY.clear+1,CAMPAIGN.length-1),free:true,field:V_MAP,rare:true,encMid:null}; LEVEL_BUDGET=CAMPAIGN[CAMP.ch].budget; campTheme=FIELD_BTHEME[V_MAP]||'forest'; mapType='normal'; enterChapterSelect(); return 'rare@'+V_MAP; },
+  enemyStats(){ return Object.values(state.units).filter(u=>u.owner===1).map(u=>({name:MID[u.mid].name,lv:MID[u.mid].level,hp:u.maxhp,atkX:+(u.atkX||1).toFixed(2),boss:!!u.isBoss})); },
   terrStats(){ const f={}; for(const row of state.terrain) for(const t of row) f[t]=(f[t]||0)+1; return f; },
   evoCap(){ return evoLvCap(); },
   openGa(){ openGacha('village'); return true; },
