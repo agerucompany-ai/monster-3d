@@ -9721,8 +9721,12 @@ function buildCastle(){
   addWall(1.5,2,17,1);    torch(-7.5,2.6);                    // 左に開口
   addWall(-1.5,-2,17,1);  torch(7.5,-1.4);                    // 右に開口
   addWall(1.5,-6,17,1);   torch(-7.5,-5.4);                   // 左に開口
-  // 行き止まりの短い仕切り（迷路感）
-  addWall(-5,4,1,3); addWall(5,0,1,3); addWall(-5,-4,1,3); addWall(3,4,1,3);
+  // 蛇行路に半分だけ突き出す仕切り（迷路感・通路は塞がない）
+  addWall(-9.4,4,3.2,1); addWall(9.4,0,3.2,1); addWall(-9.4,-4,3.2,1);
+  // 最奥の間の崩れ柱（装飾）
+  for(const [px,pz] of [[-6,-9],[6,-9]]){
+    const col=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.42,2.4,8), wallM); col.position.set(px,1.2,pz); villageGroup.add(col); vCol(px,pz,0.42);
+    const cap=new THREE.Mesh(new THREE.BoxGeometry(0.95,0.26,0.95), wallM); cap.position.set(px,2.55,pz); villageGroup.add(cap); }
   vFieldCommon(0xb070ff);
 }
 // ======================= ヨーロッパ編：銀鏡の湖 =======================
