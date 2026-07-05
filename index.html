@@ -4997,7 +4997,7 @@ function openQuests(){
   ov.style.display='flex';
 }
 let STORY = loadStory();
-// 既存セーブ移行: 相棒を選んでいれば相棒3ライン(相棒/ソヨカ/ツチノコ)の全進化段を必ず所持=進化先未所持を根絶
+// 既存セーブ移行: 相棒を選んでいれば相棒3ライン(相棒/ソヨカ/イシコロ)の全進化段を必ず所持=進化先未所持を根絶
 (function migrateStarterLines(){
   if(!STORY.starter || !Array.isArray(STORY.owned)) return;
   const before=STORY.owned.length;
@@ -5036,7 +5036,7 @@ const GACHA_RAR_COL={N:'#8a97ad',R:'#b08ae0',SR:'#e0c060',SSR:'#ff7ab0'};
 // N=Lv1 / R=Lv2(進化形含む) / SR=Lv3+竜系 / SSR=融合体
 // シリーズパック: 章を進めるほど新しい召喚シリーズが解放される（次のマップの敵に刺さる属性順）
 const GACHA_PACKS=[
- {key:'basic', name:'相棒の系譜',     types:null, starterPack:true, need:-1, hint:'相棒・ソヨカ・ツチノコの進化ラインだけが出る。1回1回がまっすぐ戦力になる'},
+ {key:'basic', name:'相棒の系譜',     types:null, starterPack:true, need:-1, hint:'相棒・ソヨカ・イシコロの進化ラインだけが出る。1回1回がまっすぐ戦力になる'},
  {key:'flame', name:'紅蓮の火種',     types:['炎','風'], need:0,  lines:[1,4,7,106,49,52],       fusions:[13,100,143], hint:'樹海の草モンスターは炎で焼き払え'},
  {key:'volt',  name:'雷雲の胎動',     types:['雷','草'], need:6,  lines:[67,70,78,31,178],       fusions:[82,135,201], hint:'エーゲの水モンスターには雷と草'},
  {key:'earth', name:'大地の鼓動',     types:['地','水'], need:7,  lines:[34,40,117,16,19],       fusions:[175,204,187],hint:'エーレアの怪物は地と水で迎え撃て'},
@@ -5048,7 +5048,7 @@ const GACHA_PACKS=[
 ];
 let GFIELD=null;   // フィールドHUDから開いた時=そのマップ専用ガチャ
 // マップ専用パック: この地の敵に強いタイプ + この地のボスの素材ライン
-const FIELD_COUNTER={forest:['炎','雷'], port:['雷','草'], mountain:['地','草'], snow:['炎'], under:['光','地'], tree:['炎','闇'], volcano:['水','氷']};
+const FIELD_COUNTER={euro:['炎','雷'], castle:['地','草'], lake:['雷','草'], alps:['炎','雷'], forest:['氷','水'], port:['雷','草'], mountain:['地','草'], snow:['炎'], under:['光','地'], tree:['炎','闇'], volcano:['水','氷']};
 function fieldGPack(map){
   return {key:'field:'+map, name:(FIELD_INFO[map]?FIELD_INFO[map].name:'この地')+'の召喚',
     types:FIELD_COUNTER[map]||['炎'], fieldMap:map, need:-1,
@@ -5128,8 +5128,8 @@ function packLineIds(pk){ const out=new Set();
   for(const f of (pk.fusions||[])) if(!GACHA_BAN.has(f)) out.add(f);
   return out; }
 function starterFamilyIds(){
-  const bases=[STORY.starter||7, 49, 34];
-  if(!STORY.starter) bases.push(16,178);   // 相棒未選択なら3相棒とも
+  const bases=[STORY.starter||1, 49, 31];
+  if(!STORY.starter) bases.push(178,70);   // 相棒未選択なら3御三家とも
   const out=new Set();
   for(const b of bases){ let cur=b, g=0; while(cur!=null && g<6){ out.add(cur); cur=MID[cur]?MID[cur].evolves_to:null; g++; } }
   return out;
@@ -7695,7 +7695,7 @@ function pickStarter(cb){
     d.style.width='120px';
     d.innerHTML=`<span class="tg" style="background:${TYPE_COL[m.type]}">${m.type}</span><img src="${IMG[id]}"><div class="nm">${m.name}</div><div class="muted">HP${m.hp}/A${m.atk}</div>`;
     d.onclick=()=>{ STORY.starter=id;
-      // 相棒3ライン(相棒/ソヨカ/ツチノコ)を全進化段まで解放=最後まで必ず進化できる
+      // 相棒3ライン(相棒/ソヨカ/イシコロ)を全進化段まで解放=最後まで必ず進化できる
       STORY.owned=[];
       const addLine=(base)=>{ let c=base,g=0; while(c!=null&&g<8){ if(!STORY.owned.includes(c)) STORY.owned.push(c); c=(MID[c]?MID[c].evolves_to:null); g++; } };
       addLine(id); addLine(49); addLine(31); saveStory();
@@ -9790,7 +9790,7 @@ const FIELD_INFO={
  lake:     {name:'💧 銀鏡の湖',       need:3,  hint:'峰を映す静かな湖。水辺の地形を学ぶ'},
  alps:     {name:'❄ スイスの氷峰',    need:4,  hint:'白銀の峠。氷海王を越えれば南の国へ'},
  forest:   {name:'🌲 英雄の樹海',     need:5,  hint:'エーレアの緑。怪物と英雄志願者の国'},
- port:     {name:'⚓ エーゲの港町',   need:6,  hint:'白い神殿と青い海。深海の主が潜む港'},
+ port:     {name:'⚓ エーゲの港町',   need:6,  hint:'白い神殿と青い海。荒ぶる海神ポセイダの潜む港'},
  mountain: {name:'⛰ 神々の山道',     need:8,  hint:'九頭竜の沼と、古戦場の巨神へ続く山道'},
  under:    {name:'🏜 王家の冥所',     need:10, hint:'サディーム。黄金の砂とピラミッドの国'},
  snow:     {name:'🏔 ニヴルの雪原',     need:17, hint:'終末の予言の国。霜の巨人が眠る'},
@@ -9809,26 +9809,26 @@ const FIELD_INFO={
  suntemple:{name:'☀ 太陽神殿の頂', need:10,  hint:'雲海に浮かぶ太陽神の座'},
  surt:     {name:'🔥 スルトの玉座', need:22, hint:'炎の巨人が剣を研ぐ溶岩の間'},
 };
-const FIELD_TYPES={euro:['草','風'], castle:['雷','地'], lake:['水','氷'], alps:['氷','水'], forest:['草','風'], port:['水'], mountain:['雷'], snow:['氷'], under:['地','闇'], tree:['草','地'], volcano:['炎','竜'], pyramid:['地','闇'], shrine:['闇','地'], cave:['地','草'], laby:['水','地'], petri:['雷','光'], ironwood:['氷','風'], abyss:['闇','地'], chaos:['竜','闇'], olympus:['光','雷'], valhalla:['光','氷'], suntemple:['光','炎'], surt:['炎','竜']};
+const FIELD_TYPES={euro:['草','風'], castle:['雷','地'], lake:['水','氷'], alps:['氷','水'], forest:['草','風'], port:['水'], mountain:['雷','地'], snow:['氷'], under:['地','闇'], tree:['草','地'], volcano:['炎','竜'], pyramid:['地','闇'], shrine:['闇','地'], cave:['地','草'], laby:['水','地'], petri:['雷','光'], ironwood:['氷','風'], abyss:['闇','地'], chaos:['竜','闇'], olympus:['光','雷'], valhalla:['光','氷'], suntemple:['光','炎'], surt:['炎','竜']};
 // 各フィールドの野生モンスター(厳選): 序盤ほど種類を絞る。ニヴルにフェンリル(129,130)。
 const FIELD_ROAM={
-  euro:    [31,32,49,50,178,62],
-  castle:  [67,68,70,71,78,86],
-  lake:    [16,17,24,26,110,111],
+  euro:    [31,32,49,50,178,63],
+  castle:  [67,68,70,71,78,79],
+  lake:    [16,17,24,27,110,111],
   alps:    [22,23,151,152,158,159],
   forest:  [31,32,49,50,178,179],                // 英雄の樹海=草/風(相棒圏・少なめ)
   port:    [16,17,19,20,24,25,110,111],          // エーゲ=水
   mountain:[67,68,70,71,34,35,40,41],            // 神々の山道=雷/地
-  under:   [117,118,85,86,88,89,257],            // 王家の冥所=地/闇(サディーム)
+  under:   [117,118,85,86,88,89,96],            // 王家の冥所=地/闇(サディーム)
   snow:    [151,152,22,23,154,155,129],          // ニヴルの雪原=氷。狼ガストル129が徘徊(フェンリル/ヴァルグルは章ボスなので野生除外)
   tree:    [181,182,183,184,173,174],            // 世界樹=草/地
   volcano: [1,2,4,5,192,193,198,199],            // ムスペル=炎/竜
-  pyramid: [117,118,85,86,88,89,255,257],        // 大ピラミッド内部=地/闇
-  shrine:  [95,96,97,98,88,89,257],              // 地下祭殿=闇多め
+  pyramid: [117,118,85,86,88,89,96,98],        // 大ピラミッド内部=地/闇
+  shrine:  [95,96,97,98,88,89,86],              // 地下祭殿=闇多め
   cave:    [40,41,34,35,31,32],                  // ネメアの洞窟=地/草
   laby:    [16,17,19,20,34,35],                  // 迷宮=水/地
   petri:   [67,68,161,162,55,56],                // 石化の神殿=雷/光
-  ironwood:[151,152,129,130,261,154],            // 鉄の森=氷/風(狼)
+  ironwood:[151,152,129,154,158,159],            // 鉄の森=氷/風(狼)
   abyss:   [85,86,88,89,95,96],                  // 根の奈落=闇
   chaos:   [192,193,198,199,85,86],              // 原初の混沌=竜/闇
   olympus: [161,162,55,56,67,68],                // オリュンポス=光/雷
