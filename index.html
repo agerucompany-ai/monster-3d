@@ -214,8 +214,9 @@ button.bt.fuse{background:#a24ec0}
     </div>
     <div id="gaResult" style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px"></div>
     <div style="margin-top:16px;border-top:1px solid #3a2a4a;padding-top:10px">
-      <b style="color:#ffd86b">🔁 交換所</b><span class="muted" style="font-size:11px">　同じ子がダブると自動で<b>★グレード</b>(+3%/★・最大★5)。余りは<b>5体→Lv2</b>／<b>10体→Lv3</b>／<b>1体→💎</b>に交換可</span>
-      <div id="gaTrade" style="margin-top:8px"></div>
+      <b style="color:#ffd86b">🔁 交換所</b>
+      <div class="muted" style="font-size:11px;margin:3px 0 6px;line-height:1.6">同じモンスターが<b>ダブる</b>と、その子の下のボタンで交換できます：<br>・<b>5体ぶん</b>→ 次の進化形(Lv2)　・<b>10体ぶん</b>→ 最終進化形(Lv3)　・<b>1体ぶん</b>→ 💎ジェム<br><span style="color:#8a8a8a">※ダブりは自動で<b style="color:#ffd86b">★グレード</b>(+3%/★・最大★5)にもなる。交換に使うと★は下がります</span></div>
+      <div id="gaTrade" style="margin-top:4px"></div>
     </div>
   </div>
 </div>
@@ -5072,7 +5073,7 @@ function fieldBossLineIds(map){
 }
 function packOf(){
   if(GFIELD) return fieldGPack(GFIELD);
-  const k=STORY.gpack||'basic'; return GACHA_PACKS.find(p=>p.key===k&&STORY.clear>=p.need)||GACHA_PACKS[0]; }
+  const k=STORY.gpack||'basic'; return GACHA_PACKS.find(p=>p.key===k)||GACHA_PACKS[0]; }
 function packDropInfo(pk){
   if(!pk) return {ids:[]};
   if(pk.starterPack) return {ids:[...starterFamilyIds()].filter(id=>!GACHA_BAN.has(id)), note:'相棒として選んだ系統だけが出る'};
@@ -5110,23 +5111,20 @@ function renderPacks(){
     renderDropList(document.getElementById('gaDrops'), p);
     return;
   }
-  if(!GACHA_PACKS.some(p=>p.key===(STORY.gpack||'basic')&&STORY.clear>=p.need)) STORY.gpack='basic';
+  if(!GACHA_PACKS.some(p=>p.key===(STORY.gpack||'basic'))) STORY.gpack='basic';
   const cur=packOf();
   box.innerHTML=GACHA_PACKS.map(p=>{
-    const un=STORY.clear>=p.need;
-    const isNew=un&&!(STORY.tut&&STORY.tut['pk_'+p.key])&&p.key!=='basic';
-    return `<div data-pk="${p.key}" style="flex:0 0 auto;min-width:94px;background:${cur.key===p.key?'#2a1a3e':'#1a1226'};border:2px solid ${cur.key===p.key?'#c060ff':un?'#3a2a4a':'#241a30'};border-radius:10px;padding:7px 10px;text-align:center;${un?'cursor:pointer':'opacity:.45'};position:relative">
+    const isNew=!(STORY.tut&&STORY.tut['pk_'+p.key])&&p.key!=='basic';
+    return `<div data-pk="${p.key}" style="flex:0 0 auto;min-width:94px;background:${cur.key===p.key?'#2a1a3e':'#1a1226'};border:2px solid ${cur.key===p.key?'#c060ff':'#3a2a4a'};border-radius:10px;padding:7px 10px;text-align:center;cursor:pointer;position:relative">
       ${isNew?'<div style="position:absolute;top:-7px;right:-4px;background:#ff5a8a;color:#fff;font-size:9px;font-weight:800;border-radius:6px;padding:1px 5px">NEW</div>':''}
-      <div style="font-size:12px;font-weight:700;white-space:nowrap">${un?'':'🔒'}${p.name}</div>
+      <div style="font-size:12px;font-weight:700;white-space:nowrap">${p.name}</div>
       <div style="font-size:10px;color:#b08ae0">${p.starterPack?'相棒ライン専用':p.types?p.types.join('・'):'全タイプ'}</div>
-      ${un?'':`<div class="muted" style="font-size:9px;white-space:nowrap">${p.need===0?'序章':'第'+p.need+'章'}クリアで解放</div>`}
     </div>`;
   }).join('');
   const hint=document.getElementById('gaPackHint'); if(hint) hint.textContent=`▶ ${cur.name} — ${cur.hint}`;
   renderDropList(document.getElementById('gaDrops'), cur);
   box.querySelectorAll('[data-pk]').forEach(d=>{ d.onclick=()=>{
-    const p=GACHA_PACKS.find(x=>x.key===d.dataset.pk);
-    if(!p||STORY.clear<p.need){ toast('🔒 物語を進めると解放されるシリーズだ'); return; }
+    const p=GACHA_PACKS.find(x=>x.key===d.dataset.pk); if(!p) return;
     STORY.gpack=p.key; STORY.tut=STORY.tut||{}; STORY.tut['pk_'+p.key]=1; saveStory(); renderPacks(); }; });
 }
 const GACHA_BAN=(()=>{ const s=new Set([244,245,246,247,267]); try{ CAMPAIGN.forEach(ch=>ch.enemy.forEach(e=>{ if(e.boss) s.add(e.mid); })); }catch(_){} return s; })();   // ボス系はガチャに出さない（撃破で仲間に）
@@ -5241,13 +5239,15 @@ function renderTrade(){
     const lv2=m.evolves_to!=null?MID[m.evolves_to]:null;
     const lv3=lv2&&lv2.evolves_to!=null?MID[lv2.evolves_to]:null;
     const opts=[];
-    if(lv2&&!STORY.owned.includes(lv2.id)&&n>=5) opts.push(`<button class="bt go" data-src="${idStr}" data-tgt="${lv2.id}" data-cost="5" style="padding:6px 10px;font-size:11px">5体→${lv2.name}(Lv2)</button>`);
-    if(lv3&&!STORY.owned.includes(lv3.id)&&n>=10) opts.push(`<button class="bt go" data-src="${idStr}" data-tgt="${lv3.id}" data-cost="10" style="padding:6px 10px;font-size:11px">10体→${lv3.name}(Lv3)</button>`);
+    if(lv2&&!STORY.owned.includes(lv2.id)){ const ok=n>=5;
+      opts.push(`<button class="bt ${ok?'go':''}" data-src="${idStr}" data-tgt="${lv2.id}" data-cost="5" style="padding:6px 10px;font-size:11px${ok?'':';opacity:.5'}">5体→${lv2.name}${ok?'':`(あと${5-n})`}</button>`); }
+    if(lv3&&!STORY.owned.includes(lv3.id)){ const ok=n>=10;
+      opts.push(`<button class="bt ${ok?'go':''}" data-src="${idStr}" data-tgt="${lv3.id}" data-cost="10" style="padding:6px 10px;font-size:11px${ok?'':';opacity:.5'}">10体→${lv3.name}${ok?'':`(あと${10-n})`}</button>`); }
     opts.push(`<button class="bt" data-src="${idStr}" data-gem="${dupGem(m)}" style="padding:6px 10px;font-size:11px">1体→💎${dupGem(m)}</button>`);
     const star=Math.min(5,n);
     rows.push(`<div style="display:flex;align-items:center;gap:8px;background:#1a1226;border:1px solid #3a2a4a;border-radius:8px;padding:6px 10px;margin:4px 0;flex-wrap:wrap">
       <img src="${IMG[idStr]||''}" style="width:36px;height:36px;object-fit:contain">
-      <span style="font-size:12px;flex:1">${m.name} <b style="color:#8ee0ff">×${n}</b> <span style="color:#ffd86b;font-size:10px">${'★'.repeat(star)}${'☆'.repeat(5-star)} +${3*star}%</span></span>
+      <span style="font-size:12px;flex:1;min-width:120px">${m.name} <b style="color:#8ee0ff">ダブり×${n}</b> <span style="color:#ffd86b;font-size:10px">${'★'.repeat(star)}${'☆'.repeat(5-star)} +${3*star}%</span></span>
       ${opts.join('')}
     </div>`);
   }
@@ -5258,7 +5258,7 @@ function renderTrade(){
       if(b2.dataset.gem){ if((STORY.dups[src]||0)<1) return; STORY.dups[src]-=1; const g=+b2.dataset.gem; STORY.gems+=g;
         saveStory(); seJingle('gem'); toast(`💎 ${MID[src].name}のダブり1体 → 💎+${g}`); renderTrade(); updateGemUI(); return; }
       const tgt=+b2.dataset.tgt, cost=+b2.dataset.cost;
-      if((STORY.dups[src]||0)<cost) return;
+      if((STORY.dups[src]||0)<cost){ toast(`${MID[src].name}のダブりがあと${cost-(STORY.dups[src]||0)}体必要（今×${STORY.dups[src]||0}）`); return; }
       STORY.dups[src]-=cost;
       if(!STORY.owned.includes(tgt)) STORY.owned.push(tgt);
       saveStory(); seJingle('gem');
@@ -5351,7 +5351,7 @@ function openLegal(){
   ov.style.display='flex';
 }
 function openGacha(from){ gaFrom=from||'title';
-  GFIELD=(from==='hud'&&V_MAP!=='village')?V_MAP:null;
+  GFIELD=null;   // どのマップから開いても全シリーズを自由に選べる(その地専用ロックを廃止)
   document.getElementById('gaResult').innerHTML=''; updateGemUI(); renderPacks(); renderTrade(); document.getElementById('ovGacha').style.display='flex'; }
 function closeGacha(){ document.getElementById('ovGacha').style.display='none';
   GFIELD=null;
@@ -7616,11 +7616,9 @@ function endGame(winner,msg){
       const afterWin=()=>{
         t.textContent='🎉 章クリア！';
         const bossImgs=ch.enemy.filter(e=>e.boss).map(e=>`<img src="${IMG[String(e.mid)]||''}" style="width:76px;height:76px;object-fit:contain;background:#0d1220;border-radius:10px;border:2px solid #d8b040;margin:3px">`).join('');
-        const npk=first?GACHA_PACKS.find(p=>p.need===CAMP.ch):null;
         b.innerHTML = msg
           + (newly.length?`<br><div style="margin:6px 0">${bossImgs}</div>🎁 ボス <b>${newly.join('・')}</b> が仲間になった！（Lv3ボスは単体でそのまま出撃／融合ボスは素材を集めて出撃）`:'')
-          + `<br>💎 ジェム +${gems}${first?'（初回クリア）':''} → 所持💎${STORY.gems}`
-          + (npk?`<br>🎰 <b style="color:#ff8ab0">新召喚シリーズ「${npk.name}」（${npk.types?npk.types.join('・'):'全タイプ'}）解放！</b>`:'');
+          + `<br>💎 ジェム +${gems}${first?'（初回クリア）':''} → 所持💎${STORY.gems}`;
         const last = CAMP.ch>=CAMPAIGN.length-1;
         if(CAMP.ch===0 && tutOnce('t_altar')){   // 序章クリア後は祭壇に誘導して召喚を体験させる
           btn.textContent='🎰 村の祭壇へ（召喚を試す）';
