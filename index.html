@@ -6547,12 +6547,31 @@ function addHL(r,c,color,op){
       new THREE.MeshBasicMaterial({color,transparent:true,opacity:op||0.45,side:THREE.DoubleSide}));
   m.rotation.x=-Math.PI/2; m.position.set(w.x,cellH(r,c)+0.04,w.z); fxGroup.add(m); hlMeshes.push(m);
 }
+// 攻撃対象を示すレーダーサイト(照準◎)。敵=赤/味方巻込=黄
+function addReticle(r,c,color){
+  const w=cell2world(r,c), y=cellH(r,c)+0.07;
+  const mk=(geo,op)=>{ const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color,transparent:true,opacity:op,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending})); m.rotation.x=-Math.PI/2; m.position.set(w.x,y,w.z); fxGroup.add(m); hlMeshes.push(m); return m; };
+  mk(new THREE.RingGeometry(0.34,0.45,28),0.95);   // 外リング
+  mk(new THREE.RingGeometry(0.10,0.15,20),0.9);    // 内リング
+  mk(new THREE.PlaneGeometry(0.94,0.05),0.85);     // 横クロスヘア
+  mk(new THREE.PlaneGeometry(0.05,0.94),0.85);     // 縦クロスヘア
+}
+// 範囲/マップ攻撃で影響する“ゾーン”のセル集合（薄く塗る用）
+function attackZoneCells(u){
+  if(isAreaTerrain(u)){ const m=mon(u); const terr=hasType(m,'雷')?'sea':hasType(m,'炎')?'forest':'gloom';
+    return [...connectedTerr(u,terr)].map(k=>{const p=k.split(',');return [+p[0],+p[1]];}); }
+  const R=effRange(u), out=[];
+  for(let r=Math.max(0,u.r-R);r<=Math.min(N-1,u.r+R);r++)for(let c=Math.max(0,u.c-R);c<=Math.min(N-1,u.c+R);c++){
+    if(r===u.r&&c===u.c)continue; if(Math.max(Math.abs(r-u.r),Math.abs(c-u.c))<=R) out.push([r,c]); }
+  return out;
+}
 
 // ---- エフェクト（進化・融合・攻撃）----
 let effects=[];
+const EFF_SLOW=1.6;   // 攻撃/技エフェクトを全体的にゆっくり見せる(速すぎ対策)
 function updateEffects(){
   const now=performance.now();
-  for(let i=effects.length-1;i>=0;i--){ const e=effects[i]; const t=(now-e.t0)/e.dur;
+  for(let i=effects.length-1;i>=0;i--){ const e=effects[i]; const t=(now-e.t0)/(e.dur*EFF_SLOW);
     if(t>=1){ e.cleanup&&e.cleanup(); effects.splice(i,1); } else e.update(t); }
 }
 function fxRing(r,c,color,o){ o=o||{}; const w=cell2world(r,c), h=cellH(r,c)+(o.y||0.1);
@@ -6979,14 +6998,22 @@ function drawSelHL(){
   clearHL();
   if(!sel) return;
   addHL(sel.r,sel.c,0xffe089,0.5);
-  if(selMode==='move' && selMoves){ for(const [r,c] of selMoves.move) addHL(r,c,0xff3838,0.5);   // 移動=赤(海でも見える)
+  const aoe = effMulti(sel) || isAreaTerrain(sel);
+  const drawAtk=(strong)=>{
+    if(!canAttack(sel)) return;
+    if(aoe){
+      for(const [r,c] of attackZoneCells(sel)) addHL(r,c,0xff7a30, strong?0.30:0.20);      // 範囲ゾーン=薄橙
+      const hits = isAreaTerrain(sel) ? areaTargets(sel) : (selAtks||[]);
+      for(const x of hits) addReticle(x.r,x.c, x.owner===0?0xffe020:0xff2820);              // 敵=赤照準／味方巻込=黄照準
+    } else {
+      if(selAtks) for(const e of selAtks) addReticle(e.r,e.c,0xff2820);                      // 単体=射程内の各敵に照準
+    }
+    if(castleAdjacent(sel)){ const ec=CASTLE[1]; addReticle(ec.r,ec.c,0xff8a40); }           // 城
+  };
+  if(selMode==='move' && selMoves){ for(const [r,c] of selMoves.move) addHL(r,c,0xff3838,0.5);   // 移動=赤
     for(const [r,c] of selMoves.fuse) addHL(r,c,0xc060ff,0.65);                                     // 融合=紫
-    if(selAtks) for(const e of selAtks) addHL(e.r,e.c,0xff8030,0.6);                                // 射程内の敵=橙(直接タップで攻撃)
-    if(isAreaTerrain(sel)) for(const x of areaTargets(sel)) addHL(x.r,x.c, x.owner===0?0xffc020:0xff8030, 0.4);
-    if(castleAdjacent(sel)&&canAttack(sel)){ const ec=CASTLE[1]; addHL(ec.r,ec.c,0xff8040,0.65); } }
-  if(selMode==='attack'){ if(selAtks) for(const e of selAtks) addHL(e.r,e.c,0xff5040,0.55);
-    if(isAreaTerrain(sel)) for(const x of areaTargets(sel)) addHL(x.r,x.c, x.owner===0?0xffc020:0xff5040, 0.5);   // 味方巻込=黄警告
-    if(castleAdjacent(sel)&&canAttack(sel)){ const ec=CASTLE[1]; addHL(ec.r,ec.c,0xff8040,0.6); } }
+    drawAtk(false); }
+  if(selMode==='attack') drawAtk(true);
 }
 function clearSel(){ sel=null; selMode='none'; selMoves=null; selAtks=null; selMove=null; setSelGhost(null); clearHL(); syncUnits(); updateUI(); }
 
@@ -7059,12 +7086,18 @@ function updateUI(){
       movesFor(sel).forEach(mo=>{
         const on=selMove&&selMove.n===mo.n; const dmg=Math.round(m.atk*mo.p*rangePower(m));
         const b=document.createElement('button'); b.className='bt '+(on?'go':''); b.style.cssText='padding:7px 11px;font-size:13px';
-        b.innerHTML=`${mo.n}<span style="opacity:.7;font-size:10px"> 威${dmg}・射程${mo.range}${mo.multi?'・範囲':''}</span>`;
+        const kind = mo.multi ? (isAreaTerrain(sel)?'🗺マップ(味方巻込)':'📡範囲(敵全体)') : '🎯単体';
+        b.innerHTML=`${mo.n}<span style="opacity:.7;font-size:10px"> 威${dmg}・射程${mo.range}・${kind}</span>`;
         b.onclick=()=>{ selMove=mo; selAtks=attackTargets(sel, mo.range); drawSelHL(); updateUI(); }; movesRow.appendChild(b);
       });
       ac.appendChild(movesRow);
       const tip=document.createElement('div'); tip.className='muted'; tip.style.cssText='width:100%;font-size:12px;margin-bottom:4px';
-      tip.innerHTML='⚔️ <b style="color:#ff8a7a">赤い敵</b>／<b style="color:#ffb060">橙の城</b>をタップで攻撃'; ac.appendChild(tip);
+      { const aoe2=effMulti(sel)||isAreaTerrain(sel); const tn=traitNote(sel);
+        tip.innerHTML = (aoe2
+          ? `📡 <b style="color:#ff8a5a">範囲攻撃</b>：橙ゾーン内の${isAreaTerrain(sel)?'<b style="color:#ffe86a">味方も含め</b>全員':'敵全員'}に命中。<b>◎照準</b>の相手をタップ`
+          : `🎯 <b>◎照準</b>の<b style="color:#ff8a7a">敵</b>／<b style="color:#ffb060">城</b>をタップで攻撃`)
+          + (tn?`<br><span style="color:#8ee0ff">地形効果: ${tn}</span>`:''); }
+      ac.appendChild(tip);
       if(canMove(sel)) ac.appendChild(mkbt('🚶 移動にもどる','',true,()=>setMode('move')));
       ac.appendChild(mkbt('✖ 解除','',true,clearSel));
     } else {
