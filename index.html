@@ -5003,6 +5003,14 @@ let STORY = loadStory();
   addBase(STORY.starter); addBase(49); addBase(40);
   if(STORY.owned.length!==before){ try{ localStorage.setItem('ms3d_story', JSON.stringify(STORY)); }catch(e){} }
 })();
+// 更新救済: ネメアの獅子(250)/ミノタス(251)がLv2単体→Lv3融合化。既存所持者に融合素材を配って再現可能に
+(function migrateFusionConverts(){
+  if(!Array.isArray(STORY.owned)) return;
+  const before=STORY.owned.length;
+  const grant=(g)=>{ if(g!=null && !STORY.owned.includes(g)) STORY.owned.push(g); };
+  for(const id of [250,251]){ if(STORY.owned.includes(id) && MID[id] && MID[id].role==='fusion'){ for(const f of (MID[id].fusion_from||[])) grant(f); } }
+  if(STORY.owned.length!==before){ try{ localStorage.setItem('ms3d_story', JSON.stringify(STORY)); }catch(e){} }
+})();
 try{ loginTick(); }catch(e){}   // 連続ログイン日数の更新
 let _cloudTimer=null;
 function saveStory(){
