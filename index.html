@@ -5365,12 +5365,6 @@ function campFusionOK(){ return !CAMP.on || CAMP.ch>=18; }   // 融合は第18�
 function ownMon(id){ if(!STORY.owned.includes(id)){ STORY.owned.push(id); saveStory(); return true; } return false; }
 // 進化ラインの基本形（Lv1まで進化を遡る）
 function baseFormId(mid){ let m=MID[mid]; let guard=0; while(m && m.evolves_from!=null && guard<6){ m=MID[m.evolves_from]; guard++; } return m?m.id:mid; }
-// 融合を「系統(基本形)一致」でも成立させる索引。素材が配置できない中間進化形でも、配置できる基本形を場に重ねれば融合できる
-const FUSE_BASE_IDX={};
-MONSTERS.forEach(m=>{ if(m.role==='fusion' && m.fusion_from && m.fusion_from.length===2){
-  const bk=[baseFormId(m.fusion_from[0]), baseFormId(m.fusion_from[1])].sort((a,b)=>a-b).join(',');
-  if(!(bk in FUSE_BASE_IDX)) FUSE_BASE_IDX[bk]=m.id;   // 衝突は先勝ち(残りは正確一致でカバー)
-}});
 // 系譜チェック: そのモンスターを出撃させるのに必要な「前提」を全部持っているか
 // 進化系→進化前を全所持 / 融合体→素材2体を所持（ボスだけ仲間にしても前提が無いと使えない）
 function lineOK(m){
@@ -5677,9 +5671,7 @@ function fusionResult(a,b){
     return tr.out;
   }
   const k=[a.mid,b.mid].sort((x,y)=>x-y).join(',');
-  let fid=(k in FUSE_IDX)? FUSE_IDX[k] : null;
-  // 正確一致がなければ系統(基本形)一致でも成立＝配置できる基本形を重ねて融合OK
-  if(fid==null){ const bk=[baseFormId(a.mid),baseFormId(b.mid)].sort((x,y)=>x-y).join(','); if(bk in FUSE_BASE_IDX) fid=FUSE_BASE_IDX[bk]; }
+  const fid=(k in FUSE_IDX)? FUSE_IDX[k] : null;   // 融合は正確な素材(Lv2同士に進化させた形)一致のみ=バランス維持
   // 融合後のモンスターを集めていないと融合できない（オンラインのみ無制限）
   if(fid!=null && !ONLINE && a.owner===0 && !STORY.owned.includes(fid)) return null;
   return fid;
@@ -6893,8 +6885,9 @@ function isAtkTarget(cell){ return selAtks && selAtks.some(e=>e.r===cell[0]&&e.c
 // セル指定で移動/融合/攻撃/攻城を実行（合法ならtrue）
 function actAtCell(r,c){
   if(!sel) return false;
+  if(selMoves && !sel.acted && selMoves.fuse.some(p=>p[0]===r&&p[1]===c)){ pushUndo(); moveUnit(sel,r,c); reselectAfter(); return true; }   // 融合はモード問わず(進化直後でも可)
   if(selMode==='move' && selMoves && canMove(sel)){
-    if(selMoves.fuse.some(p=>p[0]===r&&p[1]===c) || selMoves.move.some(p=>p[0]===r&&p[1]===c)){ pushUndo(); moveUnit(sel,r,c); reselectAfter(); return true; }
+    if(selMoves.move.some(p=>p[0]===r&&p[1]===c)){ pushUndo(); moveUnit(sel,r,c); reselectAfter(); return true; }
   }
   const ec=CASTLE[1];
   if(r===ec.r&&c===ec.c&&castleAdjacent(sel)&&canAttack(sel)){ pushUndo(); doCastleAttack(sel); reselectAfter(); return true; }
@@ -6968,7 +6961,9 @@ function handlePick(sc, tc){
       if(tgt){ pushUndo(); doAttack(sel,tgt,selMove); reselectAfter(); return; }
     }
     const t=sc||tc; if(t){ const u=unitAt(t[0],t[1]);
-      if(u&&u.owner===0&&u.uid!==sel.uid){ selectUnit(u); return; }
+      if(u&&u.owner===0&&u.uid!==sel.uid){
+        if(!sel.acted && selMoves && selMoves.fuse.some(p=>p[0]===t[0]&&p[1]===t[1])){ pushUndo(); moveUnit(sel,t[0],t[1]); reselectAfter(); return; }   // 進化直後でも隣接味方と融合
+        selectUnit(u); return; }
       if(u&&u.owner!==0){ showMonsterDetail(u.mid, u); return; } }   // 射程外の敵=モンスター情報
     if(snapAct()) return;
     return;
@@ -6981,7 +6976,15 @@ function handlePick(sc, tc){
   { const t=sc||tc; if(t){ const u=unitAt(t[0],t[1]); if(u&&u.owner!==0){ showMonsterDetail(u.mid, u); return; } } }   // 敵タップ=モンスター情報
   clearSel();
 }
-function recompute(){ if(!sel){selMoves=null;selAtks=null;return;} selMoves = canMove(sel)?moveTargets(sel):{move:[],fuse:[]}; selAtks=attackTargets(sel, selMove?selMove.range:null); }
+// 隣接する融合可能な味方（進化直後で移動済みでも、未行動なら融合できる）
+function adjFuse(u){ const out=[]; if(!u||u.acted) return out;
+  for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){ const r=u.r+dr,c=u.c+dc; if(r<0||c<0||r>=N||c>=N)continue;
+    const occ=unitAt(r,c); if(occ&&occ.owner===u.owner&&fusionResult(u,occ)!=null) out.push([r,c]); }
+  return out; }
+function recompute(){ if(!sel){selMoves=null;selAtks=null;return;}
+  selMoves = canMove(sel)?moveTargets(sel):{move:[],fuse:[]};
+  for(const p of adjFuse(sel)){ if(!selMoves.fuse.some(q=>q[0]===p[0]&&q[1]===p[1])) selMoves.fuse.push(p); }   // 移動済みでも隣接融合を許可
+  selAtks=attackTargets(sel, selMove?selMove.range:null); }
 function setSelGhost(uid){ for(const k in sprites){ const s=sprites[k]; const o=(+k===uid)?0.55:1; if(s.mat.opacity!==o) s.mat.opacity=o; } }
 function selectUnit(u){ sel=u; selMove=(movesFor(u)[0]||null); recompute(); selMode = canMove(u)?'move':'attack'; setSelGhost(u.uid); drawSelHL(); updateUI(); }
 function setMode(mode){
@@ -7013,7 +7016,8 @@ function drawSelHL(){
   if(selMode==='move' && selMoves){ for(const [r,c] of selMoves.move) addHL(r,c,0xff3838,0.5);   // 移動=赤
     for(const [r,c] of selMoves.fuse) addHL(r,c,0xc060ff,0.65);                                     // 融合=紫
     drawAtk(false); }
-  if(selMode==='attack') drawAtk(true);
+  if(selMode==='attack'){ if(selMoves) for(const [r,c] of selMoves.fuse) addHL(r,c,0xc060ff,0.65);   // 攻撃モードでも融合マス(紫)を表示
+    drawAtk(true); }
 }
 function clearSel(){ sel=null; selMode='none'; selMoves=null; selAtks=null; selMove=null; setSelGhost(null); clearHL(); syncUnits(); updateUI(); }
 
@@ -7073,6 +7077,11 @@ function updateUI(){
   const sd=document.getElementById('sel'); const ac=document.getElementById('actions');
   sd.innerHTML=''; ac.innerHTML='';
   if(state.phase!=='battle'){ document.getElementById('detail').style.display='none'; return; }
+  // 融合ボタン(進化直後=移動済みでも未行動なら隣接味方と融合できる。モード問わず表示)
+  function appendFuseBtns(){ if(!sel||!selMoves||!selMoves.fuse) return; const seen={};
+    for(const [fr,fc] of selMoves.fuse){ const partner=unitAt(fr,fc); if(!partner)continue;
+      const fid=fusionResult(sel,partner); if(fid==null||seen[fid])continue; seen[fid]=1;
+      ac.appendChild(mkbt(`🔮 融合→${MID[fid].name}（${mon(partner).name}と）`,'fuse', !sel.acted, ()=>{ pushUndo(); moveUnit(sel,fr,fc); reselectAfter(); })); } }
   if(sel){
     const m=mon(sel);
     const R=effRange(sel), note=traitNote(sel);
@@ -7098,6 +7107,7 @@ function updateUI(){
           : `🎯 <b>◎照準</b>の<b style="color:#ff8a7a">敵</b>／<b style="color:#ffb060">城</b>をタップで攻撃`)
           + (tn?`<br><span style="color:#8ee0ff">地形効果: ${tn}</span>`:''); }
       ac.appendChild(tip);
+      appendFuseBtns();   // 攻撃モードでも隣接融合を出す(進化直後の融合)
       if(canMove(sel)) ac.appendChild(mkbt('🚶 移動にもどる','',true,()=>setMode('move')));
       ac.appendChild(mkbt('✖ 解除','',true,clearSel));
     } else {
@@ -7133,15 +7143,7 @@ function updateUI(){
         else if(state.energy[0]<cost){ ok=false; why=`(気${state.energy[0]}/${cost})`; }
         ac.appendChild(mkbt(`⬆ 進化→${nm.name} 気${cost}${why}`,'evo', ok, ()=>setMode('evolve')));
       }
-      // 融合：射程内に対応素材が居れば明示ボタン
-      if(selMoves && selMoves.fuse){
-        const seen={};
-        for(const [fr,fc] of selMoves.fuse){
-          const partner=unitAt(fr,fc); if(!partner)continue;
-          const fid=fusionResult(sel,partner); if(fid==null||seen[fid])continue; seen[fid]=1;
-          ac.appendChild(mkbt(`🔮 融合→${MID[fid].name}（${mon(partner).name}と）`,'fuse', canMove(sel), ()=>{ pushUndo(); moveUnit(sel,fr,fc); reselectAfter(); }));
-        }
-      }
+      appendFuseBtns();
       ac.appendChild(mkbt('✖ 解除','',true,clearSel));
     }
   } else {
