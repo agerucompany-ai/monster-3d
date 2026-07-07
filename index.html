@@ -5361,7 +5361,7 @@ function closeGacha(){ document.getElementById('ovGacha').style.display='none';
   else if(gaFrom==='select'){ buildSelect(); document.getElementById('ovSelect').style.display='flex'; }
   else document.getElementById('ovTitle').style.display='flex'; }
 let CAMP = {on:false, ch:0};   // 現在プレイ中の章
-function campFusionOK(){ return !CAMP.on || CAMP.ch>=18; }   // 融合は第18章=ニヴル(北欧)入国で解放(Lv3が揃った頃)
+function campFusionOK(){ return true; }   // 融合はいつでも可能(章ゲート撤廃)。バランスは「Lv2素材を進化で用意する投資」で担保
 function ownMon(id){ if(!STORY.owned.includes(id)){ STORY.owned.push(id); saveStory(); return true; } return false; }
 // 進化ラインの基本形（Lv1まで進化を遡る）
 function baseFormId(mid){ let m=MID[mid]; let guard=0; while(m && m.evolves_from!=null && guard<6){ m=MID[m.evolves_from]; guard++; } return m?m.id:mid; }
@@ -5412,8 +5412,8 @@ const LESSONS={
     {s:'elder',t:'状態異常は3ターンで癒えるし、進化でも治る。ここまで学んだ全て、この氷峰でぶつけよ。'}],
  13:[{s:'elder',t:'ボスが2体おる。無理に両方と殴り合うな。片方を地形で足止めし、各個撃破が定石じゃ。'},
     {s:'elder',t:'忘れるな、城を落とせば勝ちじゃ。番犬の脇をすり抜ける勇気も戦術のうちよ。'}],
- 18:[{s:'elder',t:'いまこそ「融合」を解禁しよう。素材の2体を近づけ、片方をもう片方へ重ねるように動かす。紫のマスが目印じゃ。'},
-    {s:'elder',t:'条件はふたつ。融合体そのものを召喚で仲間にしておくこと。そして相剋（炎と水など）でないことじゃ。'}],
+ 6:[{s:'elder',t:'「融合」を覚えよう。素材の2体を近づけ、片方をもう片方へ重ねるように動かす。紫のマスが目印じゃ。'},
+    {s:'elder',t:'条件はふたつ。融合体そのものを召喚で仲間にしておくこと。そして素材2体を（進化させて）場に揃えることじゃ。気は要らぬ。'}],
 };
 // 出撃時にグレード補正を反映した自軍ユニットを作る
 function addPlayerUnit(mid,r,c){
@@ -7781,7 +7781,7 @@ function openChapters(){
     d.style.cssText=`background:#141a28;border:1px solid ${cleared?'#3a7a4a':unlocked?'#5a6a9c':'#2c3346'};border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;${unlocked?'cursor:pointer':'opacity:.45'}`;
     const bossNames=ch.enemy.filter(e=>e.boss).map(e=>MID[e.mid].name).join('・');
     d.innerHTML=`<span style="font-size:20px">${cleared?'✅':unlocked?'▶️':'🔒'}</span>`
-      +`<div style="flex:1"><b>${ch.title}</b><br><span class="muted" style="font-size:12px">🗺${THEME_JP[ch.theme]||ch.theme}・編成Lv${ch.budget}${bossNames?`・BOSS: ${bossNames}（勝てば仲間に！）`:''}${i===18?'・🔮融合解放':''}</span></div>`;
+      +`<div style="flex:1"><b>${ch.title}</b><br><span class="muted" style="font-size:12px">🗺${THEME_JP[ch.theme]||ch.theme}・編成Lv${ch.budget}${bossNames?`・BOSS: ${bossNames}（勝てば仲間に！）`:''}</span></div>`;
     if(unlocked) d.onclick=()=>startChapter(i);
     list.appendChild(d);
   });
