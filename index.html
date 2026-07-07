@@ -122,7 +122,7 @@ button.bt.fuse{background:#a24ec0}
   ・自分のターンは手持ちを何体でも動かせる（自由行動制）。<br>
   ・<b>1体の行動＝「移動→攻撃」まで</b>。攻撃・進化・融合をしたらそのモンスターは行動終了。移動後にできるのは攻撃だけ。<br>
   ・タイプ相性/地形が合うと与ダメ+20%（重複で最大+40%）。風は移動が広い分、攻撃は隣接のみ。<br>
-  ・<b>「気」＝進化のエネルギー</b>。盤端の🏳フラッグ獲得(+3)＆敵撃破(+1)で増える。<b>融合に気は不要</b>。<br>
+  ・<b>「気」＝進化のエネルギー</b>。盤端の🏳フラッグ獲得(+3)＆敵撃破(+2・ボス+4)で増える。<b>融合に気は不要</b>。<br>
   ・進化：気を使って Lv1→2(気3)/Lv2→3(気5)。敵陣最奥に到達すると無条件で1段階進化。<br>
   ・融合：素材2体（例 Lv2＋Lv2）を場で重ねるとLv3が誕生（気いらず）。<br>
   ・城に隣接で攻城(素の攻撃力)。城の耐久は物語の進行に連動（序盤は約220、終盤で約2200まで上がる）。城陥落 or 敵全滅 or 14ターン時の城残量で勝敗。</p>
@@ -5758,8 +5758,8 @@ function doAttack(att, def, move){
     if(t.hp<=0){ const died=killUnit(t);
       if(died){ kills++;
         if(t.owner===1) state.killLv=(state.killLv||0)+mon(t).level;   // 敗北時の比例報酬用
-        if(t.isBoss){ state.energy[att.owner]+=2; toast(`👑 ボス ${mon(t).name} を撃破！気+3`); }
-        else toast(`${mon(t).name} を撃破！気+1`);
+        if(t.isBoss){ state.energy[att.owner]+=2; toast(`👑 ボス ${mon(t).name} を撃破！気+4`); }   // 撃破×2(=2)＋ボス加算2＝4
+        else toast(`${mon(t).name} を撃破！気+2`);
         if(CAMP.on && att.owner===0) addExp(baseFormId(att.mid), t.isBoss?60:20); } }
     else if(t.owner!==att.owner) inflictStatus(att, t);   // 生存した敵に状態異常を付与
   }
@@ -5769,7 +5769,7 @@ function doAttack(att, def, move){
     const heal=Math.min((att.maxhp||mon(att).hp)-att.hp, Math.round(dealt*GRASS_DRAIN_FRAC));
     if(heal>0){ att.hp+=heal; floatText(att.r,att.c,`+${heal}`,'#7ee08a'); }
   }
-  if(kills) state.energy[att.owner]+=kills;
+  if(kills) state.energy[att.owner]+=kills*2;   // 撃破1体につき気+2(道中で貯めて進化/融合に回す)
   toast(msg);
   afterAction();
 }
@@ -5874,7 +5874,7 @@ function applyStatusTick(u){
   // 凍結/マヒ：移動マス・攻撃範囲が最小化(effMove/effRangeで処理)。ここは3ターン自然治癒のカウントのみ
   if(u.freeze>0){ floatText(u.r,u.c,'凍結','#9fe8ff'); u.freeze--; }
   if(u.para>0){ floatText(u.r,u.c,'マヒ','#fff060'); u.para--; }
-  if(u.hp<=0){ const opp=1-u.owner; if(killUnit(u)){ state.energy[opp]+=(u.isBoss?3:1);
+  if(u.hp<=0){ const opp=1-u.owner; if(killUnit(u)){ state.energy[opp]+=(u.isBoss?4:2);   // 状態異常撃破も 通常+2/ボス+4
     if(u.owner===1) state.killLv=(state.killLv||0)+mon(u).level;
     toast(`${u.isBoss?'👑 ボス ':''}${mon(u).name} は状態異常で力尽きた`); } }
 }
