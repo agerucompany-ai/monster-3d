@@ -215,7 +215,7 @@ button.bt.fuse{background:#a24ec0}
     <div id="gaResult" style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px"></div>
     <div style="margin-top:16px;border-top:1px solid #3a2a4a;padding-top:10px">
       <b style="color:#ffd86b">🔁 交換所</b>
-      <div class="muted" style="font-size:11px;margin:3px 0 6px;line-height:1.6">同じモンスターが<b>ダブる</b>と、その子の下のボタンで交換できます：<br>・<b>5体ぶん</b>→ 次の進化形(Lv2)　・<b>10体ぶん</b>→ 最終進化形(Lv3)　・<b>1体ぶん</b>→ 💎ジェム<br><span style="color:#8a8a8a">※ダブりは自動で<b style="color:#ffd86b">★グレード</b>(+3%/★・最大★5)にもなる。交換に使うと★は下がります</span></div>
+      <div class="muted" style="font-size:11px;margin:3px 0 6px;line-height:1.6">同じモンスターが<b>ダブる</b>と、その子の下のボタンで交換できます：<br>・<b>5体ぶん</b>→ 次の進化形(Lv2)　・<b>10体ぶん</b>→ 最終進化形(Lv3)　・<b>1体／全部</b>→ 💎ジェム<br><span style="color:#8a8a8a">※進化先をすでに持っている子や、Lv3・融合・単体（進化しない子）は<b>💎交換のみ</b>（「全部→💎」でまとめて交換できます）。ダブりは自動で<b style="color:#ffd86b">★グレード</b>(+3%/★・最大★5)にもなり、交換に使うと★は下がります</span></div>
       <div id="gaTrade" style="margin-top:4px"></div>
     </div>
   </div>
@@ -5244,6 +5244,7 @@ function renderTrade(){
     if(lv3&&!STORY.owned.includes(lv3.id)){ const ok=n>=10;
       opts.push(`<button class="bt ${ok?'go':''}" data-src="${idStr}" data-tgt="${lv3.id}" data-cost="10" style="padding:6px 10px;font-size:11px${ok?'':';opacity:.5'}">10体→${lv3.name}${ok?'':`(あと${10-n})`}</button>`); }
     opts.push(`<button class="bt" data-src="${idStr}" data-gem="${dupGem(m)}" style="padding:6px 10px;font-size:11px">1体→💎${dupGem(m)}</button>`);
+    if(n>1) opts.push(`<button class="bt" data-src="${idStr}" data-gemall="1" style="padding:6px 10px;font-size:11px;background:#4a3a1a">全部(${n})→💎${n*dupGem(m)}</button>`);
     const star=Math.min(5,n);
     rows.push(`<div style="display:flex;align-items:center;gap:8px;background:#1a1226;border:1px solid #3a2a4a;border-radius:8px;padding:6px 10px;margin:4px 0;flex-wrap:wrap">
       <img src="${IMG[idStr]||''}" style="width:36px;height:36px;object-fit:contain">
@@ -5255,6 +5256,8 @@ function renderTrade(){
   box.querySelectorAll('button').forEach(b2=>{
     b2.onclick=()=>{
       const src=+b2.dataset.src;
+      if(b2.dataset.gemall){ const n=STORY.dups[src]||0; if(n<1) return; const g=n*dupGem(MID[src]); STORY.dups[src]=0; STORY.gems+=g;
+        saveStory(); seJingle('gem'); toast(`💎 ${MID[src].name}のダブり${n}体 → まとめて💎+${g}`); renderTrade(); updateGemUI(); return; }
       if(b2.dataset.gem){ if((STORY.dups[src]||0)<1) return; STORY.dups[src]-=1; const g=+b2.dataset.gem; STORY.gems+=g;
         saveStory(); seJingle('gem'); toast(`💎 ${MID[src].name}のダブり1体 → 💎+${g}`); renderTrade(); updateGemUI(); return; }
       const tgt=+b2.dataset.tgt, cost=+b2.dataset.cost;
