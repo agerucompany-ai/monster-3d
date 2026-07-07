@@ -10440,7 +10440,7 @@ function boot(){
   const catImg=id=>IMG[String(id)]||'';
   const catChip=t=>`<span style="background:${CAT_COL[t]||'#666'};${CAT_DTX.has(t)?'color:#222':'color:#fff'};border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700">${t}</span>`;
   let catSortKey='id', catFT=null;
-  const CAT_SORTS=[['id','番号'],['atk','⚔攻撃'],['hp','❤体力'],['def','🛡防御'],['range','🎯射程'],['move','👣移動']];
+  const CAT_SORTS=[['id','系統順'],['atk','⚔攻撃'],['hp','❤体力'],['def','🛡防御'],['range','🎯射程'],['move','👣移動']];
   const catSortVal=(m,k)=> k==='def'?Math.round(defReductionM(m)*100) : k==='range'?m.atk_range : m[k];
   function renderCatSort(){
     const s=document.getElementById('catSort'); if(!s) return;
@@ -10455,8 +10455,10 @@ function boot(){
   function buildCatalog(ft){
     catFT=ft; renderCatSort();
     const grid=document.getElementById('catGrid'); grid.innerHTML='';
+    // 既定は「系統順」＝進化ラインの基本形ごとにまとめ、ライン内はLv順。あとから追加したLv3(id大)も進化元の直後に並ぶ
+    const lineCmp=(a,b)=>{ const ba=baseFormId(a.id), bb=baseFormId(b.id); return (ba-bb) || ((a.level||1)-(b.level||1)) || (a.id-b.id); };
     const list=MONSTERS.filter(m=>!ft||m.type===ft||m.type2===ft).sort((a,b)=>
-      catSortKey==='id' ? a.id-b.id : (catSortVal(b,catSortKey)-catSortVal(a,catSortKey)) || a.id-b.id);
+      catSortKey==='id' ? lineCmp(a,b) : (catSortVal(b,catSortKey)-catSortVal(a,catSortKey)) || lineCmp(a,b));
     const ownedN=list.filter(m=>STORY.owned.includes(m.id)).length;
     document.getElementById('catCount').textContent=` ${list.length}体（手持ち${ownedN}）`;
     for(const m of list){ const c=document.createElement('div');
