@@ -5371,6 +5371,8 @@ function campFusionOK(){ return true; }   // 融合はいつでも可能(章ゲ�
 function ownMon(id){ if(!STORY.owned.includes(id)){ STORY.owned.push(id); saveStory(); return true; } return false; }
 // 進化ラインの基本形（Lv1まで進化を遡る）
 function baseFormId(mid){ let m=MID[mid]; let guard=0; while(m && m.evolves_from!=null && guard<6){ m=MID[m.evolves_from]; guard++; } return m?m.id:mid; }
+// 系統順ソート: 進化ラインの基本形→Lv→idで比較。あとから追加した高idのLv3も進化元の直後に並ぶ(図鑑・編成 共通)
+function monLineCmp(a,b){ const ba=baseFormId(a.id), bb=baseFormId(b.id); return (ba-bb) || ((a.level||1)-(b.level||1)) || (a.id-b.id); }
 // 系譜チェック: そのモンスターを出撃させるのに必要な「前提」を全部持っているか
 // 進化系→進化前を全所持 / 融合体→素材2体を所持（ボスだけ仲間にしても前提が無いと使えない）
 function lineOK(m){
@@ -7289,12 +7291,12 @@ function buildSelect(){
     let cur=m; let guard=0;
     while(cur && cur.evolves_from!=null && guard<6){ cur=MID[cur.evolves_from]; guard++; if(cur && STORY.owned.includes(cur.id)) return true; }
     return false; };
-  // ストーリー: 手持ちの融合体ボスは通常カードとして最上段に出す
-  MONSTERS.filter(m=>inFilter(m) && (m.role!=='fusion' ? visible(m) : (CAMP.on && STORY.owned.includes(m.id)))).forEach(m=>{
+  // ストーリー: 手持ちの融合体ボスは通常カードとして最上段に出す（系統順に並べる）
+  MONSTERS.filter(m=>inFilter(m) && (m.role!=='fusion' ? visible(m) : (CAMP.on && STORY.owned.includes(m.id)))).slice().sort(monLineCmp).forEach(m=>{
     pool.appendChild(makeCard(m));
   });
   // 融合モンスターを下にまとめてレシピ表示（ストーリーでは解放後のみ・手持ちボスは除く）
-  const fus=(CAMP.on&&!campFusionOK())?[]:MONSTERS.filter(m=>m.role==='fusion' && inFilter(m) && !(CAMP.on&&STORY.owned.includes(m.id)));
+  const fus=(CAMP.on&&!campFusionOK())?[]:MONSTERS.filter(m=>m.role==='fusion' && inFilter(m) && !(CAMP.on&&STORY.owned.includes(m.id))).slice().sort(monLineCmp);
   if(fus.length){
     const hd=document.createElement('div'); hd.className='poolhead';
     hd.textContent='🔮 融合モンスター（素材2体をLv上げ→場で重ねて作る）';
@@ -10456,9 +10458,8 @@ function boot(){
     catFT=ft; renderCatSort();
     const grid=document.getElementById('catGrid'); grid.innerHTML='';
     // 既定は「系統順」＝進化ラインの基本形ごとにまとめ、ライン内はLv順。あとから追加したLv3(id大)も進化元の直後に並ぶ
-    const lineCmp=(a,b)=>{ const ba=baseFormId(a.id), bb=baseFormId(b.id); return (ba-bb) || ((a.level||1)-(b.level||1)) || (a.id-b.id); };
     const list=MONSTERS.filter(m=>!ft||m.type===ft||m.type2===ft).sort((a,b)=>
-      catSortKey==='id' ? lineCmp(a,b) : (catSortVal(b,catSortKey)-catSortVal(a,catSortKey)) || lineCmp(a,b));
+      catSortKey==='id' ? monLineCmp(a,b) : (catSortVal(b,catSortKey)-catSortVal(a,catSortKey)) || monLineCmp(a,b));
     const ownedN=list.filter(m=>STORY.owned.includes(m.id)).length;
     document.getElementById('catCount').textContent=` ${list.length}体（手持ち${ownedN}）`;
     for(const m of list){ const c=document.createElement('div');
