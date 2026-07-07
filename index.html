@@ -210,10 +210,11 @@ button.bt.fuse{background:#a24ec0}
     <div id="gaDrops" style="margin:0 0 12px"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button class="bt go" id="gaPull1" style="font-size:16px;padding:12px 22px">召喚する（3体） 💎100</button>
+      <button class="bt" id="gaPull10" style="font-size:16px;padding:12px 22px;background:#c9821f">10連召喚（30体） 💎900</button>
     </div>
     <div id="gaResult" style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px"></div>
     <div style="margin-top:16px;border-top:1px solid #3a2a4a;padding-top:10px">
-      <b style="color:#ffd86b">🔁 交換所</b><span class="muted" style="font-size:11px">　同じモンスターのダブり<b>5体分</b>→進化ラインのLv2／<b>10体分</b>→Lv3と交換</span>
+      <b style="color:#ffd86b">🔁 交換所</b><span class="muted" style="font-size:11px">　同じ子がダブると自動で<b>★グレード</b>(+3%/★・最大★5)。余りは<b>5体→Lv2</b>／<b>10体→Lv3</b>／<b>1体→💎</b>に交換可</span>
       <div id="gaTrade" style="margin-top:8px"></div>
     </div>
   </div>
@@ -5187,19 +5188,21 @@ function doGacha(n){
   if(STORY.gems<cost){ toast(`ジェム不足（💎${STORY.gems}/${cost}）ストーリーや対戦で稼ごう`); return; }
   STORY.gems-=cost;
   const PULLS=n*3;   // 1回=3体・10連=30体
-  const res=[]; let gotRplus=false, refund=0;
+  const res=[]; let gotRplus=false;
   for(let k=0;k<PULLS;k++){
     const pity=(n===10 && k===PULLS-1 && !gotRplus);   // 10連最終枠はR以上確定
     const p=gachaPull(pity);
     if(p.rar!=='N') gotRplus=true;
     p.isNew=!STORY.owned.includes(p.id);
-    if(p.isNew) STORY.owned.push(p.id); else { refund+=GACHA_DUP[p.rar]; STORY.dups[p.id]=(STORY.dups[p.id]||0)+1; }
+    // ダブりは自動でジェムに変換しない。所持数を貯めて「★グレード(重ねると+3%)」＋「進化ライン交換」に使う
+    if(p.isNew) STORY.owned.push(p.id);
+    else { STORY.dups[p.id]=(STORY.dups[p.id]||0)+1; p.dup=STORY.dups[p.id]; p.star=Math.min(5,p.dup); }
     res.push(p);
   }
   if(first10){ STORY.tut=STORY.tut||{}; STORY.tut.g10=1; }
-  STORY.gems+=refund; qBump('summons', n===10?10:1); saveStory();
+  qBump('summons', n===10?10:1); saveStory();
   window._updGa10&&window._updGa10();
-  renderGachaResult(res, refund);
+  renderGachaResult(res, 0);
 }
 function renderGachaResult(res, refund){
   const g=document.getElementById('gaResult'); g.innerHTML='';
@@ -5212,7 +5215,7 @@ function renderGachaResult(res, refund){
       +(p.isNew?`<div style="position:absolute;top:4px;right:6px;font-weight:800;font-size:10px;color:#ffd86b">NEW!</div>`:'')
       +`<img src="${IMG[p.id]}" style="width:100%;aspect-ratio:1;object-fit:contain;border-radius:6px;background:#0d1220">`
       +`<div style="font-size:11px;font-weight:700;margin-top:3px">${m.name}</div>`
-      +`<div class="muted" style="font-size:10px">${m.type}${m.type2?'/'+m.type2:''} Lv${m.level}${p.isNew?'':` → 💎+${GACHA_DUP[p.rar]}`}</div>`
+      +`<div class="muted" style="font-size:10px">${m.type}${m.type2?'/'+m.type2:''} Lv${m.level}${p.isNew?'':` <span style="color:#ffd86b">ダブり→★${p.star}</span>`}</div>`
       +(()=>{ if(m.role==='fusion') return '<div style="font-size:9px;color:#c98adf">🔮融合で誕生</div>';
               if(m.evolves_from!=null) return '<div style="font-size:9px;color:#ffd86b">⬆進化用（戦闘中に進化）</div>';
               return '<div style="font-size:9px;color:#7ee08a">✅そのまま出撃OK</div>'; })();
@@ -5228,28 +5231,33 @@ function renderGachaResult(res, refund){
 }
 function updateGemUI(){ const e=document.getElementById('gemCount'); if(e) e.textContent=`　💎 ${STORY.gems}`; }
 let gaFrom='title';
+function dupGem(m){ return m.role==='fusion'?GACHA_DUP.SSR : (m.level===3||m.type==='竜')?GACHA_DUP.SR : m.level===2?GACHA_DUP.R : GACHA_DUP.N; }
 function renderTrade(){
   const box=document.getElementById('gaTrade'); if(!box) return;
   const rows=[];
   for(const [idStr,n] of Object.entries(STORY.dups||{})){
-    if(n<5) continue;
+    if(n<1) continue;
     const m=MID[+idStr]; if(!m) continue;
     const lv2=m.evolves_to!=null?MID[m.evolves_to]:null;
     const lv3=lv2&&lv2.evolves_to!=null?MID[lv2.evolves_to]:null;
     const opts=[];
-    if(lv2&&!STORY.owned.includes(lv2.id)&&n>=5) opts.push({cost:5,tgt:lv2});
-    if(lv3&&!STORY.owned.includes(lv3.id)&&n>=10) opts.push({cost:10,tgt:lv3});
-    if(!opts.length) continue;
-    rows.push(`<div style="display:flex;align-items:center;gap:8px;background:#1a1226;border:1px solid #3a2a4a;border-radius:8px;padding:6px 10px;margin:4px 0">
+    if(lv2&&!STORY.owned.includes(lv2.id)&&n>=5) opts.push(`<button class="bt go" data-src="${idStr}" data-tgt="${lv2.id}" data-cost="5" style="padding:6px 10px;font-size:11px">5体→${lv2.name}(Lv2)</button>`);
+    if(lv3&&!STORY.owned.includes(lv3.id)&&n>=10) opts.push(`<button class="bt go" data-src="${idStr}" data-tgt="${lv3.id}" data-cost="10" style="padding:6px 10px;font-size:11px">10体→${lv3.name}(Lv3)</button>`);
+    opts.push(`<button class="bt" data-src="${idStr}" data-gem="${dupGem(m)}" style="padding:6px 10px;font-size:11px">1体→💎${dupGem(m)}</button>`);
+    const star=Math.min(5,n);
+    rows.push(`<div style="display:flex;align-items:center;gap:8px;background:#1a1226;border:1px solid #3a2a4a;border-radius:8px;padding:6px 10px;margin:4px 0;flex-wrap:wrap">
       <img src="${IMG[idStr]||''}" style="width:36px;height:36px;object-fit:contain">
-      <span style="font-size:12px;flex:1">${m.name} <b style="color:#8ee0ff">×${n}</b></span>
-      ${opts.map(o=>`<button class="bt go" data-src="${idStr}" data-tgt="${o.tgt.id}" data-cost="${o.cost}" style="padding:6px 10px;font-size:11px">${o.cost}体分→${o.tgt.name}(Lv${o.tgt.level})</button>`).join('')}
+      <span style="font-size:12px;flex:1">${m.name} <b style="color:#8ee0ff">×${n}</b> <span style="color:#ffd86b;font-size:10px">${'★'.repeat(star)}${'☆'.repeat(5-star)} +${3*star}%</span></span>
+      ${opts.join('')}
     </div>`);
   }
-  box.innerHTML=rows.length?rows.join(''):'<span class="muted" style="font-size:11px">交換できるダブりがまだありません（ガチャのダブりが貯まると出ます）</span>';
+  box.innerHTML=rows.length?rows.join(''):'<span class="muted" style="font-size:11px">ダブりがまだありません（同じ子がダブると★が上がり、進化ライン交換や💎変換に使えます）</span>';
   box.querySelectorAll('button').forEach(b2=>{
     b2.onclick=()=>{
-      const src=+b2.dataset.src, tgt=+b2.dataset.tgt, cost=+b2.dataset.cost;
+      const src=+b2.dataset.src;
+      if(b2.dataset.gem){ if((STORY.dups[src]||0)<1) return; STORY.dups[src]-=1; const g=+b2.dataset.gem; STORY.gems+=g;
+        saveStory(); seJingle('gem'); toast(`💎 ${MID[src].name}のダブり1体 → 💎+${g}`); renderTrade(); updateGemUI(); return; }
+      const tgt=+b2.dataset.tgt, cost=+b2.dataset.cost;
       if((STORY.dups[src]||0)<cost) return;
       STORY.dups[src]-=cost;
       if(!STORY.owned.includes(tgt)) STORY.owned.push(tgt);
@@ -5357,6 +5365,12 @@ function campFusionOK(){ return !CAMP.on || CAMP.ch>=18; }   // 融合は第18�
 function ownMon(id){ if(!STORY.owned.includes(id)){ STORY.owned.push(id); saveStory(); return true; } return false; }
 // 進化ラインの基本形（Lv1まで進化を遡る）
 function baseFormId(mid){ let m=MID[mid]; let guard=0; while(m && m.evolves_from!=null && guard<6){ m=MID[m.evolves_from]; guard++; } return m?m.id:mid; }
+// 融合を「系統(基本形)一致」でも成立させる索引。素材が配置できない中間進化形でも、配置できる基本形を場に重ねれば融合できる
+const FUSE_BASE_IDX={};
+MONSTERS.forEach(m=>{ if(m.role==='fusion' && m.fusion_from && m.fusion_from.length===2){
+  const bk=[baseFormId(m.fusion_from[0]), baseFormId(m.fusion_from[1])].sort((a,b)=>a-b).join(',');
+  if(!(bk in FUSE_BASE_IDX)) FUSE_BASE_IDX[bk]=m.id;   // 衝突は先勝ち(残りは正確一致でカバー)
+}});
 // 系譜チェック: そのモンスターを出撃させるのに必要な「前提」を全部持っているか
 // 進化系→進化前を全所持 / 融合体→素材2体を所持（ボスだけ仲間にしても前提が無いと使えない）
 function lineOK(m){
@@ -5377,18 +5391,13 @@ function grantLine(mid){
   if(added) saveStory();
   return added;
 }
-// ======================= レベル上げ（EXP/グレード） =======================
-// 撃破+20xp(ボス+60)・章クリア時の生存+30xp。100xpごとにグレード+1(最大10)＝HP/攻撃+3%ずつ
-function expOf(bid){ return (STORY.exp&&STORY.exp[bid])||0; }
-function expGrade(bid){ return Math.min(10, Math.floor(expOf(bid)/100)); }
-function addExp(bid,n){
-  if(!STORY.exp) STORY.exp={};
-  const g0=expGrade(bid);
-  STORY.exp[bid]=expOf(bid)+n; saveStory();
-  const g1=expGrade(bid);
-  if(g1>g0) toast(`⭐ ${MID[bid].name}系がグレード${g1}に成長！（HP/攻撃+${3*g1}%）`);
-}
-function growthX(mid){ return CAMP.on ? 1+0.03*expGrade(baseFormId(mid)) : 1; }
+// ======================= ★グレード（同じモンスターを重ねると強化） =======================
+// ガチャでダブった数=★（最大5）。★1につきHP/攻撃+3%（★5=+15%）。そのモンスター単位で重ねる
+function starOf(id){ const d=(STORY.dups&&STORY.dups[id])||0; return Math.min(5, d); }
+function expOf(bid){ return (STORY.exp&&STORY.exp[bid])||0; }   // 旧EXP(未使用・互換用)
+function expGrade(id){ return starOf(id); }                     // 表示は★=ダブり重ね数に統一
+function addExp(bid,n){ /* 旧EXP成長は廃止(★=ダブり重ねに一本化)。呼び出し互換のため空実装 */ }
+function growthX(mid){ return ONLINE ? 1 : (1 + 0.03*starOf(mid)); }   // ★1=+3%(★5=+15%)。重ねるほど強い
 // ======================= チュートリアル（ストーリーで学ぶ・各1回だけ） =======================
 function tutOnce(key){ if(!CAMP.on) return false; STORY.tut=STORY.tut||{}; if(STORY.tut[key]) return false; STORY.tut[key]=1; saveStory(); return true; }
 function tutToast(msg){ setTimeout(()=>toast(msg), 1700); }   // 攻撃トーストの後に出す
@@ -5668,7 +5677,9 @@ function fusionResult(a,b){
     return tr.out;
   }
   const k=[a.mid,b.mid].sort((x,y)=>x-y).join(',');
-  const fid=(k in FUSE_IDX)? FUSE_IDX[k] : null;
+  let fid=(k in FUSE_IDX)? FUSE_IDX[k] : null;
+  // 正確一致がなければ系統(基本形)一致でも成立＝配置できる基本形を重ねて融合OK
+  if(fid==null){ const bk=[baseFormId(a.mid),baseFormId(b.mid)].sort((x,y)=>x-y).join(','); if(bk in FUSE_BASE_IDX) fid=FUSE_BASE_IDX[bk]; }
   // 融合後のモンスターを集めていないと融合できない（オンラインのみ無制限）
   if(fid!=null && !ONLINE && a.owner===0 && !STORY.owned.includes(fid)) return null;
   return fid;
@@ -7169,7 +7180,7 @@ function makeCard(m){
     +`<img src="${IMG[m.id]}"${owned||ONLINE?'':' style="filter:grayscale(.85);opacity:.55"'}><div class="nm">${m.name}</div>`
     +ownChip
     +evoLine
-    +(CAMP.on&&expGrade(baseFormId(m.id))>0?`<div style="color:#ffd86b;font-size:9px">⭐グレード${expGrade(baseFormId(m.id))} (+${3*expGrade(baseFormId(m.id))}%)</div>`:'')
+    +(starOf(m.id)>0?`<div style="color:#ffd86b;font-size:9px">${'★'.repeat(starOf(m.id))} (+${3*starOf(m.id)}%)</div>`:'')
     +(!ONLINE&&owned&&!lineOK(m)?`<div style="color:#ff9a7a;font-size:9px">🔒${m.role==='fusion'?'素材未所持':'進化前未所持'}</div>`:'')
     +(m.archetype?`<div class="muted" style="color:#9bb8e0;font-size:9px">${m.archetype}</div>`:'')
     +`<div class="muted">Lv${m.level} HP${m.hp}/A${m.atk}</div>`
@@ -10419,8 +10430,8 @@ function boot(){
   function catDetail(m){ const d=document.getElementById('catDetail'); const im=catImg(m.id);
     let evo=''; if(m.evolves_from!=null||m.evolves_to!=null){ let cur=m; while(cur.evolves_from!=null&&MID[cur.evolves_from])cur=MID[cur.evolves_from]; const chain=[]; while(cur){chain.push(cur);cur=cur.evolves_to!=null?MID[cur.evolves_to]:null;} evo=`<div style="margin-top:8px;font-size:13px">🧬 進化: ${chain.map(x=>x.id===m.id?`<b style="color:#ffd86b">${x.name}</b>`:x.name).join(' → ')}</div>`; }
     let fus=''; if(m.role==='fusion'&&m.fusion_from&&m.fusion_from.length>=2){ const names=m.fusion_from.map(f2=>{const x=MID[f2]; return x?`${x.name}(${x.type})`:'?';}).join(' ＋ '); fus=`<div style="margin-top:8px;font-size:13px">🔮 融合素材: ${names}${m.fusion_from.length===3?' 〔3体融合〕':''}</div>`; }
-    const gr=expGrade(baseFormId(m.id));
-    const grHtml=gr>0?`<div style="text-align:center;color:#ffd86b;font-size:12px;margin-top:4px">⭐グレード${gr}（HP/攻撃+${3*gr}%）</div>`:'';
+    const gr=starOf(m.id);
+    const grHtml=gr>0?`<div style="text-align:center;color:#ffd86b;font-size:12px;margin-top:4px">${'★'.repeat(gr)}${'☆'.repeat(5-gr)}（重ねてHP/攻撃+${3*gr}%）</div>`:`<div style="text-align:center;color:#8a8a8a;font-size:11px;margin-top:4px">☆☆☆☆☆（同じ子を重ねると+3%ずつ・最大★5）</div>`;
     const walkBtn=STORY.owned.includes(m.id)
       ? `<button class="bt ${STORY.walkMid===m.id?'warn':'go'}" id="catWalk" style="width:100%;margin-top:8px;padding:9px">${STORY.walkMid===m.id?'🐾 連れ歩き解除':'🐾 この子を連れ歩く'}</button>` : '';
     d.innerHTML=`<div style="max-width:420px;margin:0 auto;background:#141a28;border:1px solid #2c3346;border-radius:12px;padding:16px"><button class="bt" id="catDClose" style="float:right;padding:6px 12px">×</button><div style="width:150px;height:150px;margin:0 auto;background:#0d1220;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center">${im?`<img src="${im}" style="width:100%;height:100%;object-fit:contain">`:''}</div><h2 style="text-align:center;margin:8px 0 2px">${m.name}</h2><div style="text-align:center">${catChip(m.type)}${m.type2?' '+catChip(m.type2):''} <span class="muted" style="font-size:12px">Lv${m.level}・${CAT_ROLE[m.role]||m.role}</span></div>${grHtml}<div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:13px"><div>❤ HP <b>${m.hp}</b></div><div>⚔ ATK <b>${m.atk}</b></div><div>👣 移動 <b>${m.move}</b></div><div>🎯 射程 <b>${m.atk_range}</b></div></div>${evo}${fus}<div style="margin-top:8px;font-size:12.5px;color:#e0d2a4;line-height:1.65;font-style:italic">${m.desc||m.design||''}</div>${walkBtn}</div>`;
@@ -10556,6 +10567,7 @@ function boot(){
   document.getElementById('chGacha').onclick=()=>{ document.getElementById('ovChapters').style.display='none'; openGacha('chapters'); };
   document.getElementById('btSelGacha').onclick=()=>{ document.getElementById('ovSelect').style.display='none'; openGacha('select'); };
   document.getElementById('gaPull1').onclick=()=>doGacha(1);
+  { const b10=document.getElementById('gaPull10'); if(b10) b10.onclick=()=>doGacha(10); }
   { const bg=document.getElementById('gaBuyGem'); if(bg) bg.onclick=openGemShop; }
   window._updGa10=()=>{};   // 10連は廃止（1回=3体に集約）
   window._go={forest:()=>enterForest(), village:()=>enterVillage(), walk:(x,z)=>villageGoWorld(x,z), euro:()=>enterField('euro'), road:()=>enterField('road'), plain:()=>enterField('plain'), swamp:()=>enterField('swamp'), castle:()=>enterField('castle'), lake:()=>enterField('lake'), alps:()=>enterField('alps'), port:()=>enterField('port'), mtn:()=>enterField('mountain'), snow:()=>enterField('snow'), ironforest:()=>enterField('ironforest'), sea:()=>enterField('sea'), wasteland:()=>enterField('wasteland'), roots:()=>enterField('roots'), void:()=>enterField('void'), under:()=>enterField('under'), gate:()=>enterField('gate'), tomb:()=>enterField('tomb'), canyon:()=>enterField('canyon'), nightriver:()=>enterField('nightriver'), throne:()=>enterField('throne'), sunpeak:()=>enterField('sunpeak'), pyr:()=>enterField('pyramid'), shr:()=>enterField('shrine'), cave:()=>enterField('cave'), laby:()=>enterField('laby'), petri:()=>enterField('petri'), ironwood:()=>enterField('ironwood'), abyss:()=>enterField('abyss'), chaos:()=>enterField('chaos'), olympus:()=>enterField('olympus'), valhalla:()=>enterField('valhalla'), suntemple:()=>enterField('suntemple'), surt:()=>enterField('surt'), tree:()=>enterField('tree'), volc:()=>enterField('volcano'), enc:()=>{ if(VG&&VG.roamers&&VG.roamers[0]) villageGoWorld(VG.roamers[0].x, VG.roamers[0].z); }, quests:()=>openQuests(), wmap:()=>openWorldMap(), npcs:()=>(VG&&VG.npcs||[]).map(n=>n.def.name), roamers:()=>(VG&&VG.roamers||[]).map(r=>MID[r.mid]?MID[r.mid].name:r.mid), talkNpc:(nm)=>{const n=(VG&&VG.npcs||[]).find(n=>n.def.name.includes(nm)); if(n){villagerTalk(n);return true;} return false;}, rv:(k)=>{const r=rivalOfField(k); return r?r.name:null}, picks:()=>VG&&VG.pickups?VG.pickups.filter(p=>!p.got).map(p=>[+p.x.toFixed(1),+p.z.toFixed(1)]):null, noenc:()=>{ if(VG&&VG.roamers) for(const r of VG.roamers){ r.grp.visible=false; r.x=999; r.z=999; r.tx=999; r.tz=999; } }, boss:()=>{ const n=(VG&&VG.npcs||[]).find(n=>n.def.bossCh!=null); return n?{ch:n.def.bossCh,x:n.x,z:n.z}:null; }, pos:()=>VG&&VG.hero?[+VG.hero.x.toFixed(2),+VG.hero.z.toFixed(2)]:null, vj:()=>({a:vj.active,x:vj.x,y:vj.y})};   // デバッグ遷移
