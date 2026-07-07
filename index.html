@@ -215,7 +215,7 @@ button.bt.fuse{background:#a24ec0}
     <div id="gaResult" style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px"></div>
     <div style="margin-top:16px;border-top:1px solid #3a2a4a;padding-top:10px">
       <b style="color:#ffd86b">🔁 交換所</b>
-      <div class="muted" style="font-size:11px;margin:3px 0 6px;line-height:1.6">同じモンスターが<b>ダブる</b>と、その子の下のボタンで交換できます：<br>・<b>5体ぶん</b>→ 次の進化形(Lv2)　・<b>10体ぶん</b>→ 最終進化形(Lv3)　・<b>1体／全部</b>→ 💎ジェム<br><span style="color:#8a8a8a">※進化先をすでに持っている子や、Lv3・融合・単体（進化しない子）は<b>💎交換のみ</b>（「全部→💎」でまとめて交換できます）。ダブりは自動で<b style="color:#ffd86b">★グレード</b>(+3%/★・最大★5)にもなり、交換に使うと★は下がります</span></div>
+      <div class="muted" style="font-size:11px;margin:3px 0 6px;line-height:1.6">同じモンスターが<b>ダブる</b>と、その子の下のボタンで交換できます：<br>・<b>5体ぶん</b>→ 次の進化形(Lv2)　・<b>10体ぶん</b>→ 最終進化形(Lv3)　・<b>1体／全部</b>→ 💎ジェム<br><span style="color:#8a8a8a">※進化先を<b>すでに持っていても交換OK</b>＝その進化形の<b style="color:#ffd86b">⭐（ダブり=+3%/★・最大★5）</b>が上がります。Lv3・融合・単体（進化しない子）は💎交換のみ（「全部→💎」でまとめて可）</span></div>
       <div id="gaTrade" style="margin-top:4px"></div>
     </div>
   </div>
@@ -5239,10 +5239,10 @@ function renderTrade(){
     const lv2=m.evolves_to!=null?MID[m.evolves_to]:null;
     const lv3=lv2&&lv2.evolves_to!=null?MID[lv2.evolves_to]:null;
     const opts=[];
-    if(lv2&&!STORY.owned.includes(lv2.id)){ const ok=n>=5;
-      opts.push(`<button class="bt ${ok?'go':''}" data-src="${idStr}" data-tgt="${lv2.id}" data-cost="5" style="padding:6px 10px;font-size:11px${ok?'':';opacity:.5'}">5体→${lv2.name}${ok?'':`(あと${5-n})`}</button>`); }
-    if(lv3&&!STORY.owned.includes(lv3.id)){ const ok=n>=10;
-      opts.push(`<button class="bt ${ok?'go':''}" data-src="${idStr}" data-tgt="${lv3.id}" data-cost="10" style="padding:6px 10px;font-size:11px${ok?'':';opacity:.5'}">10体→${lv3.name}${ok?'':`(あと${10-n})`}</button>`); }
+    if(lv2){ const ok=n>=5; const o2=STORY.owned.includes(lv2.id);
+      opts.push(`<button class="bt ${ok?'go':''}" data-src="${idStr}" data-tgt="${lv2.id}" data-cost="5" style="padding:6px 10px;font-size:11px${ok?'':';opacity:.5'}">5体→${lv2.name}${o2?'⭐':''}${ok?'':`(あと${5-n})`}</button>`); }
+    if(lv3){ const ok=n>=10; const o3=STORY.owned.includes(lv3.id);
+      opts.push(`<button class="bt ${ok?'go':''}" data-src="${idStr}" data-tgt="${lv3.id}" data-cost="10" style="padding:6px 10px;font-size:11px${ok?'':';opacity:.5'}">10体→${lv3.name}${o3?'⭐':''}${ok?'':`(あと${10-n})`}</button>`); }
     opts.push(`<button class="bt" data-src="${idStr}" data-gem="${dupGem(m)}" style="padding:6px 10px;font-size:11px">1体→💎${dupGem(m)}</button>`);
     if(n>1) opts.push(`<button class="bt" data-src="${idStr}" data-gemall="1" style="padding:6px 10px;font-size:11px;background:#4a3a1a">全部(${n})→💎${n*dupGem(m)}</button>`);
     const star=Math.min(5,n);
@@ -5263,9 +5263,12 @@ function renderTrade(){
       const tgt=+b2.dataset.tgt, cost=+b2.dataset.cost;
       if((STORY.dups[src]||0)<cost){ toast(`${MID[src].name}のダブりがあと${cost-(STORY.dups[src]||0)}体必要（今×${STORY.dups[src]||0}）`); return; }
       STORY.dups[src]-=cost;
-      if(!STORY.owned.includes(tgt)) STORY.owned.push(tgt);
+      const wasOwned=STORY.owned.includes(tgt);
+      if(!wasOwned) STORY.owned.push(tgt);
+      else STORY.dups[tgt]=(STORY.dups[tgt]||0)+1;   // 所持済みなら進化先のダブり=★グレードUP
       saveStory(); seJingle('gem');
-      toast(`🔁 ${MID[src].name}×${cost} → ${MID[tgt].name} を入手！`);
+      if(wasOwned){ const star=Math.min(5,STORY.dups[tgt]||0); toast(`⭐ ${MID[src].name}×${cost} → ${MID[tgt].name} を強化！（★${star}）`); }
+      else toast(`🔁 ${MID[src].name}×${cost} → ${MID[tgt].name} を入手！`);
       renderTrade(); updateGemUI();
     };
   });
