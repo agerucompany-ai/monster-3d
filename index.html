@@ -202,7 +202,7 @@ button.bt.fuse{background:#a24ec0}
   </div>
   <div style="flex:1 1 auto;overflow-y:auto;padding:14px">
     <p class="muted" style="margin:0 0 4px">ジェムを祭壇に捧げるとモンスターが仲間になる（＝ガチャ）。💎ジェムは<b>ストーリーの章クリア</b>や<b>対戦勝利</b>で貯まる。ダブりは自動でジェムに変換（N=20/R=50/SR=200/SSR=400）。</p>
-    <p class="muted" style="margin:0 0 10px">排出率: <b style="color:#ff7ab0">SSR 3%</b>（融合体）/ <b style="color:#e0c060">SR 7%</b>（Lv3・竜系）/ <b style="color:#b08ae0">R 30%</b>（Lv2）/ N 60%（Lv1）。10連は<b>R以上1枠確定</b>。<br>✨<b>縁ガチャ</b>: R/SRは<b>手持ちモンスターの進化先が優先して当たる</b>（序盤はさらに優遇）— 育てたい子の進化系が揃いやすい！</p>
+    <p class="muted" style="margin:0 0 10px">排出率: <b style="color:#ff7ab0">SSR 3%→約12%</b>（融合体・中盤以降どんどんUP）/ <b style="color:#e0c060">SR 7%→約13%</b>（Lv3・竜系）/ <b style="color:#b08ae0">R</b>（Lv2）/ N（Lv1）。10連は<b>R以上1枠確定</b>。<br>✨<b>縁ガチャ</b>: R/SRは<b>手持ちモンスターの進化先が優先して当たる</b>（序盤はさらに優遇）— 育てたい子の進化系が揃いやすい！</p>
     <p class="muted" style="margin:0 0 10px">⚠ <b>進化には進化先の所持</b>、<b>融合には融合体の所持</b>が必要。ボスを使うにも進化前/素材が要る——集めてこそ強くなる！</p>
     <div style="font-weight:700;font-size:13px;color:#ffd86b;margin:2px 0 4px">📦 召喚シリーズ <span class="muted" style="font-size:10px">（章クリアで新シリーズ解放。選んだシリーズの属性が出る）</span></div>
     <div id="gaPacks" style="display:flex;gap:8px;overflow-x:auto;padding:6px 2px;margin:0 0 2px"></div>
@@ -5163,14 +5163,17 @@ function gachaPools(){
   return {N:fn.length?fn:pn, R:fr.length?fr:pr, SR:fs.length?fs:ps, SSR:fx.length?fx:px};
 }
 function gachaPull(pity){
-  const P=gachaPools(); const r=Math.random();
+  const P=gachaPools(); const r=Math.random(); const c=STORY.clear;
+  // 中盤以降は融合(SSR)/Lv3(SR)の排出率が段階的に上がる: SSR 3%→約12%, SR +7%→約+13%
+  const ssrR = 0.03 + Math.min(0.09, Math.max(0,c-3)*0.006);
+  const srR  = ssrR + 0.07 + Math.min(0.06, Math.max(0,c-3)*0.004);
   let pool,rar;
-  if(r<0.03){ pool=P.SSR; rar='SSR'; }
-  else if(r<0.10){ pool=P.SR; rar='SR'; }
+  if(r<ssrR){ pool=P.SSR; rar='SSR'; }
+  else if(r<srR){ pool=P.SR; rar='SR'; }
   else if(r<0.40 || pity){ pool=P.R; rar='R'; }
   else { pool=P.N; rar='N'; }
   // 最序盤(ch5=最初のLv3ボスより前)は Lv3/融合(SR/SSR) を排出しない=「そもそもLv3が揃わない」。R(Lv2)へ振替
-  if((rar==='SR'||rar==='SSR') && STORY.clear<4){ pool=P.R; rar='R'; }
+  if((rar==='SR'||rar==='SSR') && c<4){ pool=P.R; rar='R'; }
   // ===== 縁(えん)補正: R/SRは「手持ちの進化先でまだ未所持」を優先 =====
   // 序盤(手持ち15体未満)は75%、以降も55%の確率で進化先プールから引く
   if(rar==='R'||rar==='SR'){
@@ -7532,7 +7535,7 @@ function cpuPlace(){
     const capHP = rb ? Math.round(rb.hp*Math.min(2.1,1.4+0.06*refCh)*0.8) : 1e9;    // ボスHPの80%が上限
     const capAtk= rb ? rb.atk*Math.min(1.45,1.1+0.03*refCh)*0.85 : 1e9;             // ボス攻撃の85%が上限
     team.forEach((e,i)=>{ if(i<spots.length){ const [r,c]=spots[i]; const u=addUnit(1,e.mid,r,c);
-      if(mook){ u.maxhp=u.hp=Math.round(u.maxhp*0.72); u.atkX=0.85; }
+      if(mook){ u.maxhp=u.hp=Math.round(u.maxhp*0.85); u.atkX=0.92; }   // 通常野生の弱体化を緩和(しょぼすぎ対策)
       if(pw>1){ const pwc=Math.min(1.25,pw); u.maxhp=u.hp=Math.round(u.maxhp*pwc); u.atkX=(u.atkX||1)*pwc; }
       if(e.boss){ u.isBoss=true; }   // レア/ライバルの主役は「印」だけ=HP/攻撃の上乗せなし
       if(u.maxhp>capHP){ u.maxhp=u.hp=capHP; }                                      // ストーリーボス超え防止(HP)
@@ -7654,7 +7657,7 @@ function endGame(winner,msg){
       // ジェム: 初回クリアは大きく、再挑戦でも少し
       for(const u of alive(0)) addExp(baseFormId(u.mid), 30);   // 生き残りに経験値
       const first = STORY.clear<CAMP.ch;
-      const gems = first ? 100+CAMP.ch*20 : 40;
+      const gems = first ? 200+CAMP.ch*40 : 60;   // ボス撃破ジェムを段階的に約2倍(ch1=240…ch25=1200)
       if(first) STORY.clear=CAMP.ch;
       STORY.gems+=gems; saveStory();
       seJingle('fanfare');
@@ -10263,10 +10266,13 @@ function freeEnemyTeam(){
   for(let i=0;i<extra1;i++){ const id=pick(1); if(id) team.push({mid:id}); }
   for(let i=0;i<extra2;i++){ const id=pick(2); if(id) team.push({mid:id}); }
   if(CAMP.rare && c>=5){ const id=pick(3); if(id) team.push({mid:id, boss:true}); }   // Lv3はレア戦のみ
-  // 報酬: 敵レベル合計に比例
   if(CAMP.rare){ const id=pick(2); if(id) team.push({mid:id}); }   // レア戦は敵+1
+  // 中盤以降(c>=8)は融合モンスターも野生に登場=手応えUP・逃げずに戦う価値。ボス系融合は除外
+  if(c>=8){ const fp=MONSTERS.filter(m=>m.role==='fusion' && !GACHA_BAN.has(m.id) && (types.includes(m.type)||(m.type2&&types.includes(m.type2))));
+    if(fp.length && (CAMP.rare || Math.random()<0.4)){ team.push({mid:fp[(Math.random()*fp.length)|0].id, boss:true}); } }
+  // 報酬: 敵レベル合計に比例＋進行度で増える（融合はLv3扱いで大きめ）
   let lv=0; for(const e of team){ const m=MID[e.mid]; if(m) lv+=m.level; }
-  CAMP.freeReward=(25+lv*7)*(CAMP.rare?3:1);
+  CAMP.freeReward=Math.round((35+lv*11)*(CAMP.rare?3:1)*(1+Math.max(0,c)*0.04));
   return team;
 }
 function openFieldSelect(){
