@@ -7551,7 +7551,12 @@ function cpuPlace(){
     const atX = Math.min(1.45, 1.1+0.03*CAMP.ch);   // ボス攻撃: ×1.1 → ×1.45(元の値)
     const spots=castleArea(1).filter(([r,c])=>!unitAt(r,c))
       .sort((a,b)=>(Math.abs(a[0]-cc.r)+Math.abs(a[1]-cc.c))-(Math.abs(b[0]-cc.r)+Math.abs(b[1]-cc.c)));
-    const team=[...CAMPAIGN[CAMP.ch].enemy].sort((a,b)=>(b.boss?1:0)-(a.boss?1:0));
+    const team=[...CAMPAIGN[CAMP.ch].enemy];
+    // ボス戦にも中ボス(融合体)を随伴させて難度UP。中盤以降ほど数が多い(ch13+は2体)
+    { const fld=fieldOfChapter(CAMP.ch);
+      if(fld){ for(let idx=0; idx<midBossCount(CAMP.ch); idx++){ const lead=midBossTeam(fld,CAMP.ch,idx).find(e=>e.boss);
+        if(lead && !team.some(e=>e.mid===lead.mid)) team.push({mid:lead.mid}); } } }
+    team.sort((a,b)=>(b.boss?1:0)-(a.boss?1:0));
     team.forEach((e,i)=>{ if(i<spots.length){ const [r,c]=spots[i]; const u=addUnit(1,e.mid,r,c);
       if(e.boss){ u.isBoss=true; u.maxhp=u.hp=Math.round(u.maxhp*hpX); u.atkX=atX; } } });
     return;
@@ -9043,6 +9048,7 @@ function fieldBossDone(k){ const chs=FIELD_CHAPTERS[k]||[];   // クリア済み
   for(let i=chs.length-1;i>=0;i--){ if(chs[i]<=STORY.clear) return chs[i]; } return null; }
 // ======================= 中ボス制(第6章以降=野生なし。中ボスを倒すと章ボスに挑める) =======================
 function fieldChapterOf(k){ const cs=FIELD_CHAPTERS[k]||[]; return cs.length?cs[0]:null; }
+function fieldOfChapter(ch){ for(const k in FIELD_CHAPTERS){ if((FIELD_CHAPTERS[k]||[]).includes(ch)) return k; } return null; }
 function midBossCount(ch){ return (ch==null||ch<6) ? 0 : (ch<13 ? 1 : 2); }   // ch1-5:野生 / ch6-12:中ボス1 / ch13以降:中ボス2
 function midDefeated(ch){ return (STORY.midDone&&STORY.midDone[ch])||0; }
 function midBossTeam(field, ch, idx){   // 融合中心の中ボス編成。(ch,idx)で決定的に生成
