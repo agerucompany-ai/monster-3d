@@ -4918,6 +4918,7 @@ function VG_setupVillagers(){
 }
 function villagerTalk(n){
   const v=n.def;
+  if(v.midBoss!=null){ midBossChallenge(v.midBoss); return; }
   if(v.bossCh!=null){ bossTalk(v.bossCh); return; }
   if(v.bossDoneCh!=null){ bossDoneTalk(v.bossDoneCh); return; }
   if(v.name&&v.name.startsWith('行商人ザザ')){ openShop(); return; }
@@ -7526,9 +7527,9 @@ function cpuPlace(){
     const cc=CASTLE[1];
     const spots=castleArea(1).filter(([r,c])=>!unitAt(r,c))
       .sort((a,b)=>(Math.abs(a[0]-cc.r)+Math.abs(a[1]-cc.c))-(Math.abs(b[0]-cc.r)+Math.abs(b[1]-cc.c)));
-    const team=CAMP.rivalKey ? rivalEnemyTeam(RIVALS.find(r=>r.key===CAMP.rivalKey)) : freeEnemyTeam();
+    const team=CAMP.midTeam ? CAMP.midTeam.slice() : (CAMP.rivalKey ? rivalEnemyTeam(RIVALS.find(r=>r.key===CAMP.rivalKey)) : freeEnemyTeam());
     const pw=CAMP.rivalPow||1;
-    const mook=!CAMP.rivalKey && !CAMP.rare;   // 通常の野生=雑魚補正（テンポよく勝てる）
+    const mook=!CAMP.rivalKey && !CAMP.rare && !CAMP.midTeam;   // 通常の野生=雑魚補正。中ボスは補正なし(手応え)
     // 野生/レア/ライバル(剣士・魔女・狩人)は必ずストーリーボスより弱く。進行段階のボスHP/攻撃を基準に上限クランプ
     const refCh=Math.min(STORY.clear+1, CAMPAIGN.length-1);
     const rb=MID[(CAMPAIGN[refCh].enemy.find(e=>e.boss)||{}).mid];
@@ -7618,17 +7619,22 @@ function endGame(winner,msg){
       seJingle('win');
       const g=CAMP.freeReward||50;
       STORY.gems+=g; qBump('wins');
+      const isMid=CAMP.midBoss!=null; let midCleared=false;
+      if(isMid){ STORY.midDone=STORY.midDone||{}; const mch=CAMP.ch;
+        STORY.midDone[mch]=Math.min(midBossCount(mch),(STORY.midDone[mch]||0)+1); saveStory();
+        midCleared = STORY.midDone[mch]>=midBossCount(mch); }
       if(rv){ qBump('rivals'); const q=qState(); q['rw_'+rv.key]=1;
         STORY.stats=STORY.stats||{}; STORY.stats.rv=STORY.stats.rv||{};
         STORY.stats.rv[rv.key]=(STORY.stats.rv[rv.key]||0)+1; saveStory(); }
       STORY.stats=STORY.stats||{}; STORY.stats.fw=(STORY.stats.fw||0)+1; saveStory();
       for(const u of alive(0)) addExp(baseFormId(u.mid), 20);
       saveStory();
-      t.textContent=rv?`🎉 ${rv.name}に勝利！`:'🎉 勝利！';
+      t.textContent=isMid?'🎉 中ボス撃破！':(rv?`🎉 ${rv.name}に勝利！`:'🎉 勝利！');
       b.innerHTML=(rv?`<div style="color:#ffd86b;margin-bottom:4px">${rv.name}「${rv.winL}」</div>`:'')
-        +msg+`<br>💎+${g}${CAMP.rivalFirst?'（本日初勝利ボーナス×2！）':''}（所持💎${STORY.gems}）　⭐生存メンバーに経験値`;
-      btn.textContent='↻ もう一度戦う';
-      btn.onclick=()=>{ document.getElementById('ovEnd').style.display='none'; startFreeBattle(fld, null); };
+        +msg+`<br>💎+${g}${CAMP.rivalFirst?'（本日初勝利ボーナス×2！）':''}（所持💎${STORY.gems}）`
+        +(isMid?`<br>${midCleared?'🚪 <b style="color:#ffd86b">章ボスへの道が開いた！</b>':'⚔ まだ中ボスが残っている'}`:'　⭐生存メンバーに経験値');
+      btn.textContent=isMid?'🏕 フィールドへ戻る':'↻ もう一度戦う';
+      btn.onclick=()=>{ document.getElementById('ovEnd').style.display='none'; if(isMid) backToField(fld); else startFreeBattle(fld, null); };
     } else {
       t.textContent='💀 敗北…';
       const g2=Math.round((state.killLv||0)*6);
@@ -7841,6 +7847,7 @@ function openChapters(){
   ov.style.display='flex';
 }
 function startChapter(i){
+  if(STORY.clear<i){ const need=midBossCount(i)-midDefeated(i); if(need>0){ toast(`⚔ まず中ボスを倒そう（残り${need}体・そのフィールドにいる）`); return; } }   // 中ボス未撃破の章ボスには挑めない
   CAMP={on:true, ch:i};
   const ch=CAMPAIGN[i];
   LEVEL_BUDGET=ch.budget;
@@ -9034,6 +9041,56 @@ function fieldBossCh(k){ const chs=FIELD_CHAPTERS[k]||[]; const eff=window._DEBU
   return chs.find(c=>c>STORY.clear && c<=eff+1); }
 function fieldBossDone(k){ const chs=FIELD_CHAPTERS[k]||[];   // クリア済みの最後の章（和解したボス）
   for(let i=chs.length-1;i>=0;i--){ if(chs[i]<=STORY.clear) return chs[i]; } return null; }
+// ======================= 中ボス制(第6章以降=野生なし。中ボスを倒すと章ボスに挑める) =======================
+function fieldChapterOf(k){ const cs=FIELD_CHAPTERS[k]||[]; return cs.length?cs[0]:null; }
+function midBossCount(ch){ return (ch==null||ch<6) ? 0 : (ch<13 ? 1 : 2); }   // ch1-5:野生 / ch6-12:中ボス1 / ch13以降:中ボス2
+function midDefeated(ch){ return (STORY.midDone&&STORY.midDone[ch])||0; }
+function midBossTeam(field, ch, idx){   // 融合中心の中ボス編成。(ch,idx)で決定的に生成
+  const types=FIELD_TYPES[field]||['草'];
+  const inTy=m=>types.includes(m.type)||(m.type2&&types.includes(m.type2));
+  const fus=MONSTERS.filter(m=>m.role==='fusion' && !GACHA_BAN.has(m.id) && inTy(m));
+  const l3=MONSTERS.filter(m=>m.role!=='fusion' && inTy(m) && m.level===3);
+  const l2=MONSTERS.filter(m=>m.role!=='fusion' && inTy(m) && m.level===2);
+  let s=(ch*97+idx*131+7)>>>0; const rnd=()=>{ s=(s*1103515245+12345)>>>0; return (s>>>8)/16777216; };
+  const pk=arr=>arr.length?arr[(rnd()*arr.length)|0]:null;
+  const team=[], used=new Set();
+  const add=(m,boss)=>{ if(m&&!used.has(m.id)){ used.add(m.id); team.push(boss?{mid:m.id,boss:true}:{mid:m.id}); } };
+  add(pk(fus.length?fus:l3), true);        // 主役=融合(なければLv3)
+  if(ch>=13) add(pk(fus), false);          // 中盤以降はもう1体融合
+  add(pk(l3), false); add(pk(l2), false);
+  return team.slice(0,4);
+}
+function midBossChallenge(idx){
+  const ch=fieldBossCh(V_MAP); if(ch==null) return;
+  const team=midBossTeam(V_MAP, ch, idx); const lead=team.find(e=>e.boss)||team[0]; const lm=lead?MID[lead.mid]:null;
+  const ov=document.getElementById('ovStory');
+  document.getElementById('stTitle').textContent='⚔ 中ボス';
+  const face=document.getElementById('stFace'); face.style.display='block'; document.getElementById('stFaceImg').src=lm?IMG[String(lm.id)]:'';
+  document.getElementById('stName').textContent=lm?lm.name:'中ボス';
+  const el=document.getElementById('stLine'); el.style.fontStyle='normal';
+  const remain=midBossCount(ch)-midDefeated(ch);
+  el.innerHTML=`<div style="margin-bottom:10px">道を塞ぐ<b>中ボス「${lm?lm.name:'?'}」</b>が融合モンスターを従えている！倒せば章ボスへの道が開く。<br><span class="muted" style="font-size:11px">残り中ボス ${remain}体・推奨編成Lv${CAMPAIGN[ch].budget}</span></div>
+   <button class="bt go" id="mbGo" style="display:block;width:100%;margin:6px 0;padding:12px;font-size:15px">⚔ 挑む！</button>
+   <button class="bt" id="mbNo" style="display:block;width:100%;margin:6px 0;padding:10px;font-size:13px">× 準備してから</button>`;
+  document.getElementById('stPage').textContent=''; document.getElementById('stNext').style.display='none';
+  const close=()=>{ ov.style.display='none'; document.getElementById('stNext').style.display=''; _vnCool=performance.now()+2500; };
+  document.getElementById('stSkip').onclick=close;
+  document.getElementById('mbGo').onclick=()=>{ close(); startMidBoss(ch, idx); };
+  document.getElementById('mbNo').onclick=close;
+  ov.style.display='flex';
+}
+function startMidBoss(ch, idx){
+  saveStory();
+  CAMP={on:true, ch, free:true, field:V_MAP, midBoss:idx, midTeam:midBossTeam(V_MAP, ch, idx)};
+  LEVEL_BUDGET=CAMPAIGN[ch].budget;
+  const bt=FIELD_BTHEME[V_MAP]||'forest';
+  if(bt==='volcano'){ mapType='volcano'; campTheme=null; } else { mapType='normal'; campTheme=bt; }
+  let lv=0; for(const e of CAMP.midTeam){ const m=MID[e.mid]; if(m) lv+=m.level; }
+  CAMP.freeReward=Math.round((90+lv*15)*(1+Math.max(0,STORY.clear)*0.04));   // 中ボスは報酬大きめ
+  for(const id of ['ovVillage','ovStory']){ const el=document.getElementById(id); if(el) el.style.display='none'; }
+  if(window._boardSky){ scene.background=window._boardSky; } scene.fog=null;
+  seJingle('enc'); enterChapterSelect();
+}
 // 和解後のセリフ（ボスは仲間になっている）
 const BOSS_DONE_TALK={
  1:[{s:'185',t:'ぷにゅ〜……よく、ねむれた。きみ、あったかいね。'},
@@ -9093,6 +9150,8 @@ function bossDoneTalk(ch){
   showStoryLines('🤝 '+MID[be.mid].name, lines, ()=>bossChallenge(ch, true));
 }
 function bossTalk(ch){
+  const need=midBossCount(ch)-midDefeated(ch);
+  if(need>0){ toast(`⚔ まず中ボスを倒せ！（残り${need}体）`); return; }   // 中ボス未撃破なら章ボスに挑めない
   const be=CAMPAIGN[ch].enemy.find(e=>e.boss);
   const lines=BOSS_TALK[ch]||[{s:String(be.mid),t:'……来たか、小さき者よ。'}];
   showStoryLines('👹 '+CAMPAIGN[ch].title, lines, ()=>bossChallenge(ch));
@@ -9315,11 +9374,35 @@ function vFieldCommon(portalColor, backLabelY){
       ambient.push(t=>{ gl8.position.y=0.3+0.12*Math.sin(t*2.5+ph8); gl8.material.opacity=0.55+0.3*Math.sin(t*3+ph8); });
       VG.pickups.push({grp:g8, x:rx, z:rz, i});
     } }
-  // ===== 野生モンスター（徘徊・接触でフリーバトル） =====
+  // ===== 敵の配置: 第1〜5章=野生徘徊 / 第6章以降=野生なし・中ボス制 =====
   VG.roamers=[];
   const types=FIELD_TYPES[V_MAP]||['草'];
-  // 崩れゆく境界: 火山でスルヴァ撃破(ch18=clear>=18)後は、歪んだ世界で過去の大ボスの残影が徘徊する
   const ghostMode=(V_MAP==='volcano' && STORY.clear>=23);
+  const _fch=fieldChapterOf(V_MAP), _bossChNow=fieldBossCh(V_MAP);
+  if(midBossCount(_fch)>0 && !ghostMode){
+    // 第6章以降: 野生は出さない。章ボスが未クリアなら未撃破の中ボスを配置(倒すと章ボスに挑める)
+    if(_bossChNow!=null){
+      const done=midDefeated(_bossChNow), mbc=midBossCount(_bossChNow), remain=mbc-done;
+      const posList = remain>=2 ? [{x:-4.8,z:-1.2},{x:4.8,z:-1.2}] : [{x:0,z:-1.2}];
+      for(let j=0;j<remain;j++){ const absIdx=done+j;
+        const mteam=midBossTeam(V_MAP,_bossChNow,absIdx); const lead=mteam.find(e=>e.boss)||mteam[0];
+        if(!lead||!IMG[String(lead.mid)]) continue;
+        const p=posList[j]||{x:(j%2?4.8:-4.8),z:-1.2};
+        const g=new THREE.Group();
+        const tex=new THREE.TextureLoader().load(IMG[String(lead.mid)]);
+        const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true})); sp.material.toneMapped=false;
+        sp.scale.set(2.3,2.3,1); sp.center.set(0.5,0); sp.position.y=0.05; g.add(sp);
+        const aura=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0xc060ff,transparent:true,opacity:0.45,depthWrite:false,blending:THREE.AdditiveBlending}));
+        aura.scale.setScalar(3.1); aura.position.y=1.05; g.add(aura);
+        const sh=new THREE.Mesh(new THREE.CircleGeometry(0.6,18), new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.3})); sh.rotation.x=-Math.PI/2; sh.position.y=0.02; g.add(sh);
+        const lb=makeTextSprite('⚔ 中ボス '+MID[lead.mid].name); lb.scale.set(2.5,0.58,1); lb.position.y=2.7; g.add(lb);
+        g.position.set(p.x,0,p.z); villageGroup.add(g); vCol(p.x,p.z,0.7);
+        const ph=Math.random()*9; ambient.push(t=>{ aura.material.opacity=0.3+0.18*Math.sin(t*2.2+ph); });
+        VG.npcs=VG.npcs||[]; VG.npcs.push({grp:g,sp,sh,baseSY:sp.scale.y,trav:0,def:{name:'中ボス '+MID[lead.mid].name,midBoss:absIdx,rad:1.9,x:p.x,z:p.z},x:p.x,z:p.z,tx:p.x,tz:p.z,ph:0,li:0,fixed:true});
+      }
+    }
+  } else {
+  // 第1〜5章(と残影モード): 従来の野生徘徊
   const ghostIds=[254,84,262,204,153,46,72,201].filter(id=>MID[id]&&IMG[String(id)]);
   const rlist=FIELD_ROAM[V_MAP];
   const rpool0=rlist ? rlist.map(id=>MID[id]).filter(Boolean)
@@ -9349,6 +9432,7 @@ function vFieldCommon(portalColor, backLabelY){
     villageGroup.add(grp2);
     VG.roamers.push({grp:grp2,sp:sp3,sh:sh2,baseSY:sp3.scale.y,trav:0,mid:m.id,rare,x:rx,z:rz,tx:rx,tz:rz,ph:Math.random()*9});
   }
+  }   // 野生徘徊(else)の終わり
   // 影の受け渡し
   villageGroup.traverse(o=>{ if(o.isMesh && o.material){ if(o.material.type!=='MeshBasicMaterial'){ o.castShadow=true; o.receiveShadow=true; } } });
 }
