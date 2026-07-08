@@ -5373,7 +5373,12 @@ function ownMon(id){ if(!STORY.owned.includes(id)){ STORY.owned.push(id); saveSt
 // 進化ラインの基本形（Lv1まで進化を遡る）
 function baseFormId(mid){ let m=MID[mid]; let guard=0; while(m && m.evolves_from!=null && guard<6){ m=MID[m.evolves_from]; guard++; } return m?m.id:mid; }
 // 系統順ソート: 融合は常に最後の融合ゾーンへ→非融合は進化ラインの基本形→Lv→idで比較(図鑑・編成 共通)
+const FUSION_ENDLAST=[263,245,267];   // 終盤ボス(ケイオドラ→ラグナディオ→真ラグナディオ完全体)は融合ゾーンの一番最後に固定
 function monLineCmp(a,b){ const fa=a.role==='fusion'?1:0, fb=b.role==='fusion'?1:0; if(fa!==fb) return fa-fb;
+  if(fa){ const ea=FUSION_ENDLAST.indexOf(a.id), eb=FUSION_ENDLAST.indexOf(b.id); const pa=ea<0?0:1, pb=eb<0?0:1;
+    if(pa!==pb) return pa-pb;                 // 終盤ボスは末尾へ
+    if(pa===1) return ea-eb;                  // 終盤ボス同士は指定順(ケイオドラ→ラグナディオ→完全体)
+    return a.id-b.id; }                        // それ以外の融合はid順
   const ba=baseFormId(a.id), bb=baseFormId(b.id); return (ba-bb) || ((a.level||1)-(b.level||1)) || (a.id-b.id); }
 // 系譜チェック: そのモンスターを出撃させるのに必要な「前提」を全部持っているか
 // 進化系→進化前を全所持 / 融合体→素材2体を所持（ボスだけ仲間にしても前提が無いと使えない）
@@ -8211,12 +8216,17 @@ function vGlbPlay(grp, name, fade){
   ud.cur=name;
 }
 // --- 連れ歩きモンスター（お気に入りが後ろをついてくる） ---
-// 連れ歩くモンスター = パーティの1番上(既定→最後に使ったパーティ)。手動で選んだ子(walkMid)があればそれを優先
+// 連れ歩くモンスター = パーティの1番上の、所持している最終進化形(パーティは進化前しか入らないので進化後の姿で歩かせる)。手動指定(walkMid)優先
 function walkMonId(){
   if(STORY.walkMid && STORY.owned.includes(STORY.walkMid)) return STORY.walkMid;
   const pi = (STORY.partyDef!=null && (STORY.parties||[])[STORY.partyDef] && STORY.parties[STORY.partyDef].length) ? STORY.partyDef
            : ((STORY.partyLast!=null && (STORY.parties||[])[STORY.partyLast] && STORY.parties[STORY.partyLast].length) ? STORY.partyLast : -1);
-  if(pi>=0){ const top=STORY.parties[pi][0]; if(top!=null && STORY.owned.includes(top)) return top; }
+  if(pi>=0){ const top=STORY.parties[pi][0];
+    if(top!=null && STORY.owned.includes(top)){
+      let cur=MID[top];
+      while(cur && cur.evolves_to!=null && STORY.owned.includes(cur.evolves_to)) cur=MID[cur.evolves_to];   // 所持している最終進化形まで辿る
+      return cur?cur.id:top;
+    } }
   return null;
 }
 function vFollower(){
