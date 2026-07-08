@@ -8211,10 +8211,19 @@ function vGlbPlay(grp, name, fade){
   ud.cur=name;
 }
 // --- 連れ歩きモンスター（お気に入りが後ろをついてくる） ---
+// 連れ歩くモンスター = パーティの1番上(既定→最後に使ったパーティ)。手動で選んだ子(walkMid)があればそれを優先
+function walkMonId(){
+  if(STORY.walkMid && STORY.owned.includes(STORY.walkMid)) return STORY.walkMid;
+  const pi = (STORY.partyDef!=null && (STORY.parties||[])[STORY.partyDef] && STORY.parties[STORY.partyDef].length) ? STORY.partyDef
+           : ((STORY.partyLast!=null && (STORY.parties||[])[STORY.partyLast] && STORY.parties[STORY.partyLast].length) ? STORY.partyLast : -1);
+  if(pi>=0){ const top=STORY.parties[pi][0]; if(top!=null && STORY.owned.includes(top)) return top; }
+  return null;
+}
 function vFollower(){
-  if(!STORY.walkMid || !STORY.owned.includes(STORY.walkMid) || !IMG[String(STORY.walkMid)]) return null;
+  const wid=walkMonId();
+  if(!wid || !STORY.owned.includes(wid) || !IMG[String(wid)]) return null;
   const grp=new THREE.Group();
-  const tex=new THREE.TextureLoader().load(IMG[String(STORY.walkMid)]);
+  const tex=new THREE.TextureLoader().load(IMG[String(wid)]);
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true})); sp.material.toneMapped=false;
   sp.scale.set(1.05,1.05,1); sp.center.set(0.5,0); sp.position.y=0.04; grp.add(sp);
   const sh=new THREE.Mesh(new THREE.CircleGeometry(0.26,16), new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.25}));
@@ -10894,6 +10903,7 @@ window.__game={
   startRare(field){ V_MAP=field||'euro'; CAMP={on:true,ch:Math.min(STORY.clear+1,CAMPAIGN.length-1),free:true,field:V_MAP,rare:true,encMid:null}; LEVEL_BUDGET=CAMPAIGN[CAMP.ch].budget; campTheme=FIELD_BTHEME[V_MAP]||'forest'; mapType='normal'; enterChapterSelect(); return 'rare@'+V_MAP; },
   enemyStats(){ return Object.values(state.units).filter(u=>u.owner===1).map(u=>({name:MID[u.mid].name,lv:MID[u.mid].level,hp:u.maxhp,atkX:+(u.atkX||1).toFixed(2),boss:!!u.isBoss})); },
   terrStats(){ const f={}; for(const row of state.terrain) for(const t of row) f[t]=(f[t]||0)+1; return f; },
+  walkId(){ return walkMonId(); }, hasFollow(){ return !!(typeof VG!=='undefined' && VG && VG.follow); },
   gachaSim(n){ const h={1:0,2:0,3:0,fusion:0}; for(let i=0;i<(n||300);i++){ const p=gachaPull(false); const m=MID[p.id]; if(!m)continue; if(m.role==='fusion')h.fusion++; else h[m.level]=(h[m.level]||0)+1; } return h; },
   openGa(){ openGacha('village'); return true; },
   packInfo(){ return GACHA_PACKS.map(p=>({k:p.key, drops:[...packLineIds(p)].map(id=>MID[id]&&MID[id].name)})); },
