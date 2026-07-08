@@ -362,6 +362,7 @@ button.bt.fuse{background:#a24ec0}
 <div class="overlay" id="ovSelect" style="display:none">
   <h1>① 編成：レベル合計5まで</h1>
   <p class="muted" id="selDesc">Lv1=1点・Lv2=2点で<b>合計5点</b>まで（Lv2を入れると体数は減る）。Lv3単体・融合体は選べない（場で進化・融合して入手）。タイプで絞り込み可。</p>
+  <div id="selParty" style="display:flex;flex:0 0 auto;gap:6px;overflow-x:auto;overflow-y:hidden;min-height:60px;padding:4px 2px 8px"></div>
   <div class="tabs" id="selTabs"></div>
   <div id="pool"></div>
   <div id="selbar">
@@ -7261,6 +7262,35 @@ function makeFusionCard(m){
   d.querySelector('.info').onclick=(ev)=>{ ev.stopPropagation(); showMonsterDetail(m.id); };
   return d;
 }
+// ======================= パーティ登録(最大6・既定・毎回選択) =======================
+const PARTY_MAX=6;
+function partyFilter(ids){ const out=[]; let lv=0;   // 保存パーティを今のバトルで有効なぶんだけ(所持/配置可/Lv合計内)
+  for(const id of (ids||[])){ const m=MID[id]; if(!m||!canPick(m)||out.includes(id)) continue;
+    if(out.length>=teamCap()) break; if(lv+m.level>LEVEL_BUDGET) continue; out.push(id); lv+=m.level; }
+  return out; }
+function loadParty(i){ const p=(STORY.parties||[])[i];
+  if(!p||!p.length){ toast(`パーティ${i+1}は空き（下で選んで💾で保存）`); return; }
+  const f=partyFilter(p); chosen=f; STORY.partyLast=i; saveStory(); buildSelect();
+  toast(`パーティ${i+1}をセット${f.length<p.length?'（一部はLv合計/所持の都合で除外）':''}`); }
+function saveParty(i){ if(!STORY.parties) STORY.parties=[]; if(!chosen.length){ toast('先にモンスターを選んでから保存してね'); return; }
+  STORY.parties[i]=chosen.slice(); STORY.partyLast=i; saveStory(); renderPartyBar(); toast(`現在の編成をパーティ${i+1}に保存`); }
+function setDefaultParty(i){ STORY.partyDef=i; saveStory(); renderPartyBar(); toast(`パーティ${i+1}を既定に設定（次から自動でセット）`); }
+function renderPartyBar(){ const box=document.getElementById('selParty'); if(!box) return; box.innerHTML='';
+  const parts=STORY.parties||[];
+  for(let i=0;i<PARTY_MAX;i++){ const p=parts[i]||[]; const isDef=STORY.partyDef===i; const isCur=STORY.partyLast===i;
+    const d=document.createElement('div'); d.style.cssText=`flex:0 0 auto;min-width:98px;background:${isCur?'#22304a':'#141a28'};border:2px solid ${isDef?'#ffd24a':isCur?'#5a8ce0':'#2c3346'};border-radius:8px;padding:5px;text-align:center;position:relative;cursor:pointer`;
+    const icons=p.slice(0,6).map(id=>`<img src="${IMG[id]||''}" style="width:22px;height:22px;object-fit:contain;vertical-align:middle">`).join('');
+    d.innerHTML=`<div style="position:absolute;top:2px;right:3px;display:flex;gap:3px">`
+      +`<button data-def="${i}" title="既定に設定" style="font-size:10px;padding:0 4px;border-radius:4px;border:none;background:${isDef?'#ffd24a':'#3a4358'};color:${isDef?'#222':'#ccc'}">★</button>`
+      +`<button data-save="${i}" title="今の編成を保存" style="font-size:10px;padding:0 4px;border-radius:4px;border:none;background:#3a4358;color:#ccc">💾</button></div>`
+      +`<div style="font-size:10px;font-weight:700;color:${isDef?'#ffd24a':'#9bb8e0'};margin-bottom:2px">P${i+1}${isDef?' ★既定':''}</div>`
+      +`<div style="min-height:24px;line-height:1">${icons||'<span style="color:#778;font-size:10px">空き</span>'}</div>`;
+    box.appendChild(d);
+    d.onclick=(e)=>{ const t=e.target; if(t&&t.dataset&&(t.dataset.save!=null||t.dataset.def!=null)) return; loadParty(i); };
+  }
+  box.querySelectorAll('[data-save]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); saveParty(+b.dataset.save); });
+  box.querySelectorAll('[data-def]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); setDefaultParty(+b.dataset.def); });
+}
 function buildSelect(){
   const gb=document.getElementById('btSelGacha'); if(gb) gb.style.display='none';   // バトル前召喚は廃止（各マップのHUD🎰から引く）
   const h1=document.querySelector('#ovSelect h1');
@@ -7280,6 +7310,7 @@ function buildSelect(){
     : ONLINE
     ? `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで（Lv2を入れると体数は減る）。Lv3単体・融合体は選べない（場で進化・融合して入手）。タイプで絞り込み可。`
     : `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで。出撃も<b>戦闘中の進化・融合も手持ちのモンスターのみ</b>（🎰召喚で収集、所持💎${STORY.gems}）。カードの<span style="color:#7ee08a">✓所持/⬆進化できる</span>・<span style="color:#ffb36b">未所持</span>表示を参考に。`;
+  renderPartyBar();
   const tabs=document.getElementById('selTabs'); tabs.innerHTML='';
   const mk=(key,label)=>{ const b=document.createElement('button'); b.textContent=label; b.className=(selFilter===key?'on':''); b.onclick=()=>{selFilter=key; buildSelect();}; tabs.appendChild(b); };
   mk('all','全'); TYPES.forEach(t=>mk(t,t));
@@ -7818,7 +7849,12 @@ function startChapter(i){
 function enterChapterSelect(){
   state=newState(); state.phase='preview';   // campTheme/mapTypeを反映した地形を生成
   buildTerrain(); buildStructures(); syncUnits(); fit();
-  chosen=[]; selFilter='all';
+  selFilter='all';
+  // 既定パーティ(なければ最後に使ったパーティ)を自動セット=毎回全部選ぶ手間を省く。無ければ空(手動)
+  const di = (STORY.partyDef!=null && (STORY.parties||[])[STORY.partyDef] && STORY.parties[STORY.partyDef].length) ? STORY.partyDef
+           : ((STORY.partyLast!=null && (STORY.parties||[])[STORY.partyLast] && STORY.parties[STORY.partyLast].length) ? STORY.partyLast : -1);
+  chosen = di>=0 ? partyFilter(STORY.parties[di]) : [];
+  if(di>=0) STORY.partyLast=di;
   document.getElementById('ovSelect').style.display='flex';
   buildSelect();
 }
