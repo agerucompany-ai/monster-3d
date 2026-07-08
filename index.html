@@ -5379,12 +5379,17 @@ function ownMon(id){ if(!STORY.owned.includes(id)){ STORY.owned.push(id); saveSt
 function baseFormId(mid){ let m=MID[mid]; let guard=0; while(m && m.evolves_from!=null && guard<6){ m=MID[m.evolves_from]; guard++; } return m?m.id:mid; }
 // 系統順ソート: 融合は常に最後の融合ゾーンへ→非融合は進化ラインの基本形→Lv→idで比較(図鑑・編成 共通)
 const FUSION_ENDLAST=[263,245,267];   // 終盤ボス(ケイオドラ→ラグナディオ→真ラグナディオ完全体)は融合ゾーンの一番最後に固定
+const TYPE_ORDER={炎:0,水:1,草:2,地:3,風:4,雷:5,氷:6,光:7,闇:8,竜:9};   // 図鑑タブと同じ並び
 function monLineCmp(a,b){ const fa=a.role==='fusion'?1:0, fb=b.role==='fusion'?1:0; if(fa!==fb) return fa-fb;
   if(fa){ const ea=FUSION_ENDLAST.indexOf(a.id), eb=FUSION_ENDLAST.indexOf(b.id); const pa=ea<0?0:1, pb=eb<0?0:1;
     if(pa!==pb) return pa-pb;                 // 終盤ボスは末尾へ
     if(pa===1) return ea-eb;                  // 終盤ボス同士は指定順(ケイオドラ→ラグナディオ→完全体)
-    return a.id-b.id; }                        // それ以外の融合はid順
-  const ba=baseFormId(a.id), bb=baseFormId(b.id); return (ba-bb) || ((a.level||1)-(b.level||1)) || (a.id-b.id); }
+    const tfa=TYPE_ORDER[a.type]??99, tfb=TYPE_ORDER[b.type]??99; if(tfa!==tfb) return tfa-tfb;   // 融合も型順
+    return a.id-b.id; }
+  // 非融合: まず各モンスター自身の型でグループ→系統(基本形)→Lv→id
+  const ta=TYPE_ORDER[a.type]??99, tb=TYPE_ORDER[b.type]??99; if(ta!==tb) return ta-tb;
+  const ba=baseFormId(a.id), bb=baseFormId(b.id);
+  return (ba-bb) || ((a.level||1)-(b.level||1)) || (a.id-b.id); }
 // 系譜チェック: そのモンスターを出撃させるのに必要な「前提」を全部持っているか
 // 進化系→進化前を全所持 / 融合体→素材2体を所持（ボスだけ仲間にしても前提が無いと使えない）
 function lineOK(m){
@@ -7308,11 +7313,18 @@ function renderPartyBar(){ const box=document.getElementById('selParty'); if(!bo
   box.querySelectorAll('[data-ren]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); renameParty(+b.dataset.ren); });
   box.querySelectorAll('[data-ren2]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); renameParty(+b.dataset.ren2); });
 }
-let PARTY_EDIT=false;
-function openPartyEdit(){   // 村/タイトルからいつでもパーティを組める編集モード(バトルではない)
-  PARTY_EDIT=true; CAMP={on:false,ch:0}; campTheme=null; LEVEL_BUDGET=12; selFilter='all'; chosen=[];
+let PARTY_EDIT=false, POOL_SHOWN=false;
+function openPartyEdit(slot){   // パーティ編集モード。既定(or指定)パーティを読み込んで編集開始→「完了」で保存
+  PARTY_EDIT=true; POOL_SHOWN=true; CAMP={on:false,ch:0}; campTheme=null; LEVEL_BUDGET=12; selFilter='all';
+  const i = (slot!=null) ? slot : ((STORY.partyDef!=null && (STORY.parties||[])[STORY.partyDef] && STORY.parties[STORY.partyDef].length) ? STORY.partyDef : 0);
+  STORY.partyLast=i; chosen=partyFilter((STORY.parties||[])[i]||[]);
   for(const id of ['ovTitle','ovVillage','ovHub','ovChapters','ovGacha','ovCatalog']){ const el=document.getElementById(id); if(el) el.style.display='none'; }
   document.getElementById('ovSelect').style.display='flex'; buildSelect();
+}
+function finishPartyEdit(){   // 「完了」= 現在の編成を、いま編集中のスロットに保存
+  const i=(STORY.partyLast!=null?STORY.partyLast:0);
+  STORY.parties=STORY.parties||[]; STORY.parties[i]=chosen.slice(); STORY.partyLast=i; saveStory();
+  toast(`✅「${partyName(i)}」に保存しました`); closePartyEdit();
 }
 function closePartyEdit(){ PARTY_EDIT=false; LEVEL_BUDGET=5; document.getElementById('ovSelect').style.display='none'; goTitle(); }
 function buildSelect(){
@@ -7334,11 +7346,11 @@ function buildSelect(){
     : ONLINE
     ? `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで（Lv2を入れると体数は減る）。Lv3単体・融合体は選べない（場で進化・融合して入手）。タイプで絞り込み可。`
     : `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで。出撃も<b>戦闘中の進化・融合も手持ちのモンスターのみ</b>（🎰召喚で収集、所持💎${STORY.gems}）。カードの<span style="color:#7ee08a">✓所持/⬆進化できる</span>・<span style="color:#ffb36b">未所持</span>表示を参考に。`;
-  if(PARTY_EDIT){ const h=document.querySelector('#ovSelect h1'); if(h) h.textContent='🛡 パーティ編成';
-    if(sd0) sd0.innerHTML='好きな編成を組んで、上の<b>P1〜P6</b>の<b>💾</b>で保存。<b>★</b>で既定に設定（バトル前は既定が自動でセット）。<b>✅完了</b>で戻ります。'; }
+  if(PARTY_EDIT){ const h=document.querySelector('#ovSelect h1'); if(h) h.textContent=`🛡 「${partyName(STORY.partyLast!=null?STORY.partyLast:0)}」を編集中`;
+    if(sd0) sd0.innerHTML='モンスターを選んで<b>✅保存して完了</b>を押すと、<b>いま編集中のパーティに保存</b>されます。上の枠をタップで別のパーティを編集、<b>★</b>で既定に。'; }
   renderPartyBar();
-  { const tp=document.getElementById('btToPlace'), pk=document.getElementById('btPeek');   // パーティ編集モードは「完了」ボタンに
-    if(PARTY_EDIT){ tp.textContent='✅ 完了'; tp.onclick=closePartyEdit; if(pk) pk.style.display='none'; }
+  { const tp=document.getElementById('btToPlace'), pk=document.getElementById('btPeek');   // パーティ編集モードは「保存して完了」に
+    if(PARTY_EDIT){ tp.textContent='✅ 保存して完了'; tp.onclick=finishPartyEdit; if(pk) pk.style.display='none'; }
     else { tp.textContent='バトルへ →'; tp.onclick=enterPlace; if(pk) pk.style.display=''; } }
   const tabs=document.getElementById('selTabs'); tabs.innerHTML='';
   const mk=(key,label)=>{ const b=document.createElement('button'); b.textContent=label; b.className=(selFilter===key?'on':''); b.onclick=()=>{selFilter=key; buildSelect();}; tabs.appendChild(b); };
@@ -7363,6 +7375,16 @@ function buildSelect(){
     hd.textContent='🔮 融合モンスター（素材2体をLv上げ→場で重ねて作る）';
     pool.appendChild(hd);
     fus.forEach(m=> pool.appendChild(makeFusionCard(m)));
+  }
+  // バトル前は「パーティを選ぶだけ」。手動選択のプールは既定で隠し、🔧編集で開く
+  { const battleMode = CAMP.on && !PARTY_EDIT;
+    if(battleMode && !POOL_SHOWN){ tabs.style.display='none'; pool.innerHTML='';
+      const msg=document.createElement('div'); msg.style.cssText='text-align:center;color:#9bb8e0;padding:12px 8px;font-size:13px;line-height:1.7';
+      msg.innerHTML='上の<b style="color:#ffd24a">パーティ</b>を選んで（既定は自動セット済み）<b>「バトルへ →」</b>。<br>手動で入れ替えたいときは↓';
+      pool.appendChild(msg);
+      const eb=document.createElement('button'); eb.className='bt'; eb.textContent='🔧 編集（手動で選ぶ）'; eb.style.cssText='display:block;margin:4px auto;font-size:14px;padding:10px 18px;background:#4a5570';
+      eb.onclick=()=>{ POOL_SHOWN=true; buildSelect(); }; pool.appendChild(eb);
+    } else { tabs.style.display=''; }
   }
   updateSelBar();
 }
@@ -7610,7 +7632,7 @@ function goTitle(){
   window._updateTitleCont&&window._updateTitleCont();
   for(const id of ['ovEnd','ovPlace','ovSelect','ovPreview','ovLobby','btPeekBack','ovDetail','ovChapters','ovStory','ovStarter','ovGacha','ovHero','ovVillage','ovHub','ovSave'])
     { const el=document.getElementById(id); if(el) el.style.display='none'; }
-  CAMP={on:false,ch:0}; campTheme=null; LEVEL_BUDGET=5;
+  CAMP={on:false,ch:0}; campTheme=null; LEVEL_BUDGET=5; PARTY_EDIT=false; POOL_SHOWN=false;
   mapType='normal'; pickEnabled=false; clearSel(); clearHL();
   state=newState(); chosen=[]; placeList=[]; undoStack=[];
   buildTerrain(); buildStructures(); syncUnits(); fit();
@@ -7889,7 +7911,7 @@ function startChapter(i){
 function enterChapterSelect(){
   state=newState(); state.phase='preview';   // campTheme/mapTypeを反映した地形を生成
   buildTerrain(); buildStructures(); syncUnits(); fit();
-  selFilter='all';
+  selFilter='all'; PARTY_EDIT=false; POOL_SHOWN=false;   // バトル前は「パーティ選ぶだけ」から始まる(🔧編集でプール展開)
   // 既定パーティ(なければ最後に使ったパーティ)を自動セット=毎回全部選ぶ手間を省く。無ければ空(手動)
   const di = (STORY.partyDef!=null && (STORY.parties||[])[STORY.partyDef] && STORY.parties[STORY.partyDef].length) ? STORY.partyDef
            : ((STORY.partyLast!=null && (STORY.parties||[])[STORY.partyLast] && STORY.parties[STORY.partyLast].length) ? STORY.partyLast : -1);
@@ -8265,6 +8287,7 @@ function walkMonId(){
   return null;
 }
 function vFollower(){
+  return null;   // 連れ歩きは一旦廃止(常にカメラ向きで野生モンスターっぽく気持ち悪いため)
   const wid=walkMonId();
   if(!wid || !STORY.owned.includes(wid) || !IMG[String(wid)]) return null;
   const grp=new THREE.Group();
