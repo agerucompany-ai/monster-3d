@@ -101,6 +101,7 @@ button.bt.fuse{background:#a24ec0}
       <button class="bt" id="btStart" style="font-size:13px;padding:10px 13px;background:#2a6a8c">⚔ CPU対戦</button>
       <button class="bt" id="btOnline" style="font-size:13px;padding:10px 13px;background:#3a5a8c">🌐 オンライン</button>
       <button class="bt" id="btCatalog" style="font-size:13px;padding:10px 13px;background:#5a8c3a">📖 図鑑</button>
+      <button class="bt" id="btParty" style="font-size:13px;padding:10px 13px;background:#4a6a3a">🛡 パーティ</button>
     </div>
     <div style="display:flex;gap:8px;justify-content:center">
       <button class="bt" id="btHelp" style="font-size:12px;padding:8px 12px;background:#3a4152">📘 遊び方・相性表</button>
@@ -7300,6 +7301,13 @@ function renderPartyBar(){ const box=document.getElementById('selParty'); if(!bo
   box.querySelectorAll('[data-save]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); saveParty(+b.dataset.save); });
   box.querySelectorAll('[data-def]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); setDefaultParty(+b.dataset.def); });
 }
+let PARTY_EDIT=false;
+function openPartyEdit(){   // 村/タイトルからいつでもパーティを組める編集モード(バトルではない)
+  PARTY_EDIT=true; CAMP={on:false,ch:0}; campTheme=null; LEVEL_BUDGET=12; selFilter='all'; chosen=[];
+  for(const id of ['ovTitle','ovVillage','ovHub','ovChapters','ovGacha','ovCatalog']){ const el=document.getElementById(id); if(el) el.style.display='none'; }
+  document.getElementById('ovSelect').style.display='flex'; buildSelect();
+}
+function closePartyEdit(){ PARTY_EDIT=false; LEVEL_BUDGET=5; document.getElementById('ovSelect').style.display='none'; goTitle(); }
 function buildSelect(){
   const gb=document.getElementById('btSelGacha'); if(gb) gb.style.display='none';   // バトル前召喚は廃止（各マップのHUD🎰から引く）
   const h1=document.querySelector('#ovSelect h1');
@@ -7319,7 +7327,12 @@ function buildSelect(){
     : ONLINE
     ? `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで（Lv2を入れると体数は減る）。Lv3単体・融合体は選べない（場で進化・融合して入手）。タイプで絞り込み可。`
     : `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで。出撃も<b>戦闘中の進化・融合も手持ちのモンスターのみ</b>（🎰召喚で収集、所持💎${STORY.gems}）。カードの<span style="color:#7ee08a">✓所持/⬆進化できる</span>・<span style="color:#ffb36b">未所持</span>表示を参考に。`;
+  if(PARTY_EDIT){ const h=document.querySelector('#ovSelect h1'); if(h) h.textContent='🛡 パーティ編成';
+    if(sd0) sd0.innerHTML='好きな編成を組んで、上の<b>P1〜P6</b>の<b>💾</b>で保存。<b>★</b>で既定に設定（バトル前は既定が自動でセット）。<b>✅完了</b>で戻ります。'; }
   renderPartyBar();
+  { const tp=document.getElementById('btToPlace'), pk=document.getElementById('btPeek');   // パーティ編集モードは「完了」ボタンに
+    if(PARTY_EDIT){ tp.textContent='✅ 完了'; tp.onclick=closePartyEdit; if(pk) pk.style.display='none'; }
+    else { tp.textContent='バトルへ →'; tp.onclick=enterPlace; if(pk) pk.style.display=''; } }
   const tabs=document.getElementById('selTabs'); tabs.innerHTML='';
   const mk=(key,label)=>{ const b=document.createElement('button'); b.textContent=label; b.className=(selFilter===key?'on':''); b.onclick=()=>{selFilter=key; buildSelect();}; tabs.appendChild(b); };
   mk('all','全'); TYPES.forEach(t=>mk(t,t));
@@ -7349,7 +7362,7 @@ function buildSelect(){
 function updateSelBar(){
   const lv=teamLevel();
   document.getElementById('selCount').textContent=`${chosen.length}/${teamCap()}体・Lv合計 ${lv}/${LEVEL_BUDGET}`;
-  document.getElementById('btToPlace').disabled=!(chosen.length>=1 && lv<=LEVEL_BUDGET && chosen.length<=teamCap());
+  document.getElementById('btToPlace').disabled = PARTY_EDIT ? false : !(chosen.length>=1 && lv<=LEVEL_BUDGET && chosen.length<=teamCap());
   // 融合ペアの示唆
   let hint='';
   for(let i=0;i<chosen.length;i++)for(let j=i+1;j<chosen.length;j++){
@@ -10636,6 +10649,7 @@ function boot(){
       toast(STORY.walkMid?`🐾 ${m.name}を連れ歩く！（村やフィールドでついてくる）`:'連れ歩きを解除した'); catDetail(m); }; }
   { const f=document.getElementById('catFilter'); for(const t of ['全','炎','水','草','地','風','雷','氷','光','闇','竜']){ const b=document.createElement('button'); b.className='bt'; b.textContent=t; b.style.cssText='padding:5px 10px;font-size:12px'+(t!=='全'?`;background:${CAT_COL[t]};${CAT_DTX.has(t)?'color:#222':''}`:''); b.onclick=()=>buildCatalog(t==='全'?null:t); f.appendChild(b); } }
   document.getElementById('btCatalog').onclick=()=>{ document.getElementById('ovTitle').style.display='none'; buildCatalog(null); document.getElementById('ovCatalog').style.display='flex'; };
+  { const bp=document.getElementById('btParty'); if(bp) bp.onclick=()=>openPartyEdit(); }
   document.getElementById('catClose').onclick=()=>{ document.getElementById('ovCatalog').style.display='none'; document.getElementById('catDetail').style.display='none'; if(window.catFrom==='village'){ window.catFrom=null; enterVillage(); } else document.getElementById('ovTitle').style.display='flex'; };
   document.getElementById('lobHost').onclick=startHost;
   document.getElementById('lobJoin').onclick=startJoin;
