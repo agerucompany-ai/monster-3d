@@ -4104,7 +4104,13 @@ const MOVES = {
   草:[{n:'吸命葉刃',p:0.6},{n:'毒蔦打ち',p:0.75},{n:'森羅奪華',p:0.9}],   // 草は攻撃低め＝吸収＋毒で補う
 };
 // 光タイプの補助技（攻撃の代わりに使う）
-const LIGHT_HEAL_FRAC = 0.30;   // 回復＝対象の最大HPの30%
+const LIGHT_HEAL_FRAC = 0.30;   // (旧)回復＝対象の最大HPの30%
+// 昆虫型モンスター(カゼチョウ系/オオヤンマ系/コクワッコ系/カブッコ系＋甲虫融合)：森で移動+1・森の地形適性を得る
+const INSECT = new Set([60,126,127, 286,61,277, 173,174,274, 282,283,284, 285]);
+const DIG_TURNS = 2;            // 地タイプ「潜行」：2ターン地中(無敵/攻撃不可)→自動浮上
+const LIGHT_HEAL_HITS = 3;      // 光の回復魔法＝同タイプ攻撃3回分のHP回復(射程4・味方全員)
+const LIGHT_HEAL_RANGE = 4;
+const REVIVE_COST = 6;          // 光Lv3の蘇生魔法の気コスト
 const GRASS_DRAIN_FRAC = 0.5;   // 草：与えた総ダメージの50%を自己回復（吸収）
 // タイプ別の地形特性（攻撃範囲補正）の説明
 const TYPE_TRAIT = {
@@ -5457,7 +5463,7 @@ let uidSeq = 1;
 function newState(){
   return {phase:'title', turn:1, cur:0, board:grid(()=>null), units:{},
           energy:[0,0], terrain:genTerrain(), castleHP:{0:CASTLE_HP_NOW(),1:CASTLE_HP_NOW()},
-          flags: FLAG_CELLS.map(([r,c])=>({r,c,owner:-1})), items: genItems() };
+          flags: FLAG_CELLS.map(([r,c])=>({r,c,owner:-1})), items: genItems(), fallen:[[],[]] };
 }
 const HEAL_RATIO = 0.5;   // 回復アイテムでmaxHPの50%回復
 function genItems(){
@@ -5578,7 +5584,7 @@ function cellH(r,c){ return TERR_H[terrAt(r,c)]||0; }
 function addUnit(owner, mid, r, c){
   const m = MID[mid];
   const u = {uid:uidSeq++, owner, mid, hp:m.hp, maxhp:m.hp, r, c, moved:false, acted:false, evoLock:-1,
-             poison:0, burn:0, freeze:0, para:0};
+             poison:0, burn:0, freeze:0, para:0, dug:0};
   state.units[u.uid]=u; state.board[r][c]=u.uid; return u;
 }
 function unitAt(r,c){ if(r<0||c<0||r>=N||c>=N)return null; const id=state.board[r][c]; return id?state.units[id]:null; }
@@ -5588,7 +5594,9 @@ function effMove(u){ const m=mon(u);
   // 風は機動力タイプ＝移動3マス固定。他タイプは基本move。水は海上で+1（複属性は両方の適性）
   let v = hasType(m,'風') ? 3 : Math.max(1, m.move);
   if(hasType(m,'水') && state.terrain[u.r][u.c]==='sea') v+=1;
-  return Math.min(v,4);
+  let cap=4;
+  if(INSECT.has(u.mid) && state.terrain[u.r][u.c]==='forest'){ v+=1; cap=5; }   // 昆虫は森で移動+1
+  return Math.min(v,cap);
 }
 // 自マス含む隣接8マスに terr があるか（=「海/森に隣接または上」）
 function nearTerrain(u, terr){
@@ -5677,6 +5685,7 @@ function moveTargets(u){
       for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){
         const rr=r+dr, cc=c+dc; if(rr<0||cc<0||rr>=N||cc>=N)continue;
         const k=rr+','+cc; if(k in seen)continue;
+        if(u.dug>0 && state.terrain[rr][cc]==='sea') continue;   // 潜行中は海を潜って越えられない
         const occ=unitAt(rr,cc);
         if(occ){
           if(occ.owner===u.owner && fusionResult(u,occ)!=null){ fuse.push([rr,cc]); }
@@ -5710,6 +5719,7 @@ function attackTargets(u, range){
   const thunderSea = (hasType(m,'雷') && nearTerrain(u,'sea'));
   const sea = thunderSea ? connectedSea(u) : null;
   for(const e of alive(1-u.owner)){
+    if(e.dug>0) continue;                          // 地中の敵には当たらない（無敵）
     let inRange = cheby(e,u)<=R;
     // 雷×海：ひと続きの海にいる敵を対象（通電）
     if(!inRange && thunderSea && sea.has(e.r+','+e.c)) inRange=true;
@@ -5719,6 +5729,7 @@ function attackTargets(u, range){
 }
 function canAttack(u){
   if(u.acted) return false;                       // 攻撃済みは行動不能（進化/融合直後でも攻撃は可）
+  if(u.dug>0) return false;                        // 潜行中は攻撃できない
   return true;
 }
 function canMove(u){ return !u.moved && !u.acted; }  // 攻撃/進化/融合後は移動できない
@@ -5733,7 +5744,7 @@ function terrBonus(type,terr){ return (TERR_BONUS[terr]||[]).includes(type)?0.2:
 // 複属性対応：攻撃側のいずれかのタイプが防御側のいずれかのタイプに有利/苦手なら成立
 function typeBonusM(am,dm){ for(const a of monTypes(am)) for(const d of monTypes(dm)) if((STRONG[a]||[]).includes(d)) return 0.2; return 0; }
 function typePenaltyM(am,dm){ for(const a of monTypes(am)) for(const d of monTypes(dm)) if((WEAK[a]||[]).includes(d)) return -0.2; return 0; }
-function terrBonusM(am,terr){ for(const a of monTypes(am)) if((TERR_BONUS[terr]||[]).includes(a)) return 0.2; return 0; }
+function terrBonusM(am,terr){ if(INSECT.has(am.id)&&terr==='forest') return 0.2; for(const a of monTypes(am)) if((TERR_BONUS[terr]||[]).includes(a)) return 0.2; return 0; }
 // タイプ別の防御（被ダメ軽減率の基礎値）。地/竜=高い、風/光=低い、他=中
 const TYPE_DEF = {地:0.34, 竜:0.32, 水:0.27, 草:0.22, 氷:0.20, 闇:0.18, 炎:0.15, 雷:0.15, 光:0.12, 風:0.04};
 function defReductionM(m){ return Math.min(0.62, (TYPE_DEF[m.type]!=null?TYPE_DEF[m.type]:0.15) + 0.09*(m.level-1)); }  // Lvで+9%/段
@@ -5780,6 +5791,7 @@ function doAttack(att, def, move){
   for(const t of targets){
     if(!state.units[t.uid]) continue;
     if(t.uid===att.uid) continue;                 // 攻撃者自身は絶対に巻き込まない
+    if(t.dug>0) continue;                          // 地中の相手には当たらない（無敵）
     const dmg=calcDamage(att,t,move); t.hp-=dmg; if(t.owner!==att.owner) dealt+=dmg;
     floatText(t.r,t.c,`-${dmg}`, advType?'#ffd24a':(weakHit?'#aab4c0':(t.owner===0?'#ff7a5a':'#ffb0a0')));
     if(!msg) msg=`${m.name}の「${move.n}」→ ${mon(t).name} に ${dmg}`+(advType?' ⚡弱点!':'')+(weakHit?' 🛡いまひとつ':'')+(advTerr?' 🌳地形+':'')+(targets.length>1?` 他${targets.length-1}体`:'');
@@ -5826,9 +5838,9 @@ const BOSS_SPECIALS={
 };
 function applySpecialHit(att, spec){
   const owner=att.owner; let targets=[];
-  if(spec.mode==='one'){ const c=alive(1-owner).filter(e=>cheby(e,att)<=spec.rng); if(!c.length) return false; c.sort((a,b)=>a.hp-b.hp); targets=[c[0]]; }
-  else if(spec.mode==='all'){ targets=alive(1-owner).filter(e=>cheby(e,att)<=spec.rng); if(!targets.length) return false; }
-  else if(spec.mode==='allunits'){ targets=Object.values(state.units).filter(u=>u.uid!==att.uid && u.hp>0 && cheby(u,att)<=spec.rng); if(!targets.length) return false; }
+  if(spec.mode==='one'){ const c=alive(1-owner).filter(e=>e.dug<=0 && cheby(e,att)<=spec.rng); if(!c.length) return false; c.sort((a,b)=>a.hp-b.hp); targets=[c[0]]; }
+  else if(spec.mode==='all'){ targets=alive(1-owner).filter(e=>e.dug<=0 && cheby(e,att)<=spec.rng); if(!targets.length) return false; }
+  else if(spec.mode==='allunits'){ targets=Object.values(state.units).filter(u=>u.uid!==att.uid && u.hp>0 && u.dug<=0 && cheby(u,att)<=spec.rng); if(!targets.length) return false; }
   if(targets.length) attackFx(att, targets, targets[0], {n:spec.label,range:spec.rng});
   for(const t of targets.slice()){
     if(!state.units[t.uid]) continue;
@@ -5863,6 +5875,7 @@ function killUnit(u){
     toast('ニドグラを喰らい——真・ラグナディオが顕現！ 敵味方すべてを虚無へ還す！');
     return false;
   }
+  (state.fallen||(state.fallen=[[],[]]))[u.owner].push(u.mid);   // 蘇生魔法用に撃破された仲間を記録
   deathFx(u.r,u.c,u.owner); state.board[u.r][u.c]=null; delete state.units[u.uid]; markSprite(u.uid,'dead');
   return true;
 }
@@ -5918,14 +5931,40 @@ function cureBurnByFire(att, targets){
 // 光：補助行動（味方/自分を回復・状態治癒）。射程内の対象に作用
 function healTargets(u){ const res=[], R=effRange(u);
   for(const a of alive(u.owner)){ if(cheby(a,u)<=R) res.push(a); } return res; }
+function oneHitDmg(u){ const m=mon(u); return Math.max(1, Math.round(m.atk*(u.atkX||1)*rangePower(m))); }   // 素の1撃分の目安
+function healAmount(u){ return oneHitDmg(u)*LIGHT_HEAL_HITS; }                                             // 回復量＝同タイプ攻撃3回分
+function healScope(u){ const res=[]; for(const a of alive(u.owner)){ if(cheby(a,u)<=LIGHT_HEAL_RANGE) res.push(a); } return res; }
 function doHeal(u){
   if(netGuestIntercept('heal',{uid:u.uid})) return;
-  const cands=healTargets(u).filter(a=>a.hp<a.maxhp);
-  const t = cands.sort((a,b)=>(a.hp/a.maxhp)-(b.hp/b.maxhp))[0] || u;
-  const heal=Math.round(t.maxhp*LIGHT_HEAL_FRAC), before=t.hp;
-  t.hp=Math.min(t.maxhp, t.hp+heal); const got=t.hp-before;
-  u.acted=true; healFx(t.r,t.c); floatText(t.r,t.c,`+${got}`,'#7be0a0');
-  toast(`${mon(u).name}の回復魔法 → ${mon(t).name} HP+${got}`);
+  const amount=healAmount(u); let total=0, n=0;
+  for(const a of healScope(u)){ if(a.hp>=a.maxhp) continue; const before=a.hp; a.hp=Math.min(a.maxhp, a.hp+amount); const got=a.hp-before; if(got>0){ total+=got; n++; healFx(a.r,a.c); floatText(a.r,a.c,`+${got}`,'#7be0a0'); } }
+  u.acted=true;
+  toast(`${mon(u).name}の回復魔法 ✦射程${LIGHT_HEAL_RANGE}・味方${n}体を各+${amount} 回復（計+${total}）`);
+  afterAction();
+}
+// 地タイプ：潜行（2ターン地中で無敵・攻撃不可・海は越えられない・移動は可）
+function doDig(u){
+  if(netGuestIntercept('dig',{uid:u.uid})) return;
+  u.dug=DIG_TURNS;
+  healFx(u.r,u.c); floatText(u.r,u.c,'🕳潜行！','#c9a24a');
+  toast(`${mon(u).name}が地中へ潜行！ ${DIG_TURNS}ターン無敵で移動（攻撃・海越え不可）`);
+  syncUnits(); updateUI();
+  if(ONLINE&&isHost()) netPush();
+}
+// 光Lv3：蘇生魔法（撃破された仲間をLv1で自陣に復活）
+function freeCastleCell(owner){ for(const [r,c] of castleArea(owner)){ if(!unitAt(r,c)) return [r,c]; } return null; }
+function doRevive(u){
+  if(netGuestIntercept('revive',{uid:u.uid})) return;
+  if(state.energy[u.owner]<REVIVE_COST){ toast(`蘇生には気${REVIVE_COST}必要`); return; }
+  const fallen=(state.fallen&&state.fallen[u.owner])||[];
+  if(!fallen.length){ toast('蘇る仲間がいない'); return; }
+  const cell=freeCastleCell(u.owner);
+  if(!cell){ toast('自陣に空きがない'); return; }
+  const mid=fallen.shift(); const baseId=baseFormId(mid);   // Lv1の姿で復活
+  state.energy[u.owner]-=REVIVE_COST;
+  const nu = u.owner===0 ? addPlayerUnit(baseId,cell[0],cell[1]) : addUnit(u.owner,baseId,cell[0],cell[1]);
+  u.acted=true; healFx(cell[0],cell[1]); floatText(cell[0],cell[1],'✨蘇生','#ffe6a0');
+  toast(`${mon(u).name}の蘇生魔法 → ${MID[baseId].name}(Lv1)が自陣に復活！`);
   afterAction();
 }
 function doCure(u){
@@ -6044,7 +6083,9 @@ function startTurn(side){
   repairBoard();   // ターン開始ごとに盤を健全化(重なり/ゴースト/盤外を修復)
   state.cur=side;
   // 旗はアイテム式（取得時に即気）なので毎ターン収入は無し
-  for(const u of alive(side)){ u.moved=false; u.acted=false; }
+  for(const u of alive(side)){ u.moved=false; u.acted=false;
+    if(u.dug>0){ u.dug--; if(u.dug<=0){ floatText(u.r,u.c,'⬆浮上','#e0c060'); } else { floatText(u.r,u.c,`潜行(残${u.dug})`,'#c9a24a'); } }
+  }
   // 状態異常の解決（毒/やけどダメージ・凍結/マヒの行動不能・撃破あり得る）
   for(const u of alive(side).slice()){ applyStatusTick(u); }
   syncUnits();
@@ -6538,6 +6579,7 @@ function syncUnits(){
     }
     s.curmid=u.mid;
     s.grp.position.set(w.x,cellH(u.r,u.c),w.z);
+    if(u.dug>0) s.grp.position.y -= 1.35;   // 潜行中は地中へ沈める（半分埋まった見た目）
     // Lvでサイズ差（Lv1<Lv2<Lv3）＋足元リング/オーラ
     const lv=mon(u).level; const sc=1.05+0.26*lv;            // Lv1≈1.31 / Lv2≈1.57 / Lv3≈1.83
     s.sp.scale.set(sc,sc,1); s.spBaseY=sc*0.5+0.03; s.sp.position.y=s.spBaseY;
@@ -7159,10 +7201,20 @@ function updateUI(){
       }
       // 光タイプ：回復・浄化（攻撃の代わりに味方/自分を癒やす）
       if(uHasType(sel,'光')){
-        const woundOk = canAttack(sel) && healTargets(sel).some(a=>a.hp<a.maxhp);
+        const woundOk = canAttack(sel) && healScope(sel).some(a=>a.hp<a.maxhp);
         const cureOk  = canAttack(sel) && healTargets(sel).some(hasAnyStatus);
-        ac.appendChild(mkbt('💚 回復','evo', !!woundOk, ()=>{ pushUndo(); doHeal(sel); reselectAfter(); }));
+        ac.appendChild(mkbt(`💚 回復(+${healAmount(sel)}/体・射程${LIGHT_HEAL_RANGE})`,'evo', !!woundOk, ()=>{ pushUndo(); doHeal(sel); reselectAfter(); }));
         ac.appendChild(mkbt('✨ 浄化','evo', !!cureOk, ()=>{ pushUndo(); doCure(sel); reselectAfter(); }));
+        if(m.level===3){
+          const fallenN=(state.fallen&&state.fallen[0]&&state.fallen[0].length)||0;
+          const revOk = canAttack(sel) && fallenN>0 && state.energy[0]>=REVIVE_COST && !!freeCastleCell(0);
+          ac.appendChild(mkbt(`🌟 蘇生 気${REVIVE_COST}${fallenN?`(${fallenN}体)`:'(なし)'}`,'evo', !!revOk, ()=>{ pushUndo(); doRevive(sel); reselectAfter(); }));
+        }
+      }
+      // 地タイプ：潜行（2ターン地中で無敵移動）
+      if(uHasType(sel,'地') && sel.dug<=0){
+        const digOk = canAttack(sel) && !sel.moved;
+        ac.appendChild(mkbt(`⛏ 潜行(${DIG_TURNS}T無敵)`,'evo', !!digOk, ()=>{ pushUndo(); doDig(sel); reselectAfter(); }));
       }
       if(m.evolves_to!=null){
         const cost=EVO_COST[m.level]; const nm=MID[m.evolves_to];
@@ -11045,6 +11097,8 @@ function applyGuestIntent(it){
   if(it.act==='evolve'){ evolveUnit(att,false); return; }
   if(it.act==='heal'){ if(uHasType(att,'光')&&canAttack(att)) doHeal(att); return; }
   if(it.act==='cure'){ if(uHasType(att,'光')&&canAttack(att)) doCure(att); return; }
+  if(it.act==='dig'){ if(uHasType(att,'地')&&canAttack(att)&&!att.moved) doDig(att); return; }
+  if(it.act==='revive'){ if(uHasType(att,'光')&&mon(att).level===3&&canAttack(att)) doRevive(att); return; }
 }
 function resetOnline(){ ONLINE=false; IAMHOST=false; hostPlacedFlag=false; guestPlacement=null; prevLocalUnits=null; prevCastleHP=null; ROOMCODE=null; if(NET){ NET.close(); NET=null; } }
 
