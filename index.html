@@ -7246,7 +7246,7 @@ function mkbt(label,cls,enabled,fn){ const b=document.createElement('button'); b
 // ======================= 編成・配置画面 =======================
 let chosen=[];    // 選んだmid配列
 // 出撃できる最大体数: 序盤2体 → 3章クリアごとに+1 → 最大6体。CPU/オンラインは6固定
-function teamCap(){ return 6; }   // 出撃は最大6体。実際の体数はLEVEL_BUDGET(章ごとのLv合計)が自然に制御=章を進めるほど増える
+function teamCap(){ return Math.max(1, LEVEL_BUDGET); }   // 体数の固定上限は撤廃。レベル合計(章ごと)だけが制約＝後半はLv1を budget体まで出せる(例:budget8→Lv1を8体)
 let placeList=[]; // 配置待ち [{mid, placed:false}]
 let LEVEL_BUDGET = 5;   // 編成のレベル合計上限（Lv1=1点/Lv2=2点。ストーリーでは章ごとに変動）
 // 編成で選べる：Lv1全部 ＋ 最初からLv2の単体だけ（進化でなるLv2=evolves_fromありは不可）
@@ -7352,7 +7352,7 @@ function renderPartyBar(){ const box=document.getElementById('selParty'); if(!bo
   const parts=STORY.parties||[];
   for(let i=0;i<PARTY_MAX;i++){ const p=parts[i]||[]; const isDef=STORY.partyDef===i; const isCur=STORY.partyLast===i;
     const d=document.createElement('div'); d.style.cssText=`flex:0 0 auto;width:132px;background:${isCur?'#22304a':'#141a28'};border:2px solid ${isDef?'#ffd24a':isCur?'#5a8ce0':'#2c3346'};border-radius:8px;padding:6px;text-align:center`;
-    const icons=p.slice(0,6).map(id=>`<img src="${IMG[id]||''}" style="width:20px;height:20px;object-fit:contain;vertical-align:middle">`).join('');
+    const icons=p.slice(0,12).map(id=>`<img src="${IMG[id]||''}" style="width:18px;height:18px;object-fit:contain;vertical-align:middle">`).join('');
     const bstyle='border:none;border-radius:5px;color:#fff;font-size:12px;font-weight:700;padding:5px 0;cursor:pointer';
     d.innerHTML=`<div data-ren2="${i}" style="font-size:11px;font-weight:700;color:${isDef?'#ffd24a':'#cfe0ff'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer">${isDef?'⭐ ':''}${partyName(i)}</div>`
       +`<div data-load="${i}" style="min-height:24px;line-height:1;margin:3px 0;cursor:pointer">${icons||'<span style="color:#889;font-size:11px">空き</span>'}<div style="font-size:9px;color:#7a8aa0">${p.length?'タップで使う':''}</div></div>`
@@ -11109,6 +11109,8 @@ window.__game={
   startRival(key){ V_MAP=V_MAP||'euro'; const rv=RIVALS.find(r=>r.key===key)||RIVALS[0]; startRivalBattle(rv); return rv.name; },
   startRare(field){ V_MAP=field||'euro'; CAMP={on:true,ch:Math.min(STORY.clear+1,CAMPAIGN.length-1),free:true,field:V_MAP,rare:true,encMid:null}; LEVEL_BUDGET=CAMPAIGN[CAMP.ch].budget; campTheme=FIELD_BTHEME[V_MAP]||'forest'; mapType='normal'; enterChapterSelect(); return 'rare@'+V_MAP; },
   enemyStats(){ return Object.values(state.units).filter(u=>u.owner===1).map(u=>({name:MID[u.mid].name,lv:MID[u.mid].level,hp:u.maxhp,atkX:+(u.atkX||1).toFixed(2),boss:!!u.isBoss})); },
+  selInfo(){ return {budget:LEVEL_BUDGET, cap:teamCap(), chosen:chosen.length}; },
+  addSel(id){ if(chosen.length>=teamCap()) return 'cap'; if(teamLevel()+MID[id].level>LEVEL_BUDGET) return 'budget'; chosen.push(id); return chosen.length; },
   terrStats(){ const f={}; for(const row of state.terrain) for(const t of row) f[t]=(f[t]||0)+1; return f; },
   walkId(){ return walkMonId(); }, hasFollow(){ return !!(typeof VG!=='undefined' && VG && VG.follow); },
   gachaSim(n){ const h={1:0,2:0,3:0,fusion:0}; for(let i=0;i<(n||300);i++){ const p=gachaPull(false); const m=MID[p.id]; if(!m)continue; if(m.role==='fusion')h.fusion++; else h[m.level]=(h[m.level]||0)+1; } return h; },
