@@ -5714,15 +5714,14 @@ function moveTargets(u){
 }
 function fusionResult(a,b){
   if(!campFusionOK()) return null;   // ストーリー第18章(ニヴル入国)「融合解放」まで封印
-  // 3体融合: 3体目が隣接している時だけ成立
+  // 3体融合: 3体目が隣接＋所持している時だけ優先。揃わなければ下の2体融合にフォールバック
   const tr=tripleRecipe(a.mid,b.mid);
-  if(tr){
-    if(!tripleThird(a,b)) return null;
-    if(!ONLINE && a.owner===0 && !STORY.owned.includes(tr.out)) return null;
+  if(tr && tripleThird(a,b) && (ONLINE || a.owner!==0 || STORY.owned.includes(tr.out))){
     return tr.out;
   }
+  // 2体融合: 素材ペア一致（3体融合の素材2体でも、3体目が居なければこちらで成立）
   const k=[a.mid,b.mid].sort((x,y)=>x-y).join(',');
-  const fid=(k in FUSE_IDX)? FUSE_IDX[k] : null;   // 融合は正確な素材(Lv2同士に進化させた形)一致のみ=バランス維持
+  const fid=(k in FUSE_IDX)? FUSE_IDX[k] : null;
   // 融合後のモンスターを集めていないと融合できない（オンラインのみ無制限）
   if(fid!=null && !ONLINE && a.owner===0 && !STORY.owned.includes(fid)) return null;
   return fid;
@@ -6028,14 +6027,16 @@ function tryFusion(a, b, r, c){
   const fid=fusionResult(a,b);
   if(fid==null){   // なぜ融合できないかを具体的に案内（「組み合わせじゃない」誤解の解消）
     const k=[a.mid,b.mid].sort((x,y)=>x-y).join(',');
+    const two=(k in FUSE_IDX)? FUSE_IDX[k] : null;   // 2体融合の結果(あれば優先)
     const tr=tripleRecipe(a.mid,b.mid);
-    const rawId = tr? tr.out : (k in FUSE_IDX ? FUSE_IDX[k] : null);
-    if(rawId!=null && !ONLINE && a.owner===0 && !STORY.owned.includes(rawId))
-      toast(`🔮 融合先「${MID[rawId].name}」を先に🎰召喚で仲間にすると、この2体を融合できる！`);
-    else if(rawId!=null && tr && !tripleThird(a,b))
-      toast(`🔮「${MID[rawId].name}」は3体融合：3体目を隣に並べてね`);
-    else if(!campFusionOK())
+    if(!campFusionOK())
       toast('融合はまだ解放されていない（物語を進めよう）');
+    else if(two!=null && !ONLINE && a.owner===0 && !STORY.owned.includes(two))
+      toast(`🔮 融合先「${MID[two].name}」を先に🎰召喚で仲間にすると融合できる！`);
+    else if(tr && !ONLINE && a.owner===0 && !STORY.owned.includes(tr.out))
+      toast(`🔮 3体融合「${MID[tr.out].name}」を🎰召喚で仲間に＋3体目を隣に置いてね`);
+    else if(tr && !tripleThird(a,b))
+      toast(`🔮「${MID[tr.out].name}」は3体融合：3体目を隣に並べてね`);
     else
       toast('この2体は融合の組み合わせじゃない');
     return;
@@ -11146,6 +11147,7 @@ window.__game={
   selInfo(){ return {budget:LEVEL_BUDGET, cap:teamCap(), chosen:chosen.length}; },
   addSel(id){ if(chosen.length>=teamCap()) return 'cap'; if(teamLevel()+MID[id].level>LEVEL_BUDGET) return 'budget'; chosen.push(id); return chosen.length; },
   bossWin(id){ return bossDefeatReward(id); }, starOf(id){ return starOf(id); },
+  fuseCheck(m1,m2){ const a={mid:m1,owner:0,r:5,c:5,uid:-1,hp:1}, b={mid:m2,owner:0,r:5,c:6,uid:-2,hp:1}; const fid=fusionResult(a,b); const tr=tripleRecipe(m1,m2); return {result:fid, name:fid?MID[fid].name:null, tripleShadow:tr?MID[tr.out].name:null}; },
   terrStats(){ const f={}; for(const row of state.terrain) for(const t of row) f[t]=(f[t]||0)+1; return f; },
   walkId(){ return walkMonId(); }, hasFollow(){ return !!(typeof VG!=='undefined' && VG && VG.follow); },
   gachaSim(n){ const h={1:0,2:0,3:0,fusion:0}; for(let i=0;i<(n||300);i++){ const p=gachaPull(false); const m=MID[p.id]; if(!m)continue; if(m.role==='fusion')h.fusion++; else h[m.level]=(h[m.level]||0)+1; } return h; },
