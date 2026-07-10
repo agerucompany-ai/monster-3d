@@ -95,6 +95,7 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 41 ・ 融合修正版（この番号が古いなら画面を更新）</div>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
       <button class="bt" id="btGacha" style="font-size:13px;padding:10px 13px;background:#8c2a6a">🎰 召喚</button>
@@ -5714,12 +5715,17 @@ function moveTargets(u){
 }
 function fusionResult(a,b){
   if(!campFusionOK()) return null;
-  // 3体融合: 3体目が隣接していれば優先。揃わなければ2体融合にフォールバック
+  // 3体融合: 3体目が隣接＋所持している時だけ優先。揃わなければ2体融合にフォールバック
+  //   ※これが無いと「エレキ+ワイバーン」が3体融合ニドグラ判定に潰され、2体融合フルグレイズが成立しない
   const tr=tripleRecipe(a.mid,b.mid);
-  if(tr && tripleThird(a,b)) return tr.out;
-  // 2体融合: Lv2素材ペアが一致すれば成立（融合先の所持は不要＝素材さえ揃えば作れる）
+  if(tr && tripleThird(a,b) && (ONLINE || a.owner!==0 || STORY.owned.includes(tr.out))){
+    return tr.out;
+  }
+  // 2体融合: Lv2素材ペア一致。融合先を🎰召喚で所持している必要あり（仕様）
   const k=[a.mid,b.mid].sort((x,y)=>x-y).join(',');
-  return (k in FUSE_IDX)? FUSE_IDX[k] : null;
+  const fid=(k in FUSE_IDX)? FUSE_IDX[k] : null;
+  if(fid!=null && !ONLINE && a.owner===0 && !STORY.owned.includes(fid)) return null;
+  return fid;
 }
 function attackTargets(u, range){
   if(!canAttack(u)) return [];
@@ -6021,9 +6027,13 @@ function moveUnit(u, r, c){
 function tryFusion(a, b, r, c){
   const fid=fusionResult(a,b);
   if(fid==null){   // なぜ融合できないかを具体的に案内
+    const k=[a.mid,b.mid].sort((x,y)=>x-y).join(',');
+    const two=(k in FUSE_IDX)? FUSE_IDX[k] : null;
     const tr=tripleRecipe(a.mid,b.mid);
     if(!campFusionOK())
       toast('融合はまだ解放されていない（物語を進めよう）');
+    else if(two!=null && !ONLINE && a.owner===0 && !STORY.owned.includes(two))
+      toast(`🔮 融合先「${MID[two].name}」を🎰召喚で仲間にしていないと融合できない`);
     else if(tr && !tripleThird(a,b))
       toast(`🔮「${MID[tr.out].name}」は3体融合：3体目（${tr.mats.filter(x=>x!==a.mid&&x!==b.mid).map(x=>MID[x].name).join('')}）を隣に並べてね`);
     else
