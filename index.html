@@ -5382,6 +5382,17 @@ function closeGacha(){ document.getElementById('ovGacha').style.display='none';
 let CAMP = {on:false, ch:0};   // 現在プレイ中の章
 function campFusionOK(){ return true; }   // 融合はいつでも可能(章ゲート撤廃)。バランスは「Lv2素材を進化で用意する投資」で担保
 function ownMon(id){ if(!STORY.owned.includes(id)){ STORY.owned.push(id); saveStory(); return true; } return false; }
+const BOSS_STAR_KILLS = 3;   // 2体目(★1)以降は3回撃破ごとに★+1
+// ボス撃破報酬: 初回=仲間化(★0)。以降は3回撃破ごとに★+1で★5(HP/攻撃+15%)まで強化
+function bossDefeatReward(id){
+  STORY.bossKills = STORY.bossKills || {}; STORY.dups = STORY.dups || {};
+  if(!STORY.owned.includes(id)){ STORY.owned.push(id); STORY.bossKills[id]=0; saveStory(); return {name:MID[id].name, joined:true}; }
+  const cur=Math.min(5, STORY.dups[id]||0);
+  if(cur>=5){ return {name:MID[id].name, max:true, star:5}; }
+  STORY.bossKills[id]=(STORY.bossKills[id]||0)+1;
+  if(STORY.bossKills[id]>=BOSS_STAR_KILLS){ STORY.bossKills[id]=0; STORY.dups[id]=cur+1; saveStory(); return {name:MID[id].name, starUp:true, star:cur+1}; }
+  saveStory(); return {name:MID[id].name, star:cur, prog:STORY.bossKills[id], need:BOSS_STAR_KILLS};
+}
 // 進化ラインの基本形（Lv1まで進化を遡る）
 function baseFormId(mid){ let m=MID[mid]; let guard=0; while(m && m.evolves_from!=null && guard<6){ m=MID[m.evolves_from]; guard++; } return m?m.id:mid; }
 // 系統順ソート: 融合は常に最後の融合ゾーンへ→非融合は進化ラインの基本形→Lv→idで比較(図鑑・編成 共通)
@@ -7759,9 +7770,14 @@ function endGame(winner,msg){
   if(CAMP.on){
     const ch=CAMPAIGN[CAMP.ch];
     if(winner===0){
-      // ボスは必ず仲間になる
-      const newly=[];
-      for(const e of ch.enemy){ if(e.boss && e.mid!==246){ if(ownMon(e.mid)) newly.push(MID[e.mid].name); } }   // ボスは単体でのみ仲間に(素材/進化前は自分で集める。ニドグラは浄化のみ)
+      // ボスは必ず仲間になる（初回=仲間化 / 再撃破3回ごとに★+1で★5まで強化）
+      const bossMsgs=[];
+      for(const e of ch.enemy){ if(e.boss && e.mid!==246){ const r=bossDefeatReward(e.mid);   // ニドグラ(246)は浄化のみ
+        if(r.joined)      bossMsgs.push(`🎁 ボス <b>${r.name}</b> が仲間になった！`);
+        else if(r.starUp) bossMsgs.push(`⭐ <b>${r.name}</b> が ★${r.star} に強化！（HP/攻撃 +${3*r.star}%）`);
+        else if(r.max)    bossMsgs.push(`👑 <b>${r.name}</b> は既に★5（最大強化）`);
+        else              bossMsgs.push(`🗡 <b>${r.name}</b> 再撃破（★${r.star} → 次の★まであと ${r.need-r.prog} 回）`);
+      } }
       // ジェム: 初回クリアは大きく、再挑戦でも少し
       for(const u of alive(0)) addExp(baseFormId(u.mid), 30);   // 生き残りに経験値
       const first = STORY.clear<CAMP.ch;
@@ -7773,7 +7789,7 @@ function endGame(winner,msg){
         t.textContent='🎉 章クリア！';
         const bossImgs=ch.enemy.filter(e=>e.boss).map(e=>`<img src="${IMG[String(e.mid)]||''}" style="width:76px;height:76px;object-fit:contain;background:#0d1220;border-radius:10px;border:2px solid #d8b040;margin:3px">`).join('');
         b.innerHTML = msg
-          + (newly.length?`<br><div style="margin:6px 0">${bossImgs}</div>🎁 ボス <b>${newly.join('・')}</b> が仲間になった！（Lv3ボスは単体でそのまま出撃／融合ボスは素材を集めて出撃）`:'')
+          + (bossMsgs.length?`<br><div style="margin:6px 0">${bossImgs}</div>${bossMsgs.join('<br>')}<br><span class="muted" style="font-size:11px">※倒すほど★が上がりHP/攻撃UP（★5=+15%）。2体目以降は3回撃破ごとに★+1</span>`:'')
           + `<br>💎 ジェム +${gems}${first?'（初回クリア）':''} → 所持💎${STORY.gems}`;
         const last = CAMP.ch>=CAMPAIGN.length-1;
         if(CAMP.ch===0 && tutOnce('t_altar')){   // 序章クリア後は祭壇に誘導して召喚を体験させる
@@ -11111,6 +11127,7 @@ window.__game={
   enemyStats(){ return Object.values(state.units).filter(u=>u.owner===1).map(u=>({name:MID[u.mid].name,lv:MID[u.mid].level,hp:u.maxhp,atkX:+(u.atkX||1).toFixed(2),boss:!!u.isBoss})); },
   selInfo(){ return {budget:LEVEL_BUDGET, cap:teamCap(), chosen:chosen.length}; },
   addSel(id){ if(chosen.length>=teamCap()) return 'cap'; if(teamLevel()+MID[id].level>LEVEL_BUDGET) return 'budget'; chosen.push(id); return chosen.length; },
+  bossWin(id){ return bossDefeatReward(id); }, starOf(id){ return starOf(id); },
   terrStats(){ const f={}; for(const row of state.terrain) for(const t of row) f[t]=(f[t]||0)+1; return f; },
   walkId(){ return walkMonId(); }, hasFollow(){ return !!(typeof VG!=='undefined' && VG && VG.follow); },
   gachaSim(n){ const h={1:0,2:0,3:0,fusion:0}; for(let i=0;i<(n||300);i++){ const p=gachaPull(false); const m=MID[p.id]; if(!m)continue; if(m.role==='fusion')h.fusion++; else h[m.level]=(h[m.level]||0)+1; } return h; },
