@@ -5713,18 +5713,13 @@ function moveTargets(u){
   return {move:res, fuse};
 }
 function fusionResult(a,b){
-  if(!campFusionOK()) return null;   // ストーリー第18章(ニヴル入国)「融合解放」まで封印
-  // 3体融合: 3体目が隣接＋所持している時だけ優先。揃わなければ下の2体融合にフォールバック
+  if(!campFusionOK()) return null;
+  // 3体融合: 3体目が隣接していれば優先。揃わなければ2体融合にフォールバック
   const tr=tripleRecipe(a.mid,b.mid);
-  if(tr && tripleThird(a,b) && (ONLINE || a.owner!==0 || STORY.owned.includes(tr.out))){
-    return tr.out;
-  }
-  // 2体融合: 素材ペア一致（3体融合の素材2体でも、3体目が居なければこちらで成立）
+  if(tr && tripleThird(a,b)) return tr.out;
+  // 2体融合: Lv2素材ペアが一致すれば成立（融合先の所持は不要＝素材さえ揃えば作れる）
   const k=[a.mid,b.mid].sort((x,y)=>x-y).join(',');
-  const fid=(k in FUSE_IDX)? FUSE_IDX[k] : null;
-  // 融合後のモンスターを集めていないと融合できない（オンラインのみ無制限）
-  if(fid!=null && !ONLINE && a.owner===0 && !STORY.owned.includes(fid)) return null;
-  return fid;
+  return (k in FUSE_IDX)? FUSE_IDX[k] : null;
 }
 function attackTargets(u, range){
   if(!canAttack(u)) return [];
@@ -6025,20 +6020,14 @@ function moveUnit(u, r, c){
 }
 function tryFusion(a, b, r, c){
   const fid=fusionResult(a,b);
-  if(fid==null){   // なぜ融合できないかを具体的に案内（「組み合わせじゃない」誤解の解消）
-    const k=[a.mid,b.mid].sort((x,y)=>x-y).join(',');
-    const two=(k in FUSE_IDX)? FUSE_IDX[k] : null;   // 2体融合の結果(あれば優先)
+  if(fid==null){   // なぜ融合できないかを具体的に案内
     const tr=tripleRecipe(a.mid,b.mid);
     if(!campFusionOK())
       toast('融合はまだ解放されていない（物語を進めよう）');
-    else if(two!=null && !ONLINE && a.owner===0 && !STORY.owned.includes(two))
-      toast(`🔮 融合先「${MID[two].name}」を先に🎰召喚で仲間にすると融合できる！`);
-    else if(tr && !ONLINE && a.owner===0 && !STORY.owned.includes(tr.out))
-      toast(`🔮 3体融合「${MID[tr.out].name}」を🎰召喚で仲間に＋3体目を隣に置いてね`);
     else if(tr && !tripleThird(a,b))
-      toast(`🔮「${MID[tr.out].name}」は3体融合：3体目を隣に並べてね`);
+      toast(`🔮「${MID[tr.out].name}」は3体融合：3体目（${tr.mats.filter(x=>x!==a.mid&&x!==b.mid).map(x=>MID[x].name).join('')}）を隣に並べてね`);
     else
-      toast('この2体は融合の組み合わせじゃない');
+      toast(`${mon(a).name}と${mon(b).name}は融合の組み合わせじゃない`);
     return;
   }
   if(a.owner===0 && !ONLINE){ qBump('fuseD'); statBump('fuse'); }   // クエスト計測: 融合
