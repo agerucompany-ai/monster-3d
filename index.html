@@ -7730,9 +7730,10 @@ function endGame(winner,msg){
     const rv=CAMP.rivalKey?RIVALS.find(r=>r.key===CAMP.rivalKey):null;
     if(winner===0){
       seJingle('win');
-      const g=CAMP.freeReward||50;
-      STORY.gems+=g; qBump('wins');
       const isMid=CAMP.midBoss!=null; let midCleared=false;
+      // 中ボスは2勝で10連(900)ぶんのジェム＝1勝あたり約450+。通常フリーバトルは従来報酬
+      const g = isMid ? Math.round(GACHA10_COST/2 + CAMP.ch*8) : (CAMP.freeReward||50);
+      STORY.gems+=g; qBump('wins');
       if(isMid){ STORY.midDone=STORY.midDone||{}; const mch=CAMP.ch;
         STORY.midDone[mch]=Math.min(midBossCount(mch),(STORY.midDone[mch]||0)+1); saveStory();
         midCleared = STORY.midDone[mch]>=midBossCount(mch); }
@@ -7781,7 +7782,8 @@ function endGame(winner,msg){
       // ジェム: 初回クリアは大きく、再挑戦でも少し
       for(const u of alive(0)) addExp(baseFormId(u.mid), 30);   // 生き残りに経験値
       const first = STORY.clear<CAMP.ch;
-      const gems = first ? 200+CAMP.ch*40 : 60;   // ボス撃破ジェムを段階的に約2倍(ch1=240…ch25=1200)
+      // 初回は増額(ch1=305…ch25=1385)。再挑戦も必ず1回以上召喚できるぶん(最低100=単発／章が進むほど増える)
+      const gems = first ? Math.round(260+CAMP.ch*45) : Math.max(GACHA_COST, Math.round((200+CAMP.ch*40)*0.45));
       if(first) STORY.clear=CAMP.ch;
       STORY.gems+=gems; saveStory();
       seJingle('fanfare');
