@@ -95,7 +95,7 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
-    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 41 ・ 融合修正版（この番号が古いなら画面を更新）</div>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 42 ・ 報酬/セリフ修正版（この番号が古いなら画面を更新）</div>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
       <button class="bt" id="btGacha" style="font-size:13px;padding:10px 13px;background:#8c2a6a">🎰 召喚</button>
@@ -5384,6 +5384,8 @@ let CAMP = {on:false, ch:0};   // 現在プレイ中の章
 function campFusionOK(){ return true; }   // 融合はいつでも可能(章ゲート撤廃)。バランスは「Lv2素材を進化で用意する投資」で担保
 function ownMon(id){ if(!STORY.owned.includes(id)){ STORY.owned.push(id); saveStory(); return true; } return false; }
 const BOSS_STAR_KILLS = 3;   // 2体目(★1)以降は3回撃破ごとに★+1
+// 章ボス撃破ジェム: 初回は大きく(ch1=305…ch25=1385)、再戦も必ず単発以上(最低100・章が進むほど増える)
+function bossClearGems(ch, first){ return first ? Math.round(260+ch*45) : Math.max(GACHA_COST, Math.round((200+ch*40)*0.45)); }
 // ボス撃破報酬: 初回=仲間化(★0)。以降は3回撃破ごとに★+1で★5(HP/攻撃+28%・複利)まで強化
 function bossDefeatReward(id){
   STORY.bossKills = STORY.bossKills || {}; STORY.dups = STORY.dups || {};
@@ -7798,8 +7800,7 @@ function endGame(winner,msg){
       // ジェム: 初回クリアは大きく、再挑戦でも少し
       for(const u of alive(0)) addExp(baseFormId(u.mid), 30);   // 生き残りに経験値
       const first = STORY.clear<CAMP.ch;
-      // 初回は増額(ch1=305…ch25=1385)。再挑戦も必ず1回以上召喚できるぶん(最低100=単発／章が進むほど増える)
-      const gems = first ? Math.round(260+CAMP.ch*45) : Math.max(GACHA_COST, Math.round((200+CAMP.ch*40)*0.45));
+      const gems = bossClearGems(CAMP.ch, first);   // 初回=大/再戦=単発以上（戦闘前表示とも共通）
       if(first) STORY.clear=CAMP.ch;
       STORY.gems+=gems; saveStory();
       seJingle('fanfare');
@@ -7991,10 +7992,12 @@ function startChapter(i){
   document.getElementById('ovChapters').style.display='none';
   document.getElementById('ovTitle').style.display='none';
   document.getElementById('ovEnd').style.display='none';
-  const begin=()=>showStoryLines(ch.title, ch.intro, ()=>{
+  const afterIntro=()=>{
     if(i===0 && !STORY.starter){ pickStarter(enterChapterSelect); return; }
     enterChapterSelect();
-  });
+  };
+  const showIntro = STORY.clear < i;   // 物語イントロは初回のみ。再戦・周回では省略（セリフ二重表示の解消）
+  const begin=()=> showIntro ? showStoryLines(ch.title, ch.intro, afterIntro) : afterIntro();
   if(!STORY.hero) pickHero(begin); else begin();   // 初回は主人公作成から
 }
 function enterChapterSelect(){
@@ -9290,9 +9293,7 @@ function bossDoneTalk(ch){
 function bossTalk(ch){
   const need=midBossCount(ch)-midDefeated(ch);
   if(need>0){ toast(`⚔ まず中ボスを倒せ！（残り${need}体）`); return; }   // 中ボス未撃破なら章ボスに挑めない
-  const be=CAMPAIGN[ch].enemy.find(e=>e.boss);
-  const lines=BOSS_TALK[ch]||[{s:String(be.mid),t:'……来たか、小さき者よ。'}];
-  showStoryLines('👹 '+CAMPAIGN[ch].title, lines, ()=>bossChallenge(ch));
+  bossChallenge(ch);   // 挑発セリフ(BOSS_TALK)は章イントロ(ch.intro)と二重になるので廃止→挑戦確認へ直行
 }
 function bossChallenge(ch, done){
   const be=CAMPAIGN[ch].enemy.find(e=>e.boss); const m=MID[be.mid];
@@ -9303,8 +9304,8 @@ function bossChallenge(ch, done){
   document.getElementById('stName').textContent=m.name;
   const el=document.getElementById('stLine'); el.style.fontStyle='normal';
   el.innerHTML=`<div style="margin-bottom:10px">${done
-     ? `${m.name}は仲間になった。腕試しの再戦を受けてくれるぞ（勝てば💎40）`
-     : `${m.name}（Lv${m.level}）が挑戦を待っている。勝てば必ず仲間になる！`}<br><span class="muted" style="font-size:11px">推奨編成Lv${CAMPAIGN[ch].budget}</span></div>
+     ? `${m.name}は仲間になった。再戦して★を上げよう（勝てば💎${bossClearGems(ch,false)}／3回勝つごとに★+1）`
+     : `${m.name}（Lv${m.level}）が挑戦を待っている。勝てば仲間になる！（💎${bossClearGems(ch,true)}）`}<br><span class="muted" style="font-size:11px">推奨編成Lv${CAMPAIGN[ch].budget}</span></div>
    <button class="bt go" id="bcGo" style="display:block;width:100%;margin:6px 0;padding:12px;font-size:15px">${done?'⚔ 再戦する！':'⚔ 挑む！'}</button>
    <button class="bt" id="bcNo" style="display:block;width:100%;margin:6px 0;padding:10px;font-size:13px">${done?'× またね':'× 準備してから来る'}</button>`;
   document.getElementById('stPage').textContent='';
