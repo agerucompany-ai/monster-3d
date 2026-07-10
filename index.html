@@ -216,7 +216,7 @@ button.bt.fuse{background:#a24ec0}
     <div id="gaResult" style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px"></div>
     <div style="margin-top:16px;border-top:1px solid #3a2a4a;padding-top:10px">
       <b style="color:#ffd86b">🔁 交換所</b>
-      <div class="muted" style="font-size:11px;margin:3px 0 6px;line-height:1.6">同じモンスターが<b>ダブる</b>と、その子の下のボタンで交換できます：<br>・<b>5体ぶん</b>→ 次の進化形(Lv2)　・<b>10体ぶん</b>→ 最終進化形(Lv3)　・<b>1体／全部</b>→ 💎ジェム<br><span style="color:#8a8a8a">※進化先を<b>すでに持っていても交換OK</b>＝その進化形の<b style="color:#ffd86b">⭐（ダブり=+3%/★・最大★5）</b>が上がります。Lv3・融合・単体（進化しない子）は💎交換のみ（「全部→💎」でまとめて可）</span></div>
+      <div class="muted" style="font-size:11px;margin:3px 0 6px;line-height:1.6">同じモンスターが<b>ダブる</b>と、その子の下のボタンで交換できます：<br>・<b>5体ぶん</b>→ 次の進化形(Lv2)　・<b>10体ぶん</b>→ 最終進化形(Lv3)　・<b>1体／全部</b>→ 💎ジェム<br><span style="color:#8a8a8a">※進化先を<b>すでに持っていても交換OK</b>＝その進化形の<b style="color:#ffd86b">⭐（ダブり=★1つ+5%の複利・最大★5=+28%）</b>が上がります。Lv3・融合・単体（進化しない子）は💎交換のみ（「全部→💎」でまとめて可）</span></div>
       <div id="gaTrade" style="margin-top:4px"></div>
     </div>
   </div>
@@ -5205,7 +5205,7 @@ function doGacha(n){
     const p=gachaPull(pity);
     if(p.rar!=='N') gotRplus=true;
     p.isNew=!STORY.owned.includes(p.id);
-    // ダブりは自動でジェムに変換しない。所持数を貯めて「★グレード(重ねると+3%)」＋「進化ライン交換」に使う
+    // ダブりは自動でジェムに変換しない。所持数を貯めて「★グレード(★1つ+5%の複利)」＋「進化ライン交換」に使う
     if(p.isNew) STORY.owned.push(p.id);
     else { STORY.dups[p.id]=(STORY.dups[p.id]||0)+1; p.dup=STORY.dups[p.id]; p.star=Math.min(5,p.dup); }
     res.push(p);
@@ -5261,7 +5261,7 @@ function renderTrade(){
     const star=Math.min(5,n);
     rows.push(`<div style="display:flex;align-items:center;gap:8px;background:#1a1226;border:1px solid #3a2a4a;border-radius:8px;padding:6px 10px;margin:4px 0;flex-wrap:wrap">
       <img src="${IMG[idStr]||''}" style="width:36px;height:36px;object-fit:contain">
-      <span style="font-size:12px;flex:1;min-width:120px">${m.name} <b style="color:#8ee0ff">ダブり×${n}</b> <span style="color:#ffd86b;font-size:10px">${'★'.repeat(star)}${'☆'.repeat(5-star)} +${3*star}%</span></span>
+      <span style="font-size:12px;flex:1;min-width:120px">${m.name} <b style="color:#8ee0ff">ダブり×${n}</b> <span style="color:#ffd86b;font-size:10px">${'★'.repeat(star)}${'☆'.repeat(5-star)} +${starPct(star)}%</span></span>
       ${opts.join('')}
     </div>`);
   }
@@ -5383,7 +5383,7 @@ let CAMP = {on:false, ch:0};   // 現在プレイ中の章
 function campFusionOK(){ return true; }   // 融合はいつでも可能(章ゲート撤廃)。バランスは「Lv2素材を進化で用意する投資」で担保
 function ownMon(id){ if(!STORY.owned.includes(id)){ STORY.owned.push(id); saveStory(); return true; } return false; }
 const BOSS_STAR_KILLS = 3;   // 2体目(★1)以降は3回撃破ごとに★+1
-// ボス撃破報酬: 初回=仲間化(★0)。以降は3回撃破ごとに★+1で★5(HP/攻撃+15%)まで強化
+// ボス撃破報酬: 初回=仲間化(★0)。以降は3回撃破ごとに★+1で★5(HP/攻撃+28%・複利)まで強化
 function bossDefeatReward(id){
   STORY.bossKills = STORY.bossKills || {}; STORY.dups = STORY.dups || {};
   if(!STORY.owned.includes(id)){ STORY.owned.push(id); STORY.bossKills[id]=0; saveStory(); return {name:MID[id].name, joined:true}; }
@@ -5431,12 +5431,13 @@ function grantLine(mid){
   return added;
 }
 // ======================= ★グレード（同じモンスターを重ねると強化） =======================
-// ガチャでダブった数=★（最大5）。★1につきHP/攻撃+3%（★5=+15%）。そのモンスター単位で重ねる
+// ガチャでダブった数=★（最大5）。★1つにつきHP/攻撃×1.05の複利（★5=1.05^5≒+28%）。そのモンスター単位で重ねる
 function starOf(id){ const d=(STORY.dups&&STORY.dups[id])||0; return Math.min(5, d); }
+function starPct(s){ return Math.round((Math.pow(1.05,s)-1)*100); }   // ★sの補正% (★1=5/★2=10/★3=16/★4=22/★5=28)
 function expOf(bid){ return (STORY.exp&&STORY.exp[bid])||0; }   // 旧EXP(未使用・互換用)
 function expGrade(id){ return starOf(id); }                     // 表示は★=ダブり重ね数に統一
 function addExp(bid,n){ /* 旧EXP成長は廃止(★=ダブり重ねに一本化)。呼び出し互換のため空実装 */ }
-function growthX(mid){ return ONLINE ? 1 : (1 + 0.03*starOf(mid)); }   // ★1=+3%(★5=+15%)。重ねるほど強い
+function growthX(mid){ return ONLINE ? 1 : Math.pow(1.05, starOf(mid)); }   // ★1つ+5%の複利(★5=1.05^5≒1.276)。重ねるほど強い
 // ======================= チュートリアル（ストーリーで学ぶ・各1回だけ） =======================
 function tutOnce(key){ if(!CAMP.on) return false; STORY.tut=STORY.tut||{}; if(STORY.tut[key]) return false; STORY.tut[key]=1; saveStory(); return true; }
 function tutToast(msg){ setTimeout(()=>toast(msg), 1700); }   // 攻撃トーストの後に出す
@@ -5696,7 +5697,7 @@ function moveTargets(u){
       for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){
         const rr=r+dr, cc=c+dc; if(rr<0||cc<0||rr>=N||cc>=N)continue;
         const k=rr+','+cc; if(k in seen)continue;
-        if(u.dug>0 && state.terrain[rr][cc]==='sea') continue;   // 潜行中は海を潜って越えられない
+        if(u.dug>0 && (state.terrain[rr][cc]==='sea'||state.terrain[rr][cc]==='lava')) continue;   // 潜行中は海・溶岩を潜って越えられない
         const occ=unitAt(rr,cc);
         if(occ){
           if(occ.owner===u.owner && fusionResult(u,occ)!=null){ fuse.push([rr,cc]); }
@@ -5958,7 +5959,7 @@ function doDig(u){
   if(netGuestIntercept('dig',{uid:u.uid})) return;
   u.dug=DIG_TURNS;
   healFx(u.r,u.c); floatText(u.r,u.c,'🕳潜行！','#c9a24a');
-  toast(`${mon(u).name}が地中へ潜行！ ${DIG_TURNS}ターン無敵で移動（攻撃・海越え不可）`);
+  toast(`${mon(u).name}が地中へ潜行！ ${DIG_TURNS}ターン無敵で移動（攻撃・海/溶岩越え不可）`);
   syncUnits(); updateUI();
   if(ONLINE&&isHost()) netPush();
 }
@@ -7307,7 +7308,7 @@ function makeCard(m){
     +`<img src="${IMG[m.id]}"${owned||ONLINE?'':' style="filter:grayscale(.85);opacity:.55"'}><div class="nm">${m.name}</div>`
     +ownChip
     +evoLine
-    +(starOf(m.id)>0?`<div style="color:#ffd86b;font-size:9px">${'★'.repeat(starOf(m.id))} (+${3*starOf(m.id)}%)</div>`:'')
+    +(starOf(m.id)>0?`<div style="color:#ffd86b;font-size:9px">${'★'.repeat(starOf(m.id))} (+${starPct(starOf(m.id))}%)</div>`:'')
     +(!ONLINE&&owned&&!lineOK(m)?`<div style="color:#ff9a7a;font-size:9px">🔒${m.role==='fusion'?'素材未所持':'進化前未所持'}</div>`:'')
     +(m.archetype?`<div class="muted" style="color:#9bb8e0;font-size:9px">${m.archetype}</div>`:'')
     +`<div class="muted">Lv${m.level} HP${m.hp}/A${m.atk}</div>`
@@ -7408,7 +7409,7 @@ function buildSelect(){
   }
   const sd0=document.getElementById('selDesc');
   if(sd0) sd0.innerHTML = CAMP.on
-    ? `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで。配置できるのは<b>手持ちのLv1・単体Lv2・撃破したボス(Lv3=3点)</b>。ふつうの進化形・融合体は配置不可＝<b>戦闘中に進化/融合させて出す</b>。ただし<b>進化先・融合体を🎰召喚で仲間にしていないと発動しない</b>（所持💎${STORY.gems}）${campFusionOK()?'':'。融合は第18章（ニヴル入国）で解放'}。戦うほど⭐グレードUP（HP/攻撃+3%ずつ）。`
+    ? `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで。配置できるのは<b>手持ちのLv1・単体Lv2・撃破したボス(Lv3=3点)</b>。ふつうの進化形・融合体は配置不可＝<b>戦闘中に進化/融合させて出す</b>。ただし<b>進化先・融合体を🎰召喚で仲間にしていないと発動しない</b>（所持💎${STORY.gems}）${campFusionOK()?'':'。融合は第18章（ニヴル入国）で解放'}。戦うほど⭐グレードUP（HP/攻撃★1つ+5%の複利）。`
     : ONLINE
     ? `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで（Lv2を入れると体数は減る）。Lv3単体・融合体は選べない（場で進化・融合して入手）。タイプで絞り込み可。`
     : `Lv1=1点・Lv2=2点で<b>合計${LEVEL_BUDGET}点</b>まで。出撃も<b>戦闘中の進化・融合も手持ちのモンスターのみ</b>（🎰召喚で収集、所持💎${STORY.gems}）。カードの<span style="color:#7ee08a">✓所持/⬆進化できる</span>・<span style="color:#ffb36b">未所持</span>表示を参考に。`;
@@ -7775,7 +7776,7 @@ function endGame(winner,msg){
       const bossMsgs=[];
       for(const e of ch.enemy){ if(e.boss && e.mid!==246){ const r=bossDefeatReward(e.mid);   // ニドグラ(246)は浄化のみ
         if(r.joined)      bossMsgs.push(`🎁 ボス <b>${r.name}</b> が仲間になった！`);
-        else if(r.starUp) bossMsgs.push(`⭐ <b>${r.name}</b> が ★${r.star} に強化！（HP/攻撃 +${3*r.star}%）`);
+        else if(r.starUp) bossMsgs.push(`⭐ <b>${r.name}</b> が ★${r.star} に強化！（HP/攻撃 +${starPct(r.star)}%）`);
         else if(r.max)    bossMsgs.push(`👑 <b>${r.name}</b> は既に★5（最大強化）`);
         else              bossMsgs.push(`🗡 <b>${r.name}</b> 再撃破（★${r.star} → 次の★まであと ${r.need-r.prog} 回）`);
       } }
@@ -7791,7 +7792,7 @@ function endGame(winner,msg){
         t.textContent='🎉 章クリア！';
         const bossImgs=ch.enemy.filter(e=>e.boss).map(e=>`<img src="${IMG[String(e.mid)]||''}" style="width:76px;height:76px;object-fit:contain;background:#0d1220;border-radius:10px;border:2px solid #d8b040;margin:3px">`).join('');
         b.innerHTML = msg
-          + (bossMsgs.length?`<br><div style="margin:6px 0">${bossImgs}</div>${bossMsgs.join('<br>')}<br><span class="muted" style="font-size:11px">※倒すほど★が上がりHP/攻撃UP（★5=+15%）。2体目以降は3回撃破ごとに★+1</span>`:'')
+          + (bossMsgs.length?`<br><div style="margin:6px 0">${bossImgs}</div>${bossMsgs.join('<br>')}<br><span class="muted" style="font-size:11px">※倒すほど★が上がりHP/攻撃UP（★1つ+5%の複利・★5=+28%）。2体目以降は3回撃破ごとに★+1</span>`:'')
           + `<br>💎 ジェム +${gems}${first?'（初回クリア）':''} → 所持💎${STORY.gems}`;
         const last = CAMP.ch>=CAMPAIGN.length-1;
         if(CAMP.ch===0 && tutOnce('t_altar')){   // 序章クリア後は祭壇に誘導して召喚を体験させる
@@ -10742,7 +10743,7 @@ function boot(){
     let evo=''; if(m.evolves_from!=null||m.evolves_to!=null){ let cur=m; while(cur.evolves_from!=null&&MID[cur.evolves_from])cur=MID[cur.evolves_from]; const chain=[]; while(cur){chain.push(cur);cur=cur.evolves_to!=null?MID[cur.evolves_to]:null;} evo=`<div style="margin-top:8px;font-size:13px">🧬 進化: ${chain.map(x=>x.id===m.id?`<b style="color:#ffd86b">${x.name}</b>`:x.name).join(' → ')}</div>`; }
     let fus=''; if(m.role==='fusion'&&m.fusion_from&&m.fusion_from.length>=2){ const names=m.fusion_from.map(f2=>{const x=MID[f2]; return x?`${x.name}(${x.type})`:'?';}).join(' ＋ '); fus=`<div style="margin-top:8px;font-size:13px">🔮 融合素材: ${names}${m.fusion_from.length===3?' 〔3体融合〕':''}</div>`; }
     const gr=starOf(m.id);
-    const grHtml=gr>0?`<div style="text-align:center;color:#ffd86b;font-size:12px;margin-top:4px">${'★'.repeat(gr)}${'☆'.repeat(5-gr)}（重ねてHP/攻撃+${3*gr}%）</div>`:`<div style="text-align:center;color:#8a8a8a;font-size:11px;margin-top:4px">☆☆☆☆☆（同じ子を重ねると+3%ずつ・最大★5）</div>`;
+    const grHtml=gr>0?`<div style="text-align:center;color:#ffd86b;font-size:12px;margin-top:4px">${'★'.repeat(gr)}${'☆'.repeat(5-gr)}（重ねてHP/攻撃+${starPct(gr)}%）</div>`:`<div style="text-align:center;color:#8a8a8a;font-size:11px;margin-top:4px">☆☆☆☆☆（同じ子を重ねると★1つ+5%の複利・最大★5=+28%）</div>`;
     const walkBtn=STORY.owned.includes(m.id)
       ? `<button class="bt ${STORY.walkMid===m.id?'warn':'go'}" id="catWalk" style="width:100%;margin-top:8px;padding:9px">${STORY.walkMid===m.id?'🐾 連れ歩き解除':'🐾 この子を連れ歩く'}</button>` : '';
     d.innerHTML=`<div style="max-width:420px;margin:0 auto;background:#141a28;border:1px solid #2c3346;border-radius:12px;padding:16px"><button class="bt" id="catDClose" style="float:right;padding:6px 12px">×</button><div style="width:150px;height:150px;margin:0 auto;background:#0d1220;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center">${im?`<img src="${im}" style="width:100%;height:100%;object-fit:contain">`:''}</div><h2 style="text-align:center;margin:8px 0 2px">${m.name}</h2><div style="text-align:center">${catChip(m.type)}${m.type2?' '+catChip(m.type2):''} <span class="muted" style="font-size:12px">Lv${m.level}・${CAT_ROLE[m.role]||m.role}</span></div>${grHtml}<div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:13px"><div>❤ HP <b>${m.hp}</b></div><div>⚔ ATK <b>${m.atk}</b></div><div>👣 移動 <b>${m.move}</b></div><div>🎯 射程 <b>${m.atk_range}</b></div></div>${evo}${fus}<div style="margin-top:8px;font-size:12.5px;color:#e0d2a4;line-height:1.65;font-style:italic">${m.desc||m.design||''}</div>${walkBtn}</div>`;
