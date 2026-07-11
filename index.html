@@ -95,7 +95,7 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
-    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 51 ・ ラーガ素材入替版（この番号が古いなら画面を更新）</div>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 52 ・ 配置マス拡張版（この番号が古いなら画面を更新）</div>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
       <button class="bt" id="btGacha" style="font-size:13px;padding:10px 13px;background:#8c2a6a">🎰 召喚</button>
@@ -7605,12 +7605,13 @@ function enterBattleFromCastle(){
 }
 // 城の周囲（2マス以内）の配置可能マス
 function castleArea(owner){
-  const cc=CASTLE[owner]; const cells=[];
-  for(let dr=-2;dr<=2;dr++)for(let dc=-2;dc<=2;dc++){
-    const r=cc.r+dr, c=cc.c+dc;
-    if(r<0||c<0||r>=N||c>=N)continue; if(r===cc.r&&c===cc.c)continue;
-    cells.push([r,c]);
-  }
+  const cc=CASTLE[owner]; const cells=[]; const seen=new Set();
+  const add=(r,c)=>{ if(r<0||c<0||r>=N||c>=N)return; if(r===cc.r&&c===cc.c)return; const k=r+','+c; if(seen.has(k))return; seen.add(k); cells.push([r,c]); };
+  // 城の周囲5×5
+  for(let dr=-2;dr<=2;dr++)for(let dc=-2;dc<=2;dc++) add(cc.r+dr, cc.c+dc);
+  // 自陣の一番奥(城の行＋その手前1行=最奥2行)を横いっぱいに拡張＝配置数が増えても置ける
+  const backRows = owner===0 ? [cc.r, cc.r-1] : [cc.r, cc.r+1];   // プレイヤー=手前(行が大きい)側が奥
+  for(const r of backRows) for(let c=1;c<=N-2;c++) add(r,c);       // 端の旗列(0/N-1)は避ける
   return cells;
 }
 function inCastleArea(owner,r,c){ return castleArea(owner).some(([rr,cc])=>rr===r&&cc===c); }
