@@ -95,7 +95,7 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
-    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 46 ・ フェンリル追加版（この番号が古いなら画面を更新）</div>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 47 ・ 回復固定値版(全体+400/単体+600)（この番号が古いなら画面を更新）</div>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
       <button class="bt" id="btGacha" style="font-size:13px;padding:10px 13px;background:#8c2a6a">🎰 召喚</button>
@@ -4110,8 +4110,8 @@ const LIGHT_HEAL_FRAC = 0.30;   // (旧)回復＝対象の最大HPの30%
 const INSECT = new Set([60,126,127, 286,61,277, 173,174,274, 282,283,284, 285]);
 const DIG_TURNS = 2;            // 地タイプ「潜行」：2ターン地中(無敵/攻撃不可)→自動浮上
 const LIGHT_HEAL_RANGE = 4;     // 光の回復魔法の射程
-const LIGHT_HEAL_ALL = 0.40;    // 全体回復＝射程内の味方全員をmaxHPの40%
-const LIGHT_HEAL_ONE = 0.70;    // 単体回復＝最も傷ついた味方1体をmaxHPの70%
+const LIGHT_HEAL_ALL = 400;     // 全体回復＝射程内の味方全員をHP+400(固定)
+const LIGHT_HEAL_ONE = 600;     // 単体回復＝最も傷ついた味方1体をHP+600(固定)
 const REVIVE_COST = 6;          // 光Lv3の蘇生魔法の気コスト
 const GRASS_DRAIN_FRAC = 0.5;   // 草：与えた総ダメージの50%を自己回復（吸収）
 // タイプ別の地形特性（攻撃範囲補正）の説明
@@ -5949,21 +5949,21 @@ function cureBurnByFire(att, targets){
 function healTargets(u){ const res=[], R=effRange(u);
   for(const a of alive(u.owner)){ if(cheby(a,u)<=R) res.push(a); } return res; }
 function healScope(u){ const res=[]; for(const a of alive(u.owner)){ if(cheby(a,u)<=LIGHT_HEAL_RANGE) res.push(a); } return res; }
-function doHeal(u){   // 全体回復: 射程内の味方全員をmaxHPの40%回復
+function doHeal(u){   // 全体回復: 射程内の味方全員をHP+400(固定)
   if(netGuestIntercept('heal',{uid:u.uid})) return;
   let total=0, n=0;
-  for(const a of healScope(u)){ if(a.hp>=a.maxhp) continue; const heal=Math.max(1,Math.round(a.maxhp*LIGHT_HEAL_ALL)); const before=a.hp; a.hp=Math.min(a.maxhp,a.hp+heal); const got=a.hp-before; if(got>0){ total+=got; n++; healFx(a.r,a.c); floatText(a.r,a.c,`+${got}`,'#7be0a0'); } }
+  for(const a of healScope(u)){ if(a.hp>=a.maxhp) continue; const before=a.hp; a.hp=Math.min(a.maxhp,a.hp+LIGHT_HEAL_ALL); const got=a.hp-before; if(got>0){ total+=got; n++; healFx(a.r,a.c); floatText(a.r,a.c,`+${got}`,'#7be0a0'); } }
   u.acted=true;
-  toast(`${mon(u).name}の全体回復 ✦味方${n}体を各40%回復（計+${total}）`);
+  toast(`${mon(u).name}の全体回復 ✦味方${n}体を各+${LIGHT_HEAL_ALL}回復（計+${total}）`);
   afterAction();
 }
-function doHealOne(u){   // 単体回復: 最も傷ついた味方1体をmaxHPの70%回復
+function doHealOne(u){   // 単体回復: 最も傷ついた味方1体をHP+600(固定)
   if(netGuestIntercept('healone',{uid:u.uid})) return;
   const t=healScope(u).filter(a=>a.hp<a.maxhp).sort((a,b)=>(a.hp/a.maxhp)-(b.hp/b.maxhp))[0];
   if(!t){ toast('回復できる味方がいない'); return; }
-  const heal=Math.max(1,Math.round(t.maxhp*LIGHT_HEAL_ONE)); const before=t.hp; t.hp=Math.min(t.maxhp,t.hp+heal); const got=t.hp-before;
+  const before=t.hp; t.hp=Math.min(t.maxhp,t.hp+LIGHT_HEAL_ONE); const got=t.hp-before;
   u.acted=true; healFx(t.r,t.c); floatText(t.r,t.c,`+${got}`,'#7be0a0');
-  toast(`${mon(u).name}の単体回復 → ${mon(t).name} を70%回復（+${got}）`);
+  toast(`${mon(u).name}の単体回復 → ${mon(t).name} にHP+${got}`);
   afterAction();
 }
 // 地タイプ：潜行（2ターン地中で無敵・攻撃不可・海は越えられない・移動は可）
@@ -6195,7 +6195,7 @@ function aiOneUnit(u){
   if(BOSS_SPECIALS[u.mid]){ if(bossSpecialTurn(u)){ return; } }
   // 光タイプ：手負いの味方がいれば回復、状態異常の味方がいれば浄化を優先
   if(uHasType(u,'光') && canAttack(u)){
-    const wounded=healTargets(u).filter(a=>a.hp<a.maxhp*0.6);
+    const wounded=healTargets(u).filter(a=>a.hp<a.maxhp*0.55);
     const afflicted=healTargets(u).filter(hasAnyStatus);
     if(wounded.length){ doHeal(u); return; }
     if(afflicted.length){ doCure(u); return; }
@@ -7240,8 +7240,8 @@ function updateUI(){
       if(uHasType(sel,'光')){
         const woundOk = canAttack(sel) && healScope(sel).some(a=>a.hp<a.maxhp);
         const cureOk  = canAttack(sel) && healTargets(sel).some(hasAnyStatus);
-        ac.appendChild(mkbt('💚 全体回復(40%)','evo', !!woundOk, ()=>{ pushUndo(); doHeal(sel); reselectAfter(); }));
-        ac.appendChild(mkbt('💗 単体回復(70%)','evo', !!woundOk, ()=>{ pushUndo(); doHealOne(sel); reselectAfter(); }));
+        ac.appendChild(mkbt(`💚 全体回復(+${LIGHT_HEAL_ALL})`,'evo', !!woundOk, ()=>{ pushUndo(); doHeal(sel); reselectAfter(); }));
+        ac.appendChild(mkbt(`💗 単体回復(+${LIGHT_HEAL_ONE})`,'evo', !!woundOk, ()=>{ pushUndo(); doHealOne(sel); reselectAfter(); }));
         ac.appendChild(mkbt('✨ 浄化','evo', !!cureOk, ()=>{ pushUndo(); doCure(sel); reselectAfter(); }));
         if(m.level===3){
           const fallenN=(state.fallen&&state.fallen[0]&&state.fallen[0].length)||0;
