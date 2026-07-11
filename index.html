@@ -95,7 +95,7 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
-    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 49 ・ 超融合体3体追加版（この番号が古いなら画面を更新）</div>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 50 ・ 融合ガチャ追加版（この番号が古いなら画面を更新）</div>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
       <button class="bt" id="btGacha" style="font-size:13px;padding:10px 13px;background:#8c2a6a">🎰 召喚</button>
@@ -5064,6 +5064,8 @@ const GACHA_PACKS=[
  {key:'holy',  name:'聖光の啓示',     types:['光','闇'], need:13,  lines:[55,73,161,85,88],       fusions:[146,189,176,253], hint:'冥所の闇は光で払え'},
  {key:'all',   name:'めぐりあいの祭壇', types:null,      need:16, hint:'全タイプ排出。縁の導くまま'},
  {key:'dragon',name:'竜宮の血脈',     types:['竜','氷','水'], need:19, lines:[192,195,198,154,16], fusions:[109,177,216], hint:'終末の巨人と混沌に備えよ'},
+ {key:'fuse',  name:'融合の坩堝',     types:null, need:12, fusionGacha:true, hint:'融合体が大量に出る特別枠（融合＝約55%排出）。集めて超融合も狙え'},
+ {key:'fuse2', name:'混沌の大坩堝',   types:null, need:18, fusionGacha:true, hint:'終盤専用。融合体を一気に集める最高濃度の融合ガチャ'},
 ];
 let GFIELD=null;   // フィールドHUDから開いた時=そのマップ専用ガチャ
 // マップ専用パック: この地の敵に強いタイプ + この地のボスの素材ライン
@@ -5091,6 +5093,8 @@ function packDropInfo(pk){
   if(pk.fieldMap){ const ex=fieldBossLineIds(pk.fieldMap); const ty=pk.types||[];
     const ids=MONSTERS.filter(m=> !GACHA_BAN.has(m.id) && (ex.has(m.id) || ty.includes(m.type) || (m.type2&&ty.includes(m.type2)))).map(m=>m.id);
     return {ids, note:'この地の対抗タイプ（'+ty.join('・')+'）が中心'}; }
+  if(pk.fusionGacha){ const ids=MONSTERS.filter(m=>m.role==='fusion' && !GACHA_BAN.has(m.id)).map(m=>m.id);
+    return {ids, note:'融合体が約55%で大量に出る特別枠（SR/Lv3=25%・R/Lv2=20%）。超融合体もここから'}; }
   if(pk.lines) return {ids:[...packLineIds(pk)]};
   return {ids:null, note:'このシリーズは全モンスターが対象（縁ガチャで手持ちの進化先を優先）'};
 }
@@ -5175,13 +5179,17 @@ function gachaPools(){
 }
 function gachaPull(pity){
   const P=gachaPools(); const r=Math.random(); const c=STORY.clear;
-  // 中盤以降は融合(SSR)/Lv3(SR)の排出率が段階的に上がる: SSR 3%→約12%, SR +7%→約+13%
-  const ssrR = 0.04 + Math.min(0.11, Math.max(0,c-3)*0.007);   // 融合(SSR): 4%→約15%
-  const srR  = ssrR + 0.07 + Math.min(0.06, Math.max(0,c-3)*0.004);
+  let ssrR, srR;
+  if(packOf().fusionGacha){ ssrR=0.55; srR=0.80; }   // 融合ガチャ: 融合(SSR)約55% / Lv3(SR)25% / Lv2(R)20% ＝融合ばっか出る
+  else {
+    // 中盤以降は融合(SSR)/Lv3(SR)の排出率が段階的に上がる: SSR 4%→約15%
+    ssrR = 0.04 + Math.min(0.11, Math.max(0,c-3)*0.007);
+    srR  = ssrR + 0.07 + Math.min(0.06, Math.max(0,c-3)*0.004);
+  }
   let pool,rar;
   if(r<ssrR){ pool=P.SSR; rar='SSR'; }
   else if(r<srR){ pool=P.SR; rar='SR'; }
-  else if(r<0.62 || pity){ pool=P.R; rar='R'; }   // R(Lv2=融合素材)の枠を拡大＝素材が揃いやすい（旧0.40→0.62）
+  else if(r<0.62 || pity || packOf().fusionGacha){ pool=P.R; rar='R'; }   // 融合ガチャは残りを全てR(Lv2素材)に=Lv1ゴミを出さない
   else { pool=P.N; rar='N'; }
   // 最序盤(ch5=最初のLv3ボスより前)は Lv3/融合(SR/SSR) を排出しない=「そもそもLv3が揃わない」。R(Lv2)へ振替
   if((rar==='SR'||rar==='SSR') && c<4){ pool=P.R; rar='R'; }
