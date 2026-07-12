@@ -95,7 +95,7 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
-    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 54 ・ 合体攻撃＆MP版（この番号が古いなら画面を更新）</div>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 55 ・ 合体攻撃4種＆MP版（この番号が古いなら画面を更新）</div>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
       <button class="bt" id="btGacha" style="font-size:13px;padding:10px 13px;background:#8c2a6a">🎰 召喚</button>
@@ -5891,13 +5891,15 @@ function applySpecialHit(att, spec){
   if(targets.length) attackFx(att, targets, targets[0], {n:spec.label,range:spec.rng});
   for(const t of targets.slice()){
     if(!state.units[t.uid]) continue;
-    let mult=1; if((STRONG[spec.type]||[]).some(x=>monTypes(mon(t)).includes(x))) mult+=0.2;   // 弱点+20%
-    const d=Math.max(1, Math.round(spec.dmg*mult*(0.94+Math.random()*0.12)));
+    let d;
+    if(spec.flat){ d=spec.dmg; }                          // 合体攻撃: 弱点判定なしの固定ダメージ
+    else { let mult=1; if((STRONG[spec.type]||[]).some(x=>monTypes(mon(t)).includes(x))) mult+=0.2;   // 弱点+20%
+      d=Math.max(1, Math.round(spec.dmg*mult*(0.94+Math.random()*0.12))); }
     t.hp-=d; floatText(t.r,t.c,`-${d}`, t.owner===0?'#ff5a5a':'#ffb0a0');
     if(t.hp<=0){ if(killUnit(t)){ if(t.owner===1) state.killLv=(state.killLv||0)+mon(t).level;
       if(t.owner===0) state.energy[owner]=(state.energy[owner]||0); } }
   }
-  toast(`☠ ${mon(att).name}の「${spec.label}」！ ${spec.type}属性 ${targets.length}体に大ダメージ`);
+  toast(`☠ ${mon(att).name}の「${spec.label}」！ ${spec.type?spec.type+'属性 ':''}${targets.length}体に大ダメージ`);
   return true;
 }
 // ボスの専用ターン(使えたらtrue)。CPU側で呼ぶ
@@ -5913,8 +5915,12 @@ function bossSpecialTurn(u){
 }
 // ===== 合体攻撃(COMBO): 特定の仲間が近くに揃うと放てる共同必殺技 =====
 // mids=参加3体 / within=互いに何マス以内に集まれば発動可 / rng=着弾範囲 / dmg=威力 / type=属性(弱点+20%) / label=技名
+// 合体攻撃は固定ダメージ(弱点/地形判定なし・防御貫通)。発生条件がきつく編成コストも高いので強力に。
 const COMBOS=[
-  { mids:[84,247,248], within:3, rng:4, dmg:300, type:'光', label:'神々の裁き' },   // ラーガ+オシラント+オベリオン(エジプト神話トリオ)
+  { mids:[84,247,248], within:3, rng:4, dmg:300, label:'神々の裁き' },        // エジプト: ラーガ+オシラント+オベリオン
+  { mids:[200,18,254], within:3, rng:4, dmg:300, label:'オリュンポスの怒り' },  // ギリシャ: キマドラ+ポセイダ+ティタニカ
+  { mids:[75,249,30],  within:3, rng:4, dmg:300, label:'ラグナロクの号砲' },    // 北欧: オーディガル+トールガ+ヨルムガル
+  { mids:[3,180,72],   within:3, rng:4, dmg:300, label:'三色連携' },          // 御三家最終: エンジシ+フローラガ+ライジャ
 ];
 // uが参加できる「発動可能な合体攻撃」を返す（3体が揃い・within内に集結・全員が未行動）
 function comboFor(u){
@@ -5944,7 +5950,7 @@ function doCombo(u){
   const {cb, members}=r;
   if(!canAtkMP(u)){ if(u.owner===0&&!ONLINE) toast('攻撃MPが切れて合体攻撃できない'); return false; }
   comboFx(u, members);
-  const hit=applySpecialHit(u, {rng:cb.rng, mode:'all', type:cb.type, dmg:cb.dmg, label:cb.label});
+  const hit=applySpecialHit(u, {rng:cb.rng, mode:'all', dmg:cb.dmg, label:cb.label, flat:true});   // 弱点判定なし固定ダメージ
   if(!hit){ if(u.owner===0&&!ONLINE) toast(`合体攻撃「${cb.label}」は射程${cb.rng}に敵がいない`); return false; }
   for(const m of members) m.acted=true;                    // 3体そろって全員行動終了
   spendAtkMP(u);
