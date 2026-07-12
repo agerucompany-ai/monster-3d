@@ -95,7 +95,7 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
-    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 52 ・ 配置マス拡張版（この番号が古いなら画面を更新）</div>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 53 ・ MP(気力)導入版（この番号が古いなら画面を更新）</div>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
       <button class="bt" id="btGacha" style="font-size:13px;padding:10px 13px;background:#8c2a6a">🎰 召喚</button>
@@ -4114,6 +4114,21 @@ const LIGHT_HEAL_ALL = 400;     // 全体回復＝射程内の味方全員をHP+
 const LIGHT_HEAL_ONE = 600;     // 単体回復＝最も傷ついた味方1体をHP+600(固定)
 const REVIVE_COST = 6;          // 光Lv3の蘇生魔法の気コスト
 const GRASS_DRAIN_FRAC = 0.5;   // 草：与えた総ダメージの50%を自己回復（吸収）
+// ===== MP（気力）: 1バトルごとの行動回数。攻撃用と回復用を別々に持つ =====
+// 各モンスターは「攻撃MP=10」「回復MP=3」で出撃(バトル中は自然回復しない)。攻撃系は1回=1消費(最大10回)、
+// 回復魔法は1回=1消費(最大3回)。攻撃と回復は別枠＝回復役でも攻撃10回＋回復3回が独立して使える。
+// 敵も同じ仕様。ボスだけ無限(概念の対象外)。
+const MP_ATK_MAX = 10;          // 攻撃系の最大回数（通常攻撃・技・範囲・攻城・潜行）
+const MP_HEAL_MAX = 3;          // 回復系の最大回数（全体/単体回復・浄化・蘇生）
+function noMP(u){ return u.isBoss; }                            // ボスはMP概念の対象外(無限)
+function atkLeft(u){ return noMP(u)?Infinity:(u.amp==null?MP_ATK_MAX:u.amp); }   // 残り攻撃回数
+function healLeft(u){ return noMP(u)?Infinity:(u.hmp==null?MP_HEAL_MAX:u.hmp); }  // 残り回復回数
+function atkMax(u){ return u.ampMax||MP_ATK_MAX; }
+function healMax(u){ return u.hmpMax||MP_HEAL_MAX; }
+function canAtkMP(u){ return atkLeft(u)>=1; }
+function canHealMP(u){ return healLeft(u)>=1; }
+function spendAtkMP(u){ if(noMP(u))return; u.amp=Math.max(0, atkLeft(u)-1); }
+function spendHealMP(u){ if(noMP(u))return; u.hmp=Math.max(0, healLeft(u)-1); }
 // タイプ別の地形特性（攻撃範囲補正）の説明
 const TYPE_TRAIT = {
   炎:'森に隣接/上で攻撃範囲+1＆その範囲を全体攻撃（山火事・範囲内の味方も巻き込む）',
@@ -5610,7 +5625,7 @@ function cellH(r,c){ return TERR_H[terrAt(r,c)]||0; }
 function addUnit(owner, mid, r, c){
   const m = MID[mid];
   const u = {uid:uidSeq++, owner, mid, hp:m.hp, maxhp:m.hp, r, c, moved:false, acted:false, evoLock:-1,
-             poison:0, burn:0, freeze:0, para:0, dug:0};
+             poison:0, burn:0, freeze:0, para:0, dug:0, amp:MP_ATK_MAX, hmp:MP_HEAL_MAX, ampMax:MP_ATK_MAX, hmpMax:MP_HEAL_MAX};
   state.units[u.uid]=u; state.board[r][c]=u.uid; return u;
 }
 function unitAt(r,c){ if(r<0||c<0||r>=N||c>=N)return null; const id=state.board[r][c]; return id?state.units[id]:null; }
@@ -5755,6 +5770,7 @@ function attackTargets(u, range){
 function canAttack(u){
   if(u.acted) return false;                       // 攻撃済みは行動不能（進化/融合直後でも攻撃は可）
   if(u.dug>0) return false;                        // 潜行中は攻撃できない
+  if(!canAtkMP(u)) return false;                   // 攻撃MP切れ（ボスは無限）
   return true;
 }
 function canMove(u){ return !u.moved && !u.acted; }  // 攻撃/進化/融合後は移動できない
@@ -5789,6 +5805,7 @@ function calcDamage(att, def, move){
 
 function doAttack(att, def, move){
   if(netGuestIntercept('attack',{uid:att.uid, targetUid:def&&def.uid, move:move&&move.n})) return;
+  if(!canAtkMP(att)){ if(att.owner===0&&!ONLINE) toast('攻撃MPが切れた（1バトル10回まで）'); return; }   // 攻撃MP切れ(ボスは無限)
   const m=mon(att);
   if(!move){ const mv=movesFor(att); move=mv[0]; }   // 既定=最強技
   // 対象決定：地形AOE(雷海/炎森・味方巻込) ＞ 技の複数対象(敵のみ・射程内) ＞ 単体
@@ -5798,6 +5815,8 @@ function doAttack(att, def, move){
   else targets=[def];
   if(def && !targets.includes(def)) targets.push(def);
   att.acted=true;                              // 攻撃したら行動終了
+  spendAtkMP(att);                             // 攻撃MP-1（10回で切れる／ボスは無限）
+  if(att.owner===0 && !noMP(att) && atkLeft(att)<=0 && tutOnce('t_mp')) tutToast(`💡攻撃MP切れ！ 各モンスターは1バトルで攻撃${MP_ATK_MAX}回・回復${MP_HEAL_MAX}回まで(別枠)。MPは戦闘中は回復しない`);
   attackFx(att, targets, def, move);           // 技ごとの攻撃エフェクト
   const advType = def && typeBonusM(m, mon(def))>0;                        // タイプ相性(弱点)発動?
   const weakHit = def && typePenaltyM(m, mon(def))<0;                      // 苦手相手(-20%)?
@@ -5841,6 +5860,7 @@ function doAttack(att, def, move){
 }
 function doCastleAttack(att){
   if(netGuestIntercept('castle',{uid:att.uid})) return;
+  if(!canAtkMP(att)){ if(att.owner===0&&!ONLINE) toast('攻撃MPが切れた'); return; }
   const enemy=1-att.owner, dmg=mon(att).atk;       // 倍率なし
   state.castleHP[enemy]-=dmg;
   if(state.castleHP[enemy]<0) state.castleHP[enemy]=0;
@@ -5848,6 +5868,7 @@ function doCastleAttack(att){
   attackFx(att, [{r:cc.r,c:cc.c}], {r:cc.r,c:cc.c});   // 攻城エフェクト
   toast(`攻城！ ${enemy===1?'敵':'自'}城に ${dmg}（残${state.castleHP[enemy]}）`);
   att.acted=true;
+  spendAtkMP(att);                             // 攻城も攻撃MP-1
   afterAction();
 }
 // ===== ボス専用攻撃(固定ダメージ・属性相性±20%・防御貫通) =====
@@ -5959,6 +5980,8 @@ function healTargets(u){ const res=[], R=effRange(u);
 function healScope(u){ const res=[]; for(const a of alive(u.owner)){ if(cheby(a,u)<=LIGHT_HEAL_RANGE) res.push(a); } return res; }
 function doHeal(u){   // 全体回復: 射程内の味方全員をHP+400(固定)
   if(netGuestIntercept('heal',{uid:u.uid})) return;
+  if(!canHealMP(u)){ toast('回復MPが切れた（1バトル3回まで）'); return; }
+  spendHealMP(u);
   let total=0, n=0;
   for(const a of healScope(u)){ if(a.hp>=a.maxhp) continue; const before=a.hp; a.hp=Math.min(a.maxhp,a.hp+LIGHT_HEAL_ALL); const got=a.hp-before; if(got>0){ total+=got; n++; healFx(a.r,a.c); floatText(a.r,a.c,`+${got}`,'#7be0a0'); } }
   u.acted=true;
@@ -5967,8 +5990,10 @@ function doHeal(u){   // 全体回復: 射程内の味方全員をHP+400(固定)
 }
 function doHealOne(u){   // 単体回復: 最も傷ついた味方1体をHP+600(固定)
   if(netGuestIntercept('healone',{uid:u.uid})) return;
+  if(!canHealMP(u)){ toast('回復MPが切れた（1バトル3回まで）'); return; }
   const t=healScope(u).filter(a=>a.hp<a.maxhp).sort((a,b)=>(a.hp/a.maxhp)-(b.hp/b.maxhp))[0];
   if(!t){ toast('回復できる味方がいない'); return; }
+  spendHealMP(u);
   const before=t.hp; t.hp=Math.min(t.maxhp,t.hp+LIGHT_HEAL_ONE); const got=t.hp-before;
   u.acted=true; healFx(t.r,t.c); floatText(t.r,t.c,`+${got}`,'#7be0a0');
   toast(`${mon(u).name}の単体回復 → ${mon(t).name} にHP+${got}`);
@@ -5977,6 +6002,8 @@ function doHealOne(u){   // 単体回復: 最も傷ついた味方1体をHP+600(
 // 地タイプ：潜行（2ターン地中で無敵・攻撃不可・海は越えられない・移動は可）
 function doDig(u){
   if(netGuestIntercept('dig',{uid:u.uid})) return;
+  if(!canAtkMP(u)){ toast('攻撃MPが切れた'); return; }
+  spendAtkMP(u);                               // 潜行は攻撃MP枠を消費
   u.dug=DIG_TURNS;
   healFx(u.r,u.c); floatText(u.r,u.c,'🕳潜行！','#c9a24a');
   toast(`${mon(u).name}が地中へ潜行！ ${DIG_TURNS}ターン無敵で移動（攻撃・海/溶岩越え不可）`);
@@ -5988,12 +6015,13 @@ function freeCastleCell(owner){ for(const [r,c] of castleArea(owner)){ if(!unitA
 function doRevive(u){
   if(netGuestIntercept('revive',{uid:u.uid})) return;
   if(state.energy[u.owner]<REVIVE_COST){ toast(`蘇生には気${REVIVE_COST}必要`); return; }
+  if(!canHealMP(u)){ toast('回復MPが切れた'); return; }
   const fallen=(state.fallen&&state.fallen[u.owner])||[];
   if(!fallen.length){ toast('蘇る仲間がいない'); return; }
   const cell=freeCastleCell(u.owner);
   if(!cell){ toast('自陣に空きがない'); return; }
   const mid=fallen.shift(); const baseId=baseFormId(mid);   // Lv1の姿で復活
-  state.energy[u.owner]-=REVIVE_COST;
+  state.energy[u.owner]-=REVIVE_COST; spendHealMP(u);       // 蘇生は回復MP枠
   const nu = u.owner===0 ? addPlayerUnit(baseId,cell[0],cell[1]) : addUnit(u.owner,baseId,cell[0],cell[1]);
   u.acted=true; healFx(cell[0],cell[1]); floatText(cell[0],cell[1],'✨蘇生','#ffe6a0');
   toast(`${mon(u).name}の蘇生魔法 → ${MID[baseId].name}(Lv1)が自陣に復活！`);
@@ -6001,9 +6029,10 @@ function doRevive(u){
 }
 function doCure(u){
   if(netGuestIntercept('cure',{uid:u.uid})) return;
+  if(!canHealMP(u)){ toast('回復MPが切れた'); return; }
   const cands=healTargets(u).filter(hasAnyStatus);
   const t = cands[0] || u;
-  clearAllStatus(t);
+  clearAllStatus(t); spendHealMP(u);           // 浄化は回復MP枠
   u.acted=true; healFx(t.r,t.c); floatText(t.r,t.c,'✨浄化','#bfffe0');
   toast(`${mon(u).name}の浄化 → ${mon(t).name} の状態異常を回復`);
   afterAction();
@@ -6207,8 +6236,8 @@ function aiOneUnit(u){
   if(uHasType(u,'光') && canAttack(u)){
     const wounded=healTargets(u).filter(a=>a.hp<a.maxhp*0.55);
     const afflicted=healTargets(u).filter(hasAnyStatus);
-    if(wounded.length){ doHeal(u); return; }
-    if(afflicted.length){ doCure(u); return; }
+    if(wounded.length && canHealMP(u)){ doHeal(u); return; }   // 回復MPが尽きたら攻撃へ
+    if(afflicted.length && canHealMP(u)){ doCure(u); return; }
   }
   let atk=attackTargets(u);
   if(atk.length && canAttack(u)){ atk.sort((a,b)=>a.hp-b.hp); doAttack(u, atk[0]); return; }
@@ -6578,9 +6607,22 @@ function drawLabel(x,u,m){
   x.fillStyle = ratio>0.5?'#4fc46a':(ratio>0.25?'#e0b040':'#e05040');
   roundRect(x,hx,hy,w*ratio,30,7); x.fill();
   x.fillStyle='#fff'; x.font='bold 21px sans-serif'; x.fillText(`HP ${Math.max(0,u.hp)} / ${u.maxhp}`,128,68);
+  // MPバー（攻撃⚔と回復✚の残り回数。ボスは無限なので非表示）
+  let stY=98;
+  if(!noMP(u)){ const my=85, ah=13;
+    const amp=atkLeft(u), amm=atkMax(u), hmp=healLeft(u), hmm=healMax(u);
+    // 攻撃MP（左・青）
+    x.fillStyle='#0d0d16'; roundRect(x,8,my,150,ah,5); x.fill();
+    x.fillStyle = amp>=1?'#4f8bff':'#7a3030'; roundRect(x,8,my,150*Math.max(0,amp/amm),ah,5); x.fill();
+    x.fillStyle='#eaf0ff'; x.font='bold 12px sans-serif'; x.fillText(`⚔${amp}/${amm}`,83,92);
+    // 回復MP（右・緑）
+    x.fillStyle='#0d1610'; roundRect(x,166,my,82,ah,5); x.fill();
+    x.fillStyle = hmp>=1?'#3fbf6a':'#5a3030'; roundRect(x,166,my,82*Math.max(0,hmp/hmm),ah,5); x.fill();
+    x.fillStyle='#eafff0'; x.font='bold 12px sans-serif'; x.fillText(`✚${hmp}/${hmm}`,207,92);
+    stY=104; }
   // 状態異常アイコン
   const st=[]; if(u.poison>0)st.push('🟣毒'); if(u.burn>0)st.push('🔥焼'); if(u.freeze>0)st.push('❄凍'); if(u.para>0)st.push('⚡痺');
-  if(st.length){ x.font='bold 16px sans-serif'; x.fillStyle='#e8c8ff'; x.fillText(st.join(' '),128,98); }
+  if(st.length){ x.font='bold 15px sans-serif'; x.fillStyle='#e8c8ff'; x.fillText(st.join(' '),128,stY); }
 }
 function roundRect(x,a,b,w,h,r){ x.beginPath(); x.moveTo(a+r,b); x.arcTo(a+w,b,a+w,b+h,r); x.arcTo(a+w,b+h,a,b+h,r); x.arcTo(a,b+h,a,b,r); x.arcTo(a,b,a+w,b,r); x.closePath(); }
 
@@ -7010,7 +7052,7 @@ function actAtCell(r,c){
   const ec=CASTLE[1];
   if(r===ec.r&&c===ec.c&&castleAdjacent(sel)&&canAttack(sel)){ pushUndo(); doCastleAttack(sel); reselectAfter(); return true; }
   const tgt=selAtks&&selAtks.find(e=>e.r===r&&e.c===c);
-  if(tgt){ pushUndo(); doAttack(sel,tgt,selMove); reselectAfter(); return true; }
+  if(tgt&&canAttack(sel)){ pushUndo(); doAttack(sel,tgt,selMove); reselectAfter(); return true; }
   return false;
 }
 // レイキャストで解決できなかったタップを、見かけ上いちばん近い合法マスへスナップ
@@ -7203,7 +7245,10 @@ function updateUI(){
   if(sel){
     const m=mon(sel);
     const R=effRange(sel), note=traitNote(sel);
-    sd.innerHTML = `<img src="${IMG[sel.mid]}"><div><b style="color:#ffd86b">${m.name}</b> <span class="muted">${m.type}/Lv${m.level}</span><br>`
+    const mpStr = noMP(sel) ? '<span style="color:#ffcf6b">MP∞</span>'
+      : `<span style="color:${atkLeft(sel)>=1?'#8fb4ff':'#e06060'}">⚔MP ${atkLeft(sel)}/${atkMax(sel)}</span>`
+        +` <span style="color:${healLeft(sel)>=1?'#7be0a0':'#e06060'}">✚MP ${healLeft(sel)}/${healMax(sel)}</span>`;
+    sd.innerHTML = `<img src="${IMG[sel.mid]}"><div><b style="color:#ffd86b">${m.name}</b> <span class="muted">${m.type}/Lv${m.level}</span> ${mpStr}<br>`
       +`<span class="muted">HP ${sel.hp}/${sel.maxhp}・ATK ${m.atk}・防御-${Math.round(defReduction(sel)*100)}%・移動 ${effMove(sel)}・射程 ${R}${R>m.atk_range?'↑':''}</span>`
       +(note?`<br><span style="color:#7be0a0;font-size:11px">⚡${note}</span>`:'')+`</div>`;
     if(selMode==='attack'){
@@ -7234,7 +7279,8 @@ function updateUI(){
       tip.innerHTML = canMove(sel) ? '🚶 <b style="color:#ff6a6a">赤マス</b>タップで移動（紫=融合）。↓で攻撃/進化も選べる' : '行動可能：↓から選ぶ';
       ac.appendChild(tip);
       const atkOk = canAttack(sel) && (selAtks.length || (castleAdjacent(sel)&&canAttack(sel)));
-      ac.appendChild(mkbt(`⚔️ 攻撃${sel.acted?'(済)':''}`,'go', !!atkOk, ()=>setMode('attack')));
+      const outMP = !noMP(sel) && !sel.acted && !canAtkMP(sel);   // 攻撃MP切れ
+      ac.appendChild(mkbt(`⚔️ 攻撃${sel.acted?'(済)':(outMP?'(MP切れ)':(noMP(sel)?'':`(残${atkLeft(sel)})`))}`,'go', !!atkOk, ()=>setMode('attack')));
       // アイテム（オンライン以外は表示。盤上で拾った回復薬も使える）
       if(!ONLINE){
         if((STORY.items.heal||0)>0 && sel.hp<sel.maxhp)
@@ -7248,14 +7294,18 @@ function updateUI(){
       }
       // 光タイプ：回復・浄化（攻撃の代わりに味方/自分を癒やす）
       if(uHasType(sel,'光')){
-        const woundOk = canAttack(sel) && healScope(sel).some(a=>a.hp<a.maxhp);
-        const cureOk  = canAttack(sel) && healTargets(sel).some(hasAnyStatus);
-        ac.appendChild(mkbt(`💚 全体回復(+${LIGHT_HEAL_ALL})`,'evo', !!woundOk, ()=>{ pushUndo(); doHeal(sel); reselectAfter(); }));
-        ac.appendChild(mkbt(`💗 単体回復(+${LIGHT_HEAL_ONE})`,'evo', !!woundOk, ()=>{ pushUndo(); doHealOne(sel); reselectAfter(); }));
+        const healMP = canHealMP(sel);
+        // 回復は攻撃MPと別枠：acted(行動済み)でなく回復MPが残っていれば撃てる
+        const canAct = !sel.acted && sel.dug<=0;
+        const woundOk = canAct && healMP && healScope(sel).some(a=>a.hp<a.maxhp);
+        const cureOk  = canAct && healMP && healTargets(sel).some(hasAnyStatus);
+        const healN = noMP(sel)?'∞':healLeft(sel);
+        ac.appendChild(mkbt(`💚 全体回復(+${LIGHT_HEAL_ALL})${healMP?`〔残${healN}〕`:'(MP切れ)'}`,'evo', !!woundOk, ()=>{ pushUndo(); doHeal(sel); reselectAfter(); }));
+        ac.appendChild(mkbt(`💗 単体回復(+${LIGHT_HEAL_ONE})${healMP?`〔残${healN}〕`:'(MP切れ)'}`,'evo', !!woundOk, ()=>{ pushUndo(); doHealOne(sel); reselectAfter(); }));
         ac.appendChild(mkbt('✨ 浄化','evo', !!cureOk, ()=>{ pushUndo(); doCure(sel); reselectAfter(); }));
         if(m.level===3){
           const fallenN=(state.fallen&&state.fallen[0]&&state.fallen[0].length)||0;
-          const revOk = canAttack(sel) && fallenN>0 && state.energy[0]>=REVIVE_COST && !!freeCastleCell(0);
+          const revOk = canAct && canHealMP(sel) && fallenN>0 && state.energy[0]>=REVIVE_COST && !!freeCastleCell(0);
           ac.appendChild(mkbt(`🌟 蘇生 気${REVIVE_COST}${fallenN?`(${fallenN}体)`:'(なし)'}`,'evo', !!revOk, ()=>{ pushUndo(); doRevive(sel); reselectAfter(); }));
         }
       }
@@ -11051,7 +11101,7 @@ function tryAssembleStart(){
 function serializeState(){
   return {
     phase:state.phase, turn:state.turn, cur:state.cur,
-    units:Object.values(state.units).map(u=>({uid:u.uid,owner:u.owner,mid:u.mid,hp:u.hp,maxhp:u.maxhp,r:u.r,c:u.c,moved:u.moved,acted:u.acted,poison:u.poison||0,burn:u.burn||0,freeze:u.freeze||0,para:u.para||0})),
+    units:Object.values(state.units).map(u=>({uid:u.uid,owner:u.owner,mid:u.mid,hp:u.hp,maxhp:u.maxhp,r:u.r,c:u.c,moved:u.moved,acted:u.acted,amp:(u.amp==null?MP_ATK_MAX:u.amp),hmp:(u.hmp==null?MP_HEAL_MAX:u.hmp),ampMax:atkMax(u),hmpMax:healMax(u),isBoss:!!u.isBoss,poison:u.poison||0,burn:u.burn||0,freeze:u.freeze||0,para:u.para||0})),
     energy:[state.energy[0],state.energy[1]],
     castleHP:{0:state.castleHP[0],1:state.castleHP[1]},
     flags:state.flags.map(f=>({r:f.r,c:f.c,owner:f.owner})),
@@ -11070,7 +11120,7 @@ function applyMirrorState(S){
   state.board=grid(()=>null); state.units={};
   for(const u of S.units){ const r=N-1-u.r,c=N-1-u.c,owner=1-u.owner;
     state.units[u.uid]={uid:u.uid,owner,mid:u.mid,hp:u.hp,maxhp:u.maxhp,r,c,moved:u.moved,acted:u.acted,evoLock:-1,
-      poison:u.poison||0,burn:u.burn||0,freeze:u.freeze||0,para:u.para||0};
+      amp:(u.amp==null?MP_ATK_MAX:u.amp),hmp:(u.hmp==null?MP_HEAL_MAX:u.hmp),ampMax:u.ampMax||MP_ATK_MAX,hmpMax:u.hmpMax||MP_HEAL_MAX,isBoss:!!u.isBoss,poison:u.poison||0,burn:u.burn||0,freeze:u.freeze||0,para:u.para||0};
     state.board[r][c]=u.uid; }
   uidSeq=Math.max(uidSeq,(S.uidSeq||0));
 }
