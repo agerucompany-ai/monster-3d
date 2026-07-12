@@ -95,7 +95,7 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
-    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 53 ・ MP(気力)導入版（この番号が古いなら画面を更新）</div>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 54 ・ 合体攻撃＆MP版（この番号が古いなら画面を更新）</div>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
       <button class="bt" id="btGacha" style="font-size:13px;padding:10px 13px;background:#8c2a6a">🎰 召喚</button>
@@ -4187,15 +4187,17 @@ function CASTLE_HP_NOW(){
 }
 const MAX_TURN = 40;   // HP増で戦闘が長いので大幅延長（城陥落/全滅で終わるのが基本）
 
-// 融合インデックス: "id1,id2"(昇順) -> 融合体id
+// 廃止モンスター(IDは既存セーブ維持のため残すが、図鑑/ガチャ/出撃/徘徊/融合生成から除外)。※assemble.pyのRETIREDと一致させること
+const RETIRED=new Set([40,41,42,184,278, 221]);   // 221=ライジン(キャラ廃止)
+// 融合インデックス: "id1,id2"(昇順) -> 融合体id（廃止モンスターは融合でも作れない）
 const FUSE_IDX = {};
-MONSTERS.forEach(m=>{ if(m.role==='fusion' && m.fusion_from && m.fusion_from.length===2){
+MONSTERS.forEach(m=>{ if(m.role==='fusion' && !RETIRED.has(m.id) && m.fusion_from && m.fusion_from.length===2){
   const k = [...m.fusion_from].sort((a,b)=>a-b).join(',');
   FUSE_IDX[k] = m.id;
 }});
 // 3体融合: 素材2体を重ね、残る1体が重ね先に隣接していると誕生
 const FUSE3 = [];
-MONSTERS.forEach(m=>{ if(m.role==='fusion' && m.fusion_from && m.fusion_from.length===3) FUSE3.push({mats:[...m.fusion_from], out:m.id}); });
+MONSTERS.forEach(m=>{ if(m.role==='fusion' && !RETIRED.has(m.id) && m.fusion_from && m.fusion_from.length===3) FUSE3.push({mats:[...m.fusion_from], out:m.id}); });
 function tripleRecipe(m1,m2){ if(m1===m2) return null; for(const f of FUSE3){ if(f.mats.includes(m1)&&f.mats.includes(m2)) return f; } return null; }
 function tripleThird(a,b){   // a,bユニットに対し、3体目素材が bの隣接 にいれば返す
   const f=tripleRecipe(a.mid,b.mid); if(!f) return null;
@@ -5157,7 +5159,6 @@ function renderPacks(){
     const p=GACHA_PACKS.find(x=>x.key===d.dataset.pk); if(!p) return;
     STORY.gpack=p.key; STORY.tut=STORY.tut||{}; STORY.tut['pk_'+p.key]=1; saveStory(); renderPacks(); }; });
 }
-const RETIRED=new Set([40,41,42,184,278]);   // 廃止(デザイン被り)。IDは既存セーブ維持のため残すが図鑑/ガチャ/出撃/徘徊から除外
 const GACHA_BAN=(()=>{ const s=new Set([244,245,246,247,267]); RETIRED.forEach(id=>s.add(id)); try{ CAMPAIGN.forEach(ch=>ch.enemy.forEach(e=>{ if(e.boss) s.add(e.mid); })); }catch(_){} return s; })();   // ボス系はガチャに出さない（撃破で仲間に）
 function packLineIds(pk){ const out=new Set();
   for(const b of (pk.lines||[])){ let c=b,g=0; while(c!=null&&g<6){ if(!GACHA_BAN.has(c)) out.add(c); c=MID[c]?MID[c].evolves_to:null; g++; } }
@@ -5910,6 +5911,48 @@ function bossSpecialTurn(u){
     if(applySpecialHit(u,pick)){ u.acted=true; return true; } return false; }
   return false;
 }
+// ===== 合体攻撃(COMBO): 特定の仲間が近くに揃うと放てる共同必殺技 =====
+// mids=参加3体 / within=互いに何マス以内に集まれば発動可 / rng=着弾範囲 / dmg=威力 / type=属性(弱点+20%) / label=技名
+const COMBOS=[
+  { mids:[84,247,248], within:3, rng:4, dmg:300, type:'光', label:'神々の裁き' },   // ラーガ+オシラント+オベリオン(エジプト神話トリオ)
+];
+// uが参加できる「発動可能な合体攻撃」を返す（3体が揃い・within内に集結・全員が未行動）
+function comboFor(u){
+  if(!u) return null;
+  for(const cb of COMBOS){
+    if(!cb.mids.includes(u.mid)) continue;
+    const members=cb.mids.map(id=>alive(u.owner).find(a=>a.mid===id));
+    if(members.some(m=>!m)) continue;                       // 3体揃っていない
+    let clustered=true;
+    for(let i=0;i<members.length&&clustered;i++) for(let j=i+1;j<members.length;j++){ if(cheby(members[i],members[j])>cb.within){ clustered=false; break; } }
+    if(!clustered) continue;                                // 互いにwithin内に集まっていない
+    if(members.some(m=>m.acted||m.dug>0)) continue;         // 全員が行動可能でないと撃てない
+    return {cb, members};
+  }
+  return null;
+}
+function comboFx(caster, members){
+  const gold=0xffe27a;
+  for(const m of members){ fxBeam(m.r,m.c,gold,{dur:560}); fxRing(m.r,m.c,gold,{max:1.6,dur:520});
+    if(m!==caster) fxProjectile(m.r,m.c,caster.r,caster.c,gold,null,0.2); }   // 各員から起点へ収束
+  fxPillar(caster.r,caster.c,gold); fxRing(caster.r,caster.c,gold,{max:4.4,dur:760,y:0.06}); fxBurst(caster.r,caster.c,gold,26,{up:2.2,gravity:0.5,dur:900,size:0.09});
+}
+// 合体攻撃を実行（caster=起点。着弾はcaster中心の範囲AOE。全員が行動終了＋casterが攻撃MP-1）
+function doCombo(u){
+  if(netGuestIntercept('combo',{uid:u.uid})) return false;
+  const r=comboFor(u); if(!r) return false;
+  const {cb, members}=r;
+  if(!canAtkMP(u)){ if(u.owner===0&&!ONLINE) toast('攻撃MPが切れて合体攻撃できない'); return false; }
+  comboFx(u, members);
+  const hit=applySpecialHit(u, {rng:cb.rng, mode:'all', type:cb.type, dmg:cb.dmg, label:cb.label});
+  if(!hit){ if(u.owner===0&&!ONLINE) toast(`合体攻撃「${cb.label}」は射程${cb.rng}に敵がいない`); return false; }
+  for(const m of members) m.acted=true;                    // 3体そろって全員行動終了
+  spendAtkMP(u);
+  if(u.owner===0) showBanner(`🔱 合体攻撃 ${cb.label}！`);
+  toast(`🔱 合体攻撃「${cb.label}」！ ${members.map(m=>mon(m).name).join('＋')} 射程${cb.rng}/${cb.dmg}`);
+  afterAction();
+  return true;
+}
 // killUnitはtrueで実際に消滅、falseで変身(生存)
 function killUnit(u){
   // 裏ボス: ラグナディオ(245)は倒れるとニドグラを喰らい完全体(267)へ変身(一度きり)
@@ -6232,6 +6275,8 @@ function aiOneUnit(u){
   const me=1; if(!state.units[u.uid]) return;
   // ボス専用攻撃(ニドグラ/ラグナディオ/完全体)を最優先で試す
   if(BOSS_SPECIALS[u.mid]){ if(bossSpecialTurn(u)){ return; } }
+  // 合体攻撃: トリオが揃い射程内に敵がいれば放つ
+  if(comboFor(u) && alive(1-u.owner).some(e=>e.dug<=0 && cheby(e,u)<=4)){ if(doCombo(u)) return; }
   // 光タイプ：手負いの味方がいれば回復、状態異常の味方がいれば浄化を優先
   if(uHasType(u,'光') && canAttack(u)){
     const wounded=healTargets(u).filter(a=>a.hp<a.maxhp*0.55);
@@ -7281,6 +7326,10 @@ function updateUI(){
       const atkOk = canAttack(sel) && (selAtks.length || (castleAdjacent(sel)&&canAttack(sel)));
       const outMP = !noMP(sel) && !sel.acted && !canAtkMP(sel);   // 攻撃MP切れ
       ac.appendChild(mkbt(`⚔️ 攻撃${sel.acted?'(済)':(outMP?'(MP切れ)':(noMP(sel)?'':`(残${atkLeft(sel)})`))}`,'go', !!atkOk, ()=>setMode('attack')));
+      // 合体攻撃: 対象トリオが近くに揃っていれば発動可
+      { const cr=comboFor(sel);
+        if(cr){ const cb=cr.cb; const okC=canAtkMP(sel);
+          ac.appendChild(mkbt(`🔱 合体攻撃「${cb.label}」(射程${cb.rng}・${cb.dmg})${okC?'':'(MP切れ)'}`,'fuse', !!okC, ()=>{ pushUndo(); doCombo(sel); reselectAfter(); })); } }
       // アイテム（オンライン以外は表示。盤上で拾った回復薬も使える）
       if(!ONLINE){
         if((STORY.items.heal||0)>0 && sel.hp<sel.maxhp)
@@ -11208,6 +11257,7 @@ function applyGuestIntent(it){
   if(it.act==='cure'){ if(uHasType(att,'光')&&canAttack(att)) doCure(att); return; }
   if(it.act==='dig'){ if(uHasType(att,'地')&&canAttack(att)&&!att.moved) doDig(att); return; }
   if(it.act==='revive'){ if(uHasType(att,'光')&&mon(att).level===3&&canAttack(att)) doRevive(att); return; }
+  if(it.act==='combo'){ if(comboFor(att)) doCombo(att); return; }
 }
 function resetOnline(){ ONLINE=false; IAMHOST=false; hostPlacedFlag=false; guestPlacement=null; prevLocalUnits=null; prevCastleHP=null; ROOMCODE=null; if(NET){ NET.close(); NET=null; } }
 
@@ -11250,6 +11300,8 @@ window.__game={
   _spawn(owner,mid,r,c){ const u=addUnit(owner,mid,r,c); return u?u.uid:null; },
   _ai(uid){ const u=state.units[uid]; if(u) aiOneUnit(u); return u?u.hp:null; },
   _special(uid){ const u=state.units[uid]; return u?bossSpecialTurn(u):null; },
+  comboFor(uid){ const u=state.units[uid]; const r=u?comboFor(u):null; return r?{label:r.cb.label,rng:r.cb.rng,dmg:r.cb.dmg,members:r.members.map(m=>m.uid)}:null; },
+  doCombo(uid){ const u=state.units[uid]; return u?doCombo(u):false; },
   _unit(uid){ const u=state.units[uid]; return u?{mid:u.mid,name:MID[u.mid].name,hp:u.hp,maxhp:u.maxhp,owner:u.owner}:null; },
   selUid(){ return sel?sel.uid:null; },
   selAtksDbg(){ return {mode:selMode, atks:selAtks?selAtks.map(e=>[e.r,e.c]):null, mv:selMove?selMove.n+'/'+selMove.range:null}; },
