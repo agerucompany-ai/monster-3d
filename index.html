@@ -95,7 +95,8 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
-    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 58 ・ 合体攻撃(攻撃力合計)版（この番号が古いなら画面を更新）</div>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 59 ・ 合体攻撃(攻撃力合計)版</div>
+    <button onclick="location.replace(location.pathname+'?v='+Date.now())" style="margin-top:4px;font-size:11px;color:#cfe0ff;background:#26324a;border:1px solid #3a4a66;border-radius:8px;padding:5px 12px;cursor:pointer">🔄 最新版に更新（表示が古い時はここをタップ）</button>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
       <button class="bt" id="btGacha" style="font-size:13px;padding:10px 13px;background:#8c2a6a">🎰 召喚</button>
@@ -11313,6 +11314,7 @@ window.__game={
   _ai(uid){ const u=state.units[uid]; if(u) aiOneUnit(u); return u?u.hp:null; },
   _special(uid){ const u=state.units[uid]; return u?bossSpecialTurn(u):null; },
   comboFor(uid){ const u=state.units[uid]; const r=u?comboFor(u):null; return r?{label:r.cb.label,rng:r.cb.rng,base:comboBaseAtk(r.members),dmgMin:comboBaseAtk(r.members)+COMBO_BONUS_MIN,dmgMax:comboBaseAtk(r.members)+COMBO_BONUS_MAX,members:r.members.map(m=>m.uid)}:null; },
+  midBossLeads(field,ch){ const n=midBossCount(ch); const out=[]; for(let i=0;i<Math.max(2,n);i++){ const t=midBossTeam(field,ch,i); const l=t.find(e=>e.boss)||t[0]; out.push(l?MID[l.mid].name:null); } return {field,ch,count:n,leads:out}; },
   doCombo(uid){ const u=state.units[uid]; return u?doCombo(u):false; },
   _unit(uid){ const u=state.units[uid]; return u?{mid:u.mid,name:MID[u.mid].name,hp:u.hp,maxhp:u.maxhp,owner:u.owner}:null; },
   selUid(){ return sel?sel.uid:null; },
