@@ -95,7 +95,7 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
-    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 67 ・ 章ボス18体3D化版</div>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 68 ・ 北欧最終決戦強化版</div>
     <button onclick="location.replace(location.pathname+'?v='+Date.now())" style="margin-top:4px;font-size:11px;color:#cfe0ff;background:#26324a;border:1px solid #3a4a66;border-radius:8px;padding:5px 12px;cursor:pointer">🔄 最新版に更新（表示が古い時はここをタップ）</button>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
@@ -4962,7 +4962,7 @@ function villagerTalk(n){
       {s:'245', t:'原初の混沌すら、我を完全には御せなんだ。境界の子よ、真の終末を見せてやろう。'},
       {s:'hero', t:'ケイオドラの後に、まだこんなのが……！ でも、ここまで来た僕らなら止められる。'},
       {s:'245', t:'ほざけ。灰も残さず焼き尽くす——さあ、世界最後の炎に飛び込め！'},
-    ], ()=>startFreeBattle('volcano', 245, true));
+    ], ()=>startFreeBattle('volcano', 245, true, true));
     return;
   }
   if(v.rival){
@@ -5972,7 +5972,7 @@ function killUnit(u){
   // 裏ボス: ラグナディオ(245)は倒れるとニドグラを喰らい完全体(267)へ変身(一度きり)
   if(u.mid===245 && u.owner===1 && typeof CAMP!=='undefined' && CAMP.free && CAMP.encMid===245 && !state._ragPerfect){
     state._ragPerfect=true; const nm=MID[267];
-    u.mid=267; u.maxhp=nm.hp; u.hp=nm.hp; u.atkX=1.15; u.isBoss=true; u.moved=false; u.acted=false;
+    u.mid=267; u.maxhp=u.hp=Math.round(nm.hp*3); u.atkX=1.5; u.isBoss=true; u.moved=false; u.acted=false;   // 真・ラグナディオ=終盤の巨大な壁(本体×3HP)
     if(sprites[u.uid]){ sprites[u.uid].mat.map=loadTex(267); sprites[u.uid].mat.needsUpdate=true; sprites[u.uid].curmid=267; }
     syncUnits(); showBanner('☠ 真・ラグナディオ、顕現！');
     toast('ニドグラを喰らい——真・ラグナディオが顕現！ 敵味方すべてを虚無へ還す！');
@@ -7787,7 +7787,25 @@ function autoPlace(){
   placeList.forEach((p,i)=>{ if(p.placed)return; if(si>=spots.length)return; const [r,c]=spots[si++]; const u=addPlayerUnit(p.mid,r,c); u._pl=i; p.placed=true; });
   placePick=null; syncUnits(); drawPlaceHL(); renderPlaceRow();
 }
+// 裏ボス「終末の獣ラグナディオ」戦＝歴代・北欧神話編ボス全員(+本体・眷属)を10体、レベル無視で強化配置
+const SUPERBOSS_NORSE=[
+  {mid:245,boss:true},   // 本体ラグナディオ(倒すと真ラグナディオ267へ変身)
+  {mid:130},{mid:262},{mid:246},{mid:30},{mid:141},{mid:260},{mid:261},  // 北欧編ボス: フェンガロ/スルヴァ/ニドグラ/ヨルムガル/ユグドラシア/フリムスルス/ヴァルグル
+  {mid:46},{mid:176},    // 眷属: フェンリル/ファフノ
+];
 function cpuPlace(){
+  if(CAMP.on && CAMP.free && CAMP.superBoss){
+    // 北欧神話の最終決戦: レベル/budget無視で10体を大幅強化して配置(クランプなし)
+    const cc=CASTLE[1];
+    const spots=castleArea(1).filter(([r,c])=>!unitAt(r,c))
+      .sort((a,b)=>(Math.abs(a[0]-cc.r)+Math.abs(a[1]-cc.c))-(Math.abs(b[0]-cc.r)+Math.abs(b[1]-cc.c)));
+    SUPERBOSS_NORSE.forEach((e,i)=>{ if(i>=spots.length) return; const [r,c]=spots[i]; const u=addUnit(1,e.mid,r,c);
+      u.isBoss=true;
+      if(e.boss){ u.maxhp=u.hp=Math.round(u.maxhp*2.4); u.atkX=1.4; }   // ラグナディオ本体=高HP(この後267へ変身し更に増える)
+      else { u.maxhp=u.hp=Math.round(u.maxhp*1.8); u.atkX=1.25; }        // 歴代北欧ボス達も強化
+    });
+    return;
+  }
   if(CAMP.on && CAMP.free){
     // フリーバトル: フィールド属性のランダム編成
     const cc=CASTLE[1];
@@ -10609,7 +10627,7 @@ function encounterPrompt(r){
   document.getElementById('encRun').onclick=doRun;
   ov.style.display='flex';
 }
-function startFreeBattle(fieldKey, encMid, rare){
+function startFreeBattle(fieldKey, encMid, rare, superBoss){
   if(!MONSTERS.some(m=>isSelectable(m)&&STORY.owned.includes(m.id))){
     toast('⚠ 出撃できる仲間がいない！ まずは物語で相棒を見つけよう');
     return;
@@ -10618,7 +10636,7 @@ function startFreeBattle(fieldKey, encMid, rare){
   vj.active=false; vj.x=0; vj.y=0;
   { const j=document.getElementById('joy'); if(j) j.style.display='none'; }
   const chRef=Math.min(STORY.clear+1, CAMPAIGN.length-1);
-  CAMP={on:true, ch:chRef, free:true, field:fieldKey, encMid, rare};
+  CAMP={on:true, ch:chRef, free:true, field:fieldKey, encMid, rare, superBoss:!!superBoss};
   seJingle('enc');
   if(rare) setTimeout(()=>toast('✨ レアモンスターだ！ 倒せば報酬3倍！'), 400);
   LEVEL_BUDGET=CAMPAIGN[chRef].budget;
@@ -11333,6 +11351,15 @@ window.__game={
   comboFor(uid){ const u=state.units[uid]; const r=u?comboFor(u):null; return r?{label:r.cb.label,rng:r.cb.rng,base:comboBaseAtk(r.members),dmgMin:comboBaseAtk(r.members)+COMBO_BONUS_MIN,dmgMax:comboBaseAtk(r.members)+COMBO_BONUS_MAX,members:r.members.map(m=>m.uid)}:null; },
   midBossLeads(field,ch){ const n=midBossCount(ch); const out=[]; for(let i=0;i<Math.max(2,n);i++){ const t=midBossTeam(field,ch,i); const l=t.find(e=>e.boss)||t[0]; out.push(l?MID[l.mid].name:null); } return {field,ch,count:n,leads:out}; },
   testFuse(mA,mB,axA,axB){ if(!state||state.phase!=='battle')return{err:'no battle'}; const k=[mA,mB].sort((x,y)=>x-y).join(','); const fid=FUSE_IDX[k]; if(fid==null)return{err:'no recipe'}; if(!STORY.owned.includes(fid))STORY.owned.push(fid); const a=addUnit(0,mA,5,3); a.atkX=axA; const b=addUnit(0,mB,5,4); b.atkX=axB; const fr=fusionResult(a,b); const dbg={fr,aAtkX:a.atkX,bAtkX:b.atkX}; tryFusion(a,b,5,4); dbg.aAtkXafter=a.atkX; const nu=Object.values(state.units).find(u=>u.mid===fid&&u.owner===0); const exp=1+(Math.pow(1.05,starOf(fid))-1)+0.5*((axA-1)+(axB-1)); const rax=(nu&&nu.atkX!=null)?nu.atkX:(nu?1:null); return {fid,name:MID[fid].name,inAtkX:[axA,axB],resultAtkX:rax!=null?+rax.toFixed(4):null,expectedAtkX:+exp.toFixed(4),baseAtk:MID[fid].atk,effAtk:rax!=null?Math.round(MID[fid].atk*rax):null,dbg,nuExists:!!nu}; },
+  superBossTest(){   // 裏ボス(北欧最終決戦)の編成・HP・変身を検証
+    state=newState(); state.phase='battle'; STORY.clear=25;
+    CAMP={on:true, free:true, superBoss:true, encMid:245, field:'volcano'};
+    try{ cpuPlace(); }catch(e){ return {err:String(e).slice(0,80)}; }
+    const es=Object.values(state.units).filter(u=>u.owner===1);
+    const lead=es.find(u=>u.mid===245); const lead245hp=lead?lead.maxhp:null;
+    if(lead){ lead.hp=0; killUnit(lead); }   // 変身テスト
+    const t=Object.values(state.units).find(u=>u.mid===267);
+    return {enemyN:es.length, names:es.map(u=>MID[u.mid].name), lead245hp, transformed:!!t, hp267:t?t.maxhp:null}; },
   storyEnemies(ch){   // 描画なしで state を用意し CAMP を対象章にして cpuPlace を実行、敵数だけ測る
     state=newState(); state.phase='battle'; LEVEL_BUDGET=CAMPAIGN[ch].budget;
     STORY.clear=Math.max(STORY.clear, ch);
