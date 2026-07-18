@@ -95,7 +95,7 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
-    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 68 ・ 北欧最終決戦強化版</div>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 69 ・ 終盤敵を強い10体に版</div>
     <button onclick="location.replace(location.pathname+'?v='+Date.now())" style="margin-top:4px;font-size:11px;color:#cfe0ff;background:#26324a;border:1px solid #3a4a66;border-radius:8px;padding:5px 12px;cursor:pointer">🔄 最新版に更新（表示が古い時はここをタップ）</button>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
@@ -7841,18 +7841,21 @@ function cpuPlace(){
     { if(fld){ for(let idx=0; idx<midBossCount(CAMP.ch); idx++){ const lead=midBossTeam(fld,CAMP.ch,idx).find(e=>e.boss);
         if(lead && !team.some(e=>e.mid===lead.mid)) team.push({mid:lead.mid}); } } }
     // 自軍のレベル上限(budget)ぶん、敵の数も揃える。終盤ほど自軍が増えるので敵も同様に増やす。
-    // 追加分は属性の合うLv2の雑兵（数を合わせて盤面を埋める・ボス/中ボスの強さは据え置き）
+    // 追加分は属性の合うLv3/融合の強敵（数だけでなく強さも揃える）＋HPバフ。
+    const fillX=Math.min(1.5, 1.1+0.03*CAMP.ch);   // フィラーのHP強化(章が進むほど。上限1.5)
     { const budget=CAMPAIGN[CAMP.ch].budget||team.length;
       const targetN=(budget>=8)?Math.min(spots.length, budget):team.length;   // 終盤(budget8+)のみ敵数を自軍上限に合わせて増やす
       const types=FIELD_TYPES[fld]||FIELD_TYPES[CAMP.field]||['闇'];
       const inTy=m=>types.includes(m.type)||(m.type2&&types.includes(m.type2));
-      const fillPool=MONSTERS.filter(m=>m.role!=='fusion' && !GACHA_BAN.has(m.id) && !RETIRED.has(m.id) && inTy(m) && m.level===2);
+      let fillPool=MONSTERS.filter(m=>!GACHA_BAN.has(m.id) && !RETIRED.has(m.id) && inTy(m) && (m.level===3||m.role==='fusion'));
+      if(!fillPool.length) fillPool=MONSTERS.filter(m=>!GACHA_BAN.has(m.id) && !RETIRED.has(m.id) && inTy(m) && m.level>=2);
       let guard=0;
       while(team.length<targetN && fillPool.length && guard++<50){ team.push({mid:fillPool[(Math.random()*fillPool.length)|0].id, fill:true}); }
     }
     team.sort((a,b)=>(b.boss?1:0)-(a.boss?1:0));
     team.forEach((e,i)=>{ if(i<spots.length){ const [r,c]=spots[i]; const u=addUnit(1,e.mid,r,c);
-      if(e.boss){ u.isBoss=true; u.maxhp=u.hp=Math.round(u.maxhp*hpX); u.atkX=atX; } } });
+      if(e.boss){ u.isBoss=true; u.maxhp=u.hp=Math.round(u.maxhp*hpX); u.atkX=atX; }
+      else if(e.fill){ u.maxhp=u.hp=Math.round(u.maxhp*fillX); u.atkX=1.1; } } });   // フィラーもLv3/融合＋HP強化で強敵に
     return;
   }
   const team=pickCpuTeam();
@@ -11366,7 +11369,7 @@ window.__game={
     CAMP={on:true, ch, free:false, field:fieldOfChapter(ch)};
     try{ cpuPlace(); }catch(e){ return {err:String(e).slice(0,80)}; }
     const es=Object.values(state.units).filter(u=>u.owner===1);
-    return {ch, budget:CAMPAIGN[ch]&&CAMPAIGN[ch].budget, enemyN:es.length, boss:es.filter(u=>u.isBoss).length, names:es.map(u=>MID[u.mid].name)}; },
+    return {ch, budget:CAMPAIGN[ch]&&CAMPAIGN[ch].budget, enemyN:es.length, boss:es.filter(u=>u.isBoss).length, lv3fus:es.filter(u=>MID[u.mid].level===3||MID[u.mid].role==='fusion').length, avgHp:Math.round(es.reduce((a,u)=>a+u.maxhp,0)/Math.max(1,es.length)), names:es.map(u=>MID[u.mid].name+'L'+MID[u.mid].level)}; },
   reach(){ const cols=vColliders, HR=0.34, R2=13.6, step=0.4;   // 現フィールドで スポーン→ボス/中ボス/次の門 が歩いて到達可能か
     const blocked=(x,z)=>{ if(x*x+z*z>R2*R2)return true; for(const c of cols){ const dx=x-c.x,dz=z-c.z; if(dx*dx+dz*dz<(c.r+HR)*(c.r+HR))return true; } return false; };
     const hero=(VG&&VG.hero)?[VG.hero.x,VG.hero.z]:[0,9];
