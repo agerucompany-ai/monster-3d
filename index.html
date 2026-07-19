@@ -95,7 +95,7 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
-    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 69 ・ 終盤敵を強い10体に版</div>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 70 ・ 序盤入手性修正版</div>
     <button onclick="location.replace(location.pathname+'?v='+Date.now())" style="margin-top:4px;font-size:11px;color:#cfe0ff;background:#26324a;border:1px solid #3a4a66;border-radius:8px;padding:5px 12px;cursor:pointer">🔄 最新版に更新（表示が古い時はここをタップ）</button>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
@@ -5113,7 +5113,9 @@ function packDropInfo(pk){
     return {ids, note:'この地の対抗タイプ（'+ty.join('・')+'）が中心'}; }
   if(pk.fusionGacha){ const ids=MONSTERS.filter(m=>m.role==='fusion' && !GACHA_BAN.has(m.id)).map(m=>m.id);
     return {ids, note:'融合体が約55%で大量に出る特別枠（SR/Lv3=25%・R/Lv2=20%）。超融合体もここから'}; }
-  if(pk.lines) return {ids:[...packLineIds(pk)]};
+  if(pk.lines){ const set=packLineIds(pk); const ty=pk.types||[];   // 指定系統＋そのタイプの全モンスターを一覧表示(取りこぼし防止)
+    const ids=MONSTERS.filter(m=>!GACHA_BAN.has(m.id) && (set.has(m.id) || ty.includes(m.type) || (m.type2&&ty.includes(m.type2)))).map(m=>m.id);
+    return {ids, note:'指定系統＋'+ty.join('・')+'タイプが対象'}; }
   // 全タイプ枠(めぐりあいの祭壇)＝ボス/廃止以外の全モンスターが対象。一覧も全部見せる
   { const ids=MONSTERS.filter(m=>!GACHA_BAN.has(m.id)).map(m=>m.id);
     return {ids, note:`全タイプ対象・${ids.length}種すべて排出（縁ガチャで手持ちの進化先を優先）。ボスは撃破で仲間に`}; }
@@ -5162,7 +5164,12 @@ function renderPacks(){
     const p=GACHA_PACKS.find(x=>x.key===d.dataset.pk); if(!p) return;
     STORY.gpack=p.key; STORY.tut=STORY.tut||{}; STORY.tut['pk_'+p.key]=1; saveStory(); renderPacks(); }; });
 }
-const GACHA_BAN=(()=>{ const s=new Set([244,245,246,247,267]); RETIRED.forEach(id=>s.add(id)); try{ CAMPAIGN.forEach(ch=>ch.enemy.forEach(e=>{ if(e.boss) s.add(e.mid); })); }catch(_){} return s; })();   // ボス系はガチャに出さない（撃破で仲間に）
+const GACHA_BAN=(()=>{ const s=new Set([244,245,246,247,267]); RETIRED.forEach(id=>s.add(id)); try{ CAMPAIGN.forEach(ch=>ch.enemy.forEach(e=>{ if(e.boss) s.add(e.mid); })); }catch(_){}
+  // 序盤の低レベルボス(実体は通常モンスター)で融合素材にもなるものはガチャ解禁=撃破入手に加えて集められる
+  [81,185].forEach(id=>s.delete(id));
+  return s; })();   // ボス系はガチャに出さない（撃破で仲間に）。ただし↑の序盤ボスは例外
+// 章ボスの集合(ガチャ解禁したものも含む)=野生/残影に出さない判定用
+const BOSS_IDS=(()=>{ const s=new Set([245,267]); try{ CAMPAIGN.forEach(ch=>ch.enemy.forEach(e=>{ if(e.boss) s.add(e.mid); })); }catch(_){} return s; })();
 function packLineIds(pk){ const out=new Set();
   for(const b of (pk.lines||[])){ let c=b,g=0; while(c!=null&&g<6){ if(!GACHA_BAN.has(c)) out.add(c); c=MID[c]?MID[c].evolves_to:null; g++; } }
   for(const f of (pk.fusions||[])) if(!GACHA_BAN.has(f)) out.add(f);
@@ -5180,7 +5187,8 @@ function gachaPools(){
   if(pk.starterPack){ const fam=starterFamilyIds(); fit=m=>fam.has(m.id); }   // 相棒の系譜=手持ちラインのみ
   else if(pk.fieldMap){ const ex=fieldBossLineIds(pk.fieldMap); const ty=pk.types;
     fit=m=> ex.has(m.id) || ty.includes(m.type) || (m.type2&&ty.includes(m.type2)); }   // マップ専用=対抗タイプ+ボス素材
-  else if(pk.lines){ const set=packLineIds(pk); fit=m=>set.has(m.id); }   // 厳選シリーズ=指定系統+融合のみ
+  else if(pk.lines){ const set=packLineIds(pk); const ty=pk.types;   // 厳選シリーズ=指定系統+融合 に加え、そのタイプの全モンスターも対象(取りこぼし防止)
+    fit=m=> set.has(m.id) || (ty && (ty.includes(m.type)||(m.type2&&ty.includes(m.type2)))); }
   else { const ty=pk.types; fit=m=> !ty || ty.includes(m.type) || (m.type2&&ty.includes(m.type2)); }
   const pn=[],pr=[],ps=[],px=[], fn=[],fr=[],fs=[],fx=[];
   for(const m of MONSTERS){
@@ -9715,9 +9723,9 @@ function vFieldCommon(portalColor, backLabelY){
       }
     }
   } else {
-  // 第1〜5章(と残影モード): 従来の野生徘徊
-  const ghostIds=[254,84,262,204,153,46,72,201].filter(id=>MID[id]&&IMG[String(id)]);
-  const rlist=(FIELD_ROAM[V_MAP]||[]).filter(id=>!RETIRED.has(id));
+  // 第1〜5章(と残影モード): 従来の野生徘徊。章ボスは野生に出さない(撃破入手の価値を守る)
+  const ghostIds=[262,204,153,46,72,201,260,30].filter(id=>MID[id]&&IMG[String(id)]);   // 残影=北欧/終盤寄りに(ラーガ84等の場違いを除去)
+  const rlist=(FIELD_ROAM[V_MAP]||[]).filter(id=>!RETIRED.has(id) && !BOSS_IDS.has(id));   // ボス(セイレン111等)を野生から除外
   const rpool0=rlist ? rlist.map(id=>MID[id]).filter(Boolean)
                      : MONSTERS.filter(m=>m.role!=='fusion' && types.includes(m.type) && m.level<=2);
   const rpool=ghostMode ? ghostIds.map(id=>MID[id]) : rpool0;
