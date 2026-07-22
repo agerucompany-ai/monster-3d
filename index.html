@@ -95,7 +95,7 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
-    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 70 ・ 序盤入手性修正版</div>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 71 ・ ピラミッドにボス移設版</div>
     <button onclick="location.replace(location.pathname+'?v='+Date.now())" style="margin-top:4px;font-size:11px;color:#cfe0ff;background:#26324a;border:1px solid #3a4a66;border-radius:8px;padding:5px 12px;cursor:pointer">🔄 最新版に更新（表示が古い時はここをタップ）</button>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
@@ -8209,7 +8209,7 @@ function vResolve(nx,nz){
 }
 let V_MAP='village';   // 'village' | 'forest' | ...
 let V_SPAWN=null;      // 次のマップ構築時の主人公スポーン位置（門から入った側に出る）
-const WORLD_CHAIN=['village','euro','road','castle','lake','alps','plain','forest','port','swamp','mountain','under','gate','tomb','canyon','nightriver','throne','sunpeak','snow','ironforest','sea','tree','wasteland','volcano','roots','void'];   // 村→エーレア→サディーム→ニヴル→ムスペルヘイム
+const WORLD_CHAIN=['village','euro','road','castle','lake','alps','plain','forest','port','swamp','mountain','under','gate','pyramid','canyon','nightriver','throne','sunpeak','snow','ironforest','sea','tree','wasteland','volcano','roots','void'];   // 村→エーレア→サディーム→ニヴル→ムスペルヘイム
 function vNextUnlocked(){ const i=WORLD_CHAIN.indexOf(V_MAP); const nxt=WORLD_CHAIN[i+1]; if(!nxt) return false;
   const eff=window._DEBUG?99:STORY.clear; return FIELD_INFO[nxt].need<=eff+1; }
 const V_NPC_VILLAGE=[
@@ -8287,7 +8287,6 @@ const V_NPC_SNOW=[
 ];
 const V_NPC_UNDER=[
  {key:'altar', x:-6.2,z:2.0,   label:'🎰 召喚の祭壇'},
- {key:'warp',  to:'pyramid', x:-7.6,z:-2.2, label:'🔺 大ピラミッドへ入る'},
  {key:'warp',  to:'shrine',  x:-4.5,z:-6.4, label:'🕯 地下祭殿へ降りる'},
  {key:'warp',  to:'suntemple', x:7.0,z:-4.5, label:'☀ 太陽神殿の頂へ'},
  {key:'chest', x:6.0, z:-1.4,  label:'💰 たからばこ'},
@@ -8307,8 +8306,9 @@ const V_NPC_THRONE=[
 const V_NPC_SUNPEAK=[
  {key:'chest',x:-6,z:1.5,label:'💰 たからばこ'},{key:'back',x:0,z:10.6,label:'👑 冥王の玉座へ'},{key:'next',x:2.8,z:-9.4,label:'🏔 ニヴルの雪原へ'}];
 const V_NPC_PYRAMID=[
- {key:'warp', to:'under',  x:0,   z:10.2, label:'🚪 冥所へ戻る'},
- {key:'warp', to:'shrine', x:0,   z:-8.4, label:'⬇ さらに地下へ（地下祭殿）'},
+ {key:'back', x:0,   z:10.6, label:'🦁 スフィンクスの門へ'},   // 章チェーン: 前の地へ
+ {key:'next', x:2.8, z:-9.4, label:'🗿 巨神像の峡谷へ'},        // 章チェーン: 次の地へ(ボス撃破で解禁)
+ {key:'warp', to:'shrine', x:-6.2, z:-8.4, label:'⬇ 地下祭殿へ（探索）'},
  {key:'chest',x:5.6, z:-2.0, label:'💰 副葬品の箱'},
 ];
 const V_NPC_SHRINE=[
@@ -9272,7 +9272,7 @@ function elderTalk(){
 }
 // ======================= 章ボスのフィールド配置 =======================
 // 各フィールドで「次に挑む章」のボスが待ち構える。接触で会話→挑戦確認→開戦
-const FIELD_CHAPTERS={euro:[1], road:[2], castle:[3], lake:[4], alps:[5], plain:[6], forest:[7], port:[8], swamp:[9], mountain:[10], under:[11], gate:[12], tomb:[13], canyon:[14], nightriver:[15], throne:[16], sunpeak:[17], snow:[18], ironforest:[19], sea:[20], tree:[21], wasteland:[22], volcano:[23], roots:[24], void:[25]};
+const FIELD_CHAPTERS={euro:[1], road:[2], castle:[3], lake:[4], alps:[5], plain:[6], forest:[7], port:[8], swamp:[9], mountain:[10], under:[11], gate:[12], pyramid:[13], canyon:[14], nightriver:[15], throne:[16], sunpeak:[17], snow:[18], ironforest:[19], sea:[20], tree:[21], wasteland:[22], volcano:[23], roots:[24], void:[25]};
 const BOSS_POS={euro:{x:-3.2,z:-4.5}, road:{x:-3.2,z:-4.5}, castle:{x:0,z:-6.8}, lake:{x:-3.5,z:-5.0}, alps:{x:-3.0,z:-5.5}, plain:{x:-3.2,z:-4.5}, forest:{x:-3.2,z:-3.5}, port:{x:-3.5,z:-5.0}, swamp:{x:-3.5,z:-5.0}, mountain:{x:-3.5,z:-5.5}, snow:{x:-3.5,z:-5.0}, under:{x:-3.5,z:-5.0}, gate:{x:-3.2,z:-5.0}, tomb:{x:-3.2,z:-5.0}, canyon:{x:-3.2,z:-5.0}, nightriver:{x:-3.2,z:-5.0}, throne:{x:-3.2,z:-5.0}, sunpeak:{x:-3.2,z:-5.0}, tree:{x:-3.5,z:-5.0}, pyramid:{x:-3.2,z:-5.5}, suntemple:{x:-3.2,z:-5.5}, volcano:{x:-2.6,z:-5.6}, ironforest:{x:-3.2,z:-5.0}, sea:{x:-3.2,z:-5.0}, wasteland:{x:-3.2,z:-5.0}, roots:{x:-3.2,z:-5.0}, void:{x:-3.2,z:-5.0}};
 const BOSS_TALK={
  1:[{s:'185',t:'……ぷにゅ。ここは、ぼくの、はらっぱ……とおさない、ぞ……'},
@@ -10033,7 +10033,9 @@ function buildPyramid(){   // 大ピラミッド内部: 黄金の玄室
   floor.rotation.x=-Math.PI/2; floor.userData.walk=true; villageGroup.add(floor); villageWalk.push(floor);
   // 周囲の壁(南中央だけ開口=入口)
   const H=4.2, half=11;
-  const addWall=(x,z,w,d)=>{ const wl=new THREE.Mesh(new THREE.BoxGeometry(w,H,d), wallM); wl.position.set(x,H/2,z); villageGroup.add(wl); vCol(x,z,Math.max(w,d)/2); };
+  const addWall=(x,z,w,d)=>{ const wl=new THREE.Mesh(new THREE.BoxGeometry(w,H,d), wallM); wl.position.set(x,H/2,z); villageGroup.add(wl);
+    const n=Math.max(1,Math.round(Math.max(w,d)/1.05));   // 壁は薄い線(小円の列)＝内部を塞がない
+    for(let i=0;i<n;i++){ const f=n===1?0:(i/(n-1)-0.5); vCol(x+(w>=d?f*w:0), z+(d>w?f*d:0), 0.6); } };
   addWall(0,-half,22,1.0); addWall(-half,0,1.0,22); addWall(half,0,1.0,22);
   addWall(-7,half,8,1.0); addWall(7,half,8,1.0);
   // 傾いた内壁(ピラミッドらしい四角錐の稜線)
@@ -10075,7 +10077,9 @@ function buildShrine(){   // 地下祭殿: アヌビドの黒祭壇と冥き水
   const floor=new THREE.Mesh(new THREE.PlaneGeometry(23,23), new THREE.MeshLambertMaterial({map:vPixTex(['#3a3742','#332f39','#423e4a','#2c2933'],12)}));
   floor.rotation.x=-Math.PI/2; floor.userData.walk=true; villageGroup.add(floor); villageWalk.push(floor);
   const H=3.8, half=11;
-  const addWall=(x,z,w,d)=>{ const wl=new THREE.Mesh(new THREE.BoxGeometry(w,H,d), wallM); wl.position.set(x,H/2,z); villageGroup.add(wl); vCol(x,z,Math.max(w,d)/2); };
+  const addWall=(x,z,w,d)=>{ const wl=new THREE.Mesh(new THREE.BoxGeometry(w,H,d), wallM); wl.position.set(x,H/2,z); villageGroup.add(wl);
+    const n=Math.max(1,Math.round(Math.max(w,d)/1.05));   // 壁は薄い線(小円の列)＝内部を塞がない
+    for(let i=0;i<n;i++){ const f=n===1?0:(i/(n-1)-0.5); vCol(x+(w>=d?f*w:0), z+(d>w?f*d:0), 0.6); } };
   addWall(0,-half,22,1.0); addWall(-half,0,1.0,22); addWall(half,0,1.0,22);
   addWall(-7,half,8,1.0); addWall(7,half,8,1.0);
   // 冥き水路(中央を横切る夜の川)
@@ -10119,7 +10123,9 @@ function buildSubMap(cfg){
   const floor=new THREE.Mesh(new THREE.PlaneGeometry(23,23), new THREE.MeshLambertMaterial({map:vPixTex(cfg.floor,12)}));
   floor.rotation.x=-Math.PI/2; floor.userData.walk=true; villageGroup.add(floor); villageWalk.push(floor);
   const H=cfg.wallH||4.0, half=11;
-  const addWall=(x,z,w,d)=>{ const wl=new THREE.Mesh(new THREE.BoxGeometry(w,H,d), wallM); wl.position.set(x,H/2,z); villageGroup.add(wl); vCol(x,z,Math.max(w,d)/2); };
+  const addWall=(x,z,w,d)=>{ const wl=new THREE.Mesh(new THREE.BoxGeometry(w,H,d), wallM); wl.position.set(x,H/2,z); villageGroup.add(wl);
+    const n=Math.max(1,Math.round(Math.max(w,d)/1.05));   // 壁は薄い線(小円の列)＝内部を塞がない
+    for(let i=0;i<n;i++){ const f=n===1?0:(i/(n-1)-0.5); vCol(x+(w>=d?f*w:0), z+(d>w?f*d:0), 0.6); } };
   addWall(0,-half,22,1.0); addWall(-half,0,1.0,22); addWall(half,0,1.0,22); addWall(-7,half,8,1.0); addWall(7,half,8,1.0);
   for(const p of [[-half+1.2,-4],[half-1.2,-4],[-half+1.2,4],[half-1.2,4],[-4,-half+1.2],[4,-half+1.2]]){
     const br=new THREE.Mesh(new THREE.CylinderGeometry(0.24,0.32,0.5,8), wallM); br.position.set(p[0],0.26,p[1]); villageGroup.add(br); vCol(p[0],p[1],0.3);
