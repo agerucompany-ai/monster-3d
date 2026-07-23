@@ -95,7 +95,7 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
-    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 71 ・ ピラミッドにボス移設版</div>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 72 ・ 全域ボスをサブマップへ版</div>
     <button onclick="location.replace(location.pathname+'?v='+Date.now())" style="margin-top:4px;font-size:11px;color:#cfe0ff;background:#26324a;border:1px solid #3a4a66;border-radius:8px;padding:5px 12px;cursor:pointer">🔄 最新版に更新（表示が古い時はここをタップ）</button>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
@@ -8209,7 +8209,7 @@ function vResolve(nx,nz){
 }
 let V_MAP='village';   // 'village' | 'forest' | ...
 let V_SPAWN=null;      // 次のマップ構築時の主人公スポーン位置（門から入った側に出る）
-const WORLD_CHAIN=['village','euro','road','castle','lake','alps','plain','forest','port','swamp','mountain','under','gate','pyramid','canyon','nightriver','throne','sunpeak','snow','ironforest','sea','tree','wasteland','volcano','roots','void'];   // 村→エーレア→サディーム→ニヴル→ムスペルヘイム
+const WORLD_CHAIN=['village','euro','road','castle','lake','alps','cave','forest','port','swamp','mountain','under','gate','pyramid','canyon','nightriver','throne','suntemple','snow','ironwood','sea','tree','wasteland','surt','abyss','chaos'];   // 村→エーレア→サディーム→ニヴル→ムスペルヘイム
 function vNextUnlocked(){ const i=WORLD_CHAIN.indexOf(V_MAP); const nxt=WORLD_CHAIN[i+1]; if(!nxt) return false;
   const eff=window._DEBUG?99:STORY.clear; return FIELD_INFO[nxt].need<=eff+1; }
 const V_NPC_VILLAGE=[
@@ -8253,7 +8253,6 @@ const V_NPC_PLAIN=[
  {key:'next',  x:2.8, z:-9.4,  label:'🌲 英雄の樹海へ'},
 ];
 const V_NPC_FOREST=[
- {key:'warp', to:'cave', x:6.8,z:-4.5, label:'🦁 ネメアの洞窟へ'},
  {key:'altar', x:-6.4,z:1.5,   label:'🎰 召喚の祭壇'},
  {key:'chest', x:5.6, z:1.2,   label:'💰 たからばこ'},
  {key:'back',  x:0,   z:10.6,  label:'🏛 ネメアの平原へ'},
@@ -8278,7 +8277,6 @@ const V_NPC_MTN=[
  {key:'next',  x:-2.8,z:-9.4,  label:'🏜 王家の冥所へ'},
 ];
 const V_NPC_SNOW=[
- {key:'warp', to:'ironwood', x:-6.2,z:-3.5, label:'🐺 鉄の森へ'},
  {key:'warp', to:'valhalla', x:6.0,z:-4.5, label:'⚔ 戦士の館ヴァルハラへ'},
  {key:'altar', x:6.0, z:1.5,   label:'🎰 召喚の祭壇'},
  {key:'chest', x:-5.8,z:3.0,   label:'💰 たからばこ'},
@@ -8288,7 +8286,6 @@ const V_NPC_SNOW=[
 const V_NPC_UNDER=[
  {key:'altar', x:-6.2,z:2.0,   label:'🎰 召喚の祭壇'},
  {key:'warp',  to:'shrine',  x:-4.5,z:-6.4, label:'🕯 地下祭殿へ降りる'},
- {key:'warp',  to:'suntemple', x:7.0,z:-4.5, label:'☀ 太陽神殿の頂へ'},
  {key:'chest', x:6.0, z:-1.4,  label:'💰 たからばこ'},
  {key:'back',  x:0,   z:10.6,  label:'⛰ 神々の山道へ'},
  {key:'next',  x:2.8, z:-9.4,  label:'🦁 スフィンクスの門へ'},
@@ -8324,7 +8321,6 @@ const V_NPC_VOLC=[
  {key:'next',  x:2.8, z:-9.4,  label:'🕳 根の奈落へ'},
 ];
 const V_NPC_TREE=[
- {key:'warp', to:'abyss', x:6.2,z:1.0, label:'🕳 根の奈落へ'},
  {key:'chest', x:-6.0,z:1.0,   label:'💰 たからばこ'},
  {key:'back',  x:0,   z:10.6,  label:'🌊 世界を巡る大海へ'},
  {key:'next',  x:2.8, z:-9.4,  label:'⚔ ヴィグリーズの荒野へ'},
@@ -8335,16 +8331,16 @@ const V_NPC_WASTELAND=[{key:'back',x:0,z:10.6,label:'🌳 世界樹へ'},{key:'n
 const V_NPC_ROOTS=[{key:'back',x:0,z:10.6,label:'🌋 ムスペルヘイムへ'},{key:'next',x:2.8,z:-9.4,label:'🌌 原初の混沌へ'},{key:'chest',x:-6,z:1.5,label:'💰 たからばこ'}];
 const V_NPC_VOID=[{key:'back',x:0,z:10.6,label:'🕳 根の奈落へ'},{key:'altar',x:-6.2,z:2,label:'🎰 召喚の祭壇'}];
 const V_NPC_SUB={
- cave:    [{key:'warp',to:'forest',  x:0,z:10.2,label:'🚪 樹海へ戻る'},{key:'chest',x:5.5,z:-2,label:'💰 獅子の宝物'}],
+ cave:    [{key:'back',x:0,z:10.6,label:'❄ 白銀の霊峰へ'},{key:'next',x:2.8,z:-9.4,label:'🌲 英雄の樹海へ'},{key:'chest',x:5.5,z:-2,label:'💰 獅子の宝物'}],
  laby:    [{key:'warp',to:'port',    x:0,z:10.2,label:'🚪 港へ戻る'},  {key:'chest',x:-5.5,z:-2,label:'💰 迷宮の秘宝'}],
  petri:   [{key:'warp',to:'mountain',x:0,z:10.2,label:'🚪 山道へ戻る'},{key:'chest',x:5.5,z:-2,label:'💰 石化の宝'}],
- ironwood:[{key:'warp',to:'snow',    x:0,z:10.2,label:'🚪 雪原へ戻る'},{key:'chest',x:-5.5,z:-2,label:'💰 狼の遺物'}],
- abyss:   [{key:'warp',to:'tree',    x:0,z:10.2,label:'🚪 世界樹へ戻る'},{key:'chest',x:5.5,z:-2,label:'💰 奈落の財宝'}],
- chaos:   [{key:'warp',to:'volcano', x:0,z:10.2,label:'🚪 火山へ戻る'},{key:'chest',x:-5.5,z:-2,label:'💰 混沌の欠片'}],
+ ironwood:[{key:'back',x:0,z:10.6,label:'🏔 ニヴルの雪原へ'},{key:'next',x:2.8,z:-9.4,label:'🌊 大海へ'},{key:'chest',x:-5.5,z:-2,label:'💰 狼の遺物'}],
+ abyss:   [{key:'back',x:0,z:10.6,label:'🌋 ムスペルヘイムへ'},{key:'next',x:2.8,z:-9.4,label:'🌌 原初の混沌へ'},{key:'chest',x:5.5,z:-2,label:'💰 奈落の財宝'}],
+ chaos:   [{key:'back',x:0,z:10.6,label:'🕳 根の奈落へ'},{key:'chest',x:-5.5,z:-2,label:'💰 混沌の欠片'}],
  olympus:  [{key:'warp',to:'mountain',x:0,z:10.2,label:'🚪 山道へ戻る'},{key:'chest',x:5.5,z:-2,label:'💰 神々の供物'}],
  valhalla: [{key:'warp',to:'snow',    x:0,z:10.2,label:'🚪 雪原へ戻る'},{key:'chest',x:-5.5,z:-2,label:'💰 英霊の酒杯'}],
- suntemple:[{key:'warp',to:'under',   x:0,z:10.2,label:'🚪 冥所へ戻る'},{key:'chest',x:5.5,z:-2,label:'💰 太陽の秘宝'}],
- surt:     [{key:'warp',to:'volcano', x:0,z:10.2,label:'🚪 火山へ戻る'},{key:'chest',x:-5.5,z:-2,label:'💰 巨神の遺宝'}],
+ suntemple:[{key:'back',x:0,z:10.6,label:'👑 冥王の玉座へ'},{key:'next',x:2.8,z:-9.4,label:'🏔 ニヴルの雪原へ'},{key:'chest',x:5.5,z:-2,label:'💰 太陽の秘宝'}],
+ surt:     [{key:'back',x:0,z:10.6,label:'⚔ ヴィグリーズの荒野へ'},{key:'next',x:2.8,z:-9.4,label:'🕳 根の奈落へ'},{key:'chest',x:-5.5,z:-2,label:'💰 巨神の遺宝'}],
 };
 function V_NPC_CUR(){ if(V_NPC_SUB[V_MAP]) return V_NPC_SUB[V_MAP]; return V_MAP==='euro'?V_NPC_EURO : V_MAP==='road'?V_NPC_ROAD : V_MAP==='plain'?V_NPC_PLAIN : V_MAP==='swamp'?V_NPC_SWAMP : V_MAP==='castle'?V_NPC_CASTLE : V_MAP==='lake'?V_NPC_LAKE : V_MAP==='alps'?V_NPC_ALPS : V_MAP==='forest'?V_NPC_FOREST : V_MAP==='port'?V_NPC_PORT : V_MAP==='mountain'?V_NPC_MTN
   : V_MAP==='ironforest'?V_NPC_IRONFOREST : V_MAP==='sea'?V_NPC_SEA : V_MAP==='wasteland'?V_NPC_WASTELAND : V_MAP==='roots'?V_NPC_ROOTS : V_MAP==='void'?V_NPC_VOID : V_MAP==='snow'?V_NPC_SNOW : V_MAP==='gate'?V_NPC_GATE : V_MAP==='tomb'?V_NPC_TOMB : V_MAP==='canyon'?V_NPC_CANYON : V_MAP==='nightriver'?V_NPC_NIGHTRIVER : V_MAP==='throne'?V_NPC_THRONE : V_MAP==='sunpeak'?V_NPC_SUNPEAK : V_MAP==='under'?V_NPC_UNDER : V_MAP==='pyramid'?V_NPC_PYRAMID : V_MAP==='shrine'?V_NPC_SHRINE : V_MAP==='tree'?V_NPC_TREE : V_MAP==='volcano'?V_NPC_VOLC : V_NPC_VILLAGE; }
@@ -9272,8 +9268,8 @@ function elderTalk(){
 }
 // ======================= 章ボスのフィールド配置 =======================
 // 各フィールドで「次に挑む章」のボスが待ち構える。接触で会話→挑戦確認→開戦
-const FIELD_CHAPTERS={euro:[1], road:[2], castle:[3], lake:[4], alps:[5], plain:[6], forest:[7], port:[8], swamp:[9], mountain:[10], under:[11], gate:[12], pyramid:[13], canyon:[14], nightriver:[15], throne:[16], sunpeak:[17], snow:[18], ironforest:[19], sea:[20], tree:[21], wasteland:[22], volcano:[23], roots:[24], void:[25]};
-const BOSS_POS={euro:{x:-3.2,z:-4.5}, road:{x:-3.2,z:-4.5}, castle:{x:0,z:-6.8}, lake:{x:-3.5,z:-5.0}, alps:{x:-3.0,z:-5.5}, plain:{x:-3.2,z:-4.5}, forest:{x:-3.2,z:-3.5}, port:{x:-3.5,z:-5.0}, swamp:{x:-3.5,z:-5.0}, mountain:{x:-3.5,z:-5.5}, snow:{x:-3.5,z:-5.0}, under:{x:-3.5,z:-5.0}, gate:{x:-3.2,z:-5.0}, tomb:{x:-3.2,z:-5.0}, canyon:{x:-3.2,z:-5.0}, nightriver:{x:-3.2,z:-5.0}, throne:{x:-3.2,z:-5.0}, sunpeak:{x:-3.2,z:-5.0}, tree:{x:-3.5,z:-5.0}, pyramid:{x:-3.2,z:-5.5}, suntemple:{x:-3.2,z:-5.5}, volcano:{x:-2.6,z:-5.6}, ironforest:{x:-3.2,z:-5.0}, sea:{x:-3.2,z:-5.0}, wasteland:{x:-3.2,z:-5.0}, roots:{x:-3.2,z:-5.0}, void:{x:-3.2,z:-5.0}};
+const FIELD_CHAPTERS={euro:[1], road:[2], castle:[3], lake:[4], alps:[5], cave:[6], forest:[7], port:[8], swamp:[9], mountain:[10], under:[11], gate:[12], pyramid:[13], canyon:[14], nightriver:[15], throne:[16], suntemple:[17], snow:[18], ironwood:[19], sea:[20], tree:[21], wasteland:[22], surt:[23], abyss:[24], chaos:[25]};
+const BOSS_POS={euro:{x:-3.2,z:-4.5}, road:{x:-3.2,z:-4.5}, castle:{x:0,z:-6.8}, lake:{x:-3.5,z:-5.0}, alps:{x:-3.0,z:-5.5}, plain:{x:-3.2,z:-4.5}, forest:{x:-3.2,z:-3.5}, port:{x:-3.5,z:-5.0}, swamp:{x:-3.5,z:-5.0}, mountain:{x:-3.5,z:-5.5}, snow:{x:-3.5,z:-5.0}, under:{x:-3.5,z:-5.0}, gate:{x:-3.2,z:-5.0}, tomb:{x:-3.2,z:-5.0}, canyon:{x:-3.2,z:-5.0}, nightriver:{x:-3.2,z:-5.0}, throne:{x:-3.2,z:-5.0}, sunpeak:{x:-3.2,z:-5.0}, tree:{x:-3.5,z:-5.0}, pyramid:{x:-3.2,z:-5.5}, cave:{x:-3.2,z:-5.5}, ironwood:{x:-3.2,z:-5.5}, surt:{x:-3.2,z:-5.5}, abyss:{x:-3.2,z:-5.5}, chaos:{x:-3.2,z:-5.5}, suntemple:{x:-3.2,z:-5.5}, volcano:{x:-2.6,z:-5.6}, ironforest:{x:-3.2,z:-5.0}, sea:{x:-3.2,z:-5.0}, wasteland:{x:-3.2,z:-5.0}, roots:{x:-3.2,z:-5.0}, void:{x:-3.2,z:-5.0}};
 const BOSS_TALK={
  1:[{s:'185',t:'……ぷにゅ。ここは、ぼくの、はらっぱ……とおさない、ぞ……'},
     {s:'hero',t:'寝ぼけてるだけだよね。ごめん、ちょっとだけ本気でいくよ！'},
@@ -10538,13 +10534,13 @@ const FIELD_INFO={
  cave:     {name:'🦁 ネメアの洞窟', need:6,  hint:'黄金の獅子が棲む樹海の洞'},
  laby:     {name:'🌀 クノッソスの迷宮', need:8, hint:'牛頭王の眠る地下大迷宮'},
  petri:    {name:'🗿 石化の神殿', need:9,  hint:'見た者を石に変える神殿'},
- ironwood: {name:'🐺 鉄の森', need:18, hint:'狼の眷属が徘徊する鉄樹の森'},
- abyss:    {name:'🕳 根の奈落', need:21, hint:'世界樹の根がのびる深淵'},
- chaos:    {name:'🌌 原初の混沌', need:22, hint:'すべての始まりの虚無'},
+ ironwood: {name:'🐺 鉄の森', need:19, hint:'狼の眷属が徘徊する鉄樹の森'},
+ abyss:    {name:'🕳 根の奈落', need:24, hint:'世界樹の根がのびる深淵'},
+ chaos:    {name:'🌌 原初の混沌', need:25, hint:'すべての始まりの虚無'},
  olympus:  {name:'🏛 オリュンポス神域', need:9,  hint:'神々の座す雲上の聖域'},
  valhalla: {name:'⚔ 戦士の館ヴァルハラ', need:18, hint:'英霊の集う黄金の大広間'},
  suntemple:{name:'☀ 太陽神殿の頂', need:17,  hint:'雲海の頂。太陽神ラーガが君臨する'},
- surt:     {name:'🔥 スルヴァの玉座', need:22, hint:'炎の巨人が剣を研ぐ溶岩の間'},
+ surt:     {name:'🔥 スルヴァの玉座', need:23, hint:'炎の巨人が剣を研ぐ溶岩の間'},
 };
 const FIELD_TYPES={euro:['草','風'], road:['草','風'], plain:['草','炎'], swamp:['水','闇'], castle:['雷','地'], lake:['水','氷'], alps:['氷','水'], forest:['草','風'], port:['水'], mountain:['雷','地'], snow:['氷'], under:['地','闇'], gate:['光','地'], tomb:['闇','地'], canyon:['地'], nightriver:['水','闇'], throne:['闇','地'], sunpeak:['光','炎'], tree:['草','地'], volcano:['炎','竜'], ironforest:['氷','闇'], sea:['水','竜'], wasteland:['風','闇'], roots:['闇','竜'], void:['闇','竜'], pyramid:['地','闇'], shrine:['闇','地'], cave:['地','草'], laby:['水','地'], petri:['雷','光'], ironwood:['氷','風'], abyss:['闇','地'], chaos:['竜','闇'], olympus:['光','雷'], valhalla:['光','氷'], suntemple:['光','炎'], surt:['炎','竜']};
 // 各フィールドの野生モンスター(厳選): 序盤ほど種類を絞る。ニヴルにフェンガロ(129,130)。
