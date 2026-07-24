@@ -95,7 +95,7 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
-    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 73 ・ 探索マップに試練ボス版</div>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 74 ・ 探索マップに試練ボス版</div>
     <button onclick="location.replace(location.pathname+'?v='+Date.now())" style="margin-top:4px;font-size:11px;color:#cfe0ff;background:#26324a;border:1px solid #3a4a66;border-radius:8px;padding:5px 12px;cursor:pointer">🔄 最新版に更新（表示が古い時はここをタップ）</button>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
@@ -7830,7 +7830,7 @@ function cpuPlace(){
       const inTy=m=>types.includes(m.type)||(m.type2&&types.includes(m.type2));
       const pool=MONSTERS.filter(m=>!RETIRED.has(m.id) && inTy(m) && (m.level===3||m.role==='fusion') && m.id!==CAMP.encMid);
       team=[{mid:CAMP.encMid,boss:true}]; let g=0;
-      while(team.length<8 && pool.length && g++<40) team.push({mid:pool[(Math.random()*pool.length)|0].id});
+      while(team.length<8 && pool.length && g++<80){ const pid=pool[(Math.random()*pool.length)|0].id; if(!team.some(t=>t.mid===pid)) team.push({mid:pid}); }
     }
     team.forEach((e,i)=>{ if(i>=spots.length) return; const [r,c]=spots[i]; const u=addUnit(1,e.mid,r,c);
       u.isBoss=true;
@@ -11413,6 +11413,15 @@ window.__game={
     if(lead){ lead.hp=0; killUnit(lead); }   // 変身テスト
     const t=Object.values(state.units).find(u=>u.mid===267);
     return {enemyN:es.length, names:es.map(u=>MID[u.mid].name), lead245hp, transformed:!!t, hp267:t?t.maxhp:null}; },
+  trialTest(field){   // サブマップ試練の編成・HPを検証(描画なし)
+    const t=SUBMAP_TRIAL[field]; if(!t) return {err:'no trial for '+field};
+    state=newState(); state.phase='battle'; STORY.clear=25;
+    CAMP={on:true, free:true, superBoss:true, encMid:t.mid, field};
+    try{ cpuPlace(); }catch(e){ return {err:String(e).slice(0,80)}; }
+    const es=Object.values(state.units).filter(u=>u.owner===1);
+    const lead=es.find(u=>u.mid===t.mid);
+    return {field, boss:t.name+'#'+t.mid, enemyN:es.length, leadHp:lead?lead.maxhp:null, leadAtkX:lead?lead.atkX:null,
+      names:es.map(u=>MID[u.mid].name+'L'+MID[u.mid].level), avgHp:Math.round(es.reduce((a,u)=>a+u.maxhp,0)/Math.max(1,es.length))}; },
   storyEnemies(ch){   // 描画なしで state を用意し CAMP を対象章にして cpuPlace を実行、敵数だけ測る
     state=newState(); state.phase='battle'; LEVEL_BUDGET=CAMPAIGN[ch].budget;
     STORY.clear=Math.max(STORY.clear, ch);
