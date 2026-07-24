@@ -95,7 +95,7 @@ button.bt.fuse{background:#a24ec0}
   <div style="margin:auto;width:94%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:24px 0">
     <h1 style="margin:0;font-size:31px;text-shadow:0 3px 16px rgba(0,0,0,.75)">🐲 モンスター戦略3D</h1>
     <p class="muted" style="margin:0;font-size:13px;text-shadow:0 1px 6px rgba(0,0,0,.8)">モンスターを集めて進化・融合。大陸をめぐる冒険RPG</p>
-    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 72 ・ 全域ボスをサブマップへ版</div>
+    <div style="font-size:10px;color:#7a8698;letter-spacing:.5px">build 73 ・ 探索マップに試練ボス版</div>
     <button onclick="location.replace(location.pathname+'?v='+Date.now())" style="margin-top:4px;font-size:11px;color:#cfe0ff;background:#26324a;border:1px solid #3a4a66;border-radius:8px;padding:5px 12px;cursor:pointer">🔄 最新版に更新（表示が古い時はここをタップ）</button>
     <button class="bt" id="btStory" style="width:100%;max-width:340px;font-size:18px;padding:16px 20px;background:linear-gradient(180deg,#a06a30,#7a4a20);border:1px solid #d8a860;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.5);line-height:1.4">📜 ストーリー</button>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
@@ -4956,6 +4956,14 @@ function villagerTalk(n){
     showStoryLines('⚒ '+v.name, (v.scene||[]).concat([{s:'narr',t:`💎+${v.giftGems||100} を受け取った！（所持💎${STORY.gems}）`}]), null); return;
   }
   if(v.scene){ showStoryLines('📜 '+v.name, v.scene, null); return; }   // 道中の物語イベント
+  if(v.trial){   // サブマップの試練ボス(何度でも挑める強敵戦)
+    const t=SUBMAP_TRIAL[v.trial]||{}; if(!t.mid) return;
+    showStoryLines('☠ 試練：'+(t.name||''), [
+      {s:String(t.mid), t:t.line||'我を越えてみよ。'},
+      {s:'hero', t:'この地の試練だね。……受けて立つ！'},
+    ], ()=>startFreeBattle(v.trial, t.mid, true, true));
+    return;
+  }
   if(v.superBoss){   // 裏ボス: 終末の獣ラグナディオ(何度でも挑める高難度戦)
     showStoryLines('☠ ラグナディオ', [
       {s:'245', t:'……封印は解けた。我は終末の獣ラグナディオ。すべての悪しきモノの王。'},
@@ -7801,16 +7809,33 @@ const SUPERBOSS_NORSE=[
   {mid:130},{mid:262},{mid:246},{mid:30},{mid:141},{mid:260},{mid:261},  // 北欧編ボス: フェンガロ/スルヴァ/ニドグラ/ヨルムガル/ユグドラシア/フリムスルス/ヴァルグル
   {mid:46},{mid:176},    // 眷属: フェンリル/ファフノ
 ];
+// 探索サブマップの試練ボス(何度でも挑める強敵。属性の強敵を従える)。全クリア後の腕試し+報酬
+const SUBMAP_TRIAL={
+  shrine:  {mid:289, name:'アビスガルム',line:'冥き祭殿の主、アビスガルム。魂を喰らいに来たか。ならば試してやろう。'},
+  laby:    {mid:251, name:'ミノタス',    line:'迷宮の牛頭王ミノタス。出口を求める者よ、まず我を越えてみせよ。'},
+  petri:   {mid:253, name:'メデューナ',  line:'石化の女王メデューナ。我が瞳を見た者は永遠の彫像となる。'},
+  olympus: {mid:288, name:'セラフィナ',  line:'天空の守護者セラフィナ。神域に挑む資格、試させてもらおう。'},
+  valhalla:{mid:287, name:'アルティドラ',line:'戦士の館の番竜アルティドラ。英霊の宴に加わりたくば、我を倒してみせよ。'},
+};
 function cpuPlace(){
   if(CAMP.on && CAMP.free && CAMP.superBoss){
-    // 北欧神話の最終決戦: レベル/budget無視で10体を大幅強化して配置(クランプなし)
+    // 裏ボス/サブマップ試練: レベル/budget無視で強敵を大幅強化して配置(クランプなし)
     const cc=CASTLE[1];
     const spots=castleArea(1).filter(([r,c])=>!unitAt(r,c))
       .sort((a,b)=>(Math.abs(a[0]-cc.r)+Math.abs(a[1]-cc.c))-(Math.abs(b[0]-cc.r)+Math.abs(b[1]-cc.c)));
-    SUPERBOSS_NORSE.forEach((e,i)=>{ if(i>=spots.length) return; const [r,c]=spots[i]; const u=addUnit(1,e.mid,r,c);
+    let team;
+    if(CAMP.encMid===245){ team=SUPERBOSS_NORSE; }   // 北欧最終決戦=ラグナディオ+歴代北欧ボス
+    else {   // サブマップ試練=主役 + そのマップ属性の強敵(Lv3/融合)を8体
+      const types=FIELD_TYPES[CAMP.field]||['闇'];
+      const inTy=m=>types.includes(m.type)||(m.type2&&types.includes(m.type2));
+      const pool=MONSTERS.filter(m=>!RETIRED.has(m.id) && inTy(m) && (m.level===3||m.role==='fusion') && m.id!==CAMP.encMid);
+      team=[{mid:CAMP.encMid,boss:true}]; let g=0;
+      while(team.length<8 && pool.length && g++<40) team.push({mid:pool[(Math.random()*pool.length)|0].id});
+    }
+    team.forEach((e,i)=>{ if(i>=spots.length) return; const [r,c]=spots[i]; const u=addUnit(1,e.mid,r,c);
       u.isBoss=true;
-      if(e.boss){ u.maxhp=u.hp=Math.round(u.maxhp*2.4); u.atkX=1.4; }   // ラグナディオ本体=高HP(この後267へ変身し更に増える)
-      else { u.maxhp=u.hp=Math.round(u.maxhp*1.8); u.atkX=1.25; }        // 歴代北欧ボス達も強化
+      if(e.boss){ u.maxhp=u.hp=Math.round(u.maxhp*2.4); u.atkX=1.4; }   // 主役=高HP
+      else { u.maxhp=u.hp=Math.round(u.maxhp*1.8); u.atkX=1.25; }        // 眷属も強化
     });
     return;
   }
@@ -9669,6 +9694,20 @@ function vFieldCommon(portalColor, backLabelY){
     VG.npcs=VG.npcs||[];
     VG.npcs.push({grp:g9,sp:null,sh:sh9,baseSY:1,trav:0,def:{name:'ラグナディオ',superBoss:true,rad:2.2,x:sp.x,z:sp.z},x:sp.x,z:sp.z,tx:sp.x,tz:sp.z,ph:0,li:0,fixed:true});
   }
+  // ===== 探索サブマップの試練ボス(何度でも挑める強敵)。IMG/3Dモデルがあれば立たせる =====
+  if(SUBMAP_TRIAL[V_MAP] && IMG[String(SUBMAP_TRIAL[V_MAP].mid)]){
+    const tb=SUBMAP_TRIAL[V_MAP]; const bp={x:-3.4,z:-5.2}; const gt=new THREE.Group();
+    if(MODELS['b'+tb.mid] || (window._LAZY_MODELS||[]).includes('b'+tb.mid)){
+      const mg=vGlbChar('b'+tb.mid, 3.4); gt.add(mg);
+      const phz=Math.random()*9; ambient.push(t=>{ mg.rotation.y=0.22*Math.sin(t*0.5+phz); mg.position.y=0.04*(1+Math.sin(t*1.1+phz)); });
+    } else { const tx=new THREE.TextureLoader().load(IMG[String(tb.mid)]); const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true})); sp.material.toneMapped=false; sp.scale.set(3.4,3.4,1); sp.center.set(0.5,0); sp.position.y=0.05; gt.add(sp); }
+    const au=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0xc060ff,transparent:true,opacity:0.5,depthWrite:false,blending:THREE.AdditiveBlending})); au.scale.setScalar(4.6); au.position.y=1.7; gt.add(au);
+    const sh=new THREE.Mesh(new THREE.CircleGeometry(1.05,20), new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.32})); sh.rotation.x=-Math.PI/2; sh.position.y=0.02; gt.add(sh);
+    const lb=makeTextSprite('☠ 試練 '+tb.name); lb.scale.set(2.8,0.62,1); lb.position.y=3.9; gt.add(lb);
+    gt.position.set(bp.x,0,bp.z); villageGroup.add(gt); vCol(bp.x,bp.z,1.0);
+    const ph=Math.random()*9; ambient.push(t=>{ au.material.opacity=0.34+0.18*Math.sin(t*2.2+ph); });
+    VG.npcs=VG.npcs||[]; VG.npcs.push({grp:gt,sp:null,sh,baseSY:1,trav:0,def:{name:'試練 '+tb.name,trial:V_MAP,rad:2.2,x:bp.x,z:bp.z},x:bp.x,z:bp.z,tx:bp.x,tz:bp.z,ph:0,li:0,fixed:true});
+  }
   // ===== 落ちているアイテム（日替わり・拾うと道具/換金アイテム） =====
   VG.pickups=[];
   { const q=qState();
@@ -10650,6 +10689,7 @@ function startFreeBattle(fieldKey, encMid, rare, superBoss){
   { const j=document.getElementById('joy'); if(j) j.style.display='none'; }
   const chRef=Math.min(STORY.clear+1, CAMPAIGN.length-1);
   CAMP={on:true, ch:chRef, free:true, field:fieldKey, encMid, rare, superBoss:!!superBoss};
+  if(superBoss) CAMP.freeReward=(encMid===245)?1200:600;   // 裏ボス/試練は高報酬(💎)
   seJingle('enc');
   if(rare) setTimeout(()=>toast('✨ レアモンスターだ！ 倒せば報酬3倍！'), 400);
   LEVEL_BUDGET=CAMPAIGN[chRef].budget;
@@ -11386,7 +11426,8 @@ window.__game={
     const b=(VG&&VG.npcs||[]).find(n=>n.def&&n.def.bossCh!=null);
     const mids=(VG&&VG.npcs||[]).filter(n=>n.def&&n.def.midBoss!=null);
     const nx=(typeof V_NPC_CUR==='function'?V_NPC_CUR():[]).find(n=>n.key==='next');
-    const tg=[],nm=[]; if(b){tg.push([b.x,b.z]);nm.push('boss');} mids.forEach((n,i)=>{tg.push([n.x,n.z]);nm.push('mid'+i);}); if(nx){tg.push([nx.x,nx.z]);nm.push('next');}
+    const trialN=(VG&&VG.npcs||[]).find(n=>n.def&&n.def.trial);
+    const tg=[],nm=[]; if(b){tg.push([b.x,b.z]);nm.push('boss');} mids.forEach((n,i)=>{tg.push([n.x,n.z]);nm.push('mid'+i);}); if(nx){tg.push([nx.x,nx.z]);nm.push('next');} if(trialN){tg.push([trialN.x,trialN.z]);nm.push('trial');}
     const key=(i,j)=>i+','+j, ij=(x,z)=>[Math.round(x/step),Math.round(z/step)];
     let [si,sj]=ij(hero[0],hero[1]);
     if(blocked(si*step,sj*step)){ outer:for(let r=1;r<12;r++)for(let di=-r;di<=r;di++)for(let dj=-r;dj<=r;dj++){ if(!blocked((si+di)*step,(sj+dj)*step)){si+=di;sj+=dj;break outer;} } }
