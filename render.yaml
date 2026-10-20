@@ -17,6 +17,26 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+    # 3Dモデル(GLB)・画像は版名付きURL(?v=)で読むので長期キャッシュ。HTML と Service Worker は毎回確認
+    headers:
+      - path: /models/*
+        name: Content-Type
+        value: model/gltf-binary
+      - path: /models/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /img/*
+        name: Cache-Control
+        value: public, max-age=604800
+      - path: /sw.js
+        name: Content-Type
+        value: application/javascript; charset=utf-8
+      - path: /sw.js
+        name: Cache-Control
+        value: no-cache
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
 
   # --- WebSocket中継サーバー ---
   - type: web
