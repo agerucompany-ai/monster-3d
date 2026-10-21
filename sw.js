@@ -1,5 +1,5 @@
 // sw.js — モンスター戦略3D の Service Worker(assemble.py が生成)。版名が変わると古いキャッシュを消す
-const V = 'ms3d-d9fafd8dee';
+const V = 'ms3d-b6c1e02dcd';
 self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('ms3d-') && k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
