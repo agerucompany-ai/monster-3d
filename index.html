@@ -134,7 +134,7 @@ button.bt.fuse{background:linear-gradient(180deg,#b35ad0,#8a3ea8);border-color:r
 #ovStory.show{opacity:1}
 #stStage{position:absolute;left:0;right:0;top:0;bottom:148px;pointer-events:none;overflow:hidden}
 .stPort{position:absolute;bottom:0;width:46%;max-width:440px;height:82%;display:flex;align-items:flex-end;justify-content:center;transition:filter .25s,transform .25s,opacity .25s;opacity:1;transform-origin:50% 100%}
-.stPort.left{left:0}.stPort.right{right:0}
+.stPort.left{left:0;transform-origin:0 100%}.stPort.right{right:0;transform-origin:100% 100%}   /* build80: 後ろに下がった時も外側の縁は画面の端に付けたまま(縮んで端から離れると切れ目が見えた) */
 .stPort img{max-width:100%;max-height:100%;object-fit:contain;object-position:bottom;filter:drop-shadow(0 10px 18px rgba(0,0,0,.6))}
 .stPort.empty{opacity:0}
 .stPort.dim{filter:brightness(.42) saturate(.55);transform:scale(.94) translateY(2%);z-index:1}
@@ -271,7 +271,7 @@ button.bt.fuse{background:linear-gradient(180deg,#b35ad0,#8a3ea8);border-color:r
         <button class="tGhost" id="bt3D" onclick="window.__set3D&&window.__set3D()">3D</button>
       </div>
     </div>
-    <div id="tFoot"><span>build 79</span><button id="btReload" onclick="location.replace(location.pathname+'?v='+Date.now())">最新版に更新</button></div>
+    <div id="tFoot"><span>build 80</span><button id="btReload" onclick="location.replace(location.pathname+'?v='+Date.now())">最新版に更新</button></div>
   </div>
   <div id="titleMenu">
     <div class="mHead">
@@ -4402,8 +4402,9 @@ const MODELS = {};  // 3Dキャラモデル(GLB base64) {rogue_v3, mage_v3}
 window._LAZY_MODELS = ["n3","n7","n8","n16","n17","n18","n24","n25","n26","n30","n37","n44","n45","n46","n48","n49","n50","n51","n62","n70","n71","n72","n81","n82","n85","n86","n87","n88","n89","n90","n100","n107","n111","n135","n138","n146","n147","n150","n152","n153","n166","n167","n175","n177","n178","n179","n180","n185","n186","n187","n188","n189","n195","n196","n197","n198","n199","n200","n202","n203","n204","n205","n206","n216","n217","n222","n226","n234","n239","n244","n247","n248","n252","n253","n254","n256","n261","n263","n269","n276"];   // 外部ファイルで後から読むモデル名(全部。HTMLには埋め込まない)
 window._M3D = [3,7,8,16,17,18,24,25,26,30,37,44,45,46,48,49,50,51,62,70,71,72,81,82,85,86,87,88,89,90,100,107,111,135,138,146,147,150,152,153,166,167,175,177,178,179,180,185,186,187,188,189,195,196,197,198,199,200,202,203,204,205,206,216,217,222,226,234,239,244,247,248,252,253,254,256,261,263,269,276];                   // 戦闘で3Dにするモンスターid(models/n{id}.glb か m{id}.glb)
 window._M3D_NEW = [3,7,8,16,17,18,24,25,26,30,37,44,45,46,48,49,50,51,62,70,71,72,81,82,85,86,87,88,89,90,100,107,111,135,138,146,147,150,152,153,166,167,175,177,178,179,180,185,186,187,188,189,195,196,197,198,199,200,202,203,204,205,206,216,217,222,226,234,239,244,247,248,252,253,254,256,261,263,269,276];           // build79: 描き直した新モデル(models/n{id}.glb)がある体。無い体は旧 m{id}.glb
+const CIHI = {"3":"img/ci/3.webp","7":"img/ci/7.webp","8":"img/ci/8.webp","16":"img/ci/16.webp","17":"img/ci/17.webp","18":"img/ci/18.webp","24":"img/ci/24.webp","25":"img/ci/25.webp","26":"img/ci/26.webp","30":"img/ci/30.webp","37":"img/ci/37.webp","44":"img/ci/44.webp","45":"img/ci/45.webp","46":"img/ci/46.webp","48":"img/ci/48.webp","49":"img/ci/49.webp","50":"img/ci/50.webp","51":"img/ci/51.webp","62":"img/ci/62.webp","70":"img/ci/70.webp","71":"img/ci/71.webp","72":"img/ci/72.webp","81":"img/ci/81.webp","82":"img/ci/82.webp","85":"img/ci/85.webp","86":"img/ci/86.webp","87":"img/ci/87.webp","88":"img/ci/88.webp","89":"img/ci/89.webp","90":"img/ci/90.webp","100":"img/ci/100.webp","107":"img/ci/107.webp","111":"img/ci/111.webp","135":"img/ci/135.webp","138":"img/ci/138.webp","146":"img/ci/146.webp","147":"img/ci/147.webp","150":"img/ci/150.webp","152":"img/ci/152.webp","153":"img/ci/153.webp","166":"img/ci/166.webp","167":"img/ci/167.webp","175":"img/ci/175.webp","177":"img/ci/177.webp","178":"img/ci/178.webp","179":"img/ci/179.webp","180":"img/ci/180.webp","185":"img/ci/185.webp","186":"img/ci/186.webp","187":"img/ci/187.webp","188":"img/ci/188.webp","189":"img/ci/189.webp","195":"img/ci/195.webp","196":"img/ci/196.webp","197":"img/ci/197.webp","198":"img/ci/198.webp","199":"img/ci/199.webp","200":"img/ci/200.webp","202":"img/ci/202.webp","203":"img/ci/203.webp","204":"img/ci/204.webp","205":"img/ci/205.webp","206":"img/ci/206.webp","216":"img/ci/216.webp","217":"img/ci/217.webp","222":"img/ci/222.webp","226":"img/ci/226.webp","234":"img/ci/234.webp","239":"img/ci/239.webp","244":"img/ci/244.webp","247":"img/ci/247.webp","248":"img/ci/248.webp","252":"img/ci/252.webp","253":"img/ci/253.webp","254":"img/ci/254.webp","256":"img/ci/256.webp","261":"img/ci/261.webp","263":"img/ci/263.webp","269":"img/ci/269.webp","276":"img/ci/276.webp"};                   // build80: カットイン用の高解像度の絵 {id:'img/ci/{id}.webp'}(長辺768)。初回の読み込みでは取らず、バトルが始まってから読む
 const PMETA = {"img/p/elder_angry.webp":[1.053,1,1.0,1],"img/p/elder_hurt.webp":[1.016,1,1.0,1],"img/p/elder_normal.webp":[1.036,1,1.0,1],"img/p/elder_sad.webp":[1.096,1,1.0,1],"img/p/elder_serious.webp":[1.058,1,1.0,1],"img/p/elder_smile.webp":[1.062,1,1.0,1],"img/p/elder_surprised.webp":[1.06,1,1.0,1],"img/p/garf_angry.webp":[1.069,1,1.0,1],"img/p/garf_hurt.webp":[1.094,1,1.0,1],"img/p/garf_normal.webp":[1.078,1,1.0,1],"img/p/garf_sad.webp":[1.089,1,1.0,1],"img/p/garf_serious.webp":[1.069,1,1.0,1],"img/p/garf_smile.webp":[1.092,1,1.0,1],"img/p/garf_surprised.webp":[1.082,1,1.0,1],"img/p/hero_f_angry.webp":[1.264,1,1.0,1],"img/p/hero_f_hurt.webp":[1.27,1,1.0,1],"img/p/hero_f_normal.webp":[1.27,1,1.0,1],"img/p/hero_f_sad.webp":[1.249,1,1.0,1],"img/p/hero_f_serious.webp":[1.24,1,1.0,1],"img/p/hero_f_smile.webp":[1.267,1,1.0,1],"img/p/hero_f_surprised.webp":[1.286,1,1.0,1],"img/p/hero_m_angry.webp":[1.222,1,1.0,1],"img/p/hero_m_hurt.webp":[1.267,1,1.0,1],"img/p/hero_m_normal.webp":[1.27,1,1.0,1],"img/p/hero_m_sad.webp":[1.337,1,1.0,1],"img/p/hero_m_serious.webp":[1.29,1,1.0,1],"img/p/hero_m_smile.webp":[1.306,1,1.0,1],"img/p/hero_m_surprised.webp":[1.267,1,1.0,1],"img/p/iscario_angry.webp":[1.293,1,1.12,0],"img/p/iscario_hurt.webp":[1.28,1,1.12,0],"img/p/iscario_normal.webp":[1.261,1,1.12,0],"img/p/iscario_sad.webp":[1.347,1,1.12,0],"img/p/iscario_serious.webp":[1.306,1,1.12,0],"img/p/iscario_smile.webp":[1.293,1,1.12,0],"img/p/knight_hurt.webp":[1.118,1,1.0,1],"img/p/knight_normal.webp":[1.085,1,1.0,1],"img/p/knight_serious.webp":[1.094,1,1.0,1],"img/p/mirabel_angry.webp":[1.026,1,1.0,1],"img/p/mirabel_hurt.webp":[1.02,1,1.0,1],"img/p/mirabel_normal.webp":[1.022,1,1.0,1],"img/p/mirabel_sad.webp":[1.02,1,1.0,1],"img/p/mirabel_serious.webp":[1.036,1,1.0,1],"img/p/mirabel_smile.webp":[1.036,1,1.0,1],"img/p/mirabel_surprised.webp":[1.024,1,1.0,1],"img/p/pythia_normal.webp":[1.113,1,1.0,1],"img/p/pythia_sad.webp":[1.166,1,1.0,1],"img/p/pythia_serious.webp":[1.172,1,1.0,1],"img/p/pythia_smile.webp":[1.188,1,1.0,1],"img/p/pythia_surprised.webp":[1.177,1,1.0,1],"img/p/rody_angry.webp":[1.177,1,1.0,1],"img/p/rody_hurt.webp":[1.225,1,1.0,1],"img/p/rody_normal.webp":[1.174,1,1.0,1],"img/p/rody_sad.webp":[1.216,1,1.0,1],"img/p/rody_serious.webp":[1.21,1,1.0,1],"img/p/rody_smile.webp":[1.196,1,1.0,1],"img/p/rody_surprised.webp":[1.199,1,1.0,1],"img/p/serene_hurt.webp":[1.185,1,1.0,1],"img/p/serene_normal.webp":[1.113,1,1.0,1],"img/p/serene_sad.webp":[1.169,1,1.0,1],"img/p/serene_smile.webp":[1.143,1,1.0,1],"img/p/teto_angry.webp":[1.351,1,1.0,1],"img/p/teto_hurt.webp":[1.32,1,1.0,1],"img/p/teto_normal.webp":[1.34,1,1.0,1],"img/p/teto_smile.webp":[1.313,1,1.0,1],"img/p/teto_surprised.webp":[1.303,1,1.0,1]};                 // build79: 立ち絵の形 {path:[縦/横, 下が切れている(バストアップ)]}
-window._BUILD = "ms3d-e890e611a2";               // 版名(Service Worker のキャッシュ名と同じ)
+window._BUILD = "ms3d-c4e5c1c5a7";               // 版名(Service Worker のキャッシュ名と同じ)
 window._MODEL_BASE = 'models/';               // 遅延ロードの配信ベース(同一オリジン)
 window._lazyGlb = {};                          // fetch済みGLBのキャッシュ
 
@@ -7678,16 +7679,37 @@ function cutin(kind, o){
   if(_ci.on){ if(_ci.q.length<2) _ci.q.push([kind,o]); return; }
   _cutinShow(kind, o||{});
 }
+// build80: カットインは 320px の埋め込み絵を大きく引き伸ばしてぼやけていた → 高解像度の絵(img/ci/)を後から読む。
+// 読めた絵はそのまま使い、まだの時は埋め込み絵で出して、読めた瞬間に差し替える。バトル開始後に場の体を1枚ずつ先読み(ciHiPrefetch)
+const _ciHi={ok:new Set(), req:new Map()};
+function ciHiLoad(mid){
+  const u=CIHI[String(mid)]; if(!u) return null; if(_ciHi.ok.has(u)) return Promise.resolve(u);
+  if(!_ciHi.req.has(u)){ const im=new Image(); im.decoding='async'; _ciHi.req.set(u,new Promise(r=>{ im.onload=()=>{ _ciHi.ok.add(u); r(u); }; im.onerror=()=>r(null); })); im.src=u; }
+  return _ciHi.req.get(u);
+}
+function ciSrc(im, mid){
+  im.dataset.mid=String(mid); const u=CIHI[String(mid)];
+  if(u&&_ciHi.ok.has(u)){ im.src=u; return; }
+  im.src=IMG[mid]||''; const p=ciHiLoad(mid);
+  if(p) p.then(v=>{ if(v&&im.dataset.mid===String(mid)&&_ci.on) im.src=v; });
+}
+let _ciPre=0;
+function ciHiPrefetch(){
+  if(window._NO_CUTIN||!cutinOn()||!state||!state.units) return;
+  const tok=++_ciPre, ids=[...new Set(Object.values(state.units).map(u=>u.mid))].filter(m=>CIHI[String(m)]&&!_ciHi.ok.has(CIHI[String(m)]));
+  const step=()=>{ if(tok!==_ciPre||!ids.length||!state||state.phase!=='battle') return; const p=ciHiLoad(ids.shift()); (p||Promise.resolve()).then(()=>setTimeout(step,120)); };
+  setTimeout(step,1500);
+}
 function _cutinShow(kind, o){
   const el=document.getElementById('cutin');
   const q=(c)=>el.querySelector(c);
   const ty = o.ty || (MID[o.mid||o.to]||{}).type || '光';
   const c1 = TYPE_COL[ty]||'#d8a040';
   el.style.setProperty('--c1', c1); el.style.setProperty('--c2', '#0c1020');
-  for(const k of ['.ciA','.ciB','.ciC']){ const im=q(k); im.removeAttribute('src'); }
-  if(kind==='atk'){ q('.ciA').src=IMG[o.mid]||''; q('.ciTxt').textContent=o.n||'こうげき'; q('.ciSub').textContent=(MID[o.mid]||{}).name||''; }
-  else if(kind==='evo'){ q('.ciA').src=IMG[o.from]||''; q('.ciB').src=IMG[o.to]||''; q('.ciTxt').textContent='進化！'; q('.ciSub').textContent=`${(MID[o.from]||{}).name||''} → ${(MID[o.to]||{}).name||''}`; }
-  else if(kind==='fuse'){ q('.ciA').src=IMG[o.a]||''; q('.ciB').src=IMG[o.b]||''; q('.ciC').src=IMG[o.to]||''; q('.ciTxt').textContent='融合！'; q('.ciSub').textContent=(MID[o.to]||{}).name||''; }
+  for(const k of ['.ciA','.ciB','.ciC']){ const im=q(k); im.removeAttribute('src'); im.dataset.mid=''; }
+  if(kind==='atk'){ ciSrc(q('.ciA'),o.mid); q('.ciTxt').textContent=o.n||'こうげき'; q('.ciSub').textContent=(MID[o.mid]||{}).name||''; }
+  else if(kind==='evo'){ ciSrc(q('.ciA'),o.from); ciSrc(q('.ciB'),o.to); q('.ciTxt').textContent='進化！'; q('.ciSub').textContent=`${(MID[o.from]||{}).name||''} → ${(MID[o.to]||{}).name||''}`; }
+  else if(kind==='fuse'){ ciSrc(q('.ciA'),o.a); ciSrc(q('.ciB'),o.b); ciSrc(q('.ciC'),o.to); q('.ciTxt').textContent='融合！'; q('.ciSub').textContent=(MID[o.to]||{}).name||''; }
   el.className=''; void el.offsetWidth;   // アニメーションを毎回最初から
   el.className='on k-'+kind+(o.owner===1?' foe':'');
   _ci.on=true; clearTimeout(_ci.timer); _ci.timer=setTimeout(_cutinEnd, CUTIN_MS[kind]||1200);
@@ -7717,12 +7739,16 @@ function stLayout(){
     const mon=el.classList.contains('mon'); const pm=PMETA[src];
     const a=mon?1:(pm?pm[0]:1), bust=mon?false:(pm?!!pm[1]:true), sc=pm&&pm[2]?pm[2]:1;
     const sink=bust?0.22:0;                                  // 会話窓の後ろに沈める割合
-    const want=vh*(mon?0.30:(bust?0.44:0.47))*sc, maxW=Math.min(vw*(narrow?(bust?0.56:0.50):0.36),480);
+    const want=vh*(mon?0.30:(bust?0.44:0.47))*sc, maxW=Math.min(vw*(narrow?(bust?0.64:0.50):0.36),480);
     let h=Math.min(want,(avail*0.97)/(1-sink)); if(!bust) h=Math.min(h,maxW*a);
+    if(bust&&h/a>maxW) h=Math.max(h*0.86,maxW*a);           // build80: 横に広い絵は少し小さくして左右の切れを減らす
     const w=Math.min(h/a,maxW);
+    // build80: それでも横がはみ出すバストアップは object-fit:cover で左右が縦にまっすぐ切れていた → 内側(画面の中央寄り)の縁をぼかす
+    const over=bust&&h/a>w+1, isL=el.classList.contains('left'), fw=over?Math.min(18,Math.round((h/a-w)/(h/a)*50+8)):0;
+    const hm=over?`linear-gradient(${isL?'to left':'to right'},transparent 0,#000 ${fw}%)`:''; el.style.webkitMaskImage=hm; el.style.maskImage=hm;
     el.style.width=Math.round(w)+'px'; el.style.height=Math.round(h)+'px'; el.style.bottom=Math.round(boxH-h*sink)+'px';
     img.style.objectFit=bust?'cover':'contain'; img.style.objectPosition=bust?'50% 0%':'50% 100%';
-    const fade=pm&&pm[3]?'linear-gradient(to bottom,transparent 0,#000 7%)':''; img.style.webkitMaskImage=fade; img.style.maskImage=fade;   // 上で切れている絵は上の縁をぼかす
+    const fade=bust?`linear-gradient(to bottom,${pm&&pm[3]?'transparent 0,':''}#000 ${pm&&pm[3]?7:0}%,#000 ${Math.round(100-sink*100+2)}%,transparent 100%)`:''; img.style.webkitMaskImage=fade; img.style.maskImage=fade;   // 上で切れている絵は上の縁をぼかす / build80: 窓の後ろに沈めた下端も消す(窓の外の余白に下端の横線が見えていた)
     const side=narrow?0:vw*0.06; if(el.classList.contains('left')){ el.style.left=Math.round(side)+'px'; el.style.right=''; } else { el.style.right=Math.round(side)+'px'; el.style.left=''; }
   }
 }
@@ -9759,7 +9785,7 @@ function beginBattle(){
   for(const id of ['ovPlace','ovDetail','ovStory','ovGacha','ovCatalog','ovChapters','ovPreview','ovSelect']){ const e=document.getElementById(id); if(e) e.style.display='none'; }
   setBoardVisible(true);
   state.phase='battle'; pickEnabled=true; clearSel();
-  bgmPlay('battle');
+  bgmPlay('battle'); setTimeout(ciHiPrefetch,0);
   ensureLeaders();   // 勝敗はリーダー撃破
   const les = (CAMP.on && LESSONS[CAMP.ch] && tutOnce('lesson'+CAMP.ch)) ? LESSONS[CAMP.ch] : null;
   if(les) showStoryLines('⚔ ガイウスの助言', les, ()=>startTurn(0));
@@ -10490,7 +10516,7 @@ function tryAssembleStart(){
   for(const p of guestPlacement){ const r=N-1-p.r, c=N-1-p.c; if(!unitAt(r,c)){ const u=addUnit(1,p.mid,r,c); if(p.leader) u.leader=true; } }
   state.energy=[0,0]; state.castleHP={0:0,1:0}; state.leaderSet=false;
   ensureLeaders();
-  state.turn=1; state.cur=0; state.phase='battle';
+  state.turn=1; state.cur=0; state.phase='battle'; setTimeout(ciHiPrefetch,0);
   document.getElementById('ovPlace').style.display='none';
   pickEnabled=true; clearSel();
   buildTerrain(); buildStructures(); syncUnits(); fit();

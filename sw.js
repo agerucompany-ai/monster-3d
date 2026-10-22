@@ -1,5 +1,5 @@
 // sw.js — 神獣オリュンポス の Service Worker(assemble.py が生成)。版名が変わると古いキャッシュを消す
-const V = 'ms3d-e890e611a2';
+const V = 'ms3d-c4e5c1c5a7';
 self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('ms3d-') && k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
