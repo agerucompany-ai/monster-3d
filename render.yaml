@@ -1,4 +1,4 @@
-# Render Blueprint — モンスター戦略3D（対CPU＋オンライン対戦）
+# Render Blueprint — 神獣オリュンポス（対CPU＋オンライン対戦）
 # 2サービス構成:
 #   1) monster-3d        : 単一HTML(index.html)を配る静的サイト（=ゲーム本体）
 #   2) monster3d-server-agc : WebSocket中継サーバー (Node)。client の DEFAULT_WS と名前を一致させること。

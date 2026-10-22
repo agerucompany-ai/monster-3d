@@ -1,5 +1,5 @@
-// sw.js — モンスター戦略3D の Service Worker(assemble.py が生成)。版名が変わると古いキャッシュを消す
-const V = 'ms3d-8236569755';
+// sw.js — 神獣オリュンポス の Service Worker(assemble.py が生成)。版名が変わると古いキャッシュを消す
+const V = 'ms3d-9861aab110';
 self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('ms3d-') && k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
