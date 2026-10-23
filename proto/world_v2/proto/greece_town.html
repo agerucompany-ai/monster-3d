@@ -51,6 +51,21 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 #stL{left:max(-6vw,calc(50% - 480px))}#stR{right:max(-6vw,calc(50% - 480px))}
 .stP.dim{filter:brightness(.6) drop-shadow(0 6px 14px rgba(0,0,0,.25));transform:scale(.95)}
 .stP.off{opacity:0}
+/* 右の枠は左右反転(全員右向きで描いてある)・右のうしろの枠は少し小さく奥に */
+/* 向き: 絵ごとの向き(v3/portraits/index.json の facing)と置く側から --fx(1/-1)を決める。左の枠=右向き、右の枠=左向き */
+.stP{transform:scaleX(var(--fx,1))}.stP.dim{transform:scaleX(calc(var(--fx,1)*.95)) scaleY(.95)}
+#stR2{right:max(-16vw,calc(50% - 560px));bottom:calc(132px + env(safe-area-inset-bottom));width:min(58vw,396px);height:min(58vw,396px);filter:brightness(.72) drop-shadow(0 6px 14px rgba(0,0,0,.25))}
+/* 3人の場面: 3人を横に並べ直す(顔は重ねない。重なるのは体の端だけ)。話している人を前に出して明るく、ほかは少し下げて暗く */
+#st.trio .stP{--wc:min(100vw,760px);width:calc(var(--wc)*.46);height:calc(var(--wc)*.46);right:auto;bottom:calc(112px + env(safe-area-inset-bottom));transition:opacity .2s,transform .25s,filter .2s,left .25s}
+#st.trio #stL{left:calc((100vw - var(--wc))/2 + var(--wc)*.18 - var(--wc)*.23)}
+#st.trio #stR{left:calc((100vw - var(--wc))/2 + var(--wc)*.51 - var(--wc)*.23)}
+#st.trio #stR2{left:calc((100vw - var(--wc))/2 + var(--wc)*.83 - var(--wc)*.23)}
+#st.trio .stP:not(.dim){z-index:1}
+#st.trio .stP.dim{transform:translateY(10px) scaleX(calc(var(--fx,1)*.92)) scaleY(.92);filter:brightness(.62) drop-shadow(0 6px 14px rgba(0,0,0,.25))}
+/* 手帳の電話の画面(右上) */
+#stPh{position:absolute;right:14px;top:calc(56px + env(safe-area-inset-top));width:min(36vw,210px);aspect-ratio:1;border-radius:20px;overflow:hidden;display:none;z-index:2;
+  border:3px solid rgba(170,236,255,.95);box-shadow:0 0 22px rgba(120,210,255,.65);background:linear-gradient(#bfe6ff,#e8f6ff)}
+#stPh img{width:100%;height:100%;object-fit:cover;object-position:50% 12%}
 #stBox{position:absolute;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(94vw,640px);min-height:92px;box-sizing:border-box;padding:16px 20px 18px;border-radius:18px;
   background:rgba(255,250,240,.97);border:2px solid #fff;box-shadow:0 6px 18px rgba(20,20,30,.28);cursor:pointer;display:none;z-index:2}
 #stBox b{position:absolute;top:-14px;left:18px;padding:3px 14px;border-radius:999px;background:var(--ink);color:#fff;font-size:14px}
@@ -64,8 +79,6 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 #stCard .cap{position:absolute;left:0;right:0;bottom:calc(52px + env(safe-area-inset-bottom));text-align:center;color:#fff;font-weight:800;font-size:clamp(17px,4.6vw,24px);line-height:1.7;letter-spacing:.06em;
   text-shadow:0 2px 10px rgba(0,0,0,.6),0 0 2px rgba(0,0,0,.6);padding:0 16px;white-space:pre-line;opacity:0;transition:opacity .6s;z-index:2}
 #stCard .cap.on{opacity:1}
-.mon2d{position:absolute;width:min(30vw,190px);filter:drop-shadow(0 8px 10px rgba(0,0,0,.3));animation:float 3s ease-in-out infinite;z-index:1}
-@keyframes float{50%{transform:translateY(-8px)}}
 #stSkip{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.6);background:rgba(0,0,0,.3);color:#fff;font:inherit;font-weight:800;font-size:13px;display:none;z-index:3;cursor:pointer}
 .stBtn{border:2px solid #fff;border-radius:999px;background:var(--ink);color:#fff;font:inherit;font-weight:800;font-size:17px;letter-spacing:.12em;padding:12px 34px;box-shadow:0 4px 14px rgba(20,30,60,.3);cursor:pointer;min-width:220px}
 .stBtn.sub{background:rgba(255,250,240,.95);color:var(--ink);border-color:rgba(44,62,102,.25)}
@@ -103,11 +116,11 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 <div id="st">
   <div id="stBg"></div>
   <div id="stCard"><div class="cap"></div></div>
-  <img class="stP off" id="stL" alt=""><img class="stP off" id="stR" alt="">
+  <img class="stP off" id="stR2" alt=""><img class="stP off" id="stL" alt=""><img class="stP off" id="stR" alt=""><div id="stPh"><img alt=""></div>
   <div id="stPick"><canvas id="stPickCv"></canvas><div class="row"><button data-m="7">エンジュ</button><button data-m="178">フタバン</button><button data-m="70">デンキー</button></div><button class="stBtn go">この子にする</button></div>
   <div id="stBox"><b></b><p></p><i></i></div>
   <div id="stTitle"><h1>神獣オリュンポス<small>（仮）</small></h1><button class="stBtn" id="btNew">はじめから</button><button class="stBtn sub" id="btCont">つづきから</button></div>
-  <div id="stSetup"><div class="row"><button class="g" data-g="m"><img data-src="intro/p_hero_m_normal.webp" alt="">男の子</button><button class="g" data-g="f"><img data-src="intro/p_hero_f_normal.webp" alt="">女の子</button></div>
+  <div id="stSetup"><div class="row"><button class="g" data-g="m"><img data-src="../v3/portraits/hero_m_normal.webp" alt="">男の子</button><button class="g" data-g="f"><img data-src="../v3/portraits/hero_f_normal.webp" alt="">女の子</button></div>
     <label>名前<input id="stName" maxlength="6" autocomplete="off"></label><button class="stBtn" id="btSetup">決定</button></div>
   <button id="stSkip">スキップ</button>
 </div>
@@ -117,6 +130,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 <script src="lib/DRACOLoader.js"></script>
 <script src="lib/v83char.js"></script>
 <script src="../chars/viewer/hero_v2.js"></script>
+<script src="../v3/chars/char_v3.js"></script>
 <script>
 (function(){
 'use strict';
@@ -124,8 +138,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 //  ギリシャ地方 オリーヴァ村 — 歩ける見本 (three r128)
 //  地形・建物・小物・草は regions/<マップ>.json から組み立てる。街(オリーヴァ村)と自然(オリーブの丘)は別のマップで、
 //  門に入ると暗転して切り替える(そのマップの分だけ読む)。マップの中は48m角の区画で、主人公の近くだけ細かく作る。
-//  タイトル → イントロ → 主人公の設定 → 明日香村(相棒を選ぶ) → 飛行船 → オリーヴァ村。記録は localStorage(w2_save_v1)。
-//  主人公の3D: CFG.hero.urls の先頭から順に探す(world_v2/chars/hero_m.glb があればそれ)。
+//  タイトル → イントロ → 主人公の設定 → 明日香村の朝 → 空の港・高速便 → 飛行船 → オリーヴァ村(ゾイ・エレナ博士) → 相棒を選ぶ → 丘でディミ。記録は localStorage(w2_save_v1)。
+//  人物は world_v2/v3(characters_v3・style_v3): 3D は v3/chars/{key}.glb(char_v3.js)、立ち絵は v3/portraits/{key}_{表情}.webp(全員右向き・右の枠は反転)。
 //  WORLD.swapHero(url) で差し替えられる。
 // =====================================================================================
 const Q=new URLSearchParams(location.search);
@@ -1039,6 +1053,10 @@ async function loadC3(key,height){
   model.position.y=-y0; const inner=new THREE.Group(); inner.add(model); inner.scale.setScalar(sc); const wrap=new THREE.Group(); wrap.add(inner);
   const rig={key,mixer,acts,cur:'',eye,model,mesh,wrap,speed:{walk:((acts.walk&&acts.walk.getClip().userData.speed)||1)*sc,run:((acts.run&&acts.run.getClip().userData.speed)||2)*sc}};
   if(acts.idle){ acts.idle.play(); acts.idle.time=Math.random()*acts.idle.getClip().duration; rig.cur='idle'; } mixer.update(0); C3.push(rig); return rig; }
+const V3DIR='../v3/chars/'; const _hp=new THREE.Vector3();
+async function loadV3(key,height){ const g=await loadGLB(V3DIR+key+'.glb'); g.scene.traverse(o=>{ if(o.material&&o.material.map){ o.material.map.encoding=THREE.LinearEncoding; o.material.map.anisotropy=4; } });
+  const hv=CharV3.setup(g,{height,autoLook:false,shadow:false}); hv.root.traverse(o=>{ if(o.isMesh){ o.frustumCulled=false; o.castShadow=!IS_MOBILE; } }); return {v3:true,hv,wrap:hv.root,acts:{},cur:'idle',key}; }
+function npcLoad(n){ n.want=true; const m=n.o.m; (m.startsWith('v3:')?loadV3(m.slice(3),n.o.h||1.55):loadC3(m,n.o.h||1.55)).then(rig=>{ if(n.dead) return; n.rig=rig; n.g.add(rig.wrap); }).catch(e=>console.warn('npc',m,e&&e.message)); }
 function c3Play(rig,name,spd){ if(name==='walk'&&spd>rig.speed.walk*1.9) name='run'; if(name==='run'&&spd>0&&spd<rig.speed.walk*1.5) name='walk';
   const to=rig.acts[name]; if(!to) return; if(name==='walk'||name==='run') to.timeScale=Math.max(0.55,Math.min(name==='run'?2.3:2.0,(spd||rig.speed[name])/rig.speed[name]));
   if(rig.cur===name) return; const from=rig.acts[rig.cur]; to.enabled=true; to.setEffectiveWeight(1);
@@ -1067,13 +1085,17 @@ function heroSetModel(g,url){ HERO.rig=null; if(HERO.model){ HERO.root.remove(HE
   for(const c of g.animations){ const n=c.name.toLowerCase(); const k=n.includes('run')?'run':n.includes('walk')?'walk':n.includes('idle')?'idle':null; if(k&&!HERO.act[k]) HERO.act[k]=HERO.mixer.clipAction(c); }
   HERO.blink=blinkMap&&body?{map:blinkMap,body,orig:body.material.map,t:2}:null; HERO.url=url; heroPlay('idle'); }
 function heroPlay(k){ if(HERO.cur===k) return; const to=HERO.act[k]; if(!to) return; const from=HERO.act[HERO.cur]; to.reset(); to.play(); if(from) from.crossFadeTo(to,0.22,false); HERO.cur=k; }
+function heroSetV3(g,url){ if(HERO.model) HERO.root.remove(HERO.model); if(HERO.ph){ HERO.root.remove(HERO.ph); HERO.ph=null; }
+  g.scene.traverse(o=>{ if(o.material&&o.material.map){ o.material.map.encoding=THREE.LinearEncoding; o.material.map.anisotropy=4; } });
+  const hv=CharV3.setup(g,{height:CFG.hero.height,hero:true,shadow:false}); hv.root.traverse(o=>{ if(o.isMesh) o.frustumCulled=false; });
+  HERO.hv=hv; HERO.rig=null; HERO.mixer=null; HERO.model=hv.root; HERO.root.add(hv.root); HERO.url=url; HERO.act={}; }
 function heroSetV2(g,url){ if(HERO.model) HERO.root.remove(HERO.model); if(HERO.ph){ HERO.root.remove(HERO.ph); HERO.ph=null; }
   const hv=HeroV2.setup(g,{height:CFG.hero.height}); hv.root.traverse(o=>{ if(o.material&&o.material.map){ o.material.map.encoding=THREE.LinearEncoding; o.material.map.needsUpdate=true; o.material.needsUpdate=true; } if(o.isMesh) o.frustumCulled=false; });
   g.scene.traverse(o=>{ if(o.material&&o.material.map) o.material.map.encoding=THREE.LinearEncoding; });
   HERO.hv=hv; HERO.rig=null; HERO.mixer=null; HERO.model=hv.root; HERO.root.add(hv.root); HERO.url=url; HERO.act={}; }
 async function loadHero(urls){ for(const u of urls){ try{
       if(u.startsWith('c3:')){ const rig=await loadC3(u.slice(3),CFG.hero.height); heroSetRig(rig,u); return u; }
-      const g=await loadGLB(u); if(window.HeroV2&&g.animations.some(a=>a.name==='Talk')) heroSetV2(g,u); else heroSetModel(g,u); return u; }catch(e){ console.log('hero skip',u,e.message); } } return null; }
+      const g=await loadGLB(u); if(window.CharV3&&/\/v3\//.test(u)&&g.animations.some(a=>a.name==='Talk')) heroSetV3(g,u); else if(window.HeroV2&&g.animations.some(a=>a.name==='Talk')) heroSetV2(g,u); else heroSetModel(g,u); return u; }catch(e){ console.log('hero skip',u,e.message); } } return null; }
 function heroSetRig(rig,url){ if(HERO.model) HERO.root.remove(HERO.model); if(HERO.ph){ HERO.root.remove(HERO.ph); HERO.ph=null; } HERO.model=rig.wrap; HERO.root.add(rig.wrap); HERO.rig=rig; HERO.mixer=null; HERO.url=url; }
 
 // ---------------------------------------------------------------- 街の人・生き物・配送ドローン
@@ -1176,9 +1198,9 @@ function zoneAt(x,z){ for(const a of D.areas){ if(a.c&&Math.hypot(x-a.c[0],z-a.c
 function showArea(n){ areaEl.textContent=n; areaEl.classList.add('on'); clearTimeout(showArea.t); showArea.t=setTimeout(()=>areaEl.classList.remove('on'),2600); }
 enterEl.addEventListener('click',()=>{ if(!ENTER||STORY) return; if(ENTER.npc){ npcTalk(ENTER.npc); return; } enterPlace(ENTER.n); });
 function enterPlace(n){ const f=SAVE?SAVE.flags:{};
-  if(n==='記憶館'){ if(!f.daphne) storyField('daphne'); else toast('記憶館'); return; }
-  if(n==='はるの亭'){ storyField(f.father?'father2':'father'); return; }
-  if(n==='ムネモ研究所'){ if(!f.mother) storyField('mother'); else toast('ムネモ研究所'); return; }
+  if(n==='記憶館'){ toast('記憶館'); return; }
+  if(n==='旅人の宿'){ if(!f.tasos) storyField('tasos'); else toast('旅人の宿'); return; }
+  if(n==='ムネモ研究所'){ toast('ムネモ研究所 オリーヴァ支所'); return; }
   if(n==='店'){ ITEMS.heal=Math.max(ITEMS.heal||0,3); toast('回復の水筒 ×'+ITEMS.heal); saveGame(); return; }
   if(n==='いこいの泉'){ toast('みんな元気になった'); return; } toast(n); }
 function npcTalk(n){ const sc=n.o.scene, f=SAVE?SAVE.flags:{}; if(sc&&!n.o.trainer&&!f[sc]&&SC[sc]){ storyField(sc); return; }
@@ -1186,7 +1208,7 @@ function npcTalk(n){ const sc=n.o.scene, f=SAVE?SAVE.flags:{}; if(sc&&!n.o.train
 document.getElementById('tod').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) setTime(b.dataset.t); });
 const _pv=new THREE.Vector3();
 const talkEl=document.getElementById('talk'), bangEl=document.getElementById('bang'), flashEl=document.getElementById('flash'); let TALK=null;
-function talkTo(n,line){ TALK=n; n.talkT=4; const ty=Math.atan2(n.x-HERO.x,n.z-HERO.z); HERO.yaw=ty; if(HERO.hv) HERO.hv.play('Talk',0.15);
+function talkTo(n,line){ TALK=n; n.talkT=4; const ty=Math.atan2(n.x-HERO.x,n.z-HERO.z); HERO.yaw=ty; if(HERO.hv) HERO.hv.play('Talk',0.15); if(n.rig&&n.rig.v3) n.rig.hv.play('Talk',0.2);
   if(n.rig&&n.rig.acts.agree){ const a=n.rig.acts.agree; a.setLoop(THREE.LoopOnce,1); a.reset().play(); const f=n.rig.acts[n.rig.cur]; if(f&&f!==a) f.crossFadeTo(a,0.2,false); n.rig.cur='agree'; setTimeout(()=>{ if(n.rig.cur==='agree'){ n.rig.acts.idle.reset().play(); a.crossFadeTo(n.rig.acts.idle,0.3,false); n.rig.cur='idle'; } },1500); }
   talkEl.querySelector('b').textContent=n.o.n; talkEl.querySelector('p').textContent=line||n.o.line||'こんにちは。'; talkEl.style.display='block'; }
 function talkClose(){ TALK=null; talkEl.style.display='none'; }
@@ -1221,7 +1243,7 @@ function endEncounter(e,res){ if(res&&res.result==='quit'){ WORLD.lastBattle=res
   if(res&&res.caught){ const c=res.caught, b=c.base||c.mid; if(c.isNew){ BOX[b]={rank:c.rank||3,stack:c.stack||0}; if(PARTY.length<6) PARTY.push({mid:c.mid,rank:c.rank||3}); }
     else { BOX[b]={rank:c.rankAfter||((BOX[b]||{}).rank||3),stack:c.stack||0}; for(const q of PARTY) if(q.mid===c.mid||q.mid===b){ q.rank=c.rankAfter||q.rank; q.stack=c.stack||0; } }
     flag('caught'); toast(monName(c.mid)+(c.isNew?'が仲間になった！':'の成長ランクが'+(c.rankAfter||'')+'になった！')); }
-  if(e.n&&SAVE){ if(e.n.o.scene==='nikos') flag('nikos'); if(res&&res.result==='win'){ SAVE.flags['beat_'+e.n.o.n]=1; if(e.n.o.scene==='yannis') flag('yannis'); } }
+  if(e.n&&SAVE){ if(e.n.o.scene==='dimi') flag('dimi'); if(res&&res.result==='win'){ SAVE.flags['beat_'+e.n.o.n]=1; if(e.n.o.scene==='stavros') flag('stavros'); } }
   if(e.m){ if(res&&(res.result==='win'||res.result==='draw'||res.result==='flee')){ e.m.gone=true; if(e.m.inst&&e.m.inst.root.parent) scene.remove(e.m.inst.root); setTimeout(()=>{ e.m.gone=false; e.m.x=e.m.o.x; e.m.z=e.m.o.z; },60000); }
     const dx=HERO.x-e.m.x, dz=HERO.z-e.m.z, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*1.2,HERO.z+dz/L*1.2); }
   if(e.n){ if(res&&res.result==='win'){ e.n.beaten=true; e.n.o.line=e.n.o.lineAfter||'まいった！ いい手合わせだったよ。'; } const dx=HERO.x-e.n.x, dz=HERO.z-e.n.z, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*1.5,HERO.z+dz/L*1.5); }
@@ -1266,13 +1288,14 @@ function frame(now){ requestAnimationFrame(frame); if(PAUSED){ LAST=now; return;
   const _t0=performance.now(); streamChunks(HERO.x,HERO.z,IS_MOBILE?5:7); const _t1=performance.now();
   blobI=0; blobAt(HERO.x,HERO.y,HERO.z,0.8);
   for(const n of NPCS){ const d=Math.hypot(HERO.x-n.x,HERO.z-n.z);
-    if(!n.want&&d<26&&n.o.m){ n.want=true; loadC3(n.o.m,n.o.h||1.55).then(rig=>{ if(n.dead) return; n.rig=rig; n.g.add(rig.wrap); }).catch(e=>console.warn('npc',n.o.m,e&&e.message)); }
+    if(!n.want&&d<26&&n.o.m) npcLoad(n);
     const near=d<(IS_MOBILE?38:55); if(near!==!!n.g.parent){ if(near) scene.add(n.g); else scene.remove(n.g); } if(!near) continue; let spd=0;
     if(n.o.path&&n.rig&&d>2.2){ const P=n.o.path, t=P[n.pi%P.length]; const dx=t[0]-n.x, dz=t[1]-n.z, L=Math.hypot(dx,dz);
       if(n.wait>0) n.wait-=dt; else if(L<0.2){ n.pi++; n.wait=t[2]||0; } else { const sp=1.1*dt; n.x+=dx/L*Math.min(sp,L); n.z+=dz/L*Math.min(sp,L); spd=1.1; n.yaw+=angD(Math.atan2(dx,dz),n.yaw)*Math.min(1,dt*6); } }
     const y=groundAt(n.x,n.z); n.g.position.set(n.x,y,n.z);
     if(!spd){ const ty=d<6?Math.atan2(HERO.x-n.x,HERO.z-n.z):(n.o.rot||0)*DEG; n.yaw+=angD(ty,n.yaw)*Math.min(1,dt*4); } n.g.rotation.y=n.yaw;
-    if(n.rig){ c3Play(n.rig,spd?'walk':'idle',spd); c3Tick(n.rig,dt,d>22); } if(d<40) blobAt(n.x,y,n.z,0.75); }
+    if(n.rig&&n.rig.v3){ n.rig.hv.lookAt(d<4.5?_hp.set(HERO.x,HERO.y+CFG.hero.height*0.85,HERO.z):null); n.rig.hv.update(dt,spd); }
+    else if(n.rig){ c3Play(n.rig,spd?'walk':'idle',spd); c3Tick(n.rig,dt,d>22); } if(d<40) blobAt(n.x,y,n.z,0.75); }
   const _t2=performance.now(); for(const m of MONS) monUpdate(m,dt,now); partnerUpdate(dt); const _t3=performance.now();
   for(const dr of DRONES){ const d=dr.d, t=now/1000*d.sp+dr.ph; let x,z,yaw; if(d.c){ x=d.c[0]+Math.cos(t*6.28)*d.r; z=d.c[1]+Math.sin(t*6.28)*d.r; yaw=-t*6.28; } else { const k=0.5-0.5*Math.cos(t*6.28); x=lerp(d.line[0][0],d.line[1][0],k); z=lerp(d.line[0][1],d.line[1][1],k); yaw=Math.atan2(d.line[1][0]-d.line[0][0],d.line[1][1]-d.line[0][1]); }
     const gy2=G(x,z); dr.g.position.set(x,gy2+Math.min(d.y,4.2)+Math.sin(now*0.003+dr.ph)*0.15,z); dr.g.rotation.set(Math.sin(now*0.002)*0.06,yaw,0); if(Math.hypot(x-HERO.x,z-HERO.z)<40) blobAt(x,gy2,z,0.7); }
@@ -1321,7 +1344,7 @@ async function loadMap(id,at,pos){ const t0=performance.now();
   HERO.y=groundAt(HERO.x,HERO.z); CAM.ty=HERO.y; U.uHero.value.set(HERO.x,HERO.y,HERO.z);
   if(FX.fountainAt){ SPRAY=makePoints(IS_MOBILE?70:120,2,{box:[1,1,1],size:0.09,map:TEX.mote,add:true,alpha:0.7,c:['#e8fbff','#ffffff','#c8f2ff']}); SPRAY.material.uniforms.uCen.value.set(FX.fountainAt[0],FX.fountainAt[1],FX.fountainAt[2]); resize(); }
   partnerPlace(); READY.scene=true; STATS.mapMs=performance.now()-t0; STATS.maps=(STATS.maps||0)+1; }
-function kickActors(){ for(const n of NPCS){ const d=Math.hypot(HERO.x-n.x,HERO.z-n.z); if(!n.want&&d<26&&n.o.m){ n.want=true; loadC3(n.o.m,n.o.h||1.55).then(rig=>{ if(n.dead) return; n.rig=rig; n.g.add(rig.wrap); }).catch(e=>console.warn('npc',n.o.m,e&&e.message)); } } }
+function kickActors(){ for(const n of NPCS){ const d=Math.hypot(HERO.x-n.x,HERO.z-n.z); if(!n.want&&d<26&&n.o.m) npcLoad(n); } }
 async function settleMap(ms){ const t0=performance.now(); kickActors();
   while(performance.now()-t0<ms){ streamChunks(HERO.x,HERO.z,40); if(WORLD.pending()===0&&WORLD.modelsPending()===0&&WORLD.npcReady()) break; await sleep(16); } }
 async function goMap(to,at){ if(TRANS) return; TRANS=true; const t0=performance.now(); AUTO=null; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none';
@@ -1356,18 +1379,25 @@ function unlocks(){ const u=(SAVE&&SAVE.unlock)||{}; return {evo:!!u.evo,fusion:
 function ownedList(){ const o=new Set(); const evo=unlocks().evo; const add=id=>{ let k=+id, g=0; while(k!=null&&!o.has(k)&&g++<5){ o.add(k); if(!evo) break; k=MEVO[k]; } }; for(const id in BOX) add(id); for(const q of PARTY) add(q.mid); for(const id of (SAVE&&SAVE.owned)||[]) add(id); return [...o]; }
 function monName(id){ return MNAME[id]||MONN[id]||'この子'; }
 function objText(){ const f=SAVE?SAVE.flags:{}; if(!f.arrived) return '';
-  if(!f.daphne) return '記憶館でダフネと話す'; if(!f.hill) return '静域の門から、オリーブの丘へ'; if(!f.nikos) return '小川の先で、ニコスと勝負';
-  if(!f.caught) return '野生の子を仲間にする'; if(!f.yannis) return '丘の上の農園で、ヤニスに会う'; return '見本はここまで'; }
+  if(!f.hill) return '静域の門から、オリーブの丘へ'; if(!f.dimi) return '丘の道で、ディミと勝負';
+  if(!f.caught) return '野生の子を仲間にする'; if(!f.stavros) return '丘の上の農園で、スタヴロスに会う'; return '見本はここまで'; }
 function objUpdate(){ const t=objText(); objEl.textContent=t; objEl.style.display=t&&!STORY&&!TRANS?'block':'none'; }
 
 // ---------------------------------------------------------------- 会話(立ち絵つき)・イントロ
 const $=id=>document.getElementById(id);
-const ST={el:$('st'),bg:$('stBg'),L:$('stL'),R:$('stR'),box:$('stBox'),nm:$('stBox').querySelector('b'),tx:$('stBox').querySelector('p'),card:$('stCard'),cap:$('stCard').querySelector('.cap'),skip:$('stSkip'),title:$('stTitle'),setup:$('stSetup'),pick:$('stPick')};
-const FACES={hero_m:['normal','smile','surprised','serious','sad','angry','hurt'],hero_f:['normal','smile','surprised','serious','sad','angry','hurt'],genzo:['normal','smile','serious'],natsuki:['normal','smile'],shinji:['normal','smile'],mio:['normal','smile','surprised'],daphne:['normal','smile','surprised'],nikos:['normal','smile'],yannis:['normal']};
-const WHO={genzo:'祖父',natsuki:'母',shinji:'父',mio:'ミオ',daphne:'ダフネ',nikos:'ニコス',yannis:'ヤニス',eleni:'エレニおばさん'};
-function fillT(t){ const g=SAVE?SAVE.g:'m'; return t.replace(/\{hero\}/g,SAVE?SAVE.name:'ハルト').replace(/\{partner\}/g,MONN[SAVE&&SAVE.partner]||'相棒').replace(/\{sib\}/g,g==='f'?'おねえちゃん':'おにいちゃん'); }
-function pSrc(who,face){ const k=who==='hero'?'hero_'+(SAVE?SAVE.g:'m'):who; const f=FACES[k]; if(!f) return null; return 'intro/p_'+k+'_'+(f.includes(face)?face:'normal')+'.webp'; }
-for(const im of [ST.L,ST.R]) im.onerror=()=>im.classList.add('off');
+const ST={el:$('st'),bg:$('stBg'),L:$('stL'),R:$('stR'),R2:$('stR2'),ph:$('stPh'),box:$('stBox'),nm:$('stBox').querySelector('b'),tx:$('stBox').querySelector('p'),card:$('stCard'),cap:$('stCard').querySelector('.cap'),skip:$('stSkip'),title:$('stTitle'),setup:$('stSetup'),pick:$('stPick')};
+const PDIR='../v3/portraits/';
+const E7=['normal','smile','surprised','serious','sad','angry','hurt'];
+const FACES={hero_m:E7,hero_f:E7,genichi:['normal'],misaki:['normal','smile'],hana:['normal'],ryo:['normal'],
+  zoi:['normal','smile','surprised','serious','angry'],dimi:['normal','smile','surprised','serious'],elena:['normal','smile','serious'],tasos:['normal','smile','surprised'],petra:['normal','smile','surprised'],stavros:['normal','smile','serious']};
+const WHO={genichi:'じいちゃん',misaki:'母',hana:'ハナ',ryo:'父',zoi:'ゾイ',dimi:'ディミ',elena:'エレナ博士',tasos:'タソス',petra:'ペトラ',stavros:'スタヴロス'};
+const DEFN=g=>g==='f'?'ツムギ':'カナタ';
+function fillT(t){ const g=SAVE?SAVE.g:'m'; return t.replace(/\{hero\}/g,SAVE?SAVE.name:DEFN(g)).replace(/\{partner\}/g,MONN[SAVE&&SAVE.partner]||'相棒').replace(/\{sib\}/g,g==='f'?'ねえね':'にいに'); }
+// 立ち絵の向き(絵ごと)。index.json を読むまでは全員右向きとして扱う
+const PFACE={}; fetch(PDIR+'index.json').then(r=>r.json()).then(j=>{ for(const k in j.chars){ const f=j.chars[k].facing||{}; for(const e in f) PFACE[PDIR+k+'_'+e+'.webp']=f[e]; } }).catch(()=>{});
+function pFace(img,side){ const src=img.getAttribute('src')||''; const f=PFACE[src]||'right'; const want=side==='L'?'right':'left'; img.style.setProperty('--fx',(f==='front'||f===want)?'1':'-1'); }
+function pSrc(who,face){ const k=who==='hero'?'hero_'+(SAVE?SAVE.g:'m'):who; const f=FACES[k]; if(!f) return null; return PDIR+k+'_'+(f.includes(face)?face:'normal')+'.webp'; }
+for(const im of [ST.L,ST.R,ST.R2]) im.onerror=()=>im.classList.add('off');
 const PIMG={}; let ADV=null; function advance(){ if(ADV){ const f=ADV; ADV=null; f(); } }
 ST.box.addEventListener('click',e=>{ e.stopPropagation(); advance(); });
 ST.el.addEventListener('click',()=>{ if(!ST.el.classList.contains('field')&&ST.box.style.display==='block') advance(); });
@@ -1376,18 +1406,26 @@ function waitAdv(){ return new Promise(r=>{ ADV=r; }); }
 async function typeOut(el,t){ el.textContent=''; let skip=false; const prev=ADV; ADV=()=>{ skip=true; };
   for(let i=1;i<=t.length;i++){ if(skip){ el.textContent=t; break; } el.textContent=t.slice(0,i); await sleep(22); } ADV=null; }
 function stShow(mode,bg){ ST.el.style.display='block'; ST.el.classList.toggle('field',mode==='field'); if(bg) ST.bg.style.backgroundImage=`url(intro/bg_${bg}.webp)`;
-  for(const k of ['card','title','setup','pick']) ST[k].style.display='none'; ST.box.style.display='none'; ST.L.classList.add('off'); ST.R.classList.add('off'); ST.skip.style.display='none'; }
+  ST.el.classList.remove('trio'); for(const k of ['card','title','setup','pick','ph']) ST[k].style.display='none'; ST.box.style.display='none'; for(const k of ['L','R','R2']){ ST[k].classList.add('off'); ST[k].dataset.w=''; } ST.skip.style.display='none'; }
 function stHide(){ ST.el.style.display='none'; ST.box.style.display='none'; ADV=null; }
 // lines: {w:'hero'|'genzo'|...|'partner'|null(ナレ), t, f:表情, if:()=>bool, fn:async()=>{}}
 async function runScene(lines,opt){ opt=opt||{}; const field=!!opt.field; STORY=true; objUpdate(); enterEl.classList.remove('on'); talkClose(); IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; AUTO=null;
-  stShow(field?'field':'full',opt.bg); if(!field) PAUSED=true; ST.L.removeAttribute('src'); ST.R.removeAttribute('src');
+  stShow(field?'field':'full',opt.bg); if(!field) PAUSED=true; ST.L.removeAttribute('src'); ST.R.removeAttribute('src'); ST.R2.removeAttribute('src');
   { const ps=[]; for(const L of lines){ const q=L.w&&L.w!=='partner'?pSrc(L.w,L.f||'normal'):null; if(q&&!ps.includes(q)) ps.push(q); } await Promise.race([Promise.all(ps.map(u=>new Promise(r=>{ const im=new Image(); PIMG[u]=im; im.onload=im.onerror=r; im.src=u; }))),sleep(1500)]); }
   for(const L of lines){ if(L.if&&!L.if()) continue; if(L.fn){ ST.box.style.display='none'; await L.fn(); continue; }
     const w=L.w; const nar=!w; ST.box.classList.toggle('nar',nar); ST.box.style.display='block';
-    ST.nm.textContent=w==='hero'?(SAVE?SAVE.name:'ハルト'):(w==='partner'?(MONN[SAVE.partner]||''):(L.n||WHO[w]||w||''));
+    ST.nm.textContent=w==='hero'?(SAVE?SAVE.name:DEFN(SAVE&&SAVE.g)):(w==='partner'?(MONN[SAVE.partner]||''):(L.n||WHO[w]||w||''));
     const src=w&&w!=='partner'?pSrc(w,L.f||'normal'):null;
-    if(src){ const side=w==='hero'?ST.L:ST.R, other=w==='hero'?ST.R:ST.L; if(side.getAttribute('src')!==src) side.src=src; side.classList.remove('off','dim'); other.classList.add('dim'); }
-    else { ST.L.classList.add('dim'); ST.R.classList.add('dim'); }
+    // 置き方(style_v3 10章): 主人公=左(右向き)。相手=右(反転して左向き)。右に2人目が来たら、前の人は右のうしろの枠へ。電話は右上の画面
+    ST.ph.style.display=L.ph&&src?'block':'none';
+    if(L.ph&&src){ const im=ST.ph.querySelector('img'); if(im.getAttribute('src')!==src) im.src=src; im.style.transform=w==='ryo'?'':'scale(2.1)'; im.style.transformOrigin='50% 30%'; ST.L.classList.add('dim'); ST.R.classList.add('dim'); ST.R2.classList.add('dim'); }
+    else if(src&&w==='hero'){ if(ST.L.getAttribute('src')!==src) ST.L.src=src; ST.L.classList.remove('off','dim'); ST.R.classList.add('dim'); ST.R2.classList.add('dim'); }
+    else if(src){ const R=ST.R, R2=ST.R2;
+      if(R.dataset.w&&R.dataset.w!==w){ if(R2.dataset.w===w){ const ts=R.getAttribute('src'), tw=R.dataset.w; R2.src=ts; R2.dataset.w=tw; } else { R2.src=R.getAttribute('src'); R2.dataset.w=R.dataset.w; } R2.classList.remove('off'); }
+      if(R.getAttribute('src')!==src) R.src=src; R.dataset.w=w; R.classList.remove('off','dim'); R2.classList.add('dim'); ST.L.classList.add('dim'); }
+    else { ST.L.classList.add('dim'); ST.R.classList.add('dim'); ST.R2.classList.add('dim'); }
+    pFace(ST.L,'L'); pFace(ST.R,'R'); pFace(ST.R2,'R');
+    ST.el.classList.toggle('trio',!ST.R2.classList.contains('off')&&!!ST.R2.getAttribute('src'));
     await typeOut(ST.tx,fillT(L.t)); await waitAdv(); }
   stHide(); STORY=false; if(!field){ PAUSED=!READY.scene||!!opt.keepPaused; LAST=performance.now(); } objUpdate(); saveGame(); }
 async function runCards(cards){ stShow('full'); PAUSED=true; ST.card.style.display='block'; ST.skip.style.display='block'; let skipAll=false; ST.skip.onclick=e=>{ e.stopPropagation(); skipAll=true; advance(); };
@@ -1397,108 +1435,137 @@ async function runCards(cards){ stShow('full'); PAUSED=true; ST.card.style.displ
     await new Promise(r=>{ ADV=r; ST.card.onclick=()=>advance(); }); }
   ST.card.onclick=null; ST.card.querySelectorAll('.mon2d').forEach(e=>e.remove()); ST.card.style.display='none'; ST.skip.style.display='none'; }
 const INTRO=[
-  {bg:'intro1',t:'2100年。\n人と生き物が、犬や猫のように\nとなりで暮らす時代。',mons:[[49,8,40,26],[166,64,46,22]]},
-  {bg:'intro2',t:'AIのムネモが生んだ生き物は、\nその土地の記憶から姿をもらう。\n森には森の子、海には海の子。',mons:[[16,58,44,26]]},
-  {bg:'intro3',t:'みんな、うちの子を連れて歩く。\n目が合えば、ちょっと勝負。',mons:[[7,6,46,24],[178,38,52,22],[70,68,46,24]]},
-  {bg:'intro4',t:'古い遺跡の奥には、\n昔から眠る「いにしえの子」がいる。',mons:[[81,34,30,34,0.85]]},
-];
+  {bg:'intro1_v3',t:'2100年。\n人と生き物が、となりで暮らす時代。'},
+  {bg:'intro3_v3',t:'生き物は、生まれた土地の記憶から姿をもらう。\n森には森の子、水辺には水辺の子。'},
+  {bg:'intro2_v3',t:'古い遺跡の記憶からは、\n昔の話そのもののような「いにしえの子」が生まれる。'},
+  {bg:'airship_v3',t:'毎年、世界から選ばれた子どもが、\n相棒と遺跡をめぐる旅に出る。\n「千の遺跡の旅」。'},
+]
 // 相棒を選ぶ(3体の3D)
 let PK=null;
 function pickPartner(){ return new Promise(res=>{ ST.pick.style.display='flex'; const cv=$('stPickCv'), go=ST.pick.querySelector('.go'), btns=[...ST.pick.querySelectorAll('.row button')];
   if(!PK){ const r=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true}); r.setPixelRatio(Math.min(devicePixelRatio||1,2)); r.outputEncoding=THREE.LinearEncoding;
     const sc=new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xfff6e8,0xb8a888,0.75)); const dl=new THREE.DirectionalLight(0xfff0dc,0.75); dl.position.set(2,5,6); sc.add(dl);
     const cam=new THREE.PerspectiveCamera(26,3/1.3,0.5,60); cam.position.set(0,1.7,7.4); cam.lookAt(0,0.62,0); PK={r,sc,cam,m:{},sel:null,on:false};
-    [7,178,70].forEach((id,i)=>monProto(id).then(g=>{ const inst=monMake(g); const k=1.9; inst.k=k; inst.root.scale.setScalar(k); inst.root.position.set((i-1)*2.1,0,0); inst.root.rotation.y=0.25*(1-i); sc.add(inst.root); PK.m[id]=inst; })); }
+    const fl=new THREE.Mesh(new THREE.CircleGeometry(4.6,48).rotateX(-Math.PI/2),new THREE.MeshLambertMaterial({color:0xd9c08e})); fl.position.y=-0.005; sc.add(fl);
+    [7,178,70].forEach((id,i)=>monProto(id).then(g=>{ const inst=monMake(g); const k=1.9; inst.k=k; inst.root.scale.setScalar(k); inst.root.position.set((i-1)*2.1,0,0); inst.root.rotation.y=0.25*(1-i); sc.add(inst.root); PK.m[id]=inst;
+      const sh=new THREE.Mesh(new THREE.PlaneGeometry(1.5,1.1).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:TEX.blob,transparent:true,depthWrite:false,opacity:0.8})); sh.position.set((i-1)*2.1,0.01,0); sc.add(sh); inst.sh=sh; })); }
   const size=()=>{ const w=cv.clientWidth||300, h=cv.clientHeight||130; PK.r.setSize(w,h,false); PK.cam.aspect=w/h; PK.cam.updateProjectionMatrix(); }; size();
   PK.on=true; PK.sel=null; go.style.display='none'; btns.forEach(b=>b.classList.remove('sel'));
   const LINE={7:'三本の尾の先に、小さな火がともっている。',178:'双葉の頭で、日なたぼっこをしている。',70:'耳の内側が、ほんのり光っている。'};
-  const choose=id=>{ PK.sel=id; btns.forEach(b=>b.classList.toggle('sel',+b.dataset.m===id)); go.style.display='block'; ST.box.classList.add('nar'); ST.box.style.display='block'; ST.tx.textContent=MONN[id]+'――'+LINE[id]; ST.box.querySelector('i').style.display='none'; };
+  const choose=id=>{ if(PK.sel!==id&&PK.m[id]) PK.m[id].hopT=0; PK.sel=id; btns.forEach(b=>b.classList.toggle('sel',+b.dataset.m===id)); go.style.display='block'; ST.box.classList.add('nar'); ST.box.style.display='block'; ST.tx.textContent=MONN[id]+'――'+LINE[id]; ST.box.querySelector('i').style.display='none'; };
   btns.forEach(b=>b.onclick=e=>{ e.stopPropagation(); choose(+b.dataset.m); });
   cv.onclick=e=>{ e.stopPropagation(); const rc=cv.getBoundingClientRect(); const i=Math.min(2,Math.floor((e.clientX-rc.left)/rc.width*3)); choose([7,178,70][i]); };
   go.onclick=e=>{ e.stopPropagation(); PK.on=false; ST.pick.style.display='none'; ST.box.querySelector('i').style.display=''; ST.box.style.display='none'; res(PK.sel); };
   let last=performance.now(); const loop=now=>{ if(!PK.on) return; requestAnimationFrame(loop); const dt=Math.min(0.05,(now-last)/1000); last=now;
     MON_U.uUpV.value.set(0,1,0).transformDirection(PK.cam.matrixWorldInverse); MON_U.uSunV.value.set(0.4,0.8,0.5).normalize().transformDirection(PK.cam.matrixWorldInverse);
-    for(const id in PK.m){ const it=PK.m[id], s=+id===PK.sel; it.mixer.update(dt); const tk=it.k*(s?1.18:1); const cur=it.root.scale.x; it.root.scale.setScalar(cur+(tk-cur)*Math.min(1,dt*8)); it.root.position.y=s?Math.abs(Math.sin(now*0.006))*0.12:0; it.root.rotation.y+=s?dt*0.8:angD(0,it.root.rotation.y)*dt*2; }
+    for(const id in PK.m){ const it=PK.m[id], s=+id===PK.sel; it.mixer.update(dt); const tk=it.k*(s?1.18:1); const cur=it.root.scale.x; it.root.scale.setScalar(cur+(tk-cur)*Math.min(1,dt*8)); if(it.hopT!=null){ it.hopT+=dt; const u=it.hopT/0.42; it.root.position.y=u<1?Math.sin(Math.PI*u)*0.16:0; if(u>=1) it.hopT=null; } else it.root.position.y=0;
+      if(it.sh){ const hgt=it.root.position.y; it.sh.scale.setScalar(1-hgt*1.6); it.sh.material.opacity=0.8-hgt*2; } it.root.rotation.y+=angD(0,it.root.rotation.y)*dt*3; }
     PK.r.render(PK.sc,PK.cam); }; requestAnimationFrame(loop); }); }
 const SC={
  asuka:[
-  {w:null,t:'奈良の明日香村。\n1400年前、この国の都があった村。'},
-  {w:'genzo',t:'ほう、早いな。眠れんかったか。'},
-  {w:'hero',f:'smile',t:'うん。だって今日、ギリシャに行くんだよ！'},
-  {w:'genzo',t:'一年間か。母さんの仕事、ええ所に決まったな。'},
-  {w:'hero',f:'smile',t:'オリンピアの近くの村なんだって。古代オリンピックの！'},
-  {w:'genzo',f:'serious',t:'ほう。では、あそこの石舞台古墳。\n1400年前の人が、どうやって積んだと思う？'},
-  {w:'hero',f:'surprised',t:'え……ころとか、土の坂とか……。'},
-  {w:'genzo',f:'smile',t:'さて、なんでだと思う？\n答えは、行った先で考えたらええ。'},
-  {w:'genzo',t:'これを持っていき。わしが若いころの、発掘の手帳の写しや。'},
-  {w:'hero',f:'smile',t:'じいちゃんの記録！　いいの？'},
-  {w:'natsuki',t:'{hero}、ちょっと来て。研究所から、あなたにあずかり物よ。'},
-  {w:'natsuki',f:'smile',t:'生まれたばかりの3体。いっしょに暮らす家族を待ってるの。\nどの子がいい？　ゆっくり選んで。'},
-  {fn:async()=>{ const id=await pickPartner(); SAVE.partner=id; PARTY=[{mid:id,rank:5}]; BOX={[id]:{rank:5}}; }},
-  {w:'natsuki',f:'smile',t:'{partner}ね。いい顔。もう、あなたを見てる。'},
+  {w:null,t:'2100年、東京。\n空に浮かぶ道と、緑の塔の街。'},
+  {w:'hana',f:'normal',t:'{sib}、ほんとに今日行っちゃうの？'},
+  {w:'hero',f:'smile',t:'うん。千の遺跡の旅。1年かけて、ギリシャとエジプト！'},
+  {w:'hana',t:'1年……。ハナ、7つになっちゃうよ。'},
+  {w:'hero',f:'smile',t:'毎晩電話するよ。生き物の写真も、いっぱい送る。'},
+  {w:'misaki',t:'ほら、手帳に電話。お父さんから。'},
+  {w:null,t:'手首の上に光の画面が開き、海の上の風車が映った。'},
+  {w:'ryo',ph:1,t:'おう、間に合った！　気をつけて行けよ。'},
+  {w:'ryo',ph:1,t:'向こうの人に会ったら、まず名前を聞くんだぞ。'},
+  {w:'hero',f:'smile',t:'わかった！　お父さんも、海の上でがんばってね。'},
+  {w:'misaki',f:'smile',t:'見て。窓の外の塔、今朝はよく光ってる。'},
+  {w:'hero',t:'街の記憶が、元気ってことだよね。'},
+  {w:'misaki',f:'smile',t:'そう。人が来て、見て、覚えるとね。……あなたの旅も、それ。'},
+  {w:'genichi',t:'おお、早いな。眠れなかったか。'},
+  {w:'hero',f:'smile',t:'じいちゃん！　うん、ぜんぜん眠れなかった。'},
+  {w:'genichi',t:'これを持っていきなさい。わしが若いころ、発掘で使ったルーペだ。'},
+  {w:'hero',f:'surprised',t:'じいちゃんのルーペ！　いいの？'},
+  {w:'genichi',t:'手帳の光より、こっちのほうがよく見えるものもある。'},
+  {w:'genichi',t:'それと、発掘の記録の写しだ。古い石の前で読んでごらん。'},
+  {w:null,t:'記録の最後のページに、知らない島の名前があった。'},
+  {w:'hero',f:'surprised',t:'「ネシ島」……？　じいちゃん、これどこ？'},
+  {w:'genichi',t:'……海の底だ。今はな。'},
+  {w:'genichi',t:'オリンピアの走路、自分の足で歩いておいで。'},
+  {w:'genichi',t:'昔の人は、なんでそこで走ったんだろうな。答えは向こうで考えなさい。'},
+  {w:'misaki',f:'smile',t:'いってらっしゃい。ちゃんと食べて、ちゃんと寝るのよ。'},
+  {w:'hana',t:'{sib}、いってらっしゃい！'},
+  {w:'hero',f:'smile',t:'いってきます！'},
+ ],
+ skyport:[
+  {w:null,t:'浮上列車で、東京湾の空の港へ。'},
+  {w:null,t:'高速便は空の高い所を飛ぶ。窓の外に、丸い地球のふちが見えた。'},
+  {w:null,t:'3時間でアテネ。そこから西へは、ゆっくり飛ぶ飛行船に乗りかえる。'},
+ ],
+ airship:[
+  {w:null,n:'船の係の人',t:'（声）まもなくオリーヴァ。右手にオリーブの丘が見えますよ。'},
+  {w:'hero',f:'surprised',t:'海が二色だ！　浅い所が水色で、深い所が紺色！'},
+  {w:'hero',t:'あの丘の向こうが、オリンピア。2800年も前の競技場がある所……。'},
+  {w:null,t:'手首が小さくふるえた。手帳に電話。'},
+  {w:'hana',ph:1,t:'{sib}、もう着いた？　生き物いた？'},
+  {w:'hero',f:'smile',t:'まだ空の上。でも見て、下の畑。白い機械が、木の間を走ってる。'},
+  {w:'hana',ph:1,t:'ほんとだ！　ちっちゃい！　いいなあ。'},
+  {w:'hero',f:'smile',t:'着いたら、いちばんに写真送るよ。'},
+ ],
+ arrive:[
+  {w:null,t:'オリーヴァ村。\nオリーブの丘にかこまれた、遺跡のとなりの村。'},
+  {w:'zoi',f:'smile',t:'いた！　日本から来た旅の子でしょう？　ようこそ、オリーヴァへ！'},
+  {w:'hero',f:'smile',t:'うん、{hero}。きみは？'},
+  {w:'zoi',t:'ゾイ。村の記憶館で、案内の見習いをしてるの。'},
+  {w:'zoi',f:'smile',t:'あなたのギリシャの案内役よ。よろしくね。'},
+  {w:'hero',f:'surprised',t:'よろしく！　……あれ？　ギリシャの言葉なのに、わかる。'},
+  {w:'zoi',t:'手帳が耳もとで通訳してるの。わたしにも、あなたの言葉がわかるわ。'},
+  {w:'elena',f:'smile',t:'着いたわね。千の遺跡の旅、ギリシャの係のエレナです。'},
+  {w:'elena',t:'研究所で、あなたの相棒が待ってるわ。'},
+  {w:'hero',f:'surprised',t:'相棒……！'},
+  {w:'zoi',t:'見て、あの白い骨組み。古代オリンピアの遺跡を守る覆いよ。'},
+  {w:'hero',f:'smile',t:'あの下に、本物の競技場があるんだ……！'},
+  {w:'zoi',f:'smile',t:'明日、案内してあげる。神話ではね、英雄ヘラクレスが競技を始めたの。'},
+  {w:'hero',f:'surprised',t:'え、そうなの？　紀元前776年に始まった、とは本で読んだけど。'},
+  {w:'zoi',f:'smile',t:'ふふ。歴史は本で読めるけど、神話は人から聞くものよ。'},
+ ],
+ lab:[
+  {w:null,t:'ムネモ研究所 オリーヴァ支所。'},
+  {w:'elena',t:'この3体は、研究所のゆりかごで、旅のために生まれた子たち。'},
+  {w:'elena',t:'世界中の記録がまざって生まれたから、どこの土地の子でもないの。'},
+  {w:'elena',f:'smile',t:'あなたと同じ、これから旅に出る子たちよ。ゆっくり選んで。'},
+  {fn:async()=>{ const id=await pickPartner(); SAVE.partner=id; PARTY=[{mid:id,rank:5}]; BOX={[id]:{rank:5}}; partnerSet(id); }},
+  {w:'elena',f:'smile',t:'{partner}ね。いい顔。もう、あなたを見てる。'},
   {w:'partner',t:'コンッ！　（尾の火が、ぱっと大きくなった）',if:()=>SAVE.partner===7},
   {w:'partner',t:'ぷぅ……ふわぁ。（{hero}の足にもたれて、眠ってしまった）',if:()=>SAVE.partner===178},
   {w:'partner',t:'キュイ！　（手帳に飛びついて、画面をさわっている）',if:()=>SAVE.partner===70},
-  {w:'natsuki',t:'大事な決まりを1つだけ。街の中は「静域」。勝負はできないの。'},
-  {w:'natsuki',t:'自然の中で、だれかと目が合ったら勝負。\n野生の子は、勝つとついてきてくれるわ。'},
-  {w:'hero',f:'smile',t:'わかった！　行こう、{partner}！'},
-  {w:'mio',f:'smile',t:'{sib}ー！　飛行船、行っちゃうよー！'},
-  {w:'shinji',f:'smile',t:'ほな行こか。じいちゃん、行ってきます。'},
-  {w:'genzo',f:'smile',t:'行っといで。ええ目をして帰っておいで。'},
+  {w:'elena',t:'手帳に、旅の画面を入れたわ。地図と、出会った子の記録よ。'},
+  {w:'elena',t:'大事な決まりを3つ。'},
+  {w:'elena',t:'1つ。街の中は「静域」。勝負はできないの。'},
+  {w:'elena',t:'2つ。自然の中で、生き物を連れた人と目が合ったら、勝負。'},
+  {w:'elena',t:'3つ。野生の子は、勝負で勝つと、ついてきてくれるわ。'},
+  {w:'hero',f:'smile',t:'わかった！　よろしくね、{partner}！'},
+  {w:'elena',f:'serious',t:'それと……最近、このあたりの遺跡の記憶が、少し薄いの。'},
+  {w:'elena',t:'旅の記録で、何か気づいたら教えてね。'},
+  {w:'zoi',f:'smile',t:'泊まるのは広場の「旅人の宿」よ。タソスさんのごはん、おいしいの。'},
+  {w:'zoi',t:'村の南の「静域の門」を出ると、オリーブの丘。門の外で、勝負のやり方を教えるわ。'},
  ],
- airship:[
-  {w:'natsuki',t:'見えてきた。あれがギリシャ。ペロポネソス半島よ。'},
-  {w:'hero',f:'surprised',t:'海が二色だ！　浅い所が水色で、深い所が紺色！'},
-  {w:'mio',f:'surprised',t:'ねえママ、ギリシャにもいろんな子いる？'},
-  {w:'natsuki',f:'smile',t:'たくさん。ギリシャの子は、ギリシャの神話に似た姿をしてるの。'},
-  {w:'hero',t:'土地の記録から、ムネモが姿を作るから、でしょ？'},
-  {w:'natsuki',f:'smile',t:'正解。古い遺跡の近くでは、特別な子が生まれることもあるの。'},
-  {w:'hero',f:'surprised',t:'いにしえの子……！　会えるかな。'},
-  {w:'natsuki',t:'それは、あなたしだい。歴史を知ろうとする人の前に出るらしいわ。'},
+ tasos:[
+  {w:'tasos',f:'smile',t:'おう、旅の子か！　旅人の宿へようこそ。わしはタソスだ。'},
+  {w:'tasos',t:'野で材料を拾ってきたら、うまいおやつにしてやる。連れてる子にあげるといい。'},
+  {w:'hero',f:'smile',t:'おやつ！　{partner}、よかったね。'},
+  {w:'tasos',f:'smile',t:'腹がへっては、勝負はできん！　夜はちゃんと、ここへ帰ってくるんだぞ。'},
+  {fn:async()=>flag('tasos')},
  ],
- arrive:[
-  {w:null,t:'オリーヴァ村。\nオリーブの丘にかこまれた、小さな村。'},
-  {w:'shinji',f:'smile',t:'着いたで。門の内の角の店が、うちの新しい店「はるの亭」や。'},
-  {w:'mio',f:'smile',t:'わあ！　屋根が赤い！　壁がはちみつ色！'},
-  {w:'hero',f:'smile',t:'広場の水飲み場、すごく古い大理石だ……！'},
-  {w:'natsuki',t:'私は研究所にあいさつしてくる。\n{hero}は、広場の北の記憶館を見てきたら？'},
- ],
- daphne:[
-  {w:'daphne',t:'いらっしゃい。記憶館へようこそ。……あ、新しい家の子？'},
-  {w:'hero',f:'smile',t:'うん、{hero}。日本から来たんだ。'},
-  {w:'daphne',f:'smile',t:'私はダフネ。ここで案内の見習いをしてるの。'},
-  {w:'daphne',t:'いい？　この村の外れには、古代オリンピアの遺跡があるの。'},
-  {w:'hero',f:'smile',t:'知ってる！　紀元前776年に始まったって言われてるんだよね。'},
-  {w:'daphne',f:'surprised',t:'……くわしいのね。じゃあ、これは知ってる？\n神話ではね、英雄ヘラクレスが、この競技を始めたの。'},
-  {w:'hero',f:'surprised',t:'え、そうなの？　それは知らなかった。'},
-  {w:'daphne',f:'smile',t:'ふふ。歴史は本で読めるけど、神話は人から聞くものよ。'},
-  {w:'daphne',t:'村の南の「静域の門」を出ると、オリーブの丘。\n門の外では、勝負ができるわ。'},
-  {fn:async()=>flag('daphne')},
- ],
- father:[
-  {w:'shinji',f:'smile',t:'どや。ギリシャの村で、天ぷら屋や。'},
-  {w:'hero',t:'天ぷらって、もとはポルトガルの料理なんだよね。'},
-  {w:'shinji',f:'smile',t:'よう知っとるな。500年くらい前に伝わったらしいで。'},
-  {w:'shinji',t:'ここはオリーブ油の国や。揚げたら、えらいうまいはずや。'},
-  {fn:async()=>flag('father')},
- ],
- father2:[{w:'shinji',f:'smile',t:'気ぃつけて行っといで。腹へったら帰っておいでや。'}],
- mother:[
-  {w:'natsuki',t:'来たわね。{partner}、もうすっかりなついてる。'},
-  {w:'natsuki',t:'最近、この辺りの遺跡のメモリアが少し薄いの。\n何か変な物を見たら教えてね。'},
-  {fn:async()=>flag('mother')},
- ],
- nikos:[
-  {w:'nikos',t:'へえ。お前が日本から来たっていう、新入りか。'},
+ dimi:[
+  {w:'dimi',t:'へえ。お前が日本から来たっていう、旅の子か。'},
   {w:'hero',t:'{hero}だよ。きみは？'},
-  {w:'nikos',f:'smile',t:'ニコス。この村でいちばん強いのは、おれだ。覚えとけ。'},
-  {w:'nikos',t:'昔の話なんて役に立たない。強いのは新しい子だ。'},
+  {w:'dimi',f:'smile',t:'ディミ。パルテナから来た。おれも千の遺跡の旅に選ばれたんだ。'},
+  {w:'dimi',t:'道すじも同じ「地中海の道」。つまり、ずっと勝負の相手ってこと。'},
+  {w:'zoi',f:'surprised',t:'ディミ、おばあさんの家に来てたの？'},
+  {w:'dimi',f:'serious',t:'出発の前にな。……ばあちゃんの昔話は、もう聞きあきた。'},
+  {w:'dimi',t:'昔の話なんて役に立たない。強いのは新しく生まれた子だ。'},
   {w:'hero',f:'serious',t:'古いものの中にも、すごいものはあるよ。'},
-  {w:'nikos',t:'口だけなら何とでも言える。勝負だ、日本人！'},
+  {w:'dimi',f:'smile',t:'口だけなら何とでも言える。勝負だ！'},
  ],
- yannis:[
-  {w:'yannis',t:'……日本から来た子か。ダフネから聞いとる。'},
-  {w:'yannis',t:'この千年オリーブは、急がずに育った。お前さんの子も、な。'},
+ stavros:[
+  {w:'stavros',t:'……日本から来た旅の子か。ゾイから聞いとる。'},
+  {w:'stavros',t:'この千年オリーブは、切られても、根から芽が出た。'},
+  {w:'stavros',f:'smile',t:'木は急がん。お前さんの子も、な。'},
   {w:'hero',f:'serious',t:'勝負、お願いします！'},
  ],
 };
@@ -1508,27 +1575,28 @@ function heroGo(g){ CFG.hero.urls=['../chars/hero_'+g+'.glb']; CFG.hero.height=g
 async function arriveTown(){ fadeEl.classList.add('on'); await sleep(260); stHide(); ST.el.style.display='none'; if(LOADP) await LOADP; LOADP=null;
   if(MAP!=='oliva_town') await loadMap('oliva_town','start'); else { const p=D.arrive.start; WORLD.tp(p[0],p[1],p[2]); partnerPlace(); }
   partnerSet(SAVE.partner); SAVE.stage='field'; await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); await sleep(300);
-  showArea(D.name); AREA=D.name; await storyField('arrive'); flag('arrived'); saveGame(); }
+  showArea(D.name); AREA=D.name; await storyField('arrive'); if(!SAVE.partner) await storyField('lab'); partnerSet(SAVE.partner); flag('arrived'); saveGame(); }
 async function newGame(){ ST.title.style.display='none'; await runCards(INTRO);
   stShow('full'); ST.bg.style.backgroundImage='none'; ST.setup.style.display='flex'; ST.setup.querySelectorAll('img[data-src]').forEach(im=>{ if(!im.src) im.src=im.dataset.src; }); let g=null; const nm=$('stName'); nm.value='';
-  const gb=[...ST.setup.querySelectorAll('.g')]; const sel=x=>{ g=x; gb.forEach(b=>b.classList.toggle('sel',b.dataset.g===x)); if(!nm.value||nm.value==='ハルト'||nm.value==='ハルカ') nm.value=x==='f'?'ハルカ':'ハルト'; }; sel('m');
+  const gb=[...ST.setup.querySelectorAll('.g')]; const sel=x=>{ g=x; gb.forEach(b=>b.classList.toggle('sel',b.dataset.g===x)); if(!nm.value||nm.value==='カナタ'||nm.value==='ツムギ') nm.value=DEFN(x); }; sel('m');
   gb.forEach(b=>b.onclick=()=>sel(b.dataset.g));
   await new Promise(r=>{ $('btSetup').onclick=r; });
-  SAVE={v:1,g,name:(nm.value.trim()||(g==='f'?'ハルカ':'ハルト')).slice(0,6),partner:null,flags:{},unlock:{evo:false,fusion:false},owned:[],stage:'asuka'}; NOSAVE=false; saveGame();
+  SAVE={v:1,g,name:(nm.value.trim()||DEFN(g)).slice(0,6),partner:null,flags:{},unlock:{evo:false,fusion:false},owned:[],stage:'asuka'}; NOSAVE=false; saveGame();
   heroGo(g); fadeEl.classList.add('on'); await sleep(260); ST.setup.style.display='none';
   LOADP=loadMap('oliva_town','start').catch(e=>console.error(e));   // 会話のあいだに村を読んでおく
   await sleep(60); fadeEl.classList.remove('on');
-  await runScene(SC.asuka,{bg:'asuka',keepPaused:true}); SAVE.stage='airship'; saveGame();
-  await runScene(SC.airship,{bg:'airship',keepPaused:true});
+  await runScene(SC.asuka,{bg:'tokyo_home',keepPaused:true}); SAVE.stage='airship'; saveGame();
+  await runScene(SC.skyport,{bg:'tokyo_port',keepPaused:true});
+  await runScene(SC.airship,{bg:'airship_v3',keepPaused:true});
   await arriveTown(); }
 async function contGame(sv){ ST.title.style.display='none'; SAVE=sv; SAVE.unlock=SAVE.unlock||{evo:false,fusion:false}; SAVE.owned=SAVE.owned||[]; PARTY=sv.party||PARTY; BOX=sv.box||BOX; ITEMS=sv.items||ITEMS; heroGo(sv.g);
-  if(sv.stage!=='field'||!sv.map){ if(!sv.partner){ stShow('full'); LOADP=loadMap('oliva_town','start'); await runScene(SC.asuka,{bg:'asuka',keepPaused:true}); SAVE.stage='airship'; saveGame(); }
-    await runScene(SC.airship,{bg:'airship',keepPaused:true}); await arriveTown(); return; }
+  if(sv.stage!=='field'||!sv.map||!sv.partner){ stShow('full'); LOADP=loadMap('oliva_town','start'); if(sv.stage==='asuka'){ await runScene(SC.asuka,{bg:'tokyo_home',keepPaused:true}); SAVE.stage='airship'; saveGame(); }
+    await runScene(SC.airship,{bg:'airship_v3',keepPaused:true}); await arriveTown(); return; }
   fadeEl.classList.add('on'); stHide(); await loadMap(sv.map,null,[sv.x,sv.z,sv.yaw]); partnerSet(sv.partner); if(sv.tod) setTime(sv.tod,true);
   await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); showArea(D.name); AREA=D.name; objUpdate(); }
 function toTitle(){ PAUSED=true; AUTO=null; STORY=false; TRANS=false; objEl.style.display='none'; fadeEl.classList.remove('on'); talkClose(); titleScreen(); }
 function titleScreen(){ for(const c of INTRO){ const im=new Image(); PIMG[c.bg]=im; im.src='intro/bg_'+c.bg+'.webp'; for(const m of c.mons||[]){ const j=new Image(); PIMG['m'+m[0]]=j; j.src='../battle/img/'+m[0]+'.webp'; } }
-  stShow('full','intro3'); ST.bg.style.opacity=1; ST.title.style.display='flex'; const sv=loadSave(); const bc=$('btCont'); bc.disabled=!sv;
+  stShow('full','intro3_v3'); ST.bg.style.opacity=1; ST.title.style.display='flex'; const sv=loadSave(); const bc=$('btCont'); bc.disabled=!sv;
   $('btNew').onclick=()=>newGame().catch(e=>console.error(e)); bc.onclick=()=>{ if(sv) contGame(sv).catch(e=>console.error(e)); }; }
 
 // ---------------------------------------------------------------- 起動
@@ -1540,7 +1608,7 @@ async function boot(){ const t0=performance.now();
   resize(); setTime(Q.get('t')||'noon',true); requestAnimationFrame(frame); READY.bootMs=performance.now()-t0;
   const gq=Q.get('g');
   if(gq==='m'||gq==='f'){   // 確認用: タイトルとイントロを飛ばして、その場から(記録しない)
-    NOSAVE=true; const pid=+(Q.get('partner')||7); SAVE={v:1,g:gq,name:gq==='f'?'ハルカ':'ハルト',partner:pid,flags:{arrived:1,daphne:1},unlock:{evo:Q.get('evo')==='1',fusion:Q.get('fusion')==='1'},owned:[],stage:'field'}; PARTY=[{mid:pid,rank:5}]; BOX={[pid]:{rank:5}};
+    NOSAVE=true; const pid=+(Q.get('partner')||7); SAVE={v:1,g:gq,name:DEFN(gq),partner:pid,flags:{arrived:1},unlock:{evo:Q.get('evo')==='1',fusion:Q.get('fusion')==='1'},owned:[],stage:'field'}; PARTY=[{mid:pid,rank:5}]; BOX={[pid]:{rank:5}};
     heroGo(gq); const x=Q.get('x'), z=Q.get('z'); await loadMap(CFG.map0,null,x!=null?[+x,+z,Math.PI]:null); partnerSet(pid); PAUSED=false; LAST=performance.now(); objUpdate(); return; }
   titleScreen(); }
 boot().catch(e=>{ console.error(e); });

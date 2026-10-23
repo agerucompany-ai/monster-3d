@@ -1,0 +1,175 @@
+{
+ "note": "全員「右向き」(体と顔が画面の右を向く)にそろえた。facing は絵ごとの向き(目・鼻・耳の位置で確認済み)。ゲームは置く側に合わせて反転する: 左の枠=右向きで出す、右の枠=左向きで出す。ryo は電話の画面(正面)",
+ "chars": {
+  "hero_m": {
+   "name": "カナタ",
+   "faces": {
+    "normal": "hero_m_normal.webp",
+    "smile": "hero_m_smile.webp",
+    "surprised": "hero_m_surprised.webp",
+    "serious": "hero_m_serious.webp",
+    "sad": "hero_m_sad.webp",
+    "angry": "hero_m_angry.webp",
+    "hurt": "hero_m_hurt.webp"
+   },
+   "facing": {
+    "normal": "left",
+    "smile": "left",
+    "surprised": "left",
+    "serious": "left",
+    "sad": "left",
+    "angry": "left",
+    "hurt": "left"
+   }
+  },
+  "hero_f": {
+   "name": "ツムギ",
+   "faces": {
+    "normal": "hero_f_normal.webp",
+    "smile": "hero_f_smile.webp",
+    "surprised": "hero_f_surprised.webp",
+    "serious": "hero_f_serious.webp",
+    "sad": "hero_f_sad.webp",
+    "angry": "hero_f_angry.webp",
+    "hurt": "hero_f_hurt.webp"
+   },
+   "facing": {
+    "normal": "left",
+    "smile": "left",
+    "surprised": "left",
+    "serious": "left",
+    "sad": "left",
+    "angry": "left",
+    "hurt": "left"
+   }
+  },
+  "genichi": {
+   "name": "ゲンイチ",
+   "faces": {
+    "normal": "genichi_normal.webp",
+    "smile": "genichi_smile.webp",
+    "surprised": "genichi_surprised.webp",
+    "serious": "genichi_serious.webp"
+   },
+   "facing": {
+    "normal": "left"
+   }
+  },
+  "misaki": {
+   "name": "ミサキ",
+   "faces": {
+    "normal": "misaki_normal.webp",
+    "smile": "misaki_smile.webp"
+   },
+   "facing": {
+    "normal": "left",
+    "smile": "left"
+   }
+  },
+  "hana": {
+   "name": "ハナ",
+   "faces": {
+    "normal": "hana_normal.webp",
+    "smile": "hana_smile.webp",
+    "surprised": "hana_surprised.webp",
+    "sad": "hana_sad.webp"
+   },
+   "facing": {
+    "normal": "left"
+   }
+  },
+  "ryo": {
+   "name": "リョウ",
+   "faces": {
+    "normal": "ryo_normal.webp"
+   },
+   "facing": {
+    "normal": "front"
+   }
+  },
+  "zoi": {
+   "name": "ゾイ",
+   "faces": {
+    "normal": "zoi_normal.webp",
+    "smile": "zoi_smile.webp",
+    "surprised": "zoi_surprised.webp",
+    "serious": "zoi_serious.webp",
+    "angry": "zoi_angry.webp"
+   },
+   "facing": {
+    "normal": "right",
+    "smile": "right",
+    "surprised": "right",
+    "serious": "right",
+    "angry": "right"
+   }
+  },
+  "dimi": {
+   "name": "ディミ",
+   "faces": {
+    "normal": "dimi_normal.webp",
+    "smile": "dimi_smile.webp",
+    "surprised": "dimi_surprised.webp",
+    "serious": "dimi_serious.webp"
+   },
+   "facing": {
+    "normal": "right",
+    "smile": "right",
+    "surprised": "right",
+    "serious": "right"
+   }
+  },
+  "elena": {
+   "name": "エレナ",
+   "faces": {
+    "normal": "elena_normal.webp",
+    "smile": "elena_smile.webp",
+    "serious": "elena_serious.webp"
+   },
+   "facing": {
+    "normal": "right",
+    "smile": "right",
+    "serious": "right"
+   }
+  },
+  "tasos": {
+   "name": "タソス",
+   "faces": {
+    "normal": "tasos_normal.webp",
+    "smile": "tasos_smile.webp",
+    "surprised": "tasos_surprised.webp"
+   },
+   "facing": {
+    "normal": "right",
+    "smile": "right",
+    "surprised": "right"
+   }
+  },
+  "petra": {
+   "name": "ペトラ",
+   "faces": {
+    "normal": "petra_normal.webp",
+    "smile": "petra_smile.webp",
+    "surprised": "petra_surprised.webp"
+   },
+   "facing": {
+    "normal": "right",
+    "smile": "right",
+    "surprised": "right"
+   }
+  },
+  "stavros": {
+   "name": "スタヴロス",
+   "faces": {
+    "normal": "stavros_normal.webp",
+    "smile": "stavros_smile.webp",
+    "serious": "stavros_serious.webp"
+   },
+   "facing": {
+    "normal": "right",
+    "smile": "right",
+    "serious": "right"
+   }
+  }
+ }
+}

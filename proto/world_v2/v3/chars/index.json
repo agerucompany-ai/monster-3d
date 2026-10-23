@@ -1,0 +1,54 @@
+{
+ "note": "CharV3.setup(gltf,{height}) で読む(chars/char_v3.js)。正面+Z・足元が原点。動き: Idle/Walk/Run(速さで自動で混ぜる)・Talk/Cheer/Crouch/HighFive・待機の小芝居 IdleLook/IdleStretch/IdleHolo(手首の手帳をのぞく)/IdleTap。テクスチャに線は無い(輪郭はゲーム側の反転ハル)",
+ "loader": "char_v3.js",
+ "chars": {
+  "hero_m": {
+   "name": "カナタ",
+   "glb": "hero_m.glb",
+   "height": 1.2,
+   "kb": 1272
+  },
+  "hero_f": {
+   "name": "ツムギ",
+   "glb": "hero_f.glb",
+   "height": 1.16,
+   "kb": 1282
+  },
+  "zoi": {
+   "name": "ゾイ",
+   "glb": "zoi.glb",
+   "height": 1.32,
+   "kb": 1200
+  },
+  "dimi": {
+   "name": "ディミ",
+   "glb": "dimi.glb",
+   "height": 1.22,
+   "kb": 1223
+  },
+  "elena": {
+   "name": "エレナ",
+   "glb": "elena.glb",
+   "height": 1.6,
+   "kb": 1294
+  },
+  "tasos": {
+   "name": "タソス",
+   "glb": "tasos.glb",
+   "height": 1.55,
+   "kb": 1235
+  },
+  "petra": {
+   "name": "ペトラ",
+   "glb": "petra.glb",
+   "height": 1.55,
+   "kb": 1238
+  },
+  "stavros": {
+   "name": "スタヴロス",
+   "glb": "stavros.glb",
+   "height": 1.55,
+   "kb": 1236
+  }
+ }
+}
