@@ -117,7 +117,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
   <div id="stBg"></div>
   <div id="stCard"><div class="cap"></div></div>
   <img class="stP off" id="stR2" alt=""><img class="stP off" id="stL" alt=""><img class="stP off" id="stR" alt=""><div id="stPh"><img alt=""></div>
-  <div id="stPick"><canvas id="stPickCv"></canvas><div class="row"><button data-m="7">エンジュ</button><button data-m="178">クマッパ</button><button data-m="70">ピリポン</button></div><button class="stBtn go">この子にする</button></div>
+  <div id="stPick"><canvas id="stPickCv"></canvas><div class="row"><button data-m="1001">エンジュ</button><button data-m="1022">ビリトラ</button><button data-m="178">クマッパ</button></div><button class="stBtn go">この子にする</button></div>
   <div id="stBox"><b></b><p></p><i></i></div>
   <div id="stTitle"><h1>神獣オリュンポス<small>（仮）</small></h1><button class="stBtn" id="btNew">はじめから</button><button class="stBtn sub" id="btCont">つづきから</button></div>
   <div id="stSetup"><div class="row"><button class="g" data-g="m"><img data-src="../v3/portraits/hero_m_normal.webp" alt="">男の子</button><button class="g" data-g="f"><img data-src="../v3/portraits/hero_f_normal.webp" alt="">女の子</button></div>
@@ -1064,7 +1064,10 @@ function c3Play(rig,name,spd){ if(name==='walk'&&spd>rig.speed.walk*1.9) name='r
   if(from&&from!==to) from.crossFadeTo(to,name==='idle'?0.25:0.18,false); rig.cur=name; }
 function c3Tick(rig,dt,far){ rig.acc=(rig.acc||0)+dt; if(far&&rig.acc<1/15) return; rig.mixer.update(Math.min(0.2,rig.acc)); if(rig.eye) V83.tickBlink(rig.eye,rig.acc); rig.acc=0; }
 const MONP={};
-function monProto(id){ if(!MONP[id]) MONP[id]=loadGLB(CFG.monBase+id+'.glb').then(g=>{ g.scene.traverse(o=>{ if(o.isMesh){ o.frustumCulled=false; o.castShadow=!IS_MOBILE; o.material=monMat(o.material,!!o.isSkinnedMesh); } }); return g; }); return MONP[id]; }
+function mon2D(id){   // v3(2026-10-25): 3D がまだ無い/古い子(monsters.json の model3d:false)や読めなかった子は、バトルの絵を立て看板にして出す
+  return new Promise(res=>{ const mk=()=>{ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:0.1,depthWrite:false})); sp.position.y=0.5; const g=new THREE.Group(); g.add(sp); return {scene:g,animations:[],flat:true}; };
+    const tex=new THREE.TextureLoader().load('../battle/img/'+id+'.webp',()=>res(mk()),undefined,()=>res(mk())); }); }
+function monProto(id){ if(!MONP[id]) MONP[id]=(MMODEL[id]===false?Promise.reject(new Error('no3d')):loadGLB(CFG.monBase+id+'.glb')).then(g=>{ g.scene.traverse(o=>{ if(o.isMesh){ o.frustumCulled=false; o.castShadow=!IS_MOBILE; o.material=monMat(o.material,!!o.isSkinnedMesh); } }); return g; }).catch(e=>{ console.warn('mon 3D→2D',id,e&&e.message); return mon2D(id); }); return MONP[id]; }
 function monMake(g){ const root=SkeletonUtils.clone(g.scene); root.traverse(o=>{ if(o.isMesh){ o.frustumCulled=false; } }); const mixer=new THREE.AnimationMixer(root); const act={}; for(const c of g.animations) act[c.name]=mixer.clipAction(c); if(act.Idle){ act.Idle.play(); act.Idle.time=Math.random()*2; } return {root,mixer,act}; }
 
 // ---------------------------------------------------------------- 足もとの丸い影(まとめて1回で描く)
@@ -1233,7 +1236,7 @@ async function startEncounter(e){ ENC=e; AUTO=null; IN.active=false; IN.sx=IN.sy
   PAUSED=true; flashEl.style.opacity=0; const place=placeAt(HERO.x,HERO.z); STATS.battles=(STATS.battles||0)+1;
   const opt={ kind:e.m?'wild':(e.n.o.master?'master':'trainer'), size:e.m?7:(e.n.o.master?11:9), terrainTheme:place, backdrop:place==='seaside'?'aegean':'olive',
     player:{party:PARTY,items:ITEMS,box:BOX,rankCap:10,owned:ownedList()},
-    enemy:e.m?{party:[{mid:e.m.o.id,rank:3}]}:{name:e.n.o.n,party:(e.n.o.party||[{mid:85,rank:4},{mid:44,rank:3}]).map(x=>Object.assign({},x))} };
+    enemy:e.m?{party:[{mid:e.m.o.id,rank:3}]}:{name:e.n.o.n,party:(e.n.o.party||[{mid:1059,rank:4},{mid:1037,rank:3}]).map(x=>Object.assign({},x))} };
   if(unlocks().fusion) opt.fusionUnlocked=true;   // 融合は解禁のあとだけ渡す(見本の範囲=序盤は渡さない)
   Object.assign(opt,WORLD.battleOpt||{});
   let res=null; try{ res=await startBattle(opt); }catch(err){ console.error('battle',err); }
@@ -1371,8 +1374,8 @@ function loadSave(){ try{ const s=JSON.parse(localStorage.getItem(SKEY)); return
 function saveGame(){ if(!SAVE||NOSAVE) return; if(D&&MAP&&READY.scene) Object.assign(SAVE,{map:MAP,x:+HERO.x.toFixed(2),z:+HERO.z.toFixed(2),yaw:+HERO.yaw.toFixed(3)});
   Object.assign(SAVE,{party:PARTY,box:BOX,items:ITEMS,tod:TODN,t:Date.now()}); try{ localStorage.setItem(SKEY,JSON.stringify(SAVE)); STATS.saves=(STATS.saves||0)+1; }catch(e){} }
 function flag(k){ if(SAVE&&!SAVE.flags[k]){ SAVE.flags[k]=1; objUpdate(); } }
-const MONN={7:'エンジュ',178:'クマッパ',70:'ピリポン'};
-let MNAME={}, MEVO={}; fetch('../battle/data/monsters.json').then(r=>r.json()).then(a=>{ for(const m of a){ MNAME[m.id]=m.name; MEVO[m.id]=m.evolves_to; } }).catch(()=>{});
+const MONN={1001:'エンジュ',1022:'ビリトラ',178:'クマッパ'};   // v3名簿(2026-10-25)の御三家
+let MNAME={}, MEVO={}, MMODEL={}; fetch('../battle/data/monsters.json').then(r=>r.json()).then(a=>{ for(const m of a){ MNAME[m.id]=m.name; MEVO[m.id]=m.evolves_to; MMODEL[m.id]=m.model3d!==false; } }).catch(()=>{});
 // 持っている種類(owned): 仲間にした子は、その系統(次の段・その次の段)を全部持っている扱い(game_design 9-2)。バトルでの進化の判定に渡す
 // 解禁(SAVE.unlock): 序盤は進化も融合も未解禁(相性と地形の時期)。進化の解禁後は、仲間の系統(進化先)も持っている扱い。融合は物語の後半で解禁
 function unlocks(){ const u=(SAVE&&SAVE.unlock)||{}; return {evo:!!u.evo,fusion:!!u.fusion}; }
@@ -1447,14 +1450,14 @@ function pickPartner(){ return new Promise(res=>{ ST.pick.style.display='flex'; 
     const sc=new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xfff6e8,0xb8a888,0.75)); const dl=new THREE.DirectionalLight(0xfff0dc,0.75); dl.position.set(2,5,6); sc.add(dl);
     const cam=new THREE.PerspectiveCamera(26,3/1.3,0.5,60); cam.position.set(0,1.7,7.4); cam.lookAt(0,0.62,0); PK={r,sc,cam,m:{},sel:null,on:false};
     const fl=new THREE.Mesh(new THREE.CircleGeometry(4.6,48).rotateX(-Math.PI/2),new THREE.MeshLambertMaterial({color:0xd9c08e})); fl.position.y=-0.005; sc.add(fl);
-    [7,178,70].forEach((id,i)=>monProto(id).then(g=>{ const inst=monMake(g); const k=1.9; inst.k=k; inst.root.scale.setScalar(k); inst.root.position.set((i-1)*2.1,0,0); inst.root.rotation.y=0.25*(1-i); sc.add(inst.root); PK.m[id]=inst;
+    [1001,1022,178].forEach((id,i)=>monProto(id).then(g=>{ const inst=monMake(g); const k=1.9; inst.k=k; inst.root.scale.setScalar(k); inst.root.position.set((i-1)*2.1,0,0); inst.root.rotation.y=0.25*(1-i); sc.add(inst.root); PK.m[id]=inst;
       const sh=new THREE.Mesh(new THREE.PlaneGeometry(1.5,1.1).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:TEX.blob,transparent:true,depthWrite:false,opacity:0.8})); sh.position.set((i-1)*2.1,0.01,0); sc.add(sh); inst.sh=sh; })); }
   const size=()=>{ const w=cv.clientWidth||300, h=cv.clientHeight||130; PK.r.setSize(w,h,false); PK.cam.aspect=w/h; PK.cam.updateProjectionMatrix(); }; size();
   PK.on=true; PK.sel=null; go.style.display='none'; btns.forEach(b=>b.classList.remove('sel'));
-  const LINE={7:'三本の尾の先に、小さな火がともっている。',178:'頭の双葉をゆらして、日なたぼっこをしている。',70:'ふわふわの毛が、ぱちぱち光っている。'};
+  const LINE={1001:'しっぽの先に、小さな火がともっている。',1022:'しましまの体に、小さな雷がはしっている。',178:'頭の双葉をゆらして、日なたぼっこをしている。'};
   const choose=id=>{ if(PK.sel!==id&&PK.m[id]) PK.m[id].hopT=0; PK.sel=id; btns.forEach(b=>b.classList.toggle('sel',+b.dataset.m===id)); go.style.display='block'; ST.box.classList.add('nar'); ST.box.style.display='block'; ST.tx.textContent=MONN[id]+'――'+LINE[id]; ST.box.querySelector('i').style.display='none'; };
   btns.forEach(b=>b.onclick=e=>{ e.stopPropagation(); choose(+b.dataset.m); });
-  cv.onclick=e=>{ e.stopPropagation(); const rc=cv.getBoundingClientRect(); const i=Math.min(2,Math.floor((e.clientX-rc.left)/rc.width*3)); choose([7,178,70][i]); };
+  cv.onclick=e=>{ e.stopPropagation(); const rc=cv.getBoundingClientRect(); const i=Math.min(2,Math.floor((e.clientX-rc.left)/rc.width*3)); choose([1001,1022,178][i]); };
   go.onclick=e=>{ e.stopPropagation(); PK.on=false; ST.pick.style.display='none'; ST.box.querySelector('i').style.display=''; ST.box.style.display='none'; res(PK.sel); };
   let last=performance.now(); const loop=now=>{ if(!PK.on) return; requestAnimationFrame(loop); const dt=Math.min(0.05,(now-last)/1000); last=now;
     MON_U.uUpV.value.set(0,1,0).transformDirection(PK.cam.matrixWorldInverse); MON_U.uSunV.value.set(0.4,0.8,0.5).normalize().transformDirection(PK.cam.matrixWorldInverse);
@@ -1530,9 +1533,9 @@ const SC={
   {w:'elena',f:'smile',t:'あなたと同じ、これから旅に出る子たちよ。ゆっくり選んで。'},
   {fn:async()=>{ const id=await pickPartner(); SAVE.partner=id; PARTY=[{mid:id,rank:5}]; BOX={[id]:{rank:5}}; partnerSet(id); }},
   {w:'elena',f:'smile',t:'{partner}ね。いい顔。もう、あなたを見てる。'},
-  {w:'partner',t:'コンッ！　（尾の火が、ぱっと大きくなった）',if:()=>SAVE.partner===7},
+  {w:'partner',t:'コンッ！　（尾の火が、ぱっと大きくなった）',if:()=>SAVE.partner===1001},
   {w:'partner',t:'ぷぅ……ふわぁ。（{hero}の足にもたれて、眠ってしまった）',if:()=>SAVE.partner===178},
-  {w:'partner',t:'ピリッ！　（手帳に飛びついて、画面をさわっている）',if:()=>SAVE.partner===70},
+  {w:'partner',t:'ガウッ！　（しっぽをふると、ぱちっと小さな雷がとんだ）',if:()=>SAVE.partner===1022},
   {w:'elena',t:'手帳に、旅の画面を入れたわ。地図と、出会った子の記録よ。'},
   {w:'elena',t:'大事な決まりを3つ。'},
   {w:'elena',t:'1つ。街の中は「静域」。勝負はできないの。'},
@@ -1608,7 +1611,7 @@ async function boot(){ const t0=performance.now();
   resize(); setTime(Q.get('t')||'noon',true); requestAnimationFrame(frame); READY.bootMs=performance.now()-t0;
   const gq=Q.get('g');
   if(gq==='m'||gq==='f'){   // 確認用: タイトルとイントロを飛ばして、その場から(記録しない)
-    NOSAVE=true; const pid=+(Q.get('partner')||7); SAVE={v:1,g:gq,name:DEFN(gq),partner:pid,flags:{arrived:1},unlock:{evo:Q.get('evo')==='1',fusion:Q.get('fusion')==='1'},owned:[],stage:'field'}; PARTY=[{mid:pid,rank:5}]; BOX={[pid]:{rank:5}};
+    NOSAVE=true; const pid=+(Q.get('partner')||1001); SAVE={v:1,g:gq,name:DEFN(gq),partner:pid,flags:{arrived:1},unlock:{evo:Q.get('evo')==='1',fusion:Q.get('fusion')==='1'},owned:[],stage:'field'}; PARTY=[{mid:pid,rank:5}]; BOX={[pid]:{rank:5}};
     heroGo(gq); const x=Q.get('x'), z=Q.get('z'); await loadMap(CFG.map0,null,x!=null?[+x,+z,Math.PI]:null); partnerSet(pid); PAUSED=false; LAST=performance.now(); objUpdate(); return; }
   titleScreen(); }
 boot().catch(e=>{ console.error(e); });

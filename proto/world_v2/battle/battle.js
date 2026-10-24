@@ -37,12 +37,12 @@ const MID={};
 // ==== [template 576-609] データ・相性・地形 ====
 let N = 11;
 let CC = Math.floor(N/2);          // 中央列
-const TYPES = ['炎','水','地','風','雷','闇','氷','光','竜','草'];
-const TYPE_COL = {炎:'#e8503a',水:'#2f86c5',地:'#9c7a3c',風:'#4fa86a',雷:'#d6a915',闇:'#6a4a8c',氷:'#5cc8e0',光:'#f3d65a',竜:'#b15ad6',草:'#5cbf3a'};
-const TYPE_HEX = {炎:0xe8503a,水:0x2f86c5,地:0x9c7a3c,風:0x4fa86a,雷:0xd6a915,闇:0x6a4a8c,氷:0x5cc8e0,光:0xf3d65a,竜:0xb15ad6,草:0x5cbf3a};
+const TYPES = ['炎','水','森','雷','風','地','氷','光','闇','竜'];   // v3(2026-10-25): 草は森に改名。並びは名簿(roster_v3)の順
+const TYPE_COL = {炎:'#e8503a',水:'#2f86c5',地:'#9c7a3c',風:'#4fa86a',雷:'#d6a915',闇:'#6a4a8c',氷:'#5cc8e0',光:'#f3d65a',竜:'#b15ad6',森:'#5cbf3a'};
+const TYPE_HEX = {炎:0xe8503a,水:0x2f86c5,地:0x9c7a3c,風:0x4fa86a,雷:0xd6a915,闇:0x6a4a8c,氷:0x5cc8e0,光:0xf3d65a,竜:0xb15ad6,森:0x5cbf3a};
 // 相性: 攻撃側タイプ -> 弱点を突ける相手タイプ (+20%)
-//  竜<氷<炎 / 闇<光 / 土<草・水<草・草<炎 / 闇は何にも強くない(代わりに毒)
-const STRONG = {水:['炎'], 雷:['水','風'], 地:['雷'], 風:['草'], 炎:['氷','草'], 闇:[], 氷:['竜'], 光:['闇'], 草:['地','水'], 竜:[]};
+//  竜<氷<炎 / 闇<光 / 土<森・水<森・森<炎 / 闇は何にも強くない(代わりに毒)
+const STRONG = {水:['炎'], 雷:['水','風'], 地:['雷'], 風:['森'], 炎:['氷','森'], 闇:[], 氷:['竜'], 光:['闇'], 森:['地','水'], 竜:[]};
 // 苦手: 攻撃側タイプ -> ダメージが通りにくい相手タイプ (-20%)
 const WEAK = {雷:['地'], 氷:['炎'], 竜:['氷']};   // 雷→土は吸収 / 逆鎖(氷→炎・竜→氷)は通りにくい
 
@@ -53,8 +53,8 @@ function hasType(m, t){ return m.type===t || m.type2===t; }
 function uHasType(u, t){ return hasType(mon(u), t); }
 
 // --- 状態異常 ---
-// 雷=マヒ / 氷=凍結 / 炎=やけど / 闇=毒 / 草=毒。攻撃ヒット時に確率で付与。
-const AILMENT_OF = {雷:'para', 氷:'freeze', 炎:'burn', 闇:'poison', 草:'poison'};
+// 雷=マヒ / 氷=凍結 / 炎=やけど / 闇=毒 / 森=毒。攻撃ヒット時に確率で付与。
+const AILMENT_OF = {雷:'para', 氷:'freeze', 炎:'burn', 闇:'poison', 森:'poison'};
 const AIL_LABEL = {poison:'毒', burn:'やけど', freeze:'凍結', para:'マヒ'};
 const AIL_ICON  = {poison:'🟣', burn:'🔥', freeze:'❄', para:'⚡'};
 const AIL_TURNS = {poison:3, burn:3, freeze:3, para:3};   // あらゆる状態異常は3ターンで自然治癒
@@ -64,9 +64,9 @@ function procChance(level){ return 0.30 + 0.08*Math.max(0,(level-1)); }  // Lv1:
 const TERR = ['plain','forest','wasteland','sea','water','ruins'];
 const TERR_JP = {plain:'平原',forest:'森',wasteland:'荒地',sea:'海',water:'水辺',ruins:'遺跡',lava:'溶岩',snow:'雪原',gloom:'瘴気',cloud:'島雲',seacloud:'海雲'};
 const TERR_HEX = {plain:0x83c258, forest:0x2c6a3a, wasteland:0xc39a57, sea:0x265f9e, water:0x4f9fb0, ruins:0xcfc4a8, lava:0x3a1206, snow:0xdde8f2, gloom:0x4a2e5e};
-const TERR_BONUS = {forest:['炎','風','草'], wasteland:['地','闇'], sea:['水','雷','氷'], water:['水','草'], ruins:['地','光'], plain:[], lava:['炎','竜'], snow:['氷','光'], gloom:['闇','地']};
-const TERR_WEAK  = {forest:['水','地'], wasteland:['水','草'], sea:['炎','地'], water:['炎','雷'], ruins:['草','風'], plain:[], lava:['氷','草','水'], snow:['炎','草'], gloom:['光','風']};   // 不得意(-30%)
-const TERR_X = 0.30;   // 地形の得意/不得意の強さ   // 草=森/氷=海・雪原/竜=溶岩でも+20%
+const TERR_BONUS = {forest:['炎','風','森'], wasteland:['地','闇'], sea:['水','雷','氷'], water:['水','森'], ruins:['地','光'], plain:[], lava:['炎','竜'], snow:['氷','光'], gloom:['闇','地']};
+const TERR_WEAK  = {forest:['水','地'], wasteland:['水','森'], sea:['炎','地'], water:['炎','雷'], ruins:['森','風'], plain:[], lava:['氷','森','水'], snow:['炎','森'], gloom:['光','風']};   // 不得意(-30%)
+const TERR_X = 0.30;   // 地形の得意/不得意の強さ   // 森=森/氷=海・雪原/竜=溶岩でも+20%
 let mapType='normal';   // 'normal' | 'volcano'
 let campTheme=null;     // ストーリー章のマップテーマ（nullなら通常生成）
 // ==== [template 611-783] 技・MP・リーダー・闘気・融合 ====
@@ -81,19 +81,19 @@ const MOVES = {
   氷:[{n:'こな雪',p:0.8},{n:'氷の礫',p:1.0},{n:'絶対零度',p:1.2}],
   光:[{n:'光の粒',p:0.8},{n:'閃光',p:1.0},{n:'聖滅光',p:1.2}],
   竜:[{n:'竜の牙',p:0.8},{n:'竜撃波',p:1.0},{n:'覇竜閃',p:1.2}],
-  草:[{n:'吸命葉刃',p:0.6},{n:'毒蔦打ち',p:0.75},{n:'森羅奪華',p:0.9}],   // 草は攻撃低め＝吸収＋毒で補う
+  森:[{n:'吸命葉刃',p:0.6},{n:'毒蔦打ち',p:0.75},{n:'森羅奪華',p:0.9}],   // 森は攻撃低め＝吸収＋毒で補う
 };
 // 光タイプの補助技（攻撃の代わりに使う）
 const LIGHT_HEAL_FRAC = 0.30;   // (旧)回復＝対象の最大HPの30%
 // 昆虫型モンスター(カゼチョウ系/オオヤンマ系/コクワッコ系/カブッコ系＋甲虫融合)：森で移動+1・森の地形適性を得る
-const INSECT = new Set([60,126,127, 286,61,277, 173,174,274, 282,283,284, 285]);
+const INSECT = new Set();   // v3: monsters.json の archetype '蟲型' の子(setMonsters で埋める)
 const DIG_TURNS = 2;            // 地タイプ「潜行」：2ターン地中(無敵/攻撃不可)→自動浮上
 const LIGHT_HEAL_RANGE = 4;     // 光の回復魔法の射程
 const LIGHT_HEAL_ALL = 400;     // 全体回復＝射程内の味方全員をHP+400(固定)
 const LIGHT_HEAL_ONE = 600;     // 単体回復＝最も傷ついた味方1体をHP+600(固定)
 const REVIVE_COST = 6;          // (旧)気コスト・未使用
 const REVIVE_GAUGE = 50;        // 光Lv3の蘇生魔法=自分の闘気50を使う
-const GRASS_DRAIN_FRAC = 0.5;   // 草：与えた総ダメージの50%を自己回復（吸収）
+const GRASS_DRAIN_FRAC = 0.5;   // 森：与えた総ダメージの50%を自己回復（吸収）
 // ===== MP（気力）: 1バトルごとの行動回数。攻撃用と回復用を別々に持つ =====
 // 各モンスターは「攻撃MP=10」「回復MP=3」で出撃(バトル中は自然回復しない)。攻撃系は1回=1消費(最大10回)、
 // 回復魔法は1回=1消費(最大3回)。攻撃と回復は別枠＝回復役でも攻撃10回＋回復3回が独立して使える。
@@ -120,7 +120,7 @@ const TYPE_TRAIT = {
   氷:'攻撃が当たると凍結を付与（移動・射程が最小化／火山では凍らない）。海で射程+1。雪原で地形+20%',
   光:'回復・状態異常治癒の補助役（攻撃の代わりに味方を癒やす）',
   竜:'高ステータスの最上位種。溶岩で地形+20%・凍りにくい',
-  草:'攻撃力低めだが、攻撃で与ダメの50%を自己回復（吸収）＋毒を付与。森に隣接/上で範囲+1。草に強い（風には弱い）',
+  森:'攻撃力低めだが、攻撃で与ダメの50%を自己回復（吸収）＋毒を付与。森に隣接/上で範囲+1。地・水に強い（風と炎には弱い）',
 };
 // 技ごとに射程・複数対象・威力倍率を計算
 function moveInfo(u, tier){
@@ -216,29 +216,27 @@ function checkWin(){
 
 // 廃止モンスター(IDは既存セーブ維持のため残すが、図鑑/ガチャ/出撃/徘徊/融合生成から除外)。※assemble.pyのRETIREDと一致させること
 const RETIRED=new Set();   // world_v2: data/monsters.json は遊べる80体だけ(廃止の子は入っていない)
-// 融合(2026-10-20): 「タイプの違うLv2どうし」→ タイプ対で融合体が決まる(roster_greek.json の fusion_rule)。素材id固定レシピは廃止
-const FUSE_TYPE = {};   // "炎|光" -> 融合体id
+// 融合(2026-10-25 v3): 「決まった2体(2段目どうし)」のレシピ(monsters.json の recipe)だけ。タイプ対で決まる融合は廃止
+const FUSE_TYPE = {};   // (廃止・いつも空) 旧: "炎|光" -> 融合体id
 let FUSE_MATS = [];
 const FUSE_IDX = {};
-const FUSE_RECIPE = {};   // 素材が決まっている融合(元から融合だったボス: ヒュドリア・ティタニカ・キマドラ・ラドーグ)。"小さいid,大きいid" -> 融合体id。タイプ対より先に見る
+const FUSE_RECIPE = {};   // "小さいid,大きいid" -> 融合体id。名簿の上の行ほど優先(同じ組が2つあれば先の方)
 function fusePair(m1, m2){ const A=MID[m1], B=MID[m2]; if(!A||!B||m1===m2) return null;
   if(A.role==='fusion'||B.role==='fusion'||A.level!==2||B.level!==2) return null;
   if(RETIRED.has(m1)||RETIRED.has(m2)) return null;
-  const rk=Math.min(m1,m2)+','+Math.max(m1,m2); if(rk in FUSE_RECIPE) return FUSE_RECIPE[rk];
-  if(A.type===B.type) return null;
-  const k=[A.type,B.type].sort().join('|'); return (k in FUSE_TYPE)?FUSE_TYPE[k]:null; }
+  const rk=Math.min(m1,m2)+','+Math.max(m1,m2); return (rk in FUSE_RECIPE)?FUSE_RECIPE[rk]:null; }
+const FUSE3 = [];   // 3体融合 {mats:[a,b,c], id}(monsters.json の recipe3)。startBattle の tripleUnlocked:true で解禁
 function buildFuseTables(){   // world_v2: モンスターの表を読んだ後に作る
-for(const k in FUSE_TYPE) delete FUSE_TYPE[k]; for(const k in FUSE_IDX) delete FUSE_IDX[k]; for(const k in FUSE_RECIPE) delete FUSE_RECIPE[k];
-MONSTERS.forEach(m=>{ if(m.role==='fusion' && !RETIRED.has(m.id) && Array.isArray(m.recipe) && m.recipe.length===2){ const [a,b]=m.recipe; FUSE_RECIPE[Math.min(a,b)+','+Math.max(a,b)]=m.id; } });
-MONSTERS.forEach(m=>{ if(m.role==='fusion' && !RETIRED.has(m.id) && m.level===3 && m.type2 && !m.recipe){ const k=[m.type,m.type2].sort().join('|'); if(!(k in FUSE_TYPE)) FUSE_TYPE[k]=m.id; } });
+for(const k in FUSE_TYPE) delete FUSE_TYPE[k]; for(const k in FUSE_IDX) delete FUSE_IDX[k]; for(const k in FUSE_RECIPE) delete FUSE_RECIPE[k]; FUSE3.length=0;
+MONSTERS.forEach(m=>{ if(m.role==='fusion' && !RETIRED.has(m.id) && Array.isArray(m.recipe) && m.recipe.length===2){ const [a,b]=m.recipe.map(Number); const rk=Math.min(a,b)+','+Math.max(a,b); if(!(rk in FUSE_RECIPE)) FUSE_RECIPE[rk]=m.id; } });
+MONSTERS.forEach(m=>{ if(m.role==='fusion' && !RETIRED.has(m.id) && Array.isArray(m.recipe3) && m.recipe3.length===3) FUSE3.push({mats:m.recipe3.map(Number), id:m.id}); });
 FUSE_MATS = MONSTERS.filter(m=>m.role!=='fusion' && m.level===2 && !RETIRED.has(m.id)).map(m=>m.id).sort((a,b)=>a-b);   // 融合素材=Lv2(進化系・単体)
-// 融合インデックス: "id1,id2"(昇順) -> 融合体id（素材の全組み合わせを展開=97通り）
+// 融合インデックス: "id1,id2"(昇順) -> 融合体id(レシピのある組だけ)
 for(let i=0;i<FUSE_MATS.length;i++) for(let j=i+1;j<FUSE_MATS.length;j++){ const f=fusePair(FUSE_MATS[i],FUSE_MATS[j]); if(f!=null) FUSE_IDX[FUSE_MATS[i]+','+FUSE_MATS[j]]=f; }
-// 図鑑/詳細のレシピ表示用: 融合体ごとに素材の組を持たせる(fusion_from は代表の1組)
+// 図鑑/詳細のレシピ表示用: 融合体ごとに素材の組を持たせる(fusion_from = レシピ。3体融合は recipe3)
 MONSTERS.forEach(m=>{ if(m.role!=='fusion'||RETIRED.has(m.id)) return; const pairs=[]; for(const k in FUSE_IDX) if(FUSE_IDX[k]===m.id) pairs.push(k.split(',').map(Number));
-  m.fusion_pairs=pairs; if(pairs.length) m.fusion_from=pairs[0].slice(); m.fusion_types=(m.type2&&!m.recipe)?[m.type,m.type2]:null; });
+  m.fusion_pairs=pairs; if(pairs.length) m.fusion_from=pairs[0].slice(); else if(Array.isArray(m.recipe3)) m.fusion_from=m.recipe3.slice(); m.fusion_types=null; });
 }
-const FUSE3 = [];   // 3体融合は廃止
 function tripleRecipe(m1,m2){ if(m1===m2) return null; for(const f of FUSE3){ if(f.mats.includes(m1)&&f.mats.includes(m2)) return f; } return null; }
 function tripleThird(a,b){   // a,bユニットに対し、3体目素材が bの隣接 にいれば返す
   const f=tripleRecipe(a.mid,b.mid); if(!f) return null;
@@ -250,6 +248,11 @@ function tripleThird(a,b){   // a,bユニットに対し、3体目素材が bの
   }
   return null;
 }
+// 3体融合: a が b のマスに重なる時、recipe3 の3体目 c が b に隣接していれば {id, c}。tripleUnlocked の時だけ(押されているかどうかは問わない)
+function tripleResult(a,b){
+  if(!BT.tripleOn||!state||!a||!b||a.uid===b.uid||a.owner!==b.owner) return null;
+  const A=mon(a), B=mon(b); if(!A||!B||A.level!==2||B.level!==2||A.role==='fusion'||B.role==='fusion') return null;
+  const f=tripleRecipe(a.mid,b.mid); if(!f) return null; const c=tripleThird(a,b); return c?{id:f.id, c}:null; }
 
 // ==== [template 785-799] 盤の地形テーマ ====
 // マップテーマ（火山生成の応用: base敷き詰め+川+ブロブ成長）
@@ -445,7 +448,7 @@ function effRange(u){ const m=mon(u);
   if(u.freeze>0 || u.para>0) return 1;                                   // 凍結/マヒ：攻撃範囲が最小(1)
   let R = rangeBase(m);                                                  // Lv1=隣接 / Lv2+はデータ射程
   if((hasType(m,'水')||hasType(m,'氷')) && nearTerrain(u,'sea')) R+=1;   // 水/氷：海に隣接/上で射程+1
-  if((hasType(m,'炎')||hasType(m,'草')) && nearTerrain(u,'forest')) R+=1;// 炎/草：森に隣接/上で射程+1
+  if((hasType(m,'炎')||hasType(m,'森')) && nearTerrain(u,'forest')) R+=1;// 炎/森：森に隣接/上で射程+1
   if(hasType(m,'闇') && nearTerrain(u,'gloom')) R+=1;                    // 闇：瘴気に隣接/上で射程+1
   return R;
 }
@@ -497,7 +500,7 @@ function traitNote(u){ const m=mon(u);
   const out=[];
   if(hasType(m,'風')) out.push('隣接のみ');
   if((hasType(m,'水')||hasType(m,'氷')) && nearTerrain(u,'sea')) out.push('海:射程+1');
-  if((hasType(m,'炎')||hasType(m,'草')) && nearTerrain(u,'forest')) out.push('森:射程+1'+(hasType(m,'炎')?'&全体(味方巻込)':''));
+  if((hasType(m,'炎')||hasType(m,'森')) && nearTerrain(u,'forest')) out.push('森:射程+1'+(hasType(m,'炎')?'&全体(味方巻込)':''));
   if(hasType(m,'雷') && nearTerrain(u,'sea')) out.push('海:海上の敵全員に通電(味方巻込)');
   if(hasType(m,'闇') && nearTerrain(u,'gloom')) out.push('瘴気:射程+1&瘴気の者全員に呪詛(味方巻込)');
   return out.join(' / ');
@@ -520,7 +523,7 @@ function moveTargets(u){
         if(u.dug>0 && (state.terrain[rr][cc]==='sea'||state.terrain[rr][cc]==='lava')) continue;   // 潜行中は海・溶岩を潜って越えられない
         const occ=unitAt(rr,cc);
         if(occ){
-          if(occ.owner===u.owner && fusionResult(u,occ)!=null){ fuse.push([rr,cc]); }
+          if(occ.owner===u.owner && (fusionResult(u,occ)!=null || tripleResult(u,occ))){ fuse.push([rr,cc]); }
           continue; // 占有マスは通過不可・終点不可(融合除く)
         }
         seen[k]=d+1; res.push([rr,cc]); nf.push([rr,cc]);
@@ -537,7 +540,7 @@ function fusionResult(a,b){
   if(!a||!b||a.uid===b.uid||a.owner!==b.owner) return null;
   if(!fuseWindow(a.owner)) return null;
   if(!(a.evo||b.evo) && !fuseRelaxed(a.owner)) return null;   // 少なくとも片方は戦闘中に進化したLv2(味方が倒されていれば不要)
-  return fusePair(a.mid,b.mid);   // Lv2どうし・タイプ違い・タイプ対に融合体がある(所持は不要)
+  return fusePair(a.mid,b.mid);   // Lv2どうし・決まった組(recipe)だけ(所持は不要)
 }
 function attackTargets(u, range){
   if(!canAttack(u)) return [];
@@ -570,7 +573,7 @@ function typeBonusM(am,dm){ for(const a of monTypes(am)) for(const d of monTypes
 function typePenaltyM(am,dm){ for(const a of monTypes(am)) for(const d of monTypes(dm)) if((WEAK[a]||[]).includes(d)) return -0.2; return 0; }
 function terrBonusM(am,terr){ if(INSECT.has(am.id)&&terr==='forest') return TERR_X; for(const a of monTypes(am)) if((TERR_BONUS[terr]||[]).includes(a)) return TERR_X; for(const a of monTypes(am)) if((TERR_WEAK[terr]||[]).includes(a)) return -TERR_X; return 0; }
 // タイプ別の防御（被ダメ軽減率の基礎値）。地/竜=高い、風/光=低い、他=中
-const TYPE_DEF = {地:0.25, 竜:0.24, 水:0.21, 草:0.19, 氷:0.18, 闇:0.13, 炎:0.19, 雷:0.15, 光:0.13, 風:0.1};   // 差を縮めた(旧 地0.34〜風0.04)
+const TYPE_DEF = {地:0.25, 竜:0.24, 水:0.21, 森:0.19, 氷:0.18, 闇:0.13, 炎:0.19, 雷:0.15, 光:0.13, 風:0.1};   // 差を縮めた(旧 地0.34〜風0.04)
 function defReductionM(m){ return Math.min(0.62, (TYPE_DEF[m.type]!=null?TYPE_DEF[m.type]:0.15) + 0.09*(m.level-1)); }  // Lvで+9%/段
 function defReduction(u){ return defReductionM(mon(u)); }
 function calcDamage(att, def, move){
@@ -632,8 +635,8 @@ function doAttack(att, def, move){
   }
   if(hitFoes.length) addGauge(att, advType?GAUGE_HIT_WEAK:GAUGE_HIT);   // 与ダメで闘気
   cureBurnByFire(att, targets);                            // 炎の攻撃：対象＋隣接のやけどを治す
-  // 草の吸収：敵に与えた総ダメージの一部を自己回復（攻撃力低めの代償に持続力）
-  if(dealt>0 && monTypes(m).includes('草') && state.units[att.uid] && att.hp>0){
+  // 森の吸収：敵に与えた総ダメージの一部を自己回復（攻撃力低めの代償に持続力）
+  if(dealt>0 && monTypes(m).includes('森') && state.units[att.uid] && att.hp>0){
     const heal=Math.min((att.maxhp||mon(att).hp)-att.hp, Math.round(dealt*GRASS_DRAIN_FRAC));
     if(heal>0){ att.hp+=heal; floatText(att.r,att.c,`+${heal}`,'#7ee08a'); }
   }
@@ -877,10 +880,12 @@ function doCure(u){
   afterAction();
 }
 
-function moveUnit(u, r, c){
+function moveUnit(u, r, c, pref){   // pref: 'triple'|'pair'|undefined(=プレイヤーの手動は2体を優先・CPU/おまかせは3体を優先)
   if(netGuestIntercept('move',{uid:u.uid, r, c})) return;
   const occ=unitAt(r,c);
-  if(occ && occ.owner===u.owner){ tryFusion(u,occ,r,c); return; }
+  if(occ && occ.owner===u.owner){ const t3=tripleResult(u,occ);
+    if(t3 && pref!=='pair' && (pref==='triple' || fusionResult(u,occ)==null || u.owner!==0 || BT.auto)){ tryTriple(u,occ,t3.c,r,c); return; }
+    tryFusion(u,occ,r,c); return; }
   state.board[u.r][u.c]=null; u.r=r; u.c=c; state.board[r][c]=u.uid; u.moved=true;
   // 回復アイテム取得（乗ったら回復→消える）
   const hi=(state.items||[]).findIndex(it=>it.r===r&&it.c===c);
@@ -905,7 +910,7 @@ function tryFusion(a, b, r, c){
   if(fid==null){
     const A=mon(a), B=mon(b);
     if(A.level!==2||B.level!==2||A.role==='fusion'||B.role==='fusion') toast('融合はLv2どうし');
-    else if(A.type===B.type) toast('同じタイプどうしは融合できない');
+    else if(fusePair(a.mid,b.mid)==null) toast(`${A.name}と${B.name}の組み合わせでは融合できない`);
     else if(!(a.evo||b.evo)) toast('どちらかが戦闘中に進化したLv2なら融合できる');
     else toast(`${A.name}と${B.name}は融合できない`);
     return;
@@ -935,6 +940,33 @@ function tryFusion(a, b, r, c){
   let first=false;
   if(a.owner===0 && !BT.fusedNew.includes(fid)){ BT.fusedNew.push(fid); first=true; }   // world_v2: 作った融合は結果の fusions で返す(融合の記録)
   toast(`融合！ ${MID[fid].name} 誕生！`);
+  afterAction();
+}
+// 3体融合(v3 2026-10-25): a が b のマスに重なり、b に隣接する c も一緒に重なって recipe3 の子になる(物語の最後。startBattle の tripleUnlocked で解禁)
+function tryTriple(a, b, c, r, cc){
+  const t3=tripleResult(a,b); if(!t3 || !c || t3.c.uid!==c.uid){ toast('3体融合できない'); return; }
+  const fid=t3.id;
+  if(a.owner===0 && !ONLINE){ qBump('fuseD'); statBump('fuse'); }
+  const ca=TYPE_HEX[mon(a).type], cb=TYPE_HEX[mon(b).type];
+  const wasLeader=!!(a.leader||b.leader||c.leader);
+  for(const x of [a,b,c]){ state.board[x.r][x.c]=null; delete state.units[x.uid]; markSprite(x.uid,'dead'); }
+  const nu=addUnit(a.owner, fid, r, cc);
+  if(wasLeader) nu.leader=true;                 // リーダーを素材にしたら融合体がリーダーを継ぐ
+  { const hx=((a.hx||1)/(a._lbuf||1)+(b.hx||1)/(b._lbuf||1)+(c.hx||1)/(c._lbuf||1))/3, ax=((a.atkX||1)+(b.atkX||1)+(c.atkX||1))/3;
+    const T=BT.tune||TUNE; const fr=Math.max(T.fuseHpMin, Math.min(T.fuseHpMax, ((a.hp/a.maxhp)+(b.hp/b.maxhp)+(c.hp/c.maxhp))/3));
+    nu.hx=hx; nu.atkX=ax*T.fuseAtk; nu.rank=Math.round(((a.rank||1)+(b.rank||1)+(c.rank||1))/3); nu.maxhp=Math.round(mon(nu).hp*hx); nu.hp=Math.max(1,Math.round(nu.maxhp*fr));
+    if(wasLeader){ const LX=(BT.rules&&BT.rules.leaderHpX)||LEADER_HP_X; nu._lbuf=LX; nu.hx*=LX; const f2=nu.hp/Math.max(1,nu.maxhp); nu.maxhp=Math.round(nu.maxhp*LX); nu.hp=Math.max(1,Math.round(nu.maxhp*f2)); }
+    nu.src=(a.src||[]).concat(b.src||[],c.src||[]); nu.isBoss=!!(a.isBoss||b.isBoss||c.isBoss);
+  }
+  nu.moved=true;                              // 融合は移動扱い＝この後すぐ攻撃できる
+  (state.stats||(state.stats={evo:[0,0],fuse:[0,0]})).fuse[nu.owner]++;
+  (state.stats.ev||(state.stats.ev=[])).push({k:'fuse', n:3, o:nu.owner, sh:hpShare(nu.owner), t:state.turn});
+  fusionFx(r,cc,ca,cb);
+  nu.spReady=true; nu.fz=true;
+  if(!BT.headless){ showBanner('3体融合！ '+MID[fid].name); screenFlash('#ffffff',0.7); addShake(0.5); fxRing(r,cc,0xffffff,{max:8,dur:1100,y:0.07}); setTimeout(()=>{ fxPillar(r,cc,0xffe0ff,{dur:1600}); fxRing(r,cc,0xc080ff,{max:6.5,dur:1000}); },220); }
+  setTimeout(()=>{ if(state.units[nu.uid]) animUnit(nu.uid,'cast',{dur:900,flash:true}); },0);
+  if(a.owner===0 && !BT.fusedNew.includes(fid)) BT.fusedNew.push(fid);
+  toast(`3体融合！ ${MID[fid].name} 誕生！`);
   afterAction();
 }
 // 進化: 闘気が溜まった状態で盤中央の進化エリアにいれば(移動後でも、攻撃前なら)進化できる
@@ -1096,14 +1128,15 @@ function aiPickTarget(u,list){ if(list.length>1 && Math.random()>aiSkillOf(u)) r
 function aiSkillOf(u){ const k=BT.aiSkill&&BT.aiSkill[u.owner]; return k==null?1:k; }
 function aiStrike(u){ if(!state.units[u.uid] || !canAttack(u)) return false; const t=attackTargets(u); if(!t.length) return false; doAttack(u, aiPickTarget(u,t)); return true; }
 function aiFusePartner(u){ if(mon(u).level!==2) return null; let best=null;
-  if(!campFusionOK() || !fuseWindow(u.owner)) return null;
-  for(const p of alive(u.owner)){ if(p.uid===u.uid || (!(u.evo||p.evo) && !fuseRelaxed(u.owner))) continue; const f=fusePair(u.mid,p.mid); if(f==null) continue;
+  const pairOK=campFusionOK() && fuseWindow(u.owner); if(!pairOK && !BT.tripleOn) return null;
+  for(const p of alive(u.owner)){ if(p.uid===u.uid) continue; const t3=tripleResult(u,p); let f=t3?t3.id:null;   // 3体融合(ラスボス級)があれば最優先
+    if(f==null){ if(!pairOK || (!(u.evo||p.evo) && !fuseRelaxed(u.owner))) continue; f=fusePair(u.mid,p.mid); if(f==null) continue; }
     const sc=MID[f].atk-(Math.abs(p.r-u.r)+Math.abs(p.c-u.c))*3; if(!best||sc>best.sc) best={p,f,sc}; }
   return best; }
 function aiFuseCell(u){ if(u.acted) return null;
   const cells=(canMove(u)?moveTargets(u).fuse:[]).concat(adjFuse(u));
   let best=null, bs=-1e9;
-  for(const [r,c] of cells){ const p=unitAt(r,c); if(!p) continue; const f=fusionResult(u,p); if(f==null) continue; const sc=MID[f].atk+MID[f].hp*0.1; if(sc>bs){ bs=sc; best=[r,c]; } }
+  for(const [r,c] of cells){ const p=unitAt(r,c); if(!p) continue; const t3=tripleResult(u,p); const f=t3?t3.id:fusionResult(u,p); if(f==null) continue; const sc=MID[f].atk+MID[f].hp*0.1; if(sc>bs){ bs=sc; best=[r,c]; } }
   return best; }
 function aiBestMove(u){
   const me=u.owner, foe=1-me, foes=alive(foe);
@@ -1978,7 +2011,7 @@ function set3D(on){ RENDER3D=!!on; try{ localStorage.setItem('ms3d_3d', on?'1':'
 function upd3DBtn(){ const b=$id('bt3D'); if(b) b.textContent=RENDER3D?'3D':'2D'; }
 const M3D={ ids:new Set((window._M3D||[]).map(Number)), nw:new Set((window._M3D_NEW||[]).map(Number)), proto:{}, prom:{}, bytes:0, loaded:0,
   isNew(mid){ return true; },                                                   // world_v2: 80体とも描き直しの新モデル design_v2/models/n{id}.glb
-  has(mid){ return !!MID[+mid] && typeof THREE!=='undefined' && !!THREE.GLTFLoader && !BT.no3d; },
+  has(mid){ return !!MID[+mid] && MID[+mid].model3d!==false && typeof THREE!=='undefined' && !!THREE.GLTFLoader && !BT.no3d; },   // v3: monsters.json の model3d:false(3Dがまだ無い/古い)は2Dの絵
   load(mid){ mid=+mid; if(this.prom[mid]) return this.prom[mid];
     const url=CFG.base+CFG.models+'n'+mid+'.glb';   // world_v2: 新モデルの置き場所をそのまま読む   // 版ごとにURLを変える=HTTPの長期キャッシュでも古いモデルを掴まない
     this.prom[mid]=fetch(url).then(r=>{ if(!r.ok) throw new Error('http '+r.status); return r.arrayBuffer(); })
@@ -2184,7 +2217,7 @@ function fxSpikes(r,c,color,n){ const w=cell2world(r,c),h=cellH(r,c);
     const H=sp.scale.y; effects.push({t0:performance.now()+i*20,dur:620,update:t=>{ const up=Math.max(0,Math.min(1,t*2.6)); sp.position.y=h-0.45+up*(H*0.5+0.4); mat.opacity=1-Math.max(0,(t-0.6)/0.4); },cleanup:()=>fxGroup.remove(sp)});
   }
 }
-// 三日月の斬撃(風/草)
+// 三日月の斬撃(風/森)
 function fxSlash(r0,c0,r1,c1,color){ const w0=cell2world(r0,c0),w1=cell2world(r1,c1);
   const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:0.95,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false});
   const m=new THREE.Mesh(new THREE.TorusGeometry(0.36,0.06,6,18,Math.PI*1.15),mat);
@@ -2306,7 +2339,7 @@ const ATK_FX = {
       fxP({x:w.x,y:w.y,z:w.z,n:8+lv*3,kind:'star',color:0xffe0ff,size:0.18,sizeEnd:0.2,life:800,grav:0.8,vel:radial(2.4,2.6,1),spin:4});
       if(lv>=2) fxRing(r,c,0xffd0ff,{max:2.8+lv*0.5,dur:560,y:0.05});
       if(lv>=3){ fxPillar(r,c,0xb15ad6); fxBeam(r,c,0xe6b0ff,{rad:0.2,grow:3.2,rays:true}); fxRing(r,c,0xd8a0ff,{max:4.6,dur:800}); fxP({x:w.x,y:w.y+2.5,z:w.z,n:10,kind:'shard',color:0xffe0ff,size:0.3,sizeEnd:0.2,life:900,grav:4,vel:radial(1.2,-0.5,1),spin:5}); } } },
-  草:{ muzzle(r,c,lv){ const w=WP(r,c,0.4); fxP({x:w.x,y:w.y,z:w.z,n:5+lv*2,kind:'leaf',color:0xaee87a,size:0.14,sizeEnd:0.5,life:400,grav:0.8,vel:radial(0.9,1.2,1),spin:8,add:false}); },
+  森:{ muzzle(r,c,lv){ const w=WP(r,c,0.4); fxP({x:w.x,y:w.y,z:w.z,n:5+lv*2,kind:'leaf',color:0xaee87a,size:0.14,sizeEnd:0.5,life:400,grav:0.8,vel:radial(0.9,1.2,1),spin:8,add:false}); },
     shoot(r0,c0,r1,c1,lv,hit){ fxSlash(r0,c0,r1,c1,0xcaf0a0); fxProjectile(r0,c0,r1,c1,0x7fcf4a,hit,0.08+lv*0.04,'leaf',0.5); },
     hit(r,c,lv){ const w=WP(r,c,0.3); fxRing(r,c,0x5cbf3a,{max:1.7+0.6*lv,dur:480}); fxSpikes(r,c,0x3f8a2a,2+lv*2);
       fxP({x:w.x,y:w.y,z:w.z,n:10+lv*5,kind:'leaf',color:0xaee87a,color2:0x5cbf3a,size:0.18,sizeEnd:0.6,life:800,grav:0.9,vel:radial(1.6,2.0,1),spin:10,add:false});
@@ -2338,7 +2371,7 @@ const HIT_FX={
     fxP({x:w.x,y:w.y,z:w.z,n:12,kind:'drop',color:0xff7a20,color2:0xffd050,size:0.07,sizeEnd:0.2,life:1100,grav:-0.9,vel:upward(1.0,1.6),jit:0.6,stagger:260,add:false}); },   // 爆ぜ＋立ちのぼる火の粉
   水:(r,c,w,k)=>{ fxShock(r,c,0xbfeaff,{max:2.0*k}); fxP({x:w.x,y:w.y+0.1,z:w.z,n:16,kind:'drop',color:0x3aa8f0,color2:0x9fe0ff,size:0.13,sizeEnd:0.35,life:700,grav:5.2,add:false,vel:(i,n)=>{ const a=i/n*6.283; return [Math.cos(a)*1.3,3.2+Math.random()*1.2,Math.sin(a)*1.3]; }}); fxRing(r,c,0xffffff,{max:1.6,dur:420,y:0.04}); },   // 王冠形の水しぶき
   雷:(r,c,w,k)=>{ fxShock(r,c,0xffffff,{max:2.6*k,dur:240}); fxFlash(r,c,0xffffff); fxP({x:w.x,y:w.y+0.3,z:w.z,n:10,kind:'spark',color:0xffffff,color2:0xfff060,size:0.36,sizeEnd:0.05,life:300,grav:0,vel:radial(3.6,1.4,1),spin:10,aspect:0.3}); screenFlash('#fffbe0',0.32); },   // 閃光
-  草:(r,c,w,k)=>{ fxShock(r,c,0xdcffb0,{max:1.9*k}); fxP({x:w.x,y:w.y+0.2,z:w.z,n:14,kind:'leaf',color:0x9ee06a,color2:0xd8ff9a,size:0.2,sizeEnd:0.5,life:1100,grav:0.35,drag:0.95,vel:(i,n)=>{ const a=i/n*6.283; return [Math.cos(a)*1.8,1.4+Math.random()*1.4,Math.sin(a)*1.8]; },spin:9,add:false}); },   // 葉の舞い
+  森:(r,c,w,k)=>{ fxShock(r,c,0xdcffb0,{max:1.9*k}); fxP({x:w.x,y:w.y+0.2,z:w.z,n:14,kind:'leaf',color:0x9ee06a,color2:0xd8ff9a,size:0.2,sizeEnd:0.5,life:1100,grav:0.35,drag:0.95,vel:(i,n)=>{ const a=i/n*6.283; return [Math.cos(a)*1.8,1.4+Math.random()*1.4,Math.sin(a)*1.8]; },spin:9,add:false}); },   // 葉の舞い
   風:(r,c,w,k)=>{ fxX(r,c,0xeafff2,{len:1.9*k}); fxShock(r,c,0xbfffd0,{max:2.0*k,dur:260}); fxP({x:w.x,y:w.y+0.3,z:w.z,n:8,kind:'spark',color:0xffffff,size:0.4,sizeEnd:0.1,life:320,grav:0,vel:radial(3.4,0.4,1),spin:3,aspect:0.25}); },   // 斬撃
   地:(r,c,w,k)=>{ fxShock(r,c,0xd8b878,{max:1.9*k}); fxP({x:w.x,y:w.y,z:w.z,n:12,kind:'rock',color:0x9a7a50,color2:0x7a5e3c,size:0.2,sizeEnd:0.7,life:760,grav:6,vel:radial(1.8,3.6,1),spin:10,add:false}); fxRing(r,c,0xb09060,{max:2.0,dur:460,y:0.04}); },   // 岩のかけら
   氷:(r,c,w,k)=>{ fxShock(r,c,0xe8fbff,{max:2.1*k}); fxCrystals(r,c,0xbff0ff,3); fxP({x:w.x,y:w.y+0.3,z:w.z,n:12,kind:'shard',color:0x8fdcff,color2:0xdff6ff,size:0.17,sizeEnd:0.25,life:600,grav:2.6,vel:radial(2.4,1.8,1),spin:7,add:false}); },   // 氷の結晶
@@ -2832,7 +2865,7 @@ function handlePick(sc, tc){
 // 隣接する融合可能な味方（進化直後で移動済みでも、未行動なら融合できる）
 function adjFuse(u){ const out=[]; if(!u||u.acted) return out;
   for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){ const r=u.r+dr,c=u.c+dc; if(r<0||c<0||r>=N||c>=N)continue;
-    const occ=unitAt(r,c); if(occ&&occ.owner===u.owner&&fusionResult(u,occ)!=null) out.push([r,c]); }
+    const occ=unitAt(r,c); if(occ&&occ.owner===u.owner&&(fusionResult(u,occ)!=null||tripleResult(u,occ))) out.push([r,c]); }
   return out; }
 function recompute(){ if(!sel){selMoves=null;selAtks=null;return;}
   selMoves = canMove(sel)?moveTargets(sel):{move:[],fuse:[]};
@@ -2951,7 +2984,10 @@ function updateUI(){ if(BT.headless) return;
   function appendFuseBtns(){ if(!sel||!selMoves||!selMoves.fuse) return; const seen={};
     for(const [fr,fc] of selMoves.fuse){ const partner=unitAt(fr,fc); if(!partner)continue;
       const fid=fusionResult(sel,partner); if(fid==null||seen[fid])continue; seen[fid]=1;
-      ac.appendChild(mkbt(`🔮 融合→${MID[fid].name}（${mon(partner).name}と）`,'fuse', !sel.acted, ()=>{ pushUndo(); moveUnit(sel,fr,fc); reselectAfter(); })); } }
+      ac.appendChild(mkbt(`🔮 融合→${MID[fid].name}（${mon(partner).name}と）`,'fuse', !sel.acted, ()=>{ pushUndo(); moveUnit(sel,fr,fc,'pair'); reselectAfter(); })); }
+    for(const [fr,fc] of selMoves.fuse){ const partner=unitAt(fr,fc); if(!partner)continue;   // 3体融合(v3): 相手に隣接する3体目も一緒に
+      const t3=tripleResult(sel,partner); if(!t3||seen['t'+t3.id])continue; seen['t'+t3.id]=1;
+      ac.appendChild(mkbt(`🔱 3体融合→${MID[t3.id].name}（${mon(partner).name}・${mon(t3.c).name}と）`,'fuse', !sel.acted, ()=>{ pushUndo(); moveUnit(sel,fr,fc,'triple'); reselectAfter(); })); } }
   if(sel){
     const m=mon(sel);
     const R=effRange(sel), note=traitNote(sel);
@@ -3076,16 +3112,15 @@ function showMonsterDetail(id, u){
   });
   // この個体が融合体なら、そのレシピ
   let recipeHtml='';
-  if(isFusion && (m.fusion_from||[]).length>=2){
-    const names=m.fusion_from.map(f2=>{ const x=MID[f2]; return x?`<b>${x.name}</b>(${x.type}/Lv${x.level})`:'?'; }).join(' ＋ ');
-    const ty=m.fusion_types?`Lv2の<b>${m.fusion_types[0]}</b> ＋ Lv2の<b>${m.fusion_types[1]}</b>`:names;
-    const ex=(m.fusion_pairs||[]).slice(0,6).map(pp=>pp.map(i=>MID[i].name).join('＋')).join('／');
-    recipeHtml=`<div class="sec">融合レシピ</div><div class="chain">${ty} → <b>${m.name}</b>${ex?`<br><span class="muted" style="font-size:11px">${ex}${(m.fusion_pairs||[]).length>6?' …':''}</span>`:''}</div>`;
-  }
+  { const mats=m.recipe3||m.recipe||m.fusion_from||[];   // v3: レシピは「A＋B」(3体融合は「A＋B＋C」)
+    if(isFusion && mats.length>=2){
+      const names=mats.map(f2=>{ const x=MID[f2]; return x?`<b>${x.name}</b>(${x.type}/Lv${x.level})`:'?'; }).join(' ＋ ');
+      recipeHtml=`<div class="sec">${m.recipe3?'3体融合レシピ':'融合レシピ'}</div><div class="chain">${names} → <b>${m.name}</b></div>`; } }
   let fuseHtml='';
   // この個体が素材になる融合
-  const asMat=[]; for(const k in FUSE_IDX){ const [xa,xb]=k.split(',').map(Number); if(xa===id||xb===id) asMat.push({other:xa===id?xb:xa, f:FUSE_IDX[k]}); }
-  if(asMat.length){ fuseHtml = `<div class="sec">融合素材になる</div>`+asMat.map(o=>`<div class="chain">+ ${MID[o.other].name} → <b>${MID[o.f].name}</b></div>`).join(''); }
+  const asMat=[]; for(const k in FUSE_IDX){ const [xa,xb]=k.split(',').map(Number); if(xa===id||xb===id) asMat.push({others:[xa===id?xb:xa], f:FUSE_IDX[k]}); }
+  for(const f of FUSE3){ if(f.mats.includes(id)) asMat.push({others:f.mats.filter(x=>x!==id), f:f.id, triple:true}); }
+  if(asMat.length){ fuseHtml = `<div class="sec">融合素材になる</div>`+asMat.map(o=>`<div class="chain">+ ${o.others.map(x=>MID[x]?MID[x].name:'?').join('＋')} → <b>${MID[o.f].name}</b>${o.triple?'（3体融合）':''}</div>`).join(''); }
   box.innerHTML =
     `<div class="hd"><img src="${IMG[id]}"><div><h3>${m.name}${m.archetype?` <span style="font-size:12px;color:#9be1ff;font-weight:700">${m.archetype}</span>`:''}</h3>`
     +`<div class="muted">${m.type}${m.type2?'/'+m.type2:''}（${m.type_alias}）・${DAN[m.level]}</div></div></div>`
@@ -3118,7 +3153,15 @@ function drawPlaceHL(){
   if(pu) addReticle(pu.r,pu.c,0x6ad0ff);
 }
 let placeList=[];   // 配置待ち [{mid, ent(パーティの1件), placed}]
-function preparePlaceList(){ placeList=BT.party.map(p=>({mid:p.mid, ent:p, placed:false})); placePick=placeList.length?0:null; }
+function preparePlaceList(){ placeList=BT.party.map(p=>({mid:p.mid, base:p.mid, ent:p, placed:false})); placePick=placeList.length?0:null; }
+// 2段目から出す(2026-10-24): 系統の1段目の子は、2段目の姿を持っていれば最初から2段目で置ける(Lvの合計は2として数える)
+function canStart2(p){ const b=MID[p.base]; return !!(b && b.level===1 && b.evolves_to!=null && MID[b.evolves_to] && (ONLINE || STORY.owned.includes(b.evolves_to))); }
+function toggleStart2(i){ const p=placeList[i]; if(!canStart2(p)) return;
+  const up=p.mid===p.base; const nm=up?MID[p.base].evolves_to:p.base;
+  const delta=MID[nm].level-MID[p.mid].level; if(p.placed && placedLevel()+delta>BT.budget){ toast(`Lv合計${BT.budget}まで`); return; }
+  if(!p.placed && up && placedLevel()+MID[nm].level>BT.budget){ toast(`Lv合計${BT.budget}まで`); return; }
+  if(p.placed){ const pu=placedUnit(i); const r=pu.r, c=pu.c; unplace(i); p.mid=nm; placeOne(i,r,c); syncUnits(); } else p.mid=nm;
+  renderPlaceRow(); drawPlaceHL(); }
 function enterPlace(){   // world_v2: 編成と配置を1画面に(パーティの札をタップ→黄色のマス)。Lv合計が盤の上限まで
   $id('ovPlace').style.display='flex';
   state.phase='place'; pickEnabled=true;
@@ -3136,7 +3179,8 @@ function renderPlaceRow(){
     const d=document.createElement('div'); d.className='pcard'+(placePick===i?' on':'')+(!fitsBudget(i)?' off':''); d.style.cssText+=';width:64px;flex:0 0 auto;position:relative';
     d.style.opacity=p.placed&&placePick!==i?'0.55':'';
     const m=MID[p.mid];
-    d.innerHTML=`<img src="${IMG[p.mid]}"><div class="nm">${i===0?'<i class="lmk"></i>':''}${m.name}</div><div class="rk">${DAN[m.level]} ★${p.ent.rank}${p.ent.stack?' 重ね'+p.ent.stack:''}</div>${p.placed?'<div style="position:absolute;top:2px;right:4px;font-size:11px">✓</div>':''}`;
+    d.innerHTML=`<img src="${IMG[p.mid]}"><div class="nm">${i===0?'<i class="lmk"></i>':''}${m.name}</div><div class="rk">${DAN[m.level]} ★${p.ent.rank}${p.ent.stack?' 重ね'+p.ent.stack:''}</div>${p.placed?'<div style="position:absolute;top:2px;right:4px;font-size:11px">✓</div>':''}${canStart2(p)?`<button class="st2" style="position:absolute;top:2px;left:2px;font:800 10px/1 inherit;padding:3px 4px;border-radius:5px;border:1px solid ${p.mid!==p.base?'#ffd977':'rgba(255,255,255,.35)'};background:${p.mid!==p.base?'#b8860b':'rgba(10,14,30,.75)'};color:#fff;cursor:pointer">2段</button>`:''}`;
+    const sb=d.querySelector('.st2'); if(sb) sb.onclick=e=>{ e.stopPropagation(); toggleStart2(i); };
     d.onclick=()=>{ if(!fitsBudget(i)){ toast(`Lv合計${BT.budget}まで`); return; } placePick=(placePick===i?null:i); renderPlaceRow(); drawPlaceHL(); };
     row.appendChild(d);
   });
@@ -3357,6 +3401,7 @@ function newBattleState(){
 let _loadP=null;
 function setMonsters(list){
   MONSTERS=list; for(const k in MID) delete MID[k]; MONSTERS.forEach(m=>{ MID[m.id]=m; });
+  INSECT.clear(); MONSTERS.forEach(m=>{ if(m.archetype==='蟲型') INSECT.add(m.id); });
   IMG={}; CIHI={}; for(const m of MONSTERS){ IMG[m.id]=CFG.base+CFG.img+m.id+'.webp'; IMG[String(m.id)]=IMG[m.id]; CIHI[String(m.id)]=CFG.base+CFG.ci+m.id+'.webp'; }
   STORY.owned=MONSTERS.map(m=>m.id);
   buildFuseTables();
@@ -3599,7 +3644,7 @@ function startBattle(opts){
     BT.party=normParty(pl.party||pl); BT.enemyParty=normParty(en.party||en);
     if(!BT.party.length||!BT.enemyParty.length) throw new Error('startBattle: player/enemy の party が空');
     BT.items=Object.assign({heal:0}, pl.items||{}); STORY.items=BT.items; setOwned(pl, en);
-    BT.fusionOn=!!opts.fusionUnlocked; BT.tune=Object.assign({}, TUNE, opts.tune||{});
+    BT.fusionOn=!!opts.fusionUnlocked; BT.tripleOn=!!opts.tripleUnlocked; BT.tune=Object.assign({}, TUNE, opts.tune||{});
     BT.diff=Object.assign({}, KD.ai, en.ai||{}); BT.aiSkill=[ (pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1 ];
     BT.place=resolvePlace(opts.terrainTheme, opts.backdrop);
     BT.budget=+opts.budget||BT.rules.budget;
@@ -3763,7 +3808,7 @@ function simulate(opts){
   const pl=opts.player||{}, en=opts.enemy||{};
   BT.party=normParty(pl.party||pl); BT.enemyParty=normParty(en.party||en);
   BT.items={heal:0}; STORY.items=BT.items; setOwned(pl, en);
-  BT.fusionOn=!!opts.fusionUnlocked; BT.tune=Object.assign({}, TUNE, opts.tune||{});
+  BT.fusionOn=!!opts.fusionUnlocked; BT.tripleOn=!!opts.tripleUnlocked; BT.tune=Object.assign({}, TUNE, opts.tune||{});
   BT.diff=Object.assign({}, KD.ai, en.ai||{}); BT.aiSkill=[(pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1];
   BT.place=resolvePlace(opts.terrainTheme, opts.backdrop); BT.budget=+opts.budget||BT.rules.budget;
   applyPlace(); state=newBattleState(); uidSeq=1;
@@ -3780,7 +3825,7 @@ function simulate(opts){
   let mn=1, st0=null; if(w>=0) for(const [t,h0,h1] of log){ const tot=h0+h1; if(!tot) continue; const sh=(w===0?h0:h1)/tot; if(st0==null) st0=sh; if(t<2) continue; mn=Math.min(mn,sh); }
   res={ w, how:state.endHow||'leader', turns:Math.min(state.turn, MAX_TURN), leaderKill:(state.endHow||'leader')==='leader' && w>=0,
     evo:state.stats.evo.slice(), fuse:state.stats.fuse.slice(), atk:state.stats.atk.slice(), act:tl.act, sideTurns:tl.turns,
-    comeback: w>=0 && mn<Math.min(0.4,(st0==null?0.5:st0)-0.1), ev:(state.stats.ev||[]).slice(), stage:{evo:BT.evoOn, fusion:BT.fusionOn}, /* 逆転=勝った側の体力の割合が2ターン目以降に40%未満かつ開始時より10ポイント以上低くなった */ n:[alive(0).length, alive(1).length], hp:[hp(0),hp(1)], cutins:{atk:state.stats.atk[0]+state.stats.atk[1], evo:state.stats.evo[0]+state.stats.evo[1], fuse:state.stats.fuse[0]+state.stats.fuse[1]} };
+    comeback: w>=0 && mn<Math.min(0.4,(st0==null?0.5:st0)-0.1), ev:(state.stats.ev||[]).slice(), stage:{evo:BT.evoOn, fusion:BT.fusionOn, triple:!!BT.tripleOn}, /* 逆転=勝った側の体力の割合が2ターン目以降に40%未満かつ開始時より10ポイント以上低くなった */ n:[alive(0).length, alive(1).length], hp:[hp(0),hp(1)], cutins:{atk:state.stats.atk[0]+state.stats.atk[1], evo:state.stats.evo[0]+state.stats.evo[1], fuse:state.stats.fuse[0]+state.stats.fuse[1]} };
   BT.headless=prevHeadless;
   return res;
 }
@@ -3796,7 +3841,9 @@ const API={ init, startBattle, simulate, estSeconds, TIME_MODEL, SIZE_RULES, KIN
   // 確認用(test.html・puppeteer)
   _dbg:{ get state(){ return state; }, get BT(){ return BT; }, sprites, M3D, aiSide:(o)=>{ aiSide(o); return state.phase; }, endTurn:()=>endTurn(), killLeader(o){ const L=leaderOf(o); if(!L) return false; L.hp=0; killUnit(L); afterAction(); return state.phase; },
     gauge(uid,v){ const u=state.units[uid]; if(u&&v!=null){ u.g=v; syncUnits(); updateUI(); } return u?u.g:null; }, put(uid,r,c){ const u=state.units[uid]; if(!u||unitAt(r,c)) return false; state.board[u.r][u.c]=null; u.r=r; u.c=c; state.board[r][c]=u.uid; syncUnits(); return true; },
-    evolve(uid){ const u=state.units[uid]; return u?evolveUnit(u,true):false; }, fuse(a,b){ const A=state.units[a], B=state.units[b]; if(!A||!B) return null; A.evo=true; moveUnit(A,B.r,B.c); const nu=unitAt(B.r,B.c); return nu?nu.mid:null; },
+    evolve(uid){ const u=state.units[uid]; return u?evolveUnit(u,true):false; }, fuse(a,b){ const A=state.units[a], B=state.units[b]; if(!A||!B) return null; A.evo=true; moveUnit(A,B.r,B.c,'pair'); const nu=unitAt(B.r,B.c); return nu?nu.mid:null; },
+    fuse3(a,b,c){ const A=state.units[a], B=state.units[b], C=state.units[c]; if(!A||!B||!C) return null; const t3=tripleResult(A,B); if(!t3||t3.c.uid!==C.uid) return null; tryTriple(A,B,C,B.r,B.c); const nu=unitAt(B.r,B.c); return nu?nu.mid:null; },
+    canFuse(a,b){ const A=state.units[a], B=state.units[b]; return A&&B?fusionResult(A,B):null; }, canFuse3(a,b){ const A=state.units[a], B=state.units[b]; const t=A&&B?tripleResult(A,B):null; return t?{id:t.id, c:t.c.uid}:null; }, tables(){ return {FUSE_RECIPE, FUSE3, INSECT:[...INSECT], TYPES, STRONG, WEAK}; },
     m3dLoaded(){ return Object.values(sprites).filter(s=>s.m3d).length; }, m3dLoadAll(){ return Promise.all(Object.values(state.units).map(u=>M3D.load(u.mid).catch(()=>null))); },
     terr(){ const f={}; for(const row of state.terrain) for(const t of row) f[t]=(f[t]||0)+1; return f; }, look(){ return BT.look; }, sel(uid){ const u=state.units[uid]; if(u) selectUnit(u); return !!u; },
     leaders(){ return [0,1].map(o=>{ const L=leaderOf(o); return L?{uid:L.uid,mid:L.mid,r:L.r,c:L.c,hp:L.hp,maxhp:L.maxhp}:null; }); }, cells(){ return {N, EVO_CELLS, EVO_BASE, evoOn:BT.evoOn, HEAL_CELLS, START_ROWS, MAX_TURN}; }, attack(a,b){ const A=state.units[a], B=state.units[b]; if(!A||!B) return false; A.acted=false; A.amp=null; doAttack(A,B); return true; }, setMid(uid,mid){ const u=state.units[uid]; if(!u||!MID[mid]) return false; u.mid=+mid; syncUnits(); return true; }, dmg(aMid,dMid,terr){ const t0=state.terrain[0][0]; state.terrain[0][0]=terr||'plain'; const v=calcDamage({mid:+aMid,r:0,c:0,atkX:1,owner:0},{mid:+dMid,owner:1},null); state.terrain[0][0]=t0; return v; }, dmgRaw(aMid,dMid,terr){ const s0=BT.dmgX; BT.dmgX=1000; const v=this.dmg(aMid,dMid,terr); BT.dmgX=s0; return v; }, get dmgX(){ return BT.dmgX; }, showTable:(k)=>showTable(k), openMenu:()=>openMenu(), closeMenu:()=>closeMenu(), menuClick:(k)=>menuClick(k), autoMode:()=>autoMode(), setAutoMode:(m)=>setAutoMode(m), get fxCount(){ return effects.length; } }
