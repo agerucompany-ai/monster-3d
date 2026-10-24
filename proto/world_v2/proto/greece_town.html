@@ -117,7 +117,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
   <div id="stBg"></div>
   <div id="stCard"><div class="cap"></div></div>
   <img class="stP off" id="stR2" alt=""><img class="stP off" id="stL" alt=""><img class="stP off" id="stR" alt=""><div id="stPh"><img alt=""></div>
-  <div id="stPick"><canvas id="stPickCv"></canvas><div class="row"><button data-m="7">エンジュ</button><button data-m="178">フタバン</button><button data-m="70">デンキー</button></div><button class="stBtn go">この子にする</button></div>
+  <div id="stPick"><canvas id="stPickCv"></canvas><div class="row"><button data-m="7">エンジュ</button><button data-m="178">クマッパ</button><button data-m="70">ピリポン</button></div><button class="stBtn go">この子にする</button></div>
   <div id="stBox"><b></b><p></p><i></i></div>
   <div id="stTitle"><h1>神獣オリュンポス<small>（仮）</small></h1><button class="stBtn" id="btNew">はじめから</button><button class="stBtn sub" id="btCont">つづきから</button></div>
   <div id="stSetup"><div class="row"><button class="g" data-g="m"><img data-src="../v3/portraits/hero_m_normal.webp" alt="">男の子</button><button class="g" data-g="f"><img data-src="../v3/portraits/hero_f_normal.webp" alt="">女の子</button></div>
@@ -1371,7 +1371,7 @@ function loadSave(){ try{ const s=JSON.parse(localStorage.getItem(SKEY)); return
 function saveGame(){ if(!SAVE||NOSAVE) return; if(D&&MAP&&READY.scene) Object.assign(SAVE,{map:MAP,x:+HERO.x.toFixed(2),z:+HERO.z.toFixed(2),yaw:+HERO.yaw.toFixed(3)});
   Object.assign(SAVE,{party:PARTY,box:BOX,items:ITEMS,tod:TODN,t:Date.now()}); try{ localStorage.setItem(SKEY,JSON.stringify(SAVE)); STATS.saves=(STATS.saves||0)+1; }catch(e){} }
 function flag(k){ if(SAVE&&!SAVE.flags[k]){ SAVE.flags[k]=1; objUpdate(); } }
-const MONN={7:'エンジュ',178:'フタバン',70:'デンキー'};
+const MONN={7:'エンジュ',178:'クマッパ',70:'ピリポン'};
 let MNAME={}, MEVO={}; fetch('../battle/data/monsters.json').then(r=>r.json()).then(a=>{ for(const m of a){ MNAME[m.id]=m.name; MEVO[m.id]=m.evolves_to; } }).catch(()=>{});
 // 持っている種類(owned): 仲間にした子は、その系統(次の段・その次の段)を全部持っている扱い(game_design 9-2)。バトルでの進化の判定に渡す
 // 解禁(SAVE.unlock): 序盤は進化も融合も未解禁(相性と地形の時期)。進化の解禁後は、仲間の系統(進化先)も持っている扱い。融合は物語の後半で解禁
@@ -1451,7 +1451,7 @@ function pickPartner(){ return new Promise(res=>{ ST.pick.style.display='flex'; 
       const sh=new THREE.Mesh(new THREE.PlaneGeometry(1.5,1.1).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:TEX.blob,transparent:true,depthWrite:false,opacity:0.8})); sh.position.set((i-1)*2.1,0.01,0); sc.add(sh); inst.sh=sh; })); }
   const size=()=>{ const w=cv.clientWidth||300, h=cv.clientHeight||130; PK.r.setSize(w,h,false); PK.cam.aspect=w/h; PK.cam.updateProjectionMatrix(); }; size();
   PK.on=true; PK.sel=null; go.style.display='none'; btns.forEach(b=>b.classList.remove('sel'));
-  const LINE={7:'三本の尾の先に、小さな火がともっている。',178:'双葉の頭で、日なたぼっこをしている。',70:'耳の内側が、ほんのり光っている。'};
+  const LINE={7:'三本の尾の先に、小さな火がともっている。',178:'頭の双葉をゆらして、日なたぼっこをしている。',70:'ふわふわの毛が、ぱちぱち光っている。'};
   const choose=id=>{ if(PK.sel!==id&&PK.m[id]) PK.m[id].hopT=0; PK.sel=id; btns.forEach(b=>b.classList.toggle('sel',+b.dataset.m===id)); go.style.display='block'; ST.box.classList.add('nar'); ST.box.style.display='block'; ST.tx.textContent=MONN[id]+'――'+LINE[id]; ST.box.querySelector('i').style.display='none'; };
   btns.forEach(b=>b.onclick=e=>{ e.stopPropagation(); choose(+b.dataset.m); });
   cv.onclick=e=>{ e.stopPropagation(); const rc=cv.getBoundingClientRect(); const i=Math.min(2,Math.floor((e.clientX-rc.left)/rc.width*3)); choose([7,178,70][i]); };
@@ -1532,7 +1532,7 @@ const SC={
   {w:'elena',f:'smile',t:'{partner}ね。いい顔。もう、あなたを見てる。'},
   {w:'partner',t:'コンッ！　（尾の火が、ぱっと大きくなった）',if:()=>SAVE.partner===7},
   {w:'partner',t:'ぷぅ……ふわぁ。（{hero}の足にもたれて、眠ってしまった）',if:()=>SAVE.partner===178},
-  {w:'partner',t:'キュイ！　（手帳に飛びついて、画面をさわっている）',if:()=>SAVE.partner===70},
+  {w:'partner',t:'ピリッ！　（手帳に飛びついて、画面をさわっている）',if:()=>SAVE.partner===70},
   {w:'elena',t:'手帳に、旅の画面を入れたわ。地図と、出会った子の記録よ。'},
   {w:'elena',t:'大事な決まりを3つ。'},
   {w:'elena',t:'1つ。街の中は「静域」。勝負はできないの。'},

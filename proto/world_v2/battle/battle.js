@@ -220,20 +220,23 @@ const RETIRED=new Set();   // world_v2: data/monsters.json は遊べる80体だ�
 const FUSE_TYPE = {};   // "炎|光" -> 融合体id
 let FUSE_MATS = [];
 const FUSE_IDX = {};
+const FUSE_RECIPE = {};   // 素材が決まっている融合(元から融合だったボス: ヒュドリア・ティタニカ・キマドラ・ラドーグ)。"小さいid,大きいid" -> 融合体id。タイプ対より先に見る
 function fusePair(m1, m2){ const A=MID[m1], B=MID[m2]; if(!A||!B||m1===m2) return null;
   if(A.role==='fusion'||B.role==='fusion'||A.level!==2||B.level!==2) return null;
   if(RETIRED.has(m1)||RETIRED.has(m2)) return null;
+  const rk=Math.min(m1,m2)+','+Math.max(m1,m2); if(rk in FUSE_RECIPE) return FUSE_RECIPE[rk];
   if(A.type===B.type) return null;
   const k=[A.type,B.type].sort().join('|'); return (k in FUSE_TYPE)?FUSE_TYPE[k]:null; }
 function buildFuseTables(){   // world_v2: モンスターの表を読んだ後に作る
-for(const k in FUSE_TYPE) delete FUSE_TYPE[k]; for(const k in FUSE_IDX) delete FUSE_IDX[k];
-MONSTERS.forEach(m=>{ if(m.role==='fusion' && !RETIRED.has(m.id) && m.level===3 && m.type2){ const k=[m.type,m.type2].sort().join('|'); if(!(k in FUSE_TYPE)) FUSE_TYPE[k]=m.id; } });
+for(const k in FUSE_TYPE) delete FUSE_TYPE[k]; for(const k in FUSE_IDX) delete FUSE_IDX[k]; for(const k in FUSE_RECIPE) delete FUSE_RECIPE[k];
+MONSTERS.forEach(m=>{ if(m.role==='fusion' && !RETIRED.has(m.id) && Array.isArray(m.recipe) && m.recipe.length===2){ const [a,b]=m.recipe; FUSE_RECIPE[Math.min(a,b)+','+Math.max(a,b)]=m.id; } });
+MONSTERS.forEach(m=>{ if(m.role==='fusion' && !RETIRED.has(m.id) && m.level===3 && m.type2 && !m.recipe){ const k=[m.type,m.type2].sort().join('|'); if(!(k in FUSE_TYPE)) FUSE_TYPE[k]=m.id; } });
 FUSE_MATS = MONSTERS.filter(m=>m.role!=='fusion' && m.level===2 && !RETIRED.has(m.id)).map(m=>m.id).sort((a,b)=>a-b);   // 融合素材=Lv2(進化系・単体)
 // 融合インデックス: "id1,id2"(昇順) -> 融合体id（素材の全組み合わせを展開=97通り）
 for(let i=0;i<FUSE_MATS.length;i++) for(let j=i+1;j<FUSE_MATS.length;j++){ const f=fusePair(FUSE_MATS[i],FUSE_MATS[j]); if(f!=null) FUSE_IDX[FUSE_MATS[i]+','+FUSE_MATS[j]]=f; }
 // 図鑑/詳細のレシピ表示用: 融合体ごとに素材の組を持たせる(fusion_from は代表の1組)
 MONSTERS.forEach(m=>{ if(m.role!=='fusion'||RETIRED.has(m.id)) return; const pairs=[]; for(const k in FUSE_IDX) if(FUSE_IDX[k]===m.id) pairs.push(k.split(',').map(Number));
-  m.fusion_pairs=pairs; if(pairs.length) m.fusion_from=pairs[0].slice(); m.fusion_types=m.type2?[m.type,m.type2]:null; });
+  m.fusion_pairs=pairs; if(pairs.length) m.fusion_from=pairs[0].slice(); m.fusion_types=(m.type2&&!m.recipe)?[m.type,m.type2]:null; });
 }
 const FUSE3 = [];   // 3体融合は廃止
 function tripleRecipe(m1,m2){ if(m1===m2) return null; for(const f of FUSE3){ if(f.mats.includes(m1)&&f.mats.includes(m2)) return f; } return null; }
