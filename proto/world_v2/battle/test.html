@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>盤のバトル 確認</title>
+<link rel="icon" href="data:,">
+<style>
+html,body{margin:0;height:100%;background:#0d1120;color:#eef2ff;font-family:'Hiragino Sans','Yu Gothic UI','Noto Sans JP',sans-serif}
+#menu{display:flex;flex-direction:column;gap:12px;align-items:stretch;max-width:420px;margin:0 auto;padding:28px 16px}
+h1{font-size:18px;margin:0 0 6px;color:#ffd977;letter-spacing:.08em}
+.go{min-height:64px;border-radius:8px;border:1px solid rgba(150,170,235,.25);background:linear-gradient(180deg,#1b2448,#11183a);color:#eef1ff;font:inherit;font-size:17px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:12px;padding:0 16px;text-align:left}
+.go b{font-size:12px;color:#9fb0dc;font-weight:700;margin-left:auto}
+.go:active{transform:scale(.98)}
+.tg{display:flex;gap:8px}
+.tg button{flex:1;min-height:44px;border-radius:8px;border:1px solid rgba(150,170,235,.25);background:#11183a;color:#9fb0dc;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.tg button.on{background:#2f5fb0;color:#fff;border-color:#8fb4ff}
+#res{font:12px/1.5 ui-monospace,Consolas,monospace;white-space:pre-wrap;background:#0a0e1c;border:1px solid #232c48;border-radius:8px;padding:10px;min-height:40px;color:#b9c6e8;overflow:auto;max-height:46vh}
+</style>
+</head>
+<body>
+<div id="menu">
+  <h1>盤のバトル</h1>
+  <div class="tg" id="tgStage"><button data-v="0" class="on">序盤</button><button data-v="1">中盤</button><button data-v="2">終盤</button></div>
+  <div class="tg" id="tgMine"><button data-v="0" class="on">自分: 進化先なし</button><button data-v="1">自分: 進化先あり</button></div>
+  <div class="tg" id="tgFoe"><button data-v="0" class="on">相手: 進化しない</button><button data-v="1">相手: 進化できる</button></div>
+  <div class="tg" id="tgFuse"><button data-v="0" class="on">融合: まだ</button><button data-v="1">融合: 解禁</button></div>
+  <div class="tg" id="tgTriple"><button data-v="0" class="on">3体融合: まだ</button><button data-v="1">3体融合: 解禁</button></div>
+  <button class="go" id="bWild">野生 ソヨカ<b>7×7・小川</b></button>
+  <button class="go" id="bTrainer">ニコス<b>9×9・オリーブ畑</b></button>
+  <button class="go" id="bMaster">ヤニス<b>11×11・競技場の跡</b></button>
+  <button class="go" id="bRagna">フィンブル団<b>11×11・3体融合の確認</b></button>
+  <div id="res"></div>
+</div>
+<script src="../../three.min.js"></script>
+<script src="../../gltfloader.128.js"></script>
+<script src="../../meshopt_decoder.js"></script>
+<script src="battle.js"></script>
+<script>
+// v3名簿(2026-10-25): id は design_v2/redesign_1024/v3_ids.json。自分のパーティ(先頭=相棒=リーダー)。rank=成長ランク、stack=重ねた回数(表示だけ)
+// 1001 エンジュ(炎) / 49 ソヨカ(風) / 1022 ビリトラ(雷) / 16 ポチャラシ(氷) / 70 ピリポン(雷)
+const PARTY = [ {mid:1001, rank:5}, {mid:49, rank:4, stack:1}, {mid:1022, rank:3}, {mid:16, rank:3}, {mid:70, rank:2} ];
+const BOX = { 1001:{rank:5}, 49:{rank:4, stack:1}, 1022:{rank:3}, 16:{rank:3}, 70:{rank:2} };   // 持っている子(系統の一段目のid → 成長ランク)
+const CASES = {
+  bWild:    { kind:'wild',    size:7,  terrainTheme:'stream',  backdrop:'olive', enemy:{ party:[{mid:49, rank:3}] } },
+  bTrainer: { kind:'trainer', size:9,  terrainTheme:'olive',   backdrop:'olive', enemy:{ name:'ニコス', party:[{mid:1059, rank:4}, {mid:166, rank:4}, {mid:1037, rank:3}, {mid:1053, rank:3}] } },   // オバケロ・ニジッコ・アルマガネ・コグリフ
+  bMaster:  { kind:'master',  size:11, terrainTheme:'stadium', backdrop:'agora', enemy:{ name:'ヤニス', order:0, party:[{mid:185, rank:6, leader:true}, {mid:49, rank:6}, {mid:1037, rank:6}, {mid:16, rank:6}] } },   // アロガルド・ソヨカ・アルマガネ・ポチャラシ
+  // 3体融合の確認: 相手がリュバーン(199)・トールジン(1027)・オキヤモ(1008)を持つ → tripleUnlocked なら ラグナディオ(2071)。自分も同じ3体＋相棒
+  bRagna:   { kind:'master',  size:11, terrainTheme:'stadium', backdrop:'agora', party:[{mid:1001, rank:6}, {mid:199, rank:6}, {mid:1027, rank:6}, {mid:1008, rank:6}],
+              enemy:{ name:'フィンブル団', order:3, party:[{mid:199, rank:6, leader:true}, {mid:1027, rank:6}, {mid:1008, rank:6}] } },
+};
+const out = document.getElementById('res');
+// 進化先を持っているか(自分=player.owned / 相手=party の evo:true)。切り替えで両方を試せる
+const OPT = { mine: 0, foe: 0, fuse: 0, triple: 0 };
+const setTg = (id, v) => { for (const x of document.getElementById(id).children) x.classList.toggle('on', +x.dataset.v === v); };
+// 3段: 序盤=進化も融合もなし(相性と地形) / 中盤=進化先を持っている(進化で逆転) / 終盤=融合も解禁(融合で大逆転)
+document.getElementById('tgStage').onclick = e => { const b = e.target.closest('button'); if (!b) return; const v = +b.dataset.v; setTg('tgStage', v);
+  OPT.mine = v >= 1 ? 1 : 0; OPT.foe = v >= 1 ? 1 : 0; OPT.fuse = v >= 2 ? 1 : 0; setTg('tgMine', OPT.mine); setTg('tgFoe', OPT.foe); setTg('tgFuse', OPT.fuse); };
+for (const [id, k] of [['tgMine', 'mine'], ['tgFoe', 'foe'], ['tgFuse', 'fuse'], ['tgTriple', 'triple']]) { const g = document.getElementById(id); g.onclick = e => { const b = e.target.closest('button'); if (!b) return; OPT[k] = +b.dataset.v; for (const x of g.children) x.classList.toggle('on', x === b); }; }
+window._testOpt = OPT;
+for (const id in CASES) document.getElementById(id).onclick = () => {
+  const c = CASES[id]; const party = c.party || PARTY; const box = c.party ? Object.fromEntries(c.party.map(p => [MonBattle.baseFormId(p.mid), {rank:p.rank}])) : BOX;
+  MonBattle.init().then(() => startBattle(Object.assign({}, c, {
+    player: { party, items: { heal: 3 }, box, rankCap: 10, owned: OPT.mine ? MonBattle.MONSTERS.map(m => m.id) : Object.keys(box).map(Number) },
+    enemy: Object.assign({}, c.enemy, { party: c.enemy.party.map(e => Object.assign({}, e, OPT.foe ? { evo: true } : {})) }),
+    fusionUnlocked: !!OPT.fuse, tripleUnlocked: !!OPT.triple,
+    onEnd: (res) => { out.textContent = JSON.stringify(res, null, 1); window._lastResult = res; }
+  }))).catch(e => { out.textContent = String(e && e.stack || e); });
+};
+</script>
+</body>
+</html>
