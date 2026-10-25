@@ -91,6 +91,12 @@ const DIG_TURNS = 2;            // 地タイプ「潜行」：2ターン地中(�
 const LIGHT_HEAL_RANGE = 4;     // 光の回復魔法の射程
 const LIGHT_HEAL_ALL = 400;     // 全体回復＝射程内の味方全員をHP+400(固定)
 const LIGHT_HEAL_ONE = 600;     // 単体回復＝最も傷ついた味方1体をHP+600(固定)
+// 2026-10-25: 固定値だと1段目(体力140前後)が毎回全回復して勝負がつかない → 最大体力の割合(上限は従来の固定値)
+const LIGHT_HEAL_ALL_R = 0.20, LIGHT_HEAL_ONE_R = 0.30;
+// 2026-10-25: 小さい盤(7x7の1対1)では回復・吸収が相対的に強すぎて決着しない → SIZE_RULES の sustainX(既定1)で回復量・森の吸収量を縮める
+function sustainX(){ return (BT.rules&&BT.rules.sustainX!=null)?BT.rules.sustainX:1; }
+function healAll(a){ return Math.min(LIGHT_HEAL_ALL, Math.round(a.maxhp*LIGHT_HEAL_ALL_R*sustainX())); }
+function healOne(a){ return Math.min(LIGHT_HEAL_ONE, Math.round(a.maxhp*LIGHT_HEAL_ONE_R*sustainX())); }
 const REVIVE_COST = 6;          // (旧)気コスト・未使用
 const REVIVE_GAUGE = 50;        // 光Lv3の蘇生魔法=自分の闘気50を使う
 const GRASS_DRAIN_FRAC = 0.5;   // 森：与えた総ダメージの50%を自己回復（吸収）
@@ -637,7 +643,7 @@ function doAttack(att, def, move){
   cureBurnByFire(att, targets);                            // 炎の攻撃：対象＋隣接のやけどを治す
   // 森の吸収：敵に与えた総ダメージの一部を自己回復（攻撃力低めの代償に持続力）
   if(dealt>0 && monTypes(m).includes('森') && state.units[att.uid] && att.hp>0){
-    const heal=Math.min((att.maxhp||mon(att).hp)-att.hp, Math.round(dealt*GRASS_DRAIN_FRAC));
+    const heal=Math.min((att.maxhp||mon(att).hp)-att.hp, Math.round(dealt*GRASS_DRAIN_FRAC*sustainX()));   // 小盤は sustainX で縮む
     if(heal>0){ att.hp+=heal; floatText(att.r,att.c,`+${heal}`,'#7ee08a'); }
   }
   // 撃破の気は上のループで相手のレベル分を都度加算済み
@@ -825,9 +831,9 @@ function doHeal(u){   // 全体回復: 射程内の味方全員をHP+400(固定)
   if(!canHealMP(u)){ toast('回復MPが切れた（1バトル3回まで）'); return; }
   spendHealMP(u);
   let total=0, n=0;
-  for(const a of healScope(u)){ if(a.hp>=a.maxhp) continue; const before=a.hp; a.hp=Math.min(a.maxhp,a.hp+LIGHT_HEAL_ALL); const got=a.hp-before; if(got>0){ total+=got; n++; healFx(a.r,a.c); floatText(a.r,a.c,`+${got}`,'#7be0a0'); } }
+  for(const a of healScope(u)){ if(a.hp>=a.maxhp) continue; const before=a.hp; a.hp=Math.min(a.maxhp,a.hp+healAll(a)); const got=a.hp-before; if(got>0){ total+=got; n++; healFx(a.r,a.c); floatText(a.r,a.c,`+${got}`,'#7be0a0'); } }
   u.acted=true;
-  toast(`${mon(u).name}の全体回復 ✦味方${n}体を各+${LIGHT_HEAL_ALL}回復（計+${total}）`);
+  toast(`${mon(u).name}の全体回復 ✦味方${n}体を回復（計+${total}）`);
   afterAction();
 }
 function doHealOne(u){   // 単体回復: 最も傷ついた味方1体をHP+600(固定)
@@ -836,7 +842,7 @@ function doHealOne(u){   // 単体回復: 最も傷ついた味方1体をHP+600(
   const t=healScope(u).filter(a=>a.hp<a.maxhp).sort((a,b)=>(a.hp/a.maxhp)-(b.hp/b.maxhp))[0];
   if(!t){ toast('回復できる味方がいない'); return; }
   spendHealMP(u);
-  const before=t.hp; t.hp=Math.min(t.maxhp,t.hp+LIGHT_HEAL_ONE); const got=t.hp-before;
+  const before=t.hp; t.hp=Math.min(t.maxhp,t.hp+healOne(t)); const got=t.hp-before;
   u.acted=true; healFx(t.r,t.c); floatText(t.r,t.c,`+${got}`,'#7be0a0');
   toast(`${mon(u).name}の単体回復 → ${mon(t).name} にHP+${got}`);
   afterAction();
@@ -1158,18 +1164,22 @@ function aiBestMove(u){
   if(!goal){ const near=foes.slice().sort((a,b)=>man(a.r,a.c,u.r,u.c)-man(b.r,b.c,u.r,u.c))[0]||null;
     goal = (foeL && (!near || man(foeL.r,foeL.c,u.r,u.c)<=effMove(u)*2+effRange(u)+1)) ? foeL : (near||foeL); }   // 敵リーダーが近ければ狙う・遠ければ目の前の敵と戦う
   const hpR=u.hp/u.maxhp;
+  // 2026-10-25: 1体だけの側(野生の1対1・最後の1体)は引きこもると時間切れ＝決着しないので、敵への引き寄せを強く・敵の射程を恐れる重みを弱くする
+  // (旧: 引き寄せ12/マス・リーダーの脅威回避0.7〜1.1 → 川(地形-36)や相手の射程(-23前後)を越えられず、7x7で両軍が4行離れたまま一度も攻撃せず終わっていた)
+  const lone = alive(me).length===1;
+  const pullW = lone ? 40 : 12;
   let best=null, bs=-1e9; const cand=[];
   for(const [r,c] of cells){
     let sc=0;
     const tg=aiTargetsFrom(u,r,c);
     if(tg.length){ let m=0; for(const e of tg) m=Math.max(m, aiTargetScore(u,e)); sc+=120+m*0.6; }
-    if(goal) sc-=man(r,c,goal.r,goal.c)*(mode==='evo'?40:mode==='fuse'?25:mode==='heal'?30:12);
+    if(goal) sc-=man(r,c,goal.r,goal.c)*(mode==='evo'?40:mode==='fuse'?25:mode==='heal'?30:pullW);
     if(isHealCellFor(me,r,c)){ const hv=Math.min(u.maxhp-u.hp, u.maxhp*HEAL_SPRING); sc+=hv*0.9+(mode==='heal'?260:0); }   // 回復の泉
     if(mode==='evo' && isEvoCell(r,c)) sc+=600;
     if(mode==='fuse' && goal && man(r,c,goal.r,goal.c)===1) sc+=160;
     sc+=terrBonusM(mon(u), terrAt(r,c))*120;
     const th=threat(r,c);
-    sc-=th*(u.leader?(hpR<0.6?1.1:0.7):(hpR<0.35?0.35:0.08));
+    sc-=th*(u.leader?(lone?(me===0?0.7:0.2):(hpR<0.6?1.1:0.7)):(hpR<0.35?0.35:0.08));   // 1体だけ: 自軍は相手の射程の外で待てる時は待つ(先手を取る)・敵(野生)は気にせず詰める
     if(u.leader && mode!=='evo' && alive(me).length>1){ const back=START_ROWS[me][0]; sc-=Math.max(0, (me===0?(back-r):(r-back))-2)*70; }   // リーダーは前に出すぎない(進化に向かう時を除く)
     if(sc>bs){ bs=sc; best=[r,c]; }
     cand.push([sc,r,c]);
@@ -3042,8 +3052,8 @@ function updateUI(){ if(BT.headless) return;
         const woundOk = canAct && healMP && healScope(sel).some(a=>a.hp<a.maxhp);
         const cureOk  = canAct && healMP && healTargets(sel).some(hasAnyStatus);
         const healN = noMP(sel)?'∞':healLeft(sel);
-        ac.appendChild(mkbt(`💚 全体回復(+${LIGHT_HEAL_ALL})${healMP?`〔残${healN}〕`:'(MP切れ)'}`,'evo', !!woundOk, ()=>{ pushUndo(); doHeal(sel); reselectAfter(); }));
-        ac.appendChild(mkbt(`💗 単体回復(+${LIGHT_HEAL_ONE})${healMP?`〔残${healN}〕`:'(MP切れ)'}`,'evo', !!woundOk, ()=>{ pushUndo(); doHealOne(sel); reselectAfter(); }));
+        ac.appendChild(mkbt(`💚 全体回復(+${Math.round(LIGHT_HEAL_ALL_R*sustainX()*100)}%)${healMP?`〔残${healN}〕`:'(MP切れ)'}`,'evo', !!woundOk, ()=>{ pushUndo(); doHeal(sel); reselectAfter(); }));
+        ac.appendChild(mkbt(`💗 単体回復(+${Math.round(LIGHT_HEAL_ONE_R*sustainX()*100)}%)${healMP?`〔残${healN}〕`:'(MP切れ)'}`,'evo', !!woundOk, ()=>{ pushUndo(); doHealOne(sel); reselectAfter(); }));
         ac.appendChild(mkbt('✨ 浄化','evo', !!cureOk, ()=>{ pushUndo(); doCure(sel); reselectAfter(); }));
         if(m.level===3){
           const fallenN=(state.fallen&&state.fallen[0]&&state.fallen[0].length)||0;
@@ -3241,15 +3251,15 @@ function setBoardVisible(v){ for(const g of [tileGroup,gridGroup,structGroup,dec
 // =====================================================================================
 
 // ---- 盤の大きさごとの決まり(decisions.md 3 / game_design.md 8-3) ----
-// leaderHpX=リーダーの体力倍率(template は2.0) / budget=出せる子のLv合計 / maxTurn=最大ターン / rows=開始の行数(自陣の最奥から) / evo=進化エリア / springs=回復の泉(片側のマス数) / items=盤の回復薬 / dmgX=ダメージの倍率(バランス用)
+// leaderHpX=リーダーの体力倍率(template は2.0) / budget=出せる子のLv合計 / maxTurn=最大ターン / rows=開始の行数(自陣の最奥から) / evo=進化エリア / springs=回復の泉(片側のマス数) / items=盤の回復薬 / dmgX=ダメージの倍率(バランス用) / sustainX=光の回復量・森の吸収量の倍率(省略=1)
 const SIZE_RULES={
-  7: {budget:3, maxTurn:8,  rows:1, evo:'one',   springs:0, items:1, dmgX:1.50, hpX:1.00, leaderHpX:1.6},   // シムで調整(2026-10-23): 2〜3分・勝率8〜9割
+  7: {budget:3, maxTurn:10, rows:1, evo:'one',   springs:0, items:1, dmgX:2.10, hpX:1.00, leaderHpX:1.1, sustainX:0.45},   // シムで調整(2026-10-25): 1対1は両方リーダーなので体力1.6倍×回復/吸収で8割が時間切れだった → 10ターン・ダメージ2.1倍・リーダー1.1倍・回復/吸収45%。27組×80戦で時間切れ0.1%・平均5.8ターン・勝率70〜100%
   9: {budget:4, maxTurn:14, rows:2, evo:'cross', springs:2, items:2, dmgX:1.00, hpX:1.00, leaderHpX:2.0},
   11:{budget:5, maxTurn:20, rows:2, evo:'cross', springs:4, items:3, dmgX:1.20, hpX:1.00, leaderHpX:1.7},   // シムで調整: 8分前後・時間切れを減らす(template は dmgX1.0/リーダー2.0)
 };
 // 相手の種類ごとの既定(盤の大きさ・敵のAI)。evo=敵が進化できる回数 / eg=敵の闘気のたまりやすさ / skill=1なら毎回いちばん良い手(低いほど迷う)
 const KIND_DEFAULTS={
-  wild:   {size:7,  ai:{evo:0, eg:0.5,  skill:0.75}},
+  wild:   {size:7,  ai:{evo:0, eg:0.5,  skill:0.7, hpX:0.85, atkX:0.85}},   // 2026-10-25: 野生は鍛えられていない=体力・攻撃0.85倍・手が少し雑(相性の悪い組でも勝率7割に乗せるため)
   trainer:{size:9,  ai:{evo:1, eg:0.65, skill:0.9}},
   master: {size:11, ai:{evo:1, eg:0.75, skill:1}},
 };
@@ -3819,7 +3829,8 @@ function simulate(opts){
   while(state.phase==='battle' && guard++<400){
     log.push([state.turn,hp(0),hp(1)]);
     const side=state.cur; tl.act[side]+=alive(side).length; tl.turns[side]++;
-    aiSide(side); if(state.phase!=='battle') break; endTurn();
+    aiSide(side); if(typeof opts.trace==='function') opts.trace(state, side);   // 2026-10-25: シムの観察用フック(半ターンごと)
+    if(state.phase!=='battle') break; endTurn();
   }
   const w = state.phase==='end' ? (state.winner===undefined?-1:state.winner) : -1;
   let mn=1, st0=null; if(w>=0) for(const [t,h0,h1] of log){ const tot=h0+h1; if(!tot) continue; const sh=(w===0?h0:h1)/tot; if(st0==null) st0=sh; if(t<2) continue; mn=Math.min(mn,sh); }
