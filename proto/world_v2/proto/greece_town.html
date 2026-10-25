@@ -19,6 +19,9 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 #tod button{border:0;background:transparent;color:#6b5a44;font:inherit;font-weight:800;font-size:13px;width:34px;height:30px;border-radius:999px;cursor:pointer}
 #tod button.sel{background:var(--ink);color:#fff}
 #btSave{position:fixed;top:calc(52px + env(safe-area-inset-top));right:12px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--cream);color:var(--ink);font:inherit;font-weight:800;font-size:13px;box-shadow:0 2px 8px rgba(80,60,30,.12);cursor:pointer;display:none;z-index:4}
+#pgHud{position:fixed;top:calc(92px + env(safe-area-inset-top));right:12px;display:none;flex-direction:column;gap:6px;z-index:4}
+#pgHud button{padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--cream);color:var(--ink);font:inherit;font-weight:800;font-size:13px;box-shadow:0 2px 8px rgba(80,60,30,.12);cursor:pointer}
+#pgHud button.gem{color:#1f6b3a}
 #enter{position:fixed;left:50%;bottom:calc(34px + env(safe-area-inset-bottom));transform:translateX(-50%) scale(.92);padding:11px 26px;border-radius:999px;border:2px solid #fff;
   background:var(--ink);color:#fff;font:inherit;font-weight:800;font-size:16px;letter-spacing:.1em;box-shadow:0 4px 14px rgba(30,40,80,.28);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
 #enter.on{opacity:1;pointer-events:auto;transform:translateX(-50%) scale(1)}
@@ -100,7 +103,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 <canvas id="cv"></canvas>
 <div id="vig"></div>
 <div id="area"></div>
-<div id="tod"><button data-t="morning">朝</button><button data-t="noon" class="sel">昼</button><button data-t="evening">夕</button></div><button id="btSave">セーブ</button>
+<div id="tod"><button data-t="morning">朝</button><button data-t="noon" class="sel">昼</button><button data-t="evening">夕</button></div><button id="btSave">セーブ</button><div id="pgHud"><button id="btParty">仲間</button><button id="btGems" class="gem">💎 0</button></div>
 <button id="enter"></button>
 <div id="stick"><div id="knob"></div></div>
 <div id="toast"></div>
@@ -124,6 +127,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 <script src="lib/v83char.js"></script>
 <script src="../chars/viewer/hero_v2.js"></script>
 <script src="../v3/chars/char_v3.js"></script>
+<script src="lib/progress.js"></script>
 <script>
 (function(){
 'use strict';
@@ -216,6 +220,7 @@ function pathMask(x,z){ let s=0,d=0;
 // なめらかな舗装(砂の模様)の区画: paths.sandRects。未来の街の通り・広場(アテネ 2026-10-25)。草も散らす物も置かない
 function sandAt(x,z){ if(!PATHS||!PATHS.sa) return false; for(const r of PATHS.sa){ if(x>=r[0]&&x<=r[2]&&z>=r[1]&&z<=r[3]) return true; } return false; }
 function inEll(x,z,e){ const a=(x-e[0])/e[2], b=(z-e[1])/e[3]; return a*a+b*b; }
+const SNOWC=col3('#eef2f6');
 const GC={ g1:col3('#9db463'), g2:col3('#84a35a'), g3:col3('#bdb672'), sand:col3('#ead9b2'), wet:col3('#cdbb93'), rock:col3('#cdbb9c'), bank:col3('#a9a68a'), tall:col3('#6f9a47'), deep:col3('#b9a77f') };
 const _gc=new THREE.Color();
 function groundCol(x,z,h,slope,out){
@@ -226,6 +231,7 @@ function groundCol(x,z,h,slope,out){
   let rk=0; const sq=TER.streamQ(x,z); if(sq[0]<2.8) rk=Math.max(rk,(1-sm(1.2,2.8,sq[0]))*0.8);
   if(slope>0.75) rk=Math.max(rk,sm(0.75,1.4,slope));
   if(h<0.2) _gc.multiplyScalar(0.85);
+  if(D.snow){ const k=sm(D.snow[0],D.snow[1],h)*(0.55+0.45*fbm(x*0.09+5,z*0.09-3)); if(k>0.02){ _gc.lerp(SNOWC,Math.min(1,k*1.3)); rk=Math.max(rk,k*0.95); s=0; } }   // 高い所は残雪(雲の山道): 白く染めた岩の模様で雪
   out[0]=_gc.r; out[1]=_gc.g; out[2]=_gc.b; out[3]=s; out[4]=rk; return out; }
 
 // ---------------------------------------------------------------- レンダラ・場面
@@ -993,6 +999,7 @@ OB.odeon=(o)=>{ const y0=o.y!=null?o.y:G(o.x,o.z), M=T(o.x,y0,o.z,(o.rot||0)*DEG
   const rr=r0+rows*st+0.6; P_(cyl(rr+0.8,rr+0.8,rh*rows+1.6,36,1,true,Math.PI/2,Math.PI),0xcdbd9f,local(M,0,(rh*rows+1.6)/2,0),{vary:0.08});
   // 舞台と背の壁(南)
   const sw=o.sw||2*r0+6, wh=o.wh||5.6; P_(rbox(sw,0.9,3.6,0.08,1),PAL.marble2,local(M,0,0.45,1.9),{ao:y0});
+  if(o.nowall){ addCol({t:'c',x:o.x,z:o.z,r:r0+rows*st+1.4}); return; }   // ギリシャの劇場(デルフィナ): 背の壁なし
   P_(rbox(sw,wh,1.2,0.06,1),0xcdbd9f,local(M,0,0.9+wh/2,3.6),{ao:y0+0.9,vary:0.1});
   for(let row=0;row<3;row++){ const n=row===2?5:7; for(let i=0;i<n;i++){ const x=(i-(n-1)/2)*(sw/(n+0.5)); P_(rbox(1.0,1.3,0.3,0.02,1),0x3a3430,local(M,x,0.9+0.9+row*1.65,4.2)); P_(cyl(0.5,0.5,0.3,10,1,false,Math.PI/2,Math.PI),0x3a3430,local(M,x,0.9+1.55+row*1.65,4.2,0,1,1,1,Math.PI/2)); } }
   P_(rbox(sw+0.4,0.4,1.5,0.06,1),PAL.marble,local(M,0,0.9+wh+0.2,3.6));
@@ -1088,7 +1095,53 @@ OB.scaffold=(o)=>{ const y=G(o.x,o.z), M=T(o.x,y,o.z,(o.rot||0)*DEG), w=o.w||6, 
   for(let j=1;j<=ny;j++){ for(const s of [-1,1]) P_(rbox(w,0.07,0.07,0.02,1),0xe8ecef,local(M,0,j*h/ny,s*d/2)); for(let i=0;i<=nx;i++) P_(rbox(0.07,0.07,d,0.02,1),0xe8ecef,local(M,-w/2+i*w/nx,j*h/ny,0)); if(j%2===0) P_(rbox(w,0.05,d,0.02,1),0xd8dde2,local(M,0,j*h/ny+0.03,0)); }
   CUR.B.add(rbox(1.2,0.6,0.05,0.03,1),MAT.holo,local(M,-w/2+1.2,h*0.55,d/2+0.2),{col:0x7fd6ff,shadow:false}); addCol({t:'b',x:o.x,z:o.z,hw:w/2,hd:d/2,rot:(o.rot||0)*DEG,top:y+h}); };
 // 1本の石柱。{t:'pillar',x,z,h}
-OB.pillar=(o)=>{ const y=G(o.x,o.z), h=o.h||3.6; P_(cyl(0.5,0.52,0.18,12),0xa8a296,T(o.x,y+0.09,o.z)); P_(fluted(0.4,0.34,h-0.5,10),0x9a948a,T(o.x,y+0.18+(h-0.5)/2,o.z),{ao:y,aoH:1.5,vary:0.08}); P_(rbox(1.0,0.24,1.0,0.04,1),0xa8a296,T(o.x,y+h-0.2,o.z)); addCol({t:'c',x:o.x,z:o.z,r:0.5}); };
+OB.pillar=(o)=>{ const y=G(o.x,o.z), h=o.h||3.6, k=(o.r||0.4)/0.4, c1=o.col?col3(o.col).getHex():0xa8a296, c2=o.col2?col3(o.col2).getHex():0x9a948a; P_(cyl(0.5,0.52,0.18,12),c1,T(o.x,y+0.09,o.z,0,k,1,k)); P_(fluted(0.4,0.34,h-0.5,10),c2,T(o.x,y+0.18+(h-0.5)/2,o.z,0,k,1,k),{ao:y,aoH:1.5,vary:0.08}); P_(rbox(1.0,0.24,1.0,0.04,1),c1,T(o.x,y+h-0.2,o.z,0,k,1,k)); addCol({t:'c',x:o.x,z:o.z,r:0.5*k}); };
+// ---- ギリシャ編の続きのマップ(2026-10-26): 運河の町コリンタ・雲の山道・山の村デルフィナ・競技場の下の形。軽い形だけで作り、区画ごとに1メッシュにまとまる ----
+// 平らな石の台。{t:'slab',x,z,w,d,h,rot,col}
+OB.slab=(o)=>{ const rot=(o.rot||0)*DEG, w=o.w||4, d=o.d||4, h=o.h||0.4, y=footY(o.x,o.z,w,d,rot); P_(rbox(w,h+0.3,d,0.06,1),o.col?col3(o.col).getHex():PAL.marble2,T(o.x,y+h/2-0.15,o.z,rot),{ao:y,vary:0.05}); if(h>0.6) addCol({t:'b',x:o.x,z:o.z,hw:w/2,hd:d/2,rot,top:y+h}); };
+// 見えない柵(崖から落ちない)。{t:'blockline',pts}
+OB.blockline=(o)=>{ for(let k=0;k<o.pts.length-1;k++){ const [ax,az]=o.pts[k],[bx,bz]=o.pts[k+1], L=Math.hypot(bx-ax,bz-az), n=Math.max(1,Math.ceil(L/4)), ry=Math.atan2(-(bz-az),bx-ax); for(let i=0;i<n;i++){ const t=(i+0.5)/n; addCol({t:'b',x:lerp(ax,bx,t),z:lerp(az,bz,t),hw:L/n/2+0.1,hd:0.3,rot:ry,top:99}); } } };
+// 2100年の手すり(白い柱と光の線。運河の縁・谷を見下ろすテラス)。{t:'railing',pts,col}
+OB.railing=(o)=>{ const c=col3(o.col||'#8fe4ff').getHex(); for(let k=0;k<o.pts.length-1;k++){ const [ax,az]=o.pts[k],[bx,bz]=o.pts[k+1], L=Math.hypot(bx-ax,bz-az), n=Math.max(1,Math.round(L/3)), ry=Math.atan2(-(bz-az),bx-ax), sl=L/n;
+    for(let i=0;i<=n;i++){ const t=i/n, x=lerp(ax,bx,t), z=lerp(az,bz,t), y=G(x,z); P_(rbox(0.1,1.05,0.1,0.02,1),0xeef0f2,T(x,y+0.52,z,ry),{ao:y}); }
+    for(let i=0;i<n;i++){ const t=(i+0.5)/n, x=lerp(ax,bx,t), z=lerp(az,bz,t), y=(G(lerp(ax,bx,i/n),lerp(az,bz,i/n))+G(lerp(ax,bx,(i+1)/n),lerp(az,bz,(i+1)/n)))/2; P_(rbox(sl,0.07,0.07,0.02,1),0xeef0f2,T(x,y+1.02,z,ry)); CUR.B.add(rbox(sl-0.2,0.04,0.04,0.01,1),MAT.glow,T(x,y+0.62,z,ry),{col:c,shadow:false}); addCol({t:'b',x,z,hw:sl/2+0.05,hd:0.25,rot:ry,top:y+1.1}); } } };
+// 運河の大橋(まっすぐな高い橋。地形の bridges(kind:'canal') と同じ矩形・同じ高さ h。両端に白い塔)。{t:'canalbridge',x0,x1,z0,z1,h}
+OB.canalbridge=(o)=>{ const w=o.x1-o.x0, L=o.z1-o.z0, cx=(o.x0+o.x1)/2, cz=(o.z0+o.z1)/2, h=o.h;
+  P_(rbox(w,0.7,L,0.1,1),0xf3f1ea,T(cx,h-0.4,cz),{vary:0.03}); P_(rbox(w+0.2,0.16,L+0.2,0.05,1),0xfbfaf6,T(cx,h-0.06,cz)); P_(rbox(w*0.98,0.9,L*0.6,0.2,1),0xe6e1d6,T(cx,h-1.2,cz));
+  for(const s of [-1,1]){ const z=cz+s*(L/2-0.2), np=Math.round(w/3); for(let i=0;i<=np;i++){ const x=o.x0+0.6+i*(w-1.2)/np; P_(rbox(0.1,1.1,0.1,0.02,1),0xeef0f2,T(x,h+0.55,z)); } P_(rbox(w-0.8,0.08,0.08,0.02,1),0xeef0f2,T(cx,h+1.08,z)); CUR.B.add(rbox(w-1.0,0.05,0.05,0.01,1),MAT.glow,T(cx,h+0.6,z),{col:0x8fe4ff,shadow:false}); addCol({t:'b',x:cx,z,hw:w/2,hd:0.25,rot:0,top:h+1.2}); }
+  for(const s of [-1,1]){ const x=s<0?o.x0+1.2:o.x1-1.2; for(const q of [-1,1]) P_(rbox(0.5,h+3.5,0.5,0.08,1),0xf0ede6,T(x,(h+3.5)/2-2.5,cz+q*(L/2+0.5)),{vary:0.04}); P_(rbox(0.5,0.5,L+1.6,0.08,1),0xf0ede6,T(x,h+1.0,cz)); CUR.B.add(rbox(0.12,0.12,L+1.2,0.02,1),MAT.glow,T(x,h+0.9,cz),{col:0x8fe4ff,shadow:false}); } };
+// 城壁(胸壁つきの石の壁。アクロコリントスのとりで)。{t:'rampart',pts,h,th}
+OB.rampart=(o)=>{ const R=rng(((o.pts[0][0]*7+o.pts[0][1]*13)|0)+31), h=o.h||3.4, th=o.th||1.4, cols=['#cfc1a4','#c4b597','#d8caae','#bcae92'];
+  for(let k=0;k<o.pts.length-1;k++){ const [ax,az]=o.pts[k],[bx,bz]=o.pts[k+1], L=Math.hypot(bx-ax,bz-az), n=Math.max(1,Math.round(L/2.4)), ry=Math.atan2(-(bz-az),bx-ax), sl=L/n;
+    for(let i=0;i<n;i++){ const t=(i+0.5)/n, x=lerp(ax,bx,t), z=lerp(az,bz,t), y=G(x,z); const c=col3(pick(cols,R)).getHex();
+      CUR.B.add(rbox(sl+0.04,h+0.6,th,0.08,1),MAT.stone,T(x,y+h/2-0.3,z,ry),{col:c,ao:y,vary:0.1,wob:0.02}); P_(rbox(sl+0.08,0.25,th+0.12,0.04,1),0xd8caae,T(x,y+h-0.1,z,ry));
+      for(let m=0;m<2;m++){ const off=(m-0.5)*sl*0.5; P_(rbox(sl*0.3,0.55,0.35,0.04,1),c,T(x+Math.cos(ry)*off,y+h+0.3,z-Math.sin(ry)*off,ry)); }
+      addCol({t:'b',x,z,hw:sl/2+0.02,hd:th/2,rot:ry,top:y+h}); } }
+  if(!o.nopost) for(const [px,pz] of [o.pts[0],o.pts[o.pts.length-1]]){ const y=G(px,pz); CUR.B.add(cyl(th*0.9,th*0.95,h+1.2,12),MAT.stone,T(px,y+(h+1.2)/2-0.3,pz),{col:0xc4b597,ao:y,vary:0.08}); P_(cyl(th*1.0,th*0.9,0.3,12),0xd8caae,T(px,y+h+0.95,pz)); addCol({t:'c',x:px,z:pz,r:th}); } };
+// トロス(デルフィナの円い神殿: 3段の円い基壇・20本のうち3本が立つ柱と上の梁・中の円い壁の跡)。{t:'tholos',x,z,r}
+OB.tholos=(o)=>{ const r=o.r||5.2, y0=footY(o.x,o.z,r*1.6,r*1.6,0), M=T(o.x,y0,o.z,0), mar=PAL.marble, mar2=PAL.marble2, R=rng(((o.x+o.z)|0)+9);
+  for(let i=0;i<3;i++) P_(cyl(r+1.6-i*0.5,r+1.7-i*0.5,0.3,36),mar2,local(M,0,0.15+i*0.3,0),{ao:y0,vary:0.05});
+  const top=0.9, ch=4.6, n=20; for(let i=0;i<n;i++){ const a=i/n*Math.PI*2, x=Math.sin(a)*r, z=Math.cos(a)*r; const up=(i>=8&&i<=10); const h=up?ch:0.3+R()*0.5;
+    P_(fluted(0.36,0.3,h,10),mar,local(M,x,top+h/2,z),{ao:y0+top,aoH:2,vary:0.05}); if(up) P_(rbox(0.95,0.2,0.95,0.03,1),mar,local(M,x,top+h+0.1,z)); _v.set(x,0,z).applyMatrix4(M); addCol({t:'c',x:_v.x,z:_v.z,r:0.42}); }
+  for(let i=8;i<10;i++){ const a0=i/n*Math.PI*2, a1=(i+1)/n*Math.PI*2, am=(a0+a1)/2, sl=2*r*Math.sin(Math.PI/n); P_(rbox(sl+0.3,0.6,1.0,0.04,1),mar,local(M,Math.sin(am)*r,top+ch+0.5,Math.cos(am)*r,am)); P_(rbox(sl+0.3,0.5,1.0,0.03,1),0xe8dfcf,local(M,Math.sin(am)*r,top+ch+1.05,Math.cos(am)*r,am)); }
+  P_(cyl(r*0.55,r*0.57,1.6,28),mar2,local(M,0,top+0.8,0),{ao:y0+top,vary:0.05}); addCol({t:'c',x:o.x,z:o.z,r:r*0.6}); };
+// 山の天文台(2100年): 白い円い塔と銀の丸屋根(開いた覗き窓)・光の輪。{t:'observatory',x,z,r}
+OB.observatory=(o)=>{ const r=o.r||5, y0=footY(o.x,o.z,r*2,r*2,0), M=T(o.x,y0,o.z,(o.rot||0)*DEG), H=r*1.3;
+  P_(cyl(r+1.2,r+1.4,0.5,32),0xe6e1d6,local(M,0,0.25,0),{ao:y0}); P_(cyl(r,r*1.03,H,32),0xf6f3ec,local(M,0,0.5+H/2,0),{ao:y0+0.5,vary:0.03});
+  CUR.B.add(cyl(r+0.04,r+0.04,0.6,32,1,true),MAT.win,local(M,0,0.5+H*0.55,0),{col:0x6fa6c8}); P_(cyl(r+0.25,r+0.25,0.16,32),0xfbfaf6,local(M,0,0.5+H,0));
+  P_(sph(r*0.98,28,14,0,Math.PI*2,0,Math.PI/2),0xdfe4ea,local(M,0,0.5+H,0),{vary:0.03}); P_(rbox(r*0.5,r*0.9,0.12,0.02,1),0x22283a,local(M,0,0.5+H+r*0.45,r*0.72,0,1,1,1,-0.6));
+  CUR.B.add(cyl(r+0.3,r+0.3,0.06,32,1,true),MAT.glow,local(M,0,0.5+H+0.08,0),{col:0x8fe4ff,shadow:false});
+  CUR.B.add(rbox(1.6,2.2,0.1,0.06,1),MAT.win,local(M,0,1.5,r+0.02),{col:0x7fb6d8}); P_(rbox(2.4,0.12,1.2,0.04,1),0xf6f3ec,local(M,0,2.7,r+0.6));
+  P_(cyl(0.05,0.06,2.2,6),0xc0c6ce,local(M,r*0.5,0.5+H+1.1,-r*0.5)); CUR.B.add(sph(0.14,10,8),MAT.glow,local(M,r*0.5,0.5+H+2.3,-r*0.5),{col:0x9fe8ff,shadow:false});
+  addCol({t:'c',x:o.x,z:o.z,r:r+0.3}); _v.set(0,0,r+1.2).applyMatrix4(M); return {door:[_v.x,_v.z]}; };
+// へその石(オンファロス): 網目模様の卵形の石と台。{t:'omphalos',x,z}
+OB.omphalos=(o)=>{ const y=G(o.x,o.z), M=T(o.x,y,o.z,0); P_(cyl(1.2,1.3,0.4,16),PAL.marble2,local(M,0,0.2,0),{ao:y}); P_(lathe('omph',[[0,0],[0.62,0],[0.7,0.3],[0.66,0.8],[0.5,1.25],[0.25,1.5],[0,1.56]],18),0xd9ccb4,local(M,0,0.4,0),{ao:y+0.4,vary:0.1,wob:0.02});
+  for(let i=0;i<6;i++){ const a=i/6*Math.PI*2; P_(rbox(0.04,1.0,0.04,0.01,1),0xbfb29a,local(M,Math.sin(a)*0.66,1.1,Math.cos(a)*0.66,a,1,1,1,0,0.25)); } addCol({t:'c',x:o.x,z:o.z,r:1.3}); };
+// 丸天井の入口(競技場のクリュプテ): 両側の石の壁と、残っている弧のアーチ(1つ)。中を歩けるので天井は張らない。{t:'vault',x,z,w,h,L,rot,arches:[z…]}
+OB.vault=(o)=>{ const rot=(o.rot||0)*DEG, w=o.w||4.4, h=o.h||4.2, L=o.L||16, y=G(o.x,o.z), M=T(o.x,y,o.z,rot), R=rng(((o.x*7+o.z)|0)+5), cols=['#6a665f','#737068','#5f5b55','#7b776f'];
+  for(const s of [-1,1]){ const n=Math.ceil(L/2.4); for(let i=0;i<n;i++){ const z=-L/2+(i+0.5)*L/n; CUR.B.add(rbox(1.2,h-0.2,L/n+0.04,0.08,1),MAT.stone,local(M,s*(w/2+0.6),(h-0.2)/2,z),{col:col3(pick(cols,R)).getHex(),ao:y,vary:0.12,wob:0.03}); P_(rbox(1.3,0.25,L/n+0.08,0.04,1),0x7a766e,local(M,s*(w/2+0.6),h-0.2,z)); } _v.set(s*(w/2+0.6),0,0).applyMatrix4(M); addCol({t:'b',x:_v.x,z:_v.z,hw:0.6,hd:L/2,rot,top:y+h}); }
+  const rr=w/2+0.6, seg=7; for(const az of (o.arches||[-L/2+0.9])){ for(let k=0;k<seg;k++){ const a=Math.PI*(k+0.5)/seg, x=Math.cos(a)*rr, yy=h-0.2+Math.sin(a)*(rr*0.75), sl=Math.PI*rr/seg+0.15; P_(rbox(sl,0.5,1.2,0.05,1),col3(pick(cols,R)).getHex(),local(M,x,yy,az,0,1,1,1,0,-(a-Math.PI/2)),{vary:0.1}); } }
+  for(let i=1;i<Math.round(L/4);i++){ const z=-L/2+i*L/Math.round(L/4); for(const s of [-1,1]) CUR.B.add(rbox(0.1,0.5,0.1,0.02,1),MAT.glow,local(M,s*(w/2-0.05),h*0.6,z),{col:0xffd36b,shadow:false}); } };
 
 // ---------------------------------------------------------------- 草(区画ごと)
 function buildGrass(c,parent){ if(D.noGrass) return null; const x0=c.x0, z0=c.z0, R=rng(c.i*7919+c.j*104729+11); const pos=[],nor=[],col=[],uv=[],sw=[],idx=[]; let vi=0; const gc=[0,0,0];
@@ -1131,7 +1184,9 @@ function initChunks(){ const b=D.bounds; CS=D.chunk; OX=D.origin?D.origin[0]:0; 
       if(F.kind!=='flora') FP.push({x:o.x,z:o.z,hw:F.w/2*(big?0.96:0.75),hd:F.d/2*(big?0.94:0.75),rot,k:big?0.55:(F.kind==='tree'?0.32:0.4),r:big?1.3:(F.kind==='tree'?Math.max(0.8,F.w*0.25):0.5),k0:o.k});
       occMark(o.x,o.z,F.w/2*(F.kind==='tree'?0.45:0.9),F.d/2*(F.kind==='tree'?0.45:0.9),rot,0); if(big) FOOT.push([o.x,o.z,F.w/2+0.4,F.d/2+0.4]); }
     else if(o.t==='fbld'){ const rot=(o.rot||0)*DEG, hw=(o.w||8)/2, hd=(o.d||8)/2; FP.push({x:o.x,z:o.z,hw,hd,rot,k:0.55,r:1.3,k0:'fbld'}); occMark(o.x,o.z,hw,hd,rot,0.4); FOOT.push([o.x,o.z,hw+0.5,hd+0.5]); }
-    else if(o.t==='mazewall'||o.t==='colonnade'){ const th=o.th||1.2; for(let k=0;k<o.pts.length-1;k++){ const [ax,az]=o.pts[k],[bx,bz]=o.pts[k+1], L=Math.hypot(bx-ax,bz-az), ry=Math.atan2(-(bz-az),bx-ax), n=Math.max(1,Math.ceil(L/2)); for(let i=0;i<n;i++){ const t=(i+0.5)/n, x=lerp(ax,bx,t), z=lerp(az,bz,t); FP.push({x,z,hw:L/n/2,hd:th/2,rot:ry,k:0.5,r:1.0,k0:o.t}); occMark(x,z,L/n/2,th/2+0.3,ry,0); } } }
+    else if(o.t==='observatory'||o.t==='tholos'){ const r=(o.r||5)+1.5; FP.push({x:o.x,z:o.z,hw:r,hd:r,rot:0,k:0.5,r:1.0,k0:o.t}); occMark(o.x,o.z,r,r,0,0.3); }
+    else if(o.t==='canalbridge'||o.t==='vault'){ const cx=o.x!=null?o.x:(o.x0+o.x1)/2, cz=o.z!=null?o.z:(o.z0+o.z1)/2, hw=o.x1!=null?(o.x1-o.x0)/2:(o.w||4)/2+1.2, hd=o.z1!=null?(o.z1-o.z0)/2:(o.L||16)/2; occMark(cx,cz,hw,hd,(o.rot||0)*DEG,0.5); }
+    else if(o.t==='mazewall'||o.t==='colonnade'||o.t==='rampart'||o.t==='railing'){ const th=o.th||1.2; for(let k=0;k<o.pts.length-1;k++){ const [ax,az]=o.pts[k],[bx,bz]=o.pts[k+1], L=Math.hypot(bx-ax,bz-az), ry=Math.atan2(-(bz-az),bx-ax), n=Math.max(1,Math.ceil(L/2)); for(let i=0;i<n;i++){ const t=(i+0.5)/n, x=lerp(ax,bx,t), z=lerp(az,bz,t); FP.push({x,z,hw:L/n/2,hd:th/2,rot:ry,k:0.5,r:1.0,k0:o.t}); occMark(x,z,L/n/2,th/2+0.3,ry,0); } } }
     else if(o.t==='mazegate'||o.t==='arch'||o.t==='dais'){ const r=o.t==='dais'?(o.r||4)+0.3:(o.w||4)/2+1.6; FP.push({x:o.x,z:o.z,hw:r,hd:o.t==='dais'?r:1.2,rot:(o.rot||0)*DEG,k:0.5,r:1.0,k0:o.t}); occMark(o.x,o.z,r,o.t==='dais'?r:1.2,(o.rot||0)*DEG,0.3); } }
   // 歩く筋(lanes)は空けておく。建物の正面の両端に小物を自動で置く(扉の前はあける)
   const LANES=(D.lanes||[]).map(l=>prepPoly(l.p,l.w)); const laneD=(x,z)=>{ let d=1e9; for(const L of LANES){ const q=polyD(x,z,L)-L.w; if(q<d) d=q; } return d; };
@@ -1198,11 +1253,17 @@ function buildFar(){ const B=new Builder(); CUR={B,cols:[],dyn:[],extra:[]}; con
   const A=new Builder(); CUR={B:A,cols:[],dyn:[],extra:[]}; P_(sph(1,24,14),0xf3eee2,T(0,0,0,0,9,2.6,2.6)); P_(rbox(3,0.9,1.0,0.4,1),0x3f74b0,T(0,-2.8,0)); for(const s of [-1,1]) P_(rbox(1.6,0.12,2.4,0.06,1),0x3f74b0,T(-8,0,s*1.4,0,1,1,1,s*0.0)); P_(rbox(1.6,2.4,0.12,0.06,1),0x3f74b0,T(-8,1.4,0));
   CUR=null; AIR=new THREE.Group(); A.build(AIR); AIR.traverse(o=>{ if(o.isMesh){ o.castShadow=false; } }); scene.add(AIR); }
 let AIR=null;
+// 雲の海(雲の山道): 谷を白い平たい雲でうずめる。マップごとに作り直す。D.clouds=[[x,z,r,y]…]
+let CLOUDG=null;
+function buildClouds(){ if(CLOUDG){ scene.remove(CLOUDG); CLOUDG.traverse(o=>{ if(o.geometry&&!o.geometry._cached) o.geometry.dispose(); }); CLOUDG=null; } if(!D.clouds||!D.clouds.length) return;
+  const B=new Builder(); CUR={B,cols:[],dyn:[],extra:[]}; const R=rng(7);
+  for(const c of D.clouds){ const [x,z,r,y]=c; P_(blob(((x*3+z)|0),0.22,16,8),0xf4f7fb,T(x,y-r*0.1,z,R()*6,r,r*0.22,r*0.8),{shadow:false}); P_(blob(((x+z*5)|0)+3,0.25,12,7),0xffffff,T(x+r*0.3,y+r*0.02,z-r*0.2,R()*6,r*0.6,r*0.16,r*0.5),{shadow:false}); P_(blob(((x*5-z)|0)+6,0.25,12,7),0xfafcff,T(x-r*0.35,y+r*0.01,z+r*0.25,R()*6,r*0.5,r*0.14,r*0.45),{shadow:false}); }
+  CUR=null; CLOUDG=new THREE.Group(); B.build(CLOUDG); CLOUDG.traverse(o=>{ if(o.isMesh){ o.castShadow=false; o.receiveShadow=false; } }); scene.add(CLOUDG); }
 let SEA=null; const STREAMS=[];
 function buildWaters(){ const b=D.bounds, W=b[2]-b[0], H=b[3]-b[1]; const S=IS_MOBILE?160:220; const [c,x]=canvas(S,S); const im=x.createImageData(S,S);
   for(let j=0;j<S;j++) for(let i=0;i<S;i++){ const wx=b[0]+(i+0.5)/S*W, wz=b[1]+(j+0.5)/S*H; const h=TER.shaped(wx,wz); const v=clamp(-h/3.6,0,1); const k=(j*S+i)*4; im.data[k]=im.data[k+1]=im.data[k+2]=v*255; im.data[k+3]=255; }
   x.putImageData(im,0,0); const t=new THREE.CanvasTexture(c); t.flipY=false; MAT.sea.uniforms.uShore.value=t; MAT.sea.uniforms.uRect.value.set(b[0],b[1],W,H);
-  SEA=new THREE.Mesh(new THREE.PlaneGeometry(2600,2600,1,1),MAT.sea); SEA.rotation.x=-Math.PI/2; SEA.position.y=0.0; SEA.renderOrder=1; scene.add(SEA);
+  SEA=new THREE.Mesh(new THREE.PlaneGeometry(2600,2600,1,1),MAT.sea); SEA.rotation.x=-Math.PI/2; SEA.position.y=0.0; SEA.renderOrder=1; SEA.visible=!D.noSea; scene.add(SEA);
   for(const s of TER.streams){ if(s.bb[2]<b[0]||s.bb[0]>b[2]||s.bb[3]<b[1]||s.bb[1]>b[3]) continue; const pos=[],uv=[],idx=[]; let along=0; const hw=2.6;
     for(let i=0;i<s.xs.length;i++){ const i0=Math.max(0,i-1), i1=Math.min(s.xs.length-1,i+1); let tx=s.xs[i1]-s.xs[i0], tz=s.zs[i1]-s.zs[i0]; const L=Math.hypot(tx,tz)||1; tx/=L; tz/=L; const nx=-tz, nz=tx; if(i) along+=Math.hypot(s.xs[i]-s.xs[i-1],s.zs[i]-s.zs[i-1]);
       const y=s.wl[i]; pos.push(s.xs[i]+nx*hw,y,s.zs[i]+nz*hw, s.xs[i]-nx*hw,y,s.zs[i]-nz*hw); uv.push(0,along,1,along); if(i){ const a=(i-1)*2; idx.push(a,a+1,a+2, a+1,a+3,a+2); } }
@@ -1285,7 +1346,13 @@ function mon2D(id){   // v3(2026-10-25): 3D がまだ無い/古い子(monsters.j
   return new Promise(res=>{ const mk=()=>{ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:0.1,depthWrite:false})); sp.position.y=0.5; const g=new THREE.Group(); g.add(sp); return {scene:g,animations:[],flat:true}; };
     const tex=new THREE.TextureLoader().load('../battle/img/'+id+'.webp',()=>res(mk()),undefined,()=>res(mk())); }); }
 function monProto(id){ if(!MONP[id]) MONP[id]=(MMODEL[id]===false?Promise.reject(new Error('no3d')):loadGLB(CFG.monBase+id+'.glb')).then(g=>{ g.scene.traverse(o=>{ if(o.isMesh){ o.frustumCulled=false; o.castShadow=!IS_MOBILE; o.material=monMat(o.material,!!o.isSkinnedMesh); } }); return g; }).catch(e=>{ console.warn('mon 3D→2D',id,e&&e.message); return mon2D(id); }); return MONP[id]; }
-function monMake(g){ const root=SkeletonUtils.clone(g.scene); root.traverse(o=>{ if(o.isMesh){ o.frustumCulled=false; } }); const mixer=new THREE.AnimationMixer(root); const act={}; for(const c of g.animations) act[c.name]=mixer.clipAction(c); if(act.Idle){ act.Idle.play(); act.Idle.time=Math.random()*2; } return {root,mixer,act}; }
+function monMake(g){ const root=SkeletonUtils.clone(g.scene); root.traverse(o=>{ if(o.isMesh){ o.frustumCulled=false; } }); const mixer=new THREE.AnimationMixer(root); const act={}; for(const c of g.animations) act[c.name]=mixer.clipAction(c); if(act.Idle){ act.Idle.play(); act.Idle.time=Math.random()*2; }
+  const meta=(g.asset&&g.asset.extras&&g.asset.extras.m3d)||(g.parser&&g.parser.json&&g.parser.json.asset&&g.parser.json.asset.extras&&g.parser.json.asset.extras.m3d)||null; return {root,mixer,act,meta,cur:'Idle'}; }
+// 歩き(2026-10-26 オーナー: 跳ねずに歩く)。GLB の Walk/Run(asset.extras.m3d.clips[].speed=timeScale 1 の時の地面の速さ・体高1あたり)に合わせて、速さで Idle/Walk/Run を切りかえ timeScale を合わせる
+function monGait(inst,spd,dt,scale){ const a=inst.act, cl=(inst.meta&&inst.meta.clips)||{}; const vw=((cl.Walk&&cl.Walk.speed)||0.5)*scale, vr=((cl.Run&&cl.Run.speed)||1.0)*scale;
+  let k='Idle'; if(spd>=0.3&&a.Walk) k=(spd<1.6*vw||!a.Run)?'Walk':'Run'; const to=a[k]||a.Idle;
+  if(to){ if(inst.cur!==k){ const from=a[inst.cur]; to.enabled=true; to.setEffectiveWeight(1); to.reset().play(); if(from&&from!==to) from.crossFadeTo(to,0.15,false); inst.cur=k; } to.timeScale=k==='Idle'?1:clamp(spd/(k==='Walk'?vw:vr),0.7,2.4); }
+  inst.mixer.update(dt); }
 
 // ---------------------------------------------------------------- 足もとの丸い影(まとめて1回で描く)
 const BLOBN=48; const blobs=new THREE.InstancedMesh(new THREE.PlaneGeometry(1,1).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:TEX.blob,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}),BLOBN);
@@ -1334,7 +1401,7 @@ function npcMesh(o){ const B=new Builder(); CUR={B,cols:[],dyn:[],extra:[]}; con
   CUR=null; const g=new THREE.Group(); B.build(g); return g; }
 function makeLabel(text){ const e=document.createElement('div'); e.className='lbl'; e.textContent=text; document.body.appendChild(e); return e; }
 function initActors(){ for(const o of D.npcs){ const g=new THREE.Group(); g.position.set(o.x,0,o.z); g.rotation.y=(o.rot||0)*DEG; NPCS.push({o,g,x:o.x,z:o.z,r:0.36,yaw:(o.rot||0)*DEG,lbl:makeLabel(o.n),ph:Math.random()*6,pi:0,wait:0}); }
-  for(const o of D.wild){ if(o.ancient&&SAVE&&SAVE.flags[o.flag||'guard1']) continue;   // 古代テリオン(守り)は認められたら広間からいなくなる
+  for(const o of D.wild){ if((o.ancient||o.boss)&&SAVE&&SAVE.flags[o.flag||'guard1']) continue;   // 古代テリオン(守り)は認められたら広間からいなくなる
     MONS.push({o,x:o.x,z:o.z,yaw:Math.random()*6.28,st:'idle',t:Math.random()*3,tx:o.x,tz:o.z,inst:null,want:false,wild:true,r:0.32}); }
   for(const o of D.helpers) MONS.push({o,x:o.x,z:o.z,yaw:(o.rot||0)*DEG,st:'still',t:0,inst:null,want:false,wild:false,r:0.32});
   for(const d of D.drones){ const B=new Builder(); CUR={B,cols:[],dyn:[],extra:[]}; P_(rbox(0.56,0.16,0.56,0.07,1),0xf6f6f4,T(0,0,0)); P_(rbox(0.58,0.05,0.12,0.02,1),0x3c9a9a,T(0,0.05,0));
@@ -1352,9 +1419,8 @@ function monUpdate(m,dt,now){ const dh=Math.hypot(m.x-HERO.x,m.z-HERO.z);
     else if(m.st==='idle'){ m.t-=dt; if(m.t<=0){ for(let k=0;k<6;k++){ const a=Math.random()*6.28, r=Math.random()*m.o.r; const tx=m.o.x+Math.cos(a)*r, tz=m.o.z+Math.sin(a)*r; if(walkOK(tx,tz)&&(!D.monCol||colFree(tx,tz,0.4))){ m.tx=tx; m.tz=tz; m.st='walk'; m.t=8; break; } } if(m.st==='idle') m.t=1; } }
     else if(m.st==='walk'){ const dx=m.tx-m.x, dz=m.tz-m.z, d=Math.hypot(dx,dz); m.t-=dt; if(d<0.25||m.t<0){ m.st='idle'; m.t=1.5+Math.random()*3.5; } else { const sp=0.95*dt; const nx=m.x+dx/d*sp, nz=m.z+dz/d*sp; if(walkOK(nx,nz)&&(!D.monCol||colFree(nx,nz,0.4))&&Math.hypot(nx-HERO.x,nz-HERO.z)>0.8){ m.x=nx; m.z=nz; moving=true; } else { m.st='idle'; m.t=1; } m.yaw+=angD(Math.atan2(dx,dz),m.yaw)*Math.min(1,dt*6); } } }
   else { if(dh<3) m.yaw+=angD(Math.atan2(HERO.x-m.x,HERO.z-m.z),m.yaw)*Math.min(1,dt*4); }
-  m.ph=(m.ph||0)+dt*(moving?9:0); const hop=moving?Math.abs(Math.sin(m.ph))*0.09*m.o.h/0.8:0; const y=groundAt(m.x,m.z);
-  const R=m.inst.root; R.position.set(m.x,y+hop,m.z); R.rotation.y=m.yaw; const sq=moving?1-0.06*Math.cos(m.ph*2):1; R.scale.set(m.o.h*(2-sq),m.o.h*sq,m.o.h*(2-sq));
-  const tsc=moving?1.5:1; if(!IS_MOBILE||((FRAME+(m.x|0))&1)===0) m.inst.mixer.update(dt*tsc*(IS_MOBILE?2:1)); blobAt(m.x,y,m.z,m.o.h*0.9); }
+  const y=groundAt(m.x,m.z); const R=m.inst.root; R.position.set(m.x,y,m.z); R.rotation.y=m.yaw; R.scale.setScalar(m.o.h);
+  if(!IS_MOBILE||((FRAME+(m.x|0))&1)===0) monGait(m.inst,moving?0.95:0,dt*(IS_MOBILE?2:1),m.o.h); blobAt(m.x,y,m.z,m.o.h*0.9); }
 function angD(a,b){ let d=a-b; while(d>Math.PI) d-=Math.PI*2; while(d<-Math.PI) d+=Math.PI*2; return d; }
 
 // ---------------------------------------------------------------- 歩ける場所
@@ -1404,7 +1470,10 @@ const TOD={   // 光と色(post: 露出・にじみ・光の色・陰の色・�
     expo:1.16,bloom:0.3,bT:0.74,gain:[1.08,0.99,0.88],lift:[0.03,0.02,0.06],sat:1.12,vig:0.28,hazeK:0.42},
   // 地下の迷宮(クレタ): 空は見えない。青白い薄明かり+たいまつの暖色。奥は暗く沈む(2026-10-25)
   cave:{top:'#0e1220',mid:'#141a2a',hor:'#1a2234',sunD:[0.25,0.9,0.35],sunC:'#a4b6dc',sunI:0.48,hS:'#7a8ab2',hG:'#2e2a28',hI:0.5,fog:'#13161f',cL:'#1a1e2c',cS:'#10131c',deep:'#1d3a52',shal:'#2b5a6a',foam:'#8aa0b0',glow:1.0,win:0.6,cloud:0.0,mot:'#ffc070',
-    expo:0.92,bloom:0.36,bT:0.66,gain:[0.92,0.97,1.1],lift:[0.02,0.02,0.06],sat:1.0,vig:0.46,hazeK:0.66} };
+    expo:0.92,bloom:0.36,bT:0.66,gain:[0.92,0.97,1.1],lift:[0.02,0.02,0.06],sat:1.0,vig:0.46,hazeK:0.66},
+  // 雷の嵐(雲の山道): 灰色の空・低い光・重い霞(2026-10-26)
+  storm:{top:'#4a5670',mid:'#7b879c',hor:'#aab2bf',sunD:[0.3,0.7,0.5],sunC:'#cfd6e4',sunI:0.55,hS:'#9aa6ba',hG:'#5a5a58',hI:0.5,fog:'#8e98a8',cL:'#b8c0cc',cS:'#5c6676',deep:'#2e4a60',shal:'#5a7a88',foam:'#dde4ea',glow:0.8,win:0.4,cloud:0.5,mot:'#cfe0ff',
+    expo:0.9,bloom:0.2,bT:0.8,gain:[0.95,0.98,1.06],lift:[0.02,0.02,0.05],sat:0.9,vig:0.34,hazeK:0.5} };
 let TODC=null, TODT=null, TODK=0, TODN='noon', TODP=null, TODPREV=null;
 function todVals(p){ return {expo:p.expo,bloom:p.bloom,bT:p.bT,sat:p.sat,vig:p.vig,hazeK:p.hazeK,gain:new THREE.Vector3(...p.gain),lift:new THREE.Vector3(...p.lift),top:col3(p.top),mid:col3(p.mid),hor:col3(p.hor),sunD:new THREE.Vector3(...p.sunD).normalize(),sunC:col3(p.sunC),sunI:p.sunI,hS:col3(p.hS),hG:col3(p.hG),hI:p.hI,fog:col3(p.fog),cL:col3(p.cL),cS:col3(p.cS),deep:col3(p.deep),shal:col3(p.shal),foam:col3(p.foam),glow:p.glow,win:p.win,cloud:p.cloud,mot:col3(p.mot)}; }
 function setTime(n,instant){ if(!TOD[n]) return; TODN=n; const tv=todVals(TOD[n]); TODP=TOD[n]; if(instant||!TODC){ TODC=tv; TODT=null; applyTod(TODC); } else { TODT={from:TODC,to:tv,k:0}; }
@@ -1428,8 +1497,9 @@ enterEl.addEventListener('click',()=>{ if(!ENTER||STORY) return; if(ENTER.npc){ 
 function enterPlace(n){ const f=SAVE?SAVE.flags:{};
   if(n==='記憶館'){ toast('記憶館'); return; }
   if(n==='旅人の宿'){ if(!f.tasos) storyField('tasos'); else toast('旅人の宿'); return; }
-  if(n==='テリオン研究所'||n==='ムネモ研究所'){ toast('テリオン研究所 オリーヴァ支所'); return; }
-  if(n==='道しるべ'){ toast('→ アルカディアの森 → 港町ナフリア → 運河の町コリンタ → 山の村デルフィナ（準備中）'); return; }
+  if(n==='テリオン研究所'||n==='ムネモ研究所'){ if(window.Progress&&Progress.state()) Progress.ui.open('cradle'); else toast('テリオン研究所 オリーヴァ支所'); return; }   // 研究所の中だけ ゆりかご(ガチャ)
+  if(n==='道しるべ'){ toast('→ アルカディアの森 → 運河の町コリンタ → 雲の山道 → 山の村デルフィナ'); return; }
+  if(n==='山の天文台'){ toast('山の天文台'); return; }
   if(n==='店'){ ITEMS.heal=Math.max(ITEMS.heal||0,3); toast('回復の水筒 ×'+ITEMS.heal); saveGame(); return; }
   if(n==='いこいの泉'){ toast('みんな元気になった'); return; } toast(n); }
 function npcTalk(n){ const sc=n.o.scene, f=SAVE?SAVE.flags:{}; if(sc&&!n.o.trainer&&!f[sc]&&SC[sc]){ storyField(sc); return; }
@@ -1448,40 +1518,49 @@ let ENC=null, encCool=0;
 function loadScript(src){ return new Promise((res,rej)=>{ const e=document.createElement('script'); e.src=src; e.onload=res; e.onerror=rej; document.head.appendChild(e); }); }
 function placeAt(x,z){ if(TER.streamQ(x,z)[0]<8) return 'stream'; if(TER.coastD(x,z)<14) return 'seaside'; for(const e of D.grass.tall){ if(inEll(x,z,[e[0],e[1],e[2]+2,e[3]+2])<1) return 'meadow'; } if(x>-34&&x<46&&z>23&&z<50) return 'olive'; return 'meadow'; }
 function inTown(x,z){ if(!D) return true; if(D.quiet) return D.quiet.some(r=>x>r[0]&&x<r[2]&&z>r[1]&&z<r[3]); return !D.nature; }   // 街のマップは全部が静域。quiet(矩形の列)があればその中だけ静域(アテネ・クレタ 2026-10-25)
-function encounterCheck(dt){ encCool-=dt; if(WORLD.noEnc||ENC||STORY||TRANS||encCool>0||!READY.hero||inTown(HERO.x,HERO.z)) return;
-  for(const m of MONS){ if(!m.wild||!m.inst||m.gone) continue; if(Math.hypot(m.x-HERO.x,m.z-HERO.z)<(m.o.ancient?2.8:1.5)){ startEncounter({type:'wild',m}); return; } }
+function encounterCheck(dt){ encCool-=dt; if(WORLD.noEnc||ENC||STORY||TRANS||encCool>0||!READY.hero) return; const town=inTown(HERO.x,HERO.z);
+  if(!town) for(const m of MONS){ if(!m.wild||!m.inst||m.gone) continue; if(Math.hypot(m.x-HERO.x,m.z-HERO.z)<(m.o.ancient||m.o.boss?2.8:1.5)){ startEncounter({type:'wild',m}); return; } }
   for(const n of NPCS){ if(!n.o.trainer||n.beaten||!n.rig) continue; if(Math.hypot(n.x-HERO.x,n.z-HERO.z)<3.4){ startEncounter({type:'trainer',n}); return; } } }
 async function startEncounter(e){ ENC=e; AUTO=null; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; enterEl.classList.remove('on');
   const who=e.m?e.m:e.n; const P=new THREE.Vector3(who.x,groundAt(who.x,who.z)+(e.m?e.m.o.h+0.3:1.9),who.z).project(camera);
   bangEl.style.left=((P.x*0.5+0.5)*innerWidth)+'px'; bangEl.style.top=((-P.y*0.5+0.5)*innerHeight)+'px'; bangEl.style.display='block';
   if(e.n){ HERO.yaw=Math.atan2(e.n.x-HERO.x,e.n.z-HERO.z); e.n.yaw=Math.atan2(HERO.x-e.n.x,HERO.z-e.n.z); talkTo(e.n,e.n.o.n+'が勝負をしかけてきた！'); if(e.n.o.scene&&SC[e.n.o.scene]&&!(SAVE&&SAVE.flags['seen_'+e.n.o.scene])){ await sleep(500); bangEl.style.display='none'; talkClose(); await storyField(e.n.o.scene); if(SAVE) SAVE.flags['seen_'+e.n.o.scene]=1; } }
-  if(e.m) toast(e.m.o.ancient?'古代テリオン・'+monName(e.m.o.id)+'が、角をこちらに向けた！':'野生の'+monName(e.m.o.id)+'が飛び出してきた！');
-  if(e.m&&e.m.o.scene&&SC[e.m.o.scene]&&!(SAVE&&SAVE.flags['seen_'+e.m.o.scene])){ await sleep(500); bangEl.style.display='none'; await storyField(e.m.o.scene); if(SAVE) SAVE.flags['seen_'+e.m.o.scene]=1; }   // 古代テリオン(守り)に会う場面
+  if(e.m) toast(e.m.o.ancient?'古代テリオン・'+monName(e.m.o.id)+'が、角をこちらに向けた！':(e.m.o.boss?monName(e.m.o.id)+'が、嵐の中から現れた！':'野生の'+monName(e.m.o.id)+'が飛び出してきた！'));
+  if(e.m&&e.m.o.scene&&SC[e.m.o.scene]&&!(SAVE&&SAVE.flags['seen_'+e.m.o.scene])){ await sleep(500); bangEl.style.display='none'; await storyField(e.m.o.scene); if(SAVE) SAVE.flags['seen_'+e.m.o.scene]=1; }   // 古代テリオン(守り)・ボスに会う場面
   const load=window.startBattle?Promise.resolve():loadScript('../battle/battle.js');
   await new Promise(r=>setTimeout(r,e.n?1300:700)); bangEl.style.display='none'; talkClose();
   flashEl.style.opacity=1; await load; await new Promise(r=>setTimeout(r,350));
   PAUSED=true; flashEl.style.opacity=0; const place=placeAt(HERO.x,HERO.z); STATS.battles=(STATS.battles||0)+1;
-  const opt={ kind:e.m?'wild':(e.n.o.master?'master':'trainer'), size:e.m?7:(e.n.o.master?11:9), terrainTheme:place, backdrop:place==='seaside'?'aegean':'olive',
-    player:{party:PARTY,items:ITEMS,box:BOX,rankCap:10,owned:ownedList()},
-    enemy:e.m?{party:[{mid:e.m.o.id,rank:e.m.o.rank||3}],name:e.m.o.ancient?'古代テリオン '+monName(e.m.o.id):undefined}:{name:e.n.o.n,party:(e.n.o.party||[{mid:1059,rank:4},{mid:1037,rank:3}]).map(x=>Object.assign({},x))} };
-  if(unlocks().fusion) opt.fusionUnlocked=true;   // 融合は解禁のあとだけ渡す(見本の範囲=序盤は渡さない)
+  // 進行(progress.js・2026-10-26): 野生は Progress.wildEnemy(マップのレベル帯 D.lv)・人は野生+1(町いちばんの使い手は+3)・古代テリオン(守り・王)とボスは姿を固定(fixed)して lv(無ければ rank から写す)。
+  //   player(party・box・owned・rankCap)は prepare が入れる(items だけ渡す)。仲間・EXP・ジェムは decorate(prepare が足す)の中で progress.js が済ませる
+  const area=MAP, anc=!!(e.m&&e.m.o.ancient), boss=!!(e.m&&e.m.o.boss);
+  const lvOf=(x,dflt)=>x.lv!=null?+x.lv:(x.rank!=null?Progress.rankLv(x.rank):dflt);
+  let enemy;
+  if(e.m){ const o=e.m.o; enemy={ party:[(anc||boss)?{mid:o.id, lv:lvOf(o,Progress.wildLv(area)+6), fixed:true}:Progress.wildEnemy(o.id,area)], name:anc?'古代テリオン '+monName(o.id):(boss?monName(o.id):undefined) }; }
+  else { const o=e.n.o, bump=o.master?3:1; enemy={ name:o.n, zeroday:!!o.zeroday, party:(o.party||[{mid:1059},{mid:1037}]).map(x=>{ const c={mid:+x.mid, lv:lvOf(x,Progress.wildLv(area)+bump)}; if(x.fixed||x.stage!=null) c.fixed=true; return c; }) }; }
+  const opt={ kind:e.m?'wild':(e.n.o.master?'master':'trainer'), size:e.m?7:(e.n.o.master?11:9), terrainTheme:place, backdrop:place==='seaside'?'aegean':'olive', player:{items:ITEMS}, enemy };
+  try{ Progress.prepare(opt,{area, zeroday:enemy.zeroday}); }catch(err){ console.warn('progress.prepare',err&&err.message); opt.player={party:PARTY,items:ITEMS,box:BOX,rankCap:10,owned:ownedList()}; }
+  if(anc) opt.recruit=()=>null;   // 古代テリオン(守り・王)は仲間にならない。ボス(トールガ)は野生なので判定あり
+  if(e.m&&e.m.o.ai) opt.enemy.ai=Object.assign({},e.m.o.ai);   // 古代テリオンは1体で3段目なので、マップの ai(hpX/atkX)で盤の強さを合わせる(battle.js の表は触らない)
+  if(unlocks().fusion) opt.fusionUnlocked=true;   // 融合は解禁のあとだけ渡す(守り④のあと)
   if(D.battle){ const bt=(D.battle.byArea&&D.battle.byArea[zoneAt(HERO.x,HERO.z)])||D.battle[place]||D.battle.default; if(bt) Object.assign(opt,bt); }   // マップごとの盤の見た目(遺跡・海辺など)。バランスは触らない
   Object.assign(opt,WORLD.battleOpt||{});
   let res=null; try{ res=await startBattle(opt); }catch(err){ console.error('battle',err); }
   endEncounter(e,res); }
+const npcKey=n=>'beat_'+n.o.n+'@'+MAP+':'+n.o.x+','+n.o.z;   // 同じ名前の人(ゼロデイの手下)が同じマップに何人もいるので、位置まで含めて記録する
 function endEncounter(e,res){ if(res&&res.result==='quit'){ WORLD.lastBattle=res; ENC=null; encCool=4; saveGame(); toTitle(); return; }
   PAUSED=false; LAST=performance.now(); WORLD.lastBattle=res; if(res&&res.items) ITEMS=res.items;
-  if(res&&res.caught&&!(e.m&&e.m.o.ancient)){ const c=res.caught, b=c.base||c.mid; if(c.isNew){ BOX[b]={rank:c.rank||3,stack:c.stack||0}; if(PARTY.length<6) PARTY.push({mid:c.mid,rank:c.rank||3}); }
-    else { BOX[b]={rank:c.rankAfter||((BOX[b]||{}).rank||3),stack:c.stack||0}; for(const q of PARTY) if(q.mid===c.mid||q.mid===b){ q.rank=c.rankAfter||q.rank; q.stack=c.stack||0; } }
-    flag('caught'); toast(monName(c.mid)+(c.isNew?'が仲間になった！':'の成長ランクが'+(c.rankAfter||'')+'になった！')); }
-  let after=null;   // 勝ったあとの場面(ログ＆パッチの撤収・アレクが道をあける・守り①に認められる)
-  if(e.n&&SAVE){ if(e.n.o.scene==='dimi') flag('dimi'); if(res&&res.result==='win'){ SAVE.flags['beat_'+e.n.o.n]=1; if(e.n.o.scene==='stavros') flag('stavros'); if(e.n.o.scene==='patch') flag('mission'); if(e.n.o.scene==='alek') flag('alek'); if(e.n.o.after&&SC[e.n.o.after]) after=e.n.o.after; } }
-  if(e.m&&e.m.o.ancient){ if(res&&res.result==='win'){ e.m.gone=true; if(e.m.inst&&e.m.inst.root.parent) scene.remove(e.m.inst.root); flag(e.m.o.flag||'guard1'); if(e.m.o.after&&SC[e.m.o.after]) after=e.m.o.after; }   // 古代テリオンは仲間にならない。認められた(勝った)ら広間からいなくなる
+  // 仲間・EXP・レベル・ジェムは progress.js が decorate の中で済ませ、結果画面にも出している。ここでは旗と連れ歩きの更新だけ
+  const pg=res&&res.progress; if(pg){ if(pg.recruit&&pg.recruit.isNew){ flag('caught'); toast(monName(pg.recruit.mid)+'が仲間になった！'); } else if(pg.lvup&&pg.lvup.length){ const l=pg.lvup[0]; toast(monName(l.mid)+'が Lv'+l.after+'になった！'); } }
+  followersSet();
+  let after=null; const win=!!(res&&res.result==='win');   // 勝ったあとの場面(ログ＆パッチの撤収・アレクが道をあける・守りに認められる)
+  if(e.n&&SAVE){ if(e.n.o.scene==='dimi') flag('dimi'); if(win){ SAVE.flags[npcKey(e.n)]=1; if(e.n.o.scene==='stavros') flag('stavros'); if(e.n.o.scene==='patch') flag('mission'); if(e.n.o.scene==='alek') flag('alek'); if(e.n.o.flagWin) flag(e.n.o.flagWin); if(e.n.o.after&&SC[e.n.o.after]) after=e.n.o.after; } }
+  if(e.m&&(e.m.o.ancient||e.m.o.boss)){ if(win){ e.m.gone=true; if(e.m.inst&&e.m.inst.root.parent) scene.remove(e.m.inst.root); flag(e.m.o.flag||'guard1'); if(e.m.o.after&&SC[e.m.o.after]) after=e.m.o.after; }   // 古代テリオン・ボスは認められた(勝った)ら広間からいなくなる
     const dx=HERO.x-e.m.x, dz=HERO.z-e.m.z, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*1.6,HERO.z+dz/L*1.6); }
   else if(e.m){ if(res&&(res.result==='win'||res.result==='draw'||res.result==='flee')){ e.m.gone=true; if(e.m.inst&&e.m.inst.root.parent) scene.remove(e.m.inst.root); setTimeout(()=>{ e.m.gone=false; e.m.x=e.m.o.x; e.m.z=e.m.o.z; },60000); }
     const dx=HERO.x-e.m.x, dz=HERO.z-e.m.z, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*1.2,HERO.z+dz/L*1.2); }
-  if(e.n){ if(res&&res.result==='win'){ e.n.beaten=true; e.n.o.line=e.n.o.lineAfter||'……'; } const dx=HERO.x-e.n.x, dz=HERO.z-e.n.z, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*1.5,HERO.z+dz/L*1.5); }
-  if(HERO.hv&&res&&res.result==='win') HERO.hv.play('Cheer',0.15);
+  if(e.n){ if(win){ e.n.beaten=true; e.n.o.line=e.n.o.lineAfter||'……'; } const dx=HERO.x-e.n.x, dz=HERO.z-e.n.z, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*1.5,HERO.z+dz/L*1.5); }
+  if(HERO.hv&&win) HERO.hv.play('Cheer',0.15);
   encCool=4; ENC=null; flashEl.style.opacity=0.9; setTimeout(()=>flashEl.style.opacity=0,60); objUpdate(); saveGame();
   if(after) setTimeout(()=>{ if(!STORY&&!TRANS) storyField(after); },500); }
 function uiUpdate(dt){ autosaveTick(dt); areaT-=dt; if(areaT<=0){ areaT=0.3; const z=zoneAt(HERO.x,HERO.z); if(z&&z!==AREA){ AREA=z; showArea(z); } }
@@ -1570,13 +1649,14 @@ function clearMap(){
   talkClose(); ENTER=null; enterEl.classList.remove('on'); AREA=''; }
 async function loadMap(id,at,pos){ const t0=performance.now();
   const nd=MAPC[id]||(MAPC[id]=await fetch('regions/'+id+'.json').then(r=>r.json()));
-  clearMap(); D=nd; MAP=id; CFG.loadR=D.loadR||52; CFG.unloadR=D.unloadR||76;   // 読み込み半径はマップごと(アテネは見晴らしで遠くの神殿まで組み立てる)
+  clearMap(); D=nd; MAP=id; CFG.loadR=D.loadR||52; CFG.unloadR=D.unloadR||76;
+  if(D.lv&&window.Progress) Progress.config.areas[id]=Object.assign({},Progress.config.areas[id]||{},{lv:D.lv},D.startStage?{startStage:D.startStage}:{});   // 野生のレベル帯はマップの lv(progress.js の config.areas)   // 読み込み半径はマップごと(アテネは見晴らしで遠くの神殿まで組み立てる)
   PATHS={un:D.paths.unpaved,town:D.paths.townPaved,stone:D.paths.stone.map(p=>prepPoly(p.p,p.w)),dirt:D.paths.dirt.map(p=>prepPoly(p.p,p.w)),sc:D.paths.stoneCircles,sr:D.paths.stoneRects,sa:D.paths.sandRects||null,rockAll:D.terrain.rockAll||0};
   { const want=PATHS.sa?GTEX.pave:GTEX.sand0; GTEX.sand=want; if(MAT.ground.userData.sh) MAT.ground.userData.sh.uniforms.tSa.value=want; const tn=D.terrain.tint||[1,1,1]; GTINT.set(tn[0],tn[1],tn[2]); }   // 舗装の区画があるマップは砂の代わりに板石。tint=地面の色味
   // 地下(迷宮)は暗い時間帯 tod:'cave' に固定して朝昼夕のボタンを隠す。外へ出たら元の時間帯へ
-  { const todEl=document.getElementById('tod'); if(D.tod){ if(!TODPREV) TODPREV=(TODN==='cave'?'noon':TODN); setTime(D.tod,true); todEl.style.display='none'; } else { if(TODPREV||TODN==='cave'){ setTime(TODPREV||'noon',true); TODPREV=null; } todEl.style.display=''; } if(PETALS) PETALS.visible=!D.tod; }
-  TER=makeTerrain(D); initChunks(); buildWaters(); if(!AIR) buildFar(); initActors();
-  for(const n of NPCS) if(SAVE&&SAVE.flags['beat_'+n.o.n]){ n.beaten=true; if(n.o.lineAfter) n.o.line=n.o.lineAfter; }
+  { const todEl=document.getElementById('tod'); if(D.tod){ if(!TODPREV) TODPREV=((TODN==='cave'||TODN==='storm')?'noon':TODN); setTime(D.tod,true); todEl.style.display='none'; } else { if(TODPREV||TODN==='cave'||TODN==='storm'){ setTime(TODPREV||'noon',true); TODPREV=null; } todEl.style.display=''; } if(PETALS) PETALS.visible=!D.tod; }
+  TER=makeTerrain(D); initChunks(); buildWaters(); buildClouds(); if(!AIR) buildFar(); initActors();
+  for(const n of NPCS) if(SAVE&&(SAVE.flags[npcKey(n)]||SAVE.flags['beat_'+n.o.n])){ n.beaten=true; if(n.o.lineAfter) n.o.line=n.o.lineAfter; }
   const p=pos||(D.arrive&&D.arrive[at])||D.spawn; HERO.x=p[0]; HERO.z=p[1]; HERO.yaw=p[2]; HERO.speed=0; HERO.dir=null; CAM.tx=HERO.x; CAM.tz=HERO.z;
   for(const c of CHUNKS.values()){ if(c.state===0&&chunkDist(c,HERO.x,HERO.z)<22){ const it=buildChunk(c); while(!it.next().done){} } }
   HERO.y=groundAt(HERO.x,HERO.z); CAM.ty=HERO.y; U.uHero.value.set(HERO.x,HERO.y,HERO.z);
@@ -1589,37 +1669,58 @@ async function goMap(to,at){ if(TRANS) return; TRANS=true; const t0=performance.
   fadeEl.classList.add('on'); await sleep(260); PAUSED=true;
   await loadMap(to,at); await settleMap(3500); LAST=performance.now(); PAUSED=false; await sleep(40);
   fadeEl.classList.remove('on'); STATS.transMs=performance.now()-t0; await sleep(260); TRANS=false;
-  if(D.nature) flag('hill'); objUpdate(); saveGame(); showArea(D.name); AREA=D.name; }
+  if(D.nature) flag('hill'); flag(to); objUpdate(); saveGame(); showArea(D.name); AREA=D.name; }
 function exitCheck(){ if(TRANS||STORY||ENC||!D||!D.exits) return; for(const e of D.exits){ const r=e.r; if(HERO.x>r[0]&&HERO.x<r[2]&&HERO.z>r[1]&&HERO.z<r[3]){
     // todo=まだ作っていない土地(道しるべだけ)。need=物語の旗が立つまで通れない(迷路の入口はアレクに勝つまで)。手前へ押し戻す
     if(e.todo||(e.need&&!(SAVE&&SAVE.flags[e.need]))){ if(!(exitCheck.t>NOW-2500)){ exitCheck.t=NOW; toast(e.todo?e.todo+'へ。（まだ作っていない）':(e.lock||'まだ進めない')); }
       const cx=(r[0]+r[2])/2, cz=(r[1]+r[3])/2; const dx=HERO.x-cx, dz=HERO.z-cz, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*0.5,HERO.z+dz/L*0.5); return; }
     goMap(e.to,e.at); return; } } }
 
-// ---------------------------------------------------------------- 相棒の連れ歩き
-const PALM={id:null,inst:null,x:0,z:0,yaw:0,ph:0};
-function partnerSet(id){ if(PALM.inst&&PALM.inst.root.parent) scene.remove(PALM.inst.root); PALM.id=id; PALM.inst=null; if(!id) return;
-  monProto(id).then(g=>{ if(PALM.id!==id) return; PALM.inst=monMake(g); PALM.inst.root.scale.setScalar(0.62); scene.add(PALM.inst.root); partnerPlace(); }).catch(e=>console.warn('partner',e&&e.message)); }
-function partnerPlace(){ PALM.x=HERO.x-Math.sin(HERO.yaw)*1.2+0.5; PALM.z=HERO.z-Math.cos(HERO.yaw)*1.2; PALM.yaw=HERO.yaw; }
-function partnerUpdate(dt){ const P=PALM; if(!P.inst) return; const dx=HERO.x-P.x, dz=HERO.z-P.z, d=Math.hypot(dx,dz); let moving=false;
-  if(d>9) partnerPlace(); else if(d>1.35){ const sp=Math.min(d-1.15,Math.max(1.5,HERO.realSpeed||0)*(d>3?1.5:1.02)*dt); P.x+=dx/d*sp; P.z+=dz/d*sp; moving=sp>0.004; P.yaw+=angD(Math.atan2(dx,dz),P.yaw)*Math.min(1,dt*8); }
-  else if(d<2.5) P.yaw+=angD(Math.atan2(dx,dz),P.yaw)*Math.min(1,dt*3);
-  P.ph+=dt*(moving?9:0); const hop=moving?Math.abs(Math.sin(P.ph))*0.08:0; const y=groundAt(P.x,P.z); const R=P.inst.root; R.position.set(P.x,y+hop,P.z); R.rotation.y=P.yaw;
-  const sq=moving?1-0.06*Math.cos(P.ph*2):1; R.scale.set(0.62*(2-sq),0.62*sq,0.62*(2-sq)); P.inst.mixer.update(dt*(moving?1.5:1)); blobAt(P.x,y,P.z,0.55); }
+// ---------------------------------------------------------------- 相棒の連れ歩き(パーティの先頭3体が一列でついて歩く。先頭=リーダー=相棒)
+const FOL=[]; const PALM={ get id(){ return FOL[0]?FOL[0].id:null; }, get inst(){ return FOL[0]?FOL[0].inst:null; } };
+function partnerSet(ids){ if(!Array.isArray(ids)) ids=ids?[ids]:[]; ids=ids.slice(0,3).filter(Boolean); if(ids.join()===FOL.map(f=>f.id).join()) return;
+  for(const f of FOL){ f.dead=true; if(f.inst&&f.inst.root.parent) scene.remove(f.inst.root); } FOL.length=0;
+  ids.forEach((id,i)=>{ const f={id,i,inst:null,x:HERO.x,z:HERO.z,yaw:HERO.yaw,ph:0}; FOL.push(f); monProto(id).then(g=>{ if(f.dead) return; f.inst=monMake(g); f.inst.root.scale.setScalar(0.62); scene.add(f.inst.root); partnerPlace(); }).catch(e=>console.warn('partner',e&&e.message)); }); }
+function followersSet(){ partnerSet(window.Progress&&Progress.state()?Progress.followers():(SAVE&&SAVE.partner?[SAVE.partner]:[])); }
+function partnerPlace(){ FOL.forEach((f,i)=>{ const d=1.2+i*1.15; f.x=HERO.x-Math.sin(HERO.yaw)*d+0.5; f.z=HERO.z-Math.cos(HERO.yaw)*d; f.yaw=HERO.yaw; }); }
+function partnerUpdate(dt){ let lx=HERO.x, lz=HERO.z; const ls=HERO.realSpeed||0;
+  for(const P of FOL){ if(!P.inst){ lx=P.x; lz=P.z; continue; } const dx=lx-P.x, dz=lz-P.z, d=Math.hypot(dx,dz); let moving=false;
+    if(d>9) partnerPlace(); else if(d>1.35){ const sp=Math.min(d-1.15,Math.max(1.5,ls)*(d>3?1.5:1.02)*dt); P.x+=dx/d*sp; P.z+=dz/d*sp; moving=sp>0.004; P.yaw+=angD(Math.atan2(dx,dz),P.yaw)*Math.min(1,dt*8); }
+    else if(d<2.5) P.yaw+=angD(Math.atan2(dx,dz),P.yaw)*Math.min(1,dt*3);
+    const spd=moving?Math.hypot(P.x-(P.px!=null?P.px:P.x),P.z-(P.pz!=null?P.pz:P.z))/Math.max(dt,1e-4):0; P.spd=(P.spd||0)+(spd-(P.spd||0))*Math.min(1,dt*12); P.px=P.x; P.pz=P.z;
+    const y=groundAt(P.x,P.z); const R=P.inst.root; R.position.set(P.x,y,P.z); R.rotation.y=P.yaw; R.scale.setScalar(0.62); monGait(P.inst,P.spd,dt,0.62); blobAt(P.x,y,P.z,0.55); lx=P.x; lz=P.z; } }
 
 // ---------------------------------------------------------------- 記録(端末に保存: 街に入った時・バトルのあと・会話の区切り)
 const SKEY='w2_save_v1'; let SAVE=null, NOSAVE=false;
 function loadSave(){ try{ const s=JSON.parse(localStorage.getItem(SKEY)); return s&&s.v===1?s:null; }catch(e){ return null; } }
 function saveGame(){ if(!SAVE||NOSAVE) return; if(D&&MAP&&READY.scene) Object.assign(SAVE,{map:MAP,x:+HERO.x.toFixed(2),z:+HERO.z.toFixed(2),yaw:+HERO.yaw.toFixed(3)});
-  Object.assign(SAVE,{party:PARTY,box:BOX,items:ITEMS,tod:TODN,t:Date.now()}); try{ localStorage.setItem(SKEY,JSON.stringify(SAVE)); STATS.saves=(STATS.saves||0)+1; }catch(e){} }
-function flag(k){ if(SAVE&&!SAVE.flags[k]){ SAVE.flags[k]=1; objUpdate(); } }
+  Object.assign(SAVE,{items:ITEMS,tod:TODN,t:Date.now()}); if(!(window.Progress&&Progress.state())) Object.assign(SAVE,{party:PARTY,box:BOX});   // 進行(progress.js)が動いていれば party/box/gems はそれが今の形で書く(古い読み方も壊れない)
+  try{ localStorage.setItem(SKEY,JSON.stringify(SAVE)); STATS.saves=(STATS.saves||0)+1; }catch(e){} }
+function flag(k){ if(SAVE&&!SAVE.flags[k]){ SAVE.flags[k]=1; onFlag(k); objUpdate(); } }
+// 旗が立った時の解禁とクエストのジェム(progress.js: 同じ id は1回だけ)。ミッション120・守り150・王300・雷のボス120・古印100・新しい土地40
+const QUEST_GEMS={mission:120,guard1:150,guard2:150,guard3:150,guard4:150,king:300,thunder:120,stavros:100,mihalis:100,sophia:100,bella:150,bridge:60,arcadia:40,corinth:40,cloudroad:40,delphi:40,stadium_under:40};
+function onFlag(k){ if(!(window.Progress&&Progress.state())) return;
+  if(k==='guard2') Progress.unlockLate();                 // 守り②のあと: 連れて歩くのが5体に
+  if(k==='corinth'&&SAVE.unlock) SAVE.unlock.evo=true;    // 運河の町コリンタ(第19話 エンジュ→エンレオ): 進化の解禁
+  if(k==='guard4'&&SAVE.unlock) SAVE.unlock.fusion=true;  // 守り④のあと(第26話 初めての融合): 融合の解禁
+  if(QUEST_GEMS[k]) Progress.quest(k,QUEST_GEMS[k]); }
 // 手動セーブ(HUDの「セーブ」)・自動セーブ(野歩き中30秒ごと・画面を閉じる/隠す時)。読むのはタイトルの「つづきから」(contGame)
 const saveBtn=document.getElementById('btSave'); let AUTOSAVE_T=0;
-function canSave(){ return !!(SAVE&&!NOSAVE&&READY.scene&&D&&MAP&&!STORY&&!TRANS&&!ENC&&!PAUSED); }
+function canSave(){ return !!(SAVE&&!NOSAVE&&READY.scene&&D&&MAP&&!STORY&&!TRANS&&!ENC&&!PAUSED&&!(window.Progress&&Progress.ui&&Progress.ui.isOpen())); }
 saveBtn.addEventListener('click',()=>{ if(!canSave()) return; saveGame(); toast('セーブしました'); });
-function autosaveTick(dt){ saveBtn.style.display=canSave()?'block':'none'; if(!canSave()) return; AUTOSAVE_T+=dt; if(AUTOSAVE_T>30){ AUTOSAVE_T=0; saveGame(); } }
+function autosaveTick(dt){ const ok=canSave(); saveBtn.style.display=ok?'block':'none'; pgHud.style.display=ok&&window.Progress&&Progress.state()?'flex':'none'; if(!ok) return; AUTOSAVE_T+=dt; if(AUTOSAVE_T>30){ AUTOSAVE_T=0; saveGame(); } }
 addEventListener('pagehide',()=>{ if(SAVE&&!NOSAVE&&READY.scene&&D&&MAP) saveGame(); });
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'&&SAVE&&!NOSAVE&&READY.scene&&D&&MAP) saveGame(); });
+// ---- 進行(progress.js・2026-10-26): 倒して仲間・Lv1〜99・EXP・ジェム・研究所のゆりかご(ガチャ)・パーティ3→5体と牧場。手順は proto/PROGRESS_INTEGRATION.md ----
+//   HUD: 右上「仲間」(街の中だけ 牧場と入れかえ)・「💎」(ジェムの記録)。ゆりかごは村の研究所の入口(enterPlace)から。開いている間はフィールドを止める
+let PROG=null; const pgHud=document.getElementById('pgHud');
+function hudRefresh(){ if(!(window.Progress&&Progress.state())) return; document.getElementById('btGems').textContent='💎 '+Progress.gems(); }
+async function progInit(){ if(!window.Progress) return;
+  if(!PROG){ PROG=Progress.init({save:SAVE,onSave:saveGame,base:'../battle/'}).then(()=>{ Progress.ui.mount({bar:false}); Progress.on('change',hudRefresh);
+      Progress.on('ui',d=>{ if(d.open){ PAUSED=true; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; talkClose(); } else { PAUSED=false; LAST=performance.now(); followersSet(); } hudRefresh(); }); hudRefresh(); }); await PROG; }
+  else { await PROG; Progress.attachSave(SAVE,saveGame); hudRefresh(); } }
+document.getElementById('btParty').addEventListener('click',()=>{ if(!canSave()) return; if(!inTown(HERO.x,HERO.z)){ toast('仲間の入れかえは、街の中で'); return; } Progress.ui.open('party'); });
+document.getElementById('btGems').addEventListener('click',()=>{ if(!canSave()) return; Progress.ui.open('gems'); });
 const MONN={1001:'エンジュ',1022:'ビリトラ',178:'クマッパ'};   // v3名簿(2026-10-25)の御三家
 let MNAME={}, MEVO={}, MMODEL={}; fetch('../battle/data/monsters.json').then(r=>r.json()).then(a=>{ for(const m of a){ MNAME[m.id]=m.name; MEVO[m.id]=m.evolves_to; MMODEL[m.id]=m.model3d!==false; } }).catch(()=>{});
 // 持っている種類(owned): 仲間にした子は、その系統(次の段・その次の段)を全部持っている扱い(game_design 9-2)。バトルでの進化の判定に渡す
@@ -1630,7 +1731,12 @@ function monName(id){ return MNAME[id]||MONN[id]||'この子'; }
 function objText(){ const f=SAVE?SAVE.flags:{}; if(!f.arrived) return '';
   if(!f.hill) return '静域の門から、オリーブの丘へ'; if(!f.dimi) return '丘の道で、レンと勝負';
   if(!f.mission) return '丘の上の競技場の跡へ。ゼロデイを止める'; if(!f.alek) return '丘の西のはずれ、迷路の入口へ';
-  if(!f.guard1) return '丘の下の迷路の底で、守り①に会う'; return '守り①クリア。次はアルカディアの森（準備中）'; }
+  if(!f.guard1) return '丘の下の迷路の底で、守り①に会う';
+  if(!f.arcadia) return '丘の北の道しるべから、アルカディアの森へ'; if(!f.guard2) return '森の奥の遺跡で、守り②に会う';
+  if(!f.corinth) return '森の北の道から、運河の町コリンタへ'; if(!f.bridge) return '運河の大橋のゼロデイを追いはらう'; if(!f.mihalis) return '東岸のミハリスと勝負して、古印をもらう'; if(!f.guard3) return '丘の上のとりでで、守り③に会う';
+  if(!f.cloudroad) return '町の北の道しるべから、雲の山道へ'; if(!f.thunder) return '嵐の台地で、雷のトールガをしずめる';
+  if(!f.delphi) return '山道の先、山の村デルフィナへ'; if(!f.sophia) return '神殿のソフィアと勝負して、古印をもらう'; if(!f.guard4) return '山の天文台で、守り④に会う';
+  if(!f.stadium_under) return '空の船でオリーヴァ村へ帰り、競技場の跡の下へ'; if(!f.king) return '競技場の下で、王に会う'; return 'ギリシャ編クリア。「竜は、東の果てにいる」'; }
 function objUpdate(){ const t=objText(); objEl.textContent=t; objEl.style.display=t&&!STORY&&!TRANS?'block':'none'; }
 
 // ---------------------------------------------------------------- 会話(立ち絵つき)・イントロ
@@ -1641,7 +1747,7 @@ const E7=['normal','smile','surprised','serious','sad','angry','hurt'];
 const FACES={hero_m:E7,hero_f:E7,genichi:['normal'],misaki:['normal','smile'],hana:['normal'],ryo:['normal'],
   elly:['normal','smile','surprised','sad','serious'],alek:['normal'],dimi:['normal','smile','surprised','serious'],elena:['normal','smile','serious'],tasos:['normal','smile','surprised'],petra:['normal','smile','surprised'],stavros:['normal','smile','serious']};
 // 立ち絵の鍵: elly=エリー(anime/chars/elly)・alek=アレク(anime/chars/alek)・dimi=レン(絵は dimi のまま)・stavros=ヤニス(絵は仮)。patch/log/x は絵なし(名前だけ)
-const WHO={genichi:'じいちゃん',misaki:'母',hana:'ハナ',ryo:'父',elly:'エリー',alek:'アレク',dimi:'レン',elena:'エレナ博士',tasos:'タソス',petra:'ペトラ',stavros:'ヤニス',patch:'パッチ',log:'ログ',x:''};
+const WHO={genichi:'じいちゃん',misaki:'母',hana:'ハナ',ryo:'父',elly:'エリー',alek:'アレク',dimi:'レン',elena:'エレナ博士',tasos:'タソス',petra:'ペトラ',stavros:'ヤニス',patch:'パッチ',log:'ログ',mihalis:'ミハリス',sophia:'ソフィア',bella:'ベラドンナ',yusuf:'ユスフ',x:''};
 const DEFN=g=>'ヤマト';   // 主人公はヤマトだけ(女の子版 hero_f は使わない)
 function fillT(t){ const g=SAVE?SAVE.g:'m'; return t.replace(/\{hero\}/g,SAVE?SAVE.name:DEFN(g)).replace(/\{partner\}/g,MONN[SAVE&&SAVE.partner]||'相棒').replace(/\{sib\}/g,g==='f'?'ねえね':'にいに'); }
 // 立ち絵の向き(絵ごと)。index.json を読むまでは全員右向きとして扱う
@@ -1733,7 +1839,7 @@ const SC={
  // 第2話: 手のひらの約束。研究所から逃げた3体から相棒を選ぶ(ゲームだけ。アニメはエンジュ)。そのあとレン登場
  lab:[ {todo:'story'},
   {w:null,t:''},{w:'elena',t:''},
-  {fn:async()=>{ const id=await pickPartner(); SAVE.partner=id; PARTY=[{mid:id,rank:5}]; BOX={[id]:{rank:5}}; partnerSet(id); }},
+  {fn:async()=>{ const id=await pickPartner(); PARTY=[{mid:id,rank:5}]; BOX={[id]:{rank:5}}; if(window.Progress&&Progress.state()) Progress.giveStarter(id); else SAVE.partner=id; followersSet(); }},
   {w:'hero',t:''},{w:'partner',t:'',if:()=>SAVE.partner===1001},{w:'partner',t:'',if:()=>SAVE.partner!==1001},{w:'elena',f:'smile',t:''},{w:'elly',f:'smile',t:''},
   {w:'elena',t:''},{w:'elly',t:''},
   {w:'dimi',f:'normal',t:''},{w:'hero',f:'surprised',t:''},{w:'dimi',f:'serious',t:''},{w:'partner',t:''},{w:'hero',f:'serious',t:''} ],
@@ -1768,18 +1874,45 @@ const SC={
  // 守り①に認められる(勝ったあと)。次はアルカディアの森(守り②ルミナドール)へ
  minotas_win:[ {todo:'story'},
   {w:null,t:''},{w:'elly',f:'smile',t:''},{w:'x',n:'ミノタス',t:''},{w:'elly',t:''},{w:'hero',f:'smile',t:''},{w:'partner',t:''} ],
+ // ---- ここから ギリシャ編の続き(2026-10-26)。枠だけ・台詞は空 ----
+ // 第12話: ラドン川の渓流でレンと本気の勝負(手も足も出ない)
+ dimi2:[ {todo:'story'}, {w:'dimi',t:''},{w:'hero',f:'serious',t:''},{w:'dimi',f:'serious',t:''} ],
+ dimi2_win:[ {todo:'story'}, {w:'dimi',t:''},{w:'hero',f:'surprised',t:''},{w:'elly',t:''} ],
+ // 第13〜14話: 森の奥の遺跡、守り②ルミナドール(黄金を守るグリフォン)。ゼロデイとレンも来る
+ luminador:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ルミナドール',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'alek',t:''},{w:'partner',t:''} ],
+ luminador_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ルミナドール',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''},{w:'alek',t:''} ],
+ // 第20話: 町いちばんの使い手ミハリス(地。竜は使わない)・古印=ペガサスの銀貨
+ mihalis:[ {todo:'story'}, {w:'mihalis',t:''},{w:'hero',f:'serious',t:''},{w:'x',n:'ユスフ',t:''} ],
+ // 第21話: 丘の上のとりで、守り③テンマライ(天馬)。ゼロデイと奪い合い
+ tenmarai:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'テンマライ',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'partner',t:''} ],
+ tenmarai_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'テンマライ',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
+ // 第22話: 雲の山道で遭難。雷の嵐の主トールガ(野生のボス)。レンと組まざるを得ない
+ thunder:[ {todo:'story'}, {w:null,t:''},{w:'dimi',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'x',n:'トールガ',t:''},{w:'partner',t:''} ],
+ thunder_win:[ {todo:'story'}, {w:null,t:''},{w:'dimi',t:''},{w:'hero',f:'smile',t:''} ],
+ dimi3:[ {todo:'story'}, {w:'dimi',t:''},{w:'hero',t:''} ],
+ // 第25話: 町いちばんの使い手ソフィア(光・氷)・古印=へその石
+ sophia:[ {todo:'story'}, {w:'sophia',t:''},{w:'hero',f:'serious',t:''},{w:'elly',t:''} ],
+ // 第24〜25話: 山の天文台、守り④アトラード(天をささえる巨人)。エリーがさらわれかける
+ atlard:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'アトラード',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'partner',t:''} ],
+ atlard_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'アトラード',t:''},{w:'elly',f:'smile',t:''},{w:'bella',t:''},{w:'hero',f:'angry',t:''} ],
+ // 第29話: 競技場の下、ゼロデイ幹部ベラドンナ(相棒バジリク・本当はこわがり)
+ belladonna:[ {todo:'story'}, {w:'bella',t:''},{w:'hero',f:'angry',t:''},{w:'x',n:'バジリク',t:''},{w:'elly',f:'serious',t:''},{w:'partner',t:''} ],
+ belladonna_win:[ {todo:'story'}, {w:'bella',t:''},{w:'x',n:'バジリク',t:''},{w:'hero',t:''} ],
+ // 第30話: 王ゴッドヘラクが目をさます。「竜は、東の果てにいる」→中国編へ
+ godherak:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ゴッドヘラク',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'partner',t:''} ],
+ godherak_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ゴッドヘラク',t:''},{w:'elly',f:'smile',t:''},{w:'alek',t:''},{w:'dimi',t:''},{w:'hero',f:'smile',t:''},{w:null,t:''} ],
 };
 async function storyField(k){ if(!SC[k]) return; await runScene(SC[k],{field:true}); }
 function toast(t){ toastEl.textContent=t; toastEl.style.opacity=1; clearTimeout(toast.t); toast.t=setTimeout(()=>toastEl.style.opacity=0,1600); }
 function heroGo(g){ CFG.hero.urls=['../chars/hero_'+g+'.glb']; CFG.hero.height=g==='f'?1.16:1.2; READY.hero=null; return loadHero(CFG.hero.urls).then(u=>{ READY.hero=u; return u; }); }
 async function arriveTown(){ fadeEl.classList.add('on'); await sleep(260); stHide(); ST.el.style.display='none'; if(LOADP) await LOADP; LOADP=null;
   if(MAP!=='oliva_town') await loadMap('oliva_town','start'); else { const p=D.arrive.start; WORLD.tp(p[0],p[1],p[2]); partnerPlace(); }
-  partnerSet(SAVE.partner); SAVE.stage='field'; await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); await sleep(300);
-  showArea(D.name); AREA=D.name; await storyField('arrive'); if(!SAVE.partner) await storyField('lab'); partnerSet(SAVE.partner); flag('arrived'); saveGame(); }
+  followersSet(); SAVE.stage='field'; await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); await sleep(300);
+  showArea(D.name); AREA=D.name; await storyField('arrive'); if(!SAVE.partner) await storyField('lab'); followersSet(); flag('arrived'); saveGame(); }
 // 主人公はヤマト(男の子)だけ(2026-10-26 オーナー)。性別・名前の設定画面は無し。古い記録(g:'f')はヤマトとして読む
 async function newGame(){ ST.title.style.display='none'; await runCards(INTRO);
   stShow('full'); ST.bg.style.backgroundImage='none'; const g='m';
-  SAVE={v:1,g,name:DEFN(g),partner:null,flags:{},unlock:{evo:false,fusion:false},owned:[],stage:'tokyo'}; NOSAVE=false; saveGame();
+  SAVE={v:1,g,name:DEFN(g),partner:null,flags:{},unlock:{evo:false,fusion:false},owned:[],stage:'tokyo'}; NOSAVE=false; saveGame(); await progInit();
   heroGo(g); fadeEl.classList.add('on'); await sleep(260);
   LOADP=loadMap('oliva_town','start').catch(e=>console.error(e));   // 会話のあいだに村を読んでおく
   await sleep(60); fadeEl.classList.remove('on');
@@ -1787,10 +1920,10 @@ async function newGame(){ ST.title.style.display='none'; await runCards(INTRO);
   await runScene(SC.skyport,{bg:'tokyo_port',keepPaused:true});
   await runScene(SC.airship,{bg:'airship_v3',keepPaused:true});
   await arriveTown(); }
-async function contGame(sv){ ST.title.style.display='none'; SAVE=sv; if(sv.g!=='m'){ sv.g='m'; sv.name=DEFN('m'); } SAVE.unlock=SAVE.unlock||{evo:false,fusion:false}; SAVE.owned=SAVE.owned||[]; PARTY=sv.party||PARTY; BOX=sv.box||BOX; ITEMS=sv.items||ITEMS; heroGo(sv.g);
+async function contGame(sv){ ST.title.style.display='none'; SAVE=sv; if(sv.g!=='m'){ sv.g='m'; sv.name=DEFN('m'); } SAVE.unlock=SAVE.unlock||{evo:false,fusion:false}; SAVE.owned=SAVE.owned||[]; PARTY=sv.party||PARTY; BOX=sv.box||BOX; ITEMS=sv.items||ITEMS; heroGo(sv.g); await progInit();   // 古い記録(party:[{mid,rank}]・box)は progress.js が最初の init で移行する
   if(sv.stage!=='field'||!sv.map||!sv.partner){ stShow('full'); LOADP=loadMap('oliva_town','start'); if(sv.stage==='asuka'||sv.stage==='tokyo'){ await runScene(SC.tokyo,{bg:'tokyo_home',keepPaused:true}); SAVE.stage='airship'; saveGame(); await runScene(SC.skyport,{bg:'tokyo_port',keepPaused:true}); }
     await runScene(SC.airship,{bg:'airship_v3',keepPaused:true}); await arriveTown(); return; }
-  fadeEl.classList.add('on'); stHide(); await loadMap(sv.map,null,[sv.x,sv.z,sv.yaw]); partnerSet(sv.partner); if(sv.tod) setTime(sv.tod,true);
+  fadeEl.classList.add('on'); stHide(); await loadMap(sv.map,null,[sv.x,sv.z,sv.yaw]); followersSet(); if(sv.tod) setTime(sv.tod,true);
   await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); showArea(D.name); AREA=D.name; objUpdate(); }
 function toTitle(){ PAUSED=true; AUTO=null; STORY=false; TRANS=false; objEl.style.display='none'; fadeEl.classList.remove('on'); talkClose(); titleScreen(); }
 function titleScreen(){ for(const c of INTRO){ const im=new Image(); PIMG[c.bg]=im; im.src='intro/bg_'+c.bg+'.webp'; for(const m of c.mons||[]){ const j=new Image(); PIMG['m'+m[0]]=j; j.src='../battle/img/'+m[0]+'.webp'; } }
@@ -1807,7 +1940,8 @@ async function boot(){ const t0=performance.now();
   const gq=Q.get('g');
   if(gq==='m'||gq==='f'){   // 確認用: タイトルとイントロを飛ばして、その場から(記録しない)。主人公はヤマトだけ
     NOSAVE=true; const pid=+(Q.get('partner')||1001); SAVE={v:1,g:'m',name:DEFN('m'),partner:pid,flags:{arrived:1},unlock:{evo:Q.get('evo')==='1',fusion:Q.get('fusion')==='1'},owned:[],stage:'field'}; PARTY=[{mid:pid,rank:5}]; BOX={[pid]:{rank:5}};
-    heroGo('m'); const x=Q.get('x'), z=Q.get('z'); await loadMap(CFG.map0,null,x!=null?[+x,+z,Math.PI]:null); partnerSet(pid); PAUSED=false; LAST=performance.now(); objUpdate(); return; }
+    for(const k of (Q.get('flags')||'').split(',')) if(k) SAVE.flags[k]=1;   // 確認用: ?flags=guard1,guard2 で先の土地へ
+    heroGo('m'); await progInit(); if(Q.get('gems')) Progress.addGems(+Q.get('gems'),'test'); const x=Q.get('x'), z=Q.get('z'); await loadMap(CFG.map0,null,x!=null?[+x,+z,Math.PI]:null); followersSet(); PAUSED=false; LAST=performance.now(); objUpdate(); return; }
   titleScreen(); }
 boot().catch(e=>{ console.error(e); });
 
@@ -1832,7 +1966,7 @@ window.WORLD={ prof:{n:0,chunk:0,npc:0,mon:0,render:0,all:0,cam:0,ui:0}, READY, 
     let a1=0,a2=0,g1=0,g2=0; chunkRoot.traverse(m=>{ if(m.isInstancedMesh) a1++; }); g1=chunkRoot.children.length; for(const c of CHUNKS.values()){ if(c.group){ g2++; c.group.traverse(m=>{ if(m.isInstancedMesh) a2++; }); } }
     const fl=[]; chunkRoot.traverse(m=>{ if(m.isInstancedMesh&&m.userData.k==='flowers'&&fr.intersectsObject(m)) fl.push([m.count,m.geometry.boundingSphere.center.toArray().map(v=>v.toFixed(0)).join(','),m.geometry.boundingSphere.radius.toFixed(1)]); });
     return {o,byk,a1,a2,g1,g2,fl:fl.slice(0,20),nfl:fl.length}; },
-  G, groundAt, zoneAt:(x,z)=>zoneAt(x,z), goMap, loadMap, map:()=>MAP, save:()=>SAVE, party:()=>PARTY, story:()=>STORY, trans:()=>TRANS, advance, PALM };
+  G, groundAt, zoneAt:(x,z)=>zoneAt(x,z), goMap, loadMap, map:()=>MAP, save:()=>SAVE, party:()=>PARTY, story:()=>STORY, trans:()=>TRANS, advance, PALM, FOL, flag, progInit, followersSet, enterPlace, paused:()=>PAUSED };
 })();
 </script>
 </body>
