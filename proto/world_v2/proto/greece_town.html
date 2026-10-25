@@ -139,7 +139,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 //  ギリシャ地方 オリーヴァ村 — 歩ける見本 (three r128)
 //  地形・建物・小物・草は regions/<マップ>.json から組み立てる。街(オリーヴァ村)と自然(オリーブの丘)は別のマップで、
 //  門に入ると暗転して切り替える(そのマップの分だけ読む)。マップの中は48m角の区画で、主人公の近くだけ細かく作る。
-//  タイトル → イントロ → 主人公の設定 → 明日香村の朝 → 空の港・高速便 → 飛行船 → オリーヴァ村(ゾイ・エレナ博士) → 相棒を選ぶ → 丘でディミ。記録は localStorage(w2_save_v1)。
+//  タイトル → イントロ → 主人公の設定 → 明日香村の朝 → 空の港・高速便 → 飛行船 → オリーヴァ村(ゾイ・エレナ博士) → 相棒を選ぶ → 丘でハヤト。記録は localStorage(w2_save_v1)。
 //  人物は world_v2/v3(characters_v3・style_v3): 3D は v3/chars/{key}.glb(char_v3.js)、立ち絵は v3/portraits/{key}_{表情}.webp(全員右向き・右の枠は反転)。
 //  WORLD.swapHero(url) で差し替えられる。
 // =====================================================================================
@@ -1383,7 +1383,7 @@ function unlocks(){ const u=(SAVE&&SAVE.unlock)||{}; return {evo:!!u.evo,fusion:
 function ownedList(){ const o=new Set(); const evo=unlocks().evo; const add=id=>{ let k=+id, g=0; while(k!=null&&!o.has(k)&&g++<5){ o.add(k); if(!evo) break; k=MEVO[k]; } }; for(const id in BOX) add(id); for(const q of PARTY) add(q.mid); for(const id of (SAVE&&SAVE.owned)||[]) add(id); return [...o]; }
 function monName(id){ return MNAME[id]||MONN[id]||'この子'; }
 function objText(){ const f=SAVE?SAVE.flags:{}; if(!f.arrived) return '';
-  if(!f.hill) return '静域の門から、オリーブの丘へ'; if(!f.dimi) return '丘の道で、ディミと勝負';
+  if(!f.hill) return '静域の門から、オリーブの丘へ'; if(!f.dimi) return '丘の道で、ハヤトと勝負';
   if(!f.caught) return '野生の子を仲間にする'; if(!f.stavros) return '丘の上の農園で、スタヴロスに会う'; return '見本はここまで'; }
 function objUpdate(){ const t=objText(); objEl.textContent=t; objEl.style.display=t&&!STORY&&!TRANS?'block':'none'; }
 
@@ -1394,7 +1394,7 @@ const PDIR='../v3/portraits/';
 const E7=['normal','smile','surprised','serious','sad','angry','hurt'];
 const FACES={hero_m:E7,hero_f:E7,genichi:['normal'],misaki:['normal','smile'],hana:['normal'],ryo:['normal'],
   zoi:['normal','smile','surprised','serious','angry'],dimi:['normal','smile','surprised','serious'],elena:['normal','smile','serious'],tasos:['normal','smile','surprised'],petra:['normal','smile','surprised'],stavros:['normal','smile','serious']};
-const WHO={genichi:'じいちゃん',misaki:'母',hana:'ハナ',ryo:'父',zoi:'ゾイ',dimi:'ディミ',elena:'エレナ博士',tasos:'タソス',petra:'ペトラ',stavros:'スタヴロス'};
+const WHO={genichi:'じいちゃん',misaki:'母',hana:'ハナ',ryo:'父',zoi:'ゾイ',dimi:'ハヤト',elena:'エレナ博士',tasos:'タソス',petra:'ペトラ',stavros:'スタヴロス'};
 const DEFN=g=>g==='f'?'ツムギ':'カナタ';
 function fillT(t){ const g=SAVE?SAVE.g:'m'; return t.replace(/\{hero\}/g,SAVE?SAVE.name:DEFN(g)).replace(/\{partner\}/g,MONN[SAVE&&SAVE.partner]||'相棒').replace(/\{sib\}/g,g==='f'?'ねえね':'にいに'); }
 // 立ち絵の向き(絵ごと)。index.json を読むまでは全員右向きとして扱う
@@ -1556,13 +1556,11 @@ const SC={
   {fn:async()=>flag('tasos')},
  ],
  dimi:[
-  {w:'dimi',t:'へえ。お前が日本から来たっていう、旅の子か。'},
-  {w:'hero',t:'{hero}だよ。きみは？'},
-  {w:'dimi',f:'smile',t:'ディミ。パルテナから来た。おれも千の遺跡の旅に選ばれたんだ。'},
-  {w:'dimi',t:'道すじも同じ「地中海の道」。つまり、ずっと勝負の相手ってこと。'},
-  {w:'zoi',f:'surprised',t:'ディミ、おばあさんの家に来てたの？'},
-  {w:'dimi',f:'serious',t:'出発の前にな。……ばあちゃんの昔話は、もう聞きあきた。'},
-  {w:'dimi',t:'昔の話なんて役に立たない。強いのは新しく生まれた子だ。'},
+  {w:'dimi',t:'……{hero}か。お前も来たのか。'},
+  {w:'hero',f:'surprised',t:'ハヤト！　となりのクラスの……先に来てたんだ。'},
+  {w:'dimi',t:'おれは一人で旅をしてる。仲間はいらない。'},
+  {w:'zoi',f:'surprised',t:'知り合い？　なんか、こわい子だね。'},
+  {w:'dimi',f:'serious',t:'遺跡の昔話なんて役に立たない。大事なのは強さだけだ。'},
   {w:'hero',f:'serious',t:'古いものの中にも、すごいものはあるよ。'},
   {w:'dimi',f:'smile',t:'口だけなら何とでも言える。勝負だ！'},
  ],

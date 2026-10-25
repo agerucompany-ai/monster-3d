@@ -108,7 +108,7 @@ const MP_ATK_MAX = 10;          // 攻撃系の最大回数（通常攻撃・技
 const MP_HEAL_MAX = 3;          // 回復系の最大回数（全体/単体回復・浄化・蘇生）
 function noMP(u){ return u.isBoss; }                            // ボスはMP概念の対象外(無限)
 function atkLeft(u){ return noMP(u)?Infinity:(u.amp==null?MP_ATK_MAX:u.amp); }   // 残り攻撃回数
-function healLeft(u){ return noMP(u)?Infinity:(u.hmp==null?MP_HEAL_MAX:u.hmp); }  // 残り回復回数
+function healLeft(u){ if(BT.kind==='wild') return 0; return noMP(u)?Infinity:(u.hmp==null?MP_HEAL_MAX:u.hmp); }  // 残り回復回数
 function atkMax(u){ return u.ampMax||MP_ATK_MAX; }
 function healMax(u){ return u.hmpMax||MP_HEAL_MAX; }
 function canAtkMP(u){ return atkLeft(u)>=1; }
@@ -3034,7 +3034,7 @@ function updateUI(){ if(BT.headless) return;
           const base=comboBaseAtk(cr.members);
           ac.appendChild(mkbt(`🔱 合体攻撃「${cb.label}」(射程${cb.rng}・威力${base+COMBO_BONUS_MIN}〜${base+COMBO_BONUS_MAX})${okC?'':'(MP切れ)'}`,'fuse', !!okC, ()=>{ pushUndo(); doCombo(sel); reselectAfter(); })); } }
       // アイテム（オンライン以外は表示。盤上で拾った回復薬も使える）
-      if(!ONLINE){
+      if(!ONLINE && BT.kind!=='wild'){   // 2026-10-25 オーナー: 野生戦は回復なし
         if((STORY.items.heal||0)>0 && sel.hp<sel.maxhp)
           ac.appendChild(mkbt(`🧪回復の水筒×${STORY.items.heal}（${Math.round(healFrac()*100)}%）`,'evo', !sel.acted, ()=>{ pushUndo();
             const h2=Math.min(sel.maxhp-sel.hp, Math.round(sel.maxhp*healFrac())); sel.hp+=h2; STORY.items.heal--; BT.usedItems=(BT.usedItems||0)+1;
@@ -3045,7 +3045,7 @@ function updateUI(){ if(BT.headless) return;
             floatText(sel.r,sel.c,'+'+h2,'#bfffe0'); sel.acted=true; toast(`✨霊薬エリク！ 全回復`); syncUnits(); updateUI(); }));
       }
       // 光タイプ：回復・浄化（攻撃の代わりに味方/自分を癒やす）
-      if(uHasType(sel,'光')){
+      if(uHasType(sel,'光') && BT.kind!=='wild'){
         const healMP = canHealMP(sel);
         // 回復は攻撃MPと別枠：acted(行動済み)でなく回復MPが残っていれば撃てる
         const canAct = !sel.acted && sel.dug<=0;
@@ -3253,7 +3253,7 @@ function setBoardVisible(v){ for(const g of [tileGroup,gridGroup,structGroup,dec
 // ---- 盤の大きさごとの決まり(decisions.md 3 / game_design.md 8-3) ----
 // leaderHpX=リーダーの体力倍率(template は2.0) / budget=出せる子のLv合計 / maxTurn=最大ターン / rows=開始の行数(自陣の最奥から) / evo=進化エリア / springs=回復の泉(片側のマス数) / items=盤の回復薬 / dmgX=ダメージの倍率(バランス用) / sustainX=光の回復量・森の吸収量の倍率(省略=1)
 const SIZE_RULES={
-  7: {budget:3, maxTurn:10, rows:1, evo:'one',   springs:0, items:1, dmgX:2.10, hpX:1.00, leaderHpX:1.1, sustainX:0.45},   // シムで調整(2026-10-25): 1対1は両方リーダーなので体力1.6倍×回復/吸収で8割が時間切れだった → 10ターン・ダメージ2.1倍・リーダー1.1倍・回復/吸収45%。27組×80戦で時間切れ0.1%・平均5.8ターン・勝率70〜100%
+  7: {budget:3, maxTurn:10, rows:1, evo:'one',   springs:0, items:0, dmgX:2.10, hpX:1.00, leaderHpX:1.1, sustainX:0.45},   // シムで調整(2026-10-25): 1対1は両方リーダーなので体力1.6倍×回復/吸収で8割が時間切れだった → 10ターン・ダメージ2.1倍・リーダー1.1倍・回復/吸収45%。27組×80戦で時間切れ0.1%・平均5.8ターン・勝率70〜100%
   9: {budget:4, maxTurn:14, rows:2, evo:'cross', springs:2, items:2, dmgX:1.00, hpX:1.00, leaderHpX:2.0},
   11:{budget:5, maxTurn:20, rows:2, evo:'cross', springs:4, items:3, dmgX:1.20, hpX:1.00, leaderHpX:1.7},   // シムで調整: 8分前後・時間切れを減らす(template は dmgX1.0/リーダー2.0)
 };
