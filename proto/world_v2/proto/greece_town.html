@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>ピクシーウォーズ</title>
+<title>テリオンモンスター</title>
 <style>
 :root{--ink:#2c3e66;--cream:rgba(255,250,240,.86);--line:rgba(120,96,60,.18)}
 html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
@@ -18,6 +18,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 #tod{position:fixed;top:calc(12px + env(safe-area-inset-top));right:12px;display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--cream);border:1px solid var(--line);box-shadow:0 2px 8px rgba(80,60,30,.12)}
 #tod button{border:0;background:transparent;color:#6b5a44;font:inherit;font-weight:800;font-size:13px;width:34px;height:30px;border-radius:999px;cursor:pointer}
 #tod button.sel{background:var(--ink);color:#fff}
+#btSave{position:fixed;top:calc(52px + env(safe-area-inset-top));right:12px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--cream);color:var(--ink);font:inherit;font-weight:800;font-size:13px;box-shadow:0 2px 8px rgba(80,60,30,.12);cursor:pointer;display:none;z-index:4}
 #enter{position:fixed;left:50%;bottom:calc(34px + env(safe-area-inset-bottom));transform:translateX(-50%) scale(.92);padding:11px 26px;border-radius:999px;border:2px solid #fff;
   background:var(--ink);color:#fff;font:inherit;font-weight:800;font-size:16px;letter-spacing:.1em;box-shadow:0 4px 14px rgba(30,40,80,.28);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
 #enter.on{opacity:1;pointer-events:auto;transform:translateX(-50%) scale(1)}
@@ -87,13 +88,6 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 #stTitle{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:flex-end;gap:14px;padding-bottom:calc(70px + env(safe-area-inset-bottom))}
 #stTitle h1{position:absolute;top:17%;left:0;right:0;margin:0;text-align:center;color:#fff;font-size:clamp(32px,9.5vw,58px);letter-spacing:.14em;text-shadow:0 3px 16px rgba(20,30,60,.6),0 0 3px rgba(20,30,60,.7)}
 #stTitle h1 small{display:block;font-size:.34em;letter-spacing:.3em;margin-top:8px;opacity:.9}
-#stSetup{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:linear-gradient(#cfe2ee,#f3e6d2)}
-#stSetup .row{display:flex;gap:12px}
-#stSetup .g{border:3px solid #fff;border-radius:22px;background:rgba(255,250,240,.9);padding:8px 8px 12px;cursor:pointer;box-shadow:0 6px 18px rgba(60,50,30,.18);font:inherit;font-weight:800;color:var(--ink);font-size:15px;display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .15s}
-#stSetup .g img{width:min(38vw,190px);height:min(38vw,190px);object-fit:contain}
-#stSetup .g.sel{border-color:var(--ink);background:#fff;transform:translateY(-4px)}
-#stSetup label{font-weight:800;color:var(--ink);font-size:15px;display:flex;align-items:center;gap:10px}
-#stSetup input{font:inherit;font-weight:800;font-size:18px;width:8em;padding:8px 12px;border-radius:12px;border:2px solid rgba(44,62,102,.3);background:#fff;color:var(--ink);text-align:center}
 #stPick{position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);width:min(96vw,640px);display:none;flex-direction:column;align-items:center;gap:8px;z-index:2}
 #stPickCv{width:100%;aspect-ratio:3/1.3;display:block;border-radius:20px;background:radial-gradient(ellipse at 50% 72%,rgba(255,250,235,.96),rgba(236,224,200,.88));box-shadow:0 6px 18px rgba(20,20,30,.25)}
 #stPick .row{display:flex;width:100%;justify-content:space-around;gap:6px}
@@ -106,7 +100,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 <canvas id="cv"></canvas>
 <div id="vig"></div>
 <div id="area"></div>
-<div id="tod"><button data-t="morning">朝</button><button data-t="noon" class="sel">昼</button><button data-t="evening">夕</button></div>
+<div id="tod"><button data-t="morning">朝</button><button data-t="noon" class="sel">昼</button><button data-t="evening">夕</button></div><button id="btSave">セーブ</button>
 <button id="enter"></button>
 <div id="stick"><div id="knob"></div></div>
 <div id="toast"></div>
@@ -120,9 +114,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
   <img class="stP off" id="stR2" alt=""><img class="stP off" id="stL" alt=""><img class="stP off" id="stR" alt=""><div id="stPh"><img alt=""></div>
   <div id="stPick"><canvas id="stPickCv"></canvas><div class="row"><button data-m="1001">エンジュ</button><button data-m="1022">ビリトラ</button><button data-m="178">クマッパ</button></div><button class="stBtn go">この子にする</button></div>
   <div id="stBox"><b></b><p></p><i></i></div>
-  <div id="stTitle"><h1>ピクシーウォーズ</h1><button class="stBtn" id="btNew">はじめから</button><button class="stBtn sub" id="btCont">つづきから</button></div>
-  <div id="stSetup"><div class="row"><button class="g" data-g="m"><img data-src="../v3/portraits/hero_m_normal.webp" alt="">男の子</button><button class="g" data-g="f"><img data-src="../v3/portraits/hero_f_normal.webp" alt="">女の子</button></div>
-    <label>名前<input id="stName" maxlength="6" autocomplete="off"></label><button class="stBtn" id="btSetup">決定</button></div>
+  <div id="stTitle"><h1>テリオンモンスター<small>ギリシャ編</small></h1><button class="stBtn" id="btNew">はじめから</button><button class="stBtn sub" id="btCont">つづきから</button></div>
   <button id="stSkip">スキップ</button>
 </div>
 <script src="../../three.min.js"></script>
@@ -139,7 +131,10 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 //  ギリシャ地方 オリーヴァ村 — 歩ける見本 (three r128)
 //  地形・建物・小物・草は regions/<マップ>.json から組み立てる。街(オリーヴァ村)と自然(オリーブの丘)は別のマップで、
 //  門に入ると暗転して切り替える(そのマップの分だけ読む)。マップの中は48m角の区画で、主人公の近くだけ細かく作る。
-//  タイトル → イントロ → 主人公の設定 → 明日香村の朝 → 空の港・高速便 → 飛行船 → オリーヴァ村(ゾイ・エレナ博士) → 相棒を選ぶ → 丘でハヤト。記録は localStorage(w2_save_v1)。
+//  テリオンモンスター ギリシャ編(2026-10-26 正本: world_v2/ギリシャ編_設定まとめ_2026-10-26.md)。生き物の呼び名は「テリオン」。
+//  タイトル → イントロ → 主人公の設定(ヤマト) → 東京のひまな夏(じいちゃん) → 空の港 → 飛行船(ヒヨドルの群れ) → オリーヴァ村(エリー・エレナ博士・逃げた3体)
+//  → 手のひらの約束で相棒を選ぶ → レン登場 → 丘でレン → ログ＆パッチの網(初バトル)→言い伝え「王は、四つの守りに認められた子の前でだけ、目をさます」
+//  → 丘の西の入口でアレク(最初は敵) → 丘の下の迷路(oliva_maze) → 守り①ミノタス(古代テリオン)。記録は localStorage(w2_save_v1)。
 //  人物は world_v2/v3(characters_v3・style_v3): 3D は v3/chars/{key}.glb(char_v3.js)、立ち絵は v3/portraits/{key}_{表情}.webp(全員右向き・右の枠は反転)。
 //  WORLD.swapHero(url) で差し替えられる。
 // =====================================================================================
@@ -948,6 +943,10 @@ OB.mazegate=(o)=>{ const y=G(o.x,o.z), rot=(o.rot||0)*DEG, M=T(o.x,y,o.z,rot), W
   P_(rbox(W+3.2,0.9,2.0,0.08,1),0xa8a296,local(M,0,H+0.45,0),{vary:0.1}); P_(prism(W+3.6,1.0,2.1),0x9a948a,local(M,0,H+0.9,0));
   P_(rbox(W+1.5,H+0.9,0.4,0.02,1),0x14161c,local(M,0,(H+0.9)/2,-0.7)); P_(rbox(W+3.2,H+1.2,0.6,0.05,1),0x8f8a80,local(M,0,(H+1.2)/2,-1.1),{vary:0.1});
   for(const s of [-1,1]) P_(cyl(0.05,0.2,1.3,8),0xd8d0c0,local(M,s*0.9,H+2.0,0,0,1,1,1,0,-s*0.55)); };
+// 道しるべ(木の柱に板。次の土地の名は入口の名札=entrances で出す)。{t:'signpost',x,z,rot}
+OB.signpost=(o)=>{ const y=G(o.x,o.z), M=T(o.x,y,o.z,(o.rot||0)*DEG); P_(cyl(0.07,0.09,2.2,8),0x8a6a46,local(M,0,1.1,0),{ao:y});
+  for(let i=0;i<3;i++){ const sg=i%2?-1:1; P_(rbox(1.15,0.26,0.07,0.03,1),[0xe8d8b4,0xdfcfa8,0xe4d2ad][i],local(M,sg*0.36,2.0-i*0.36,0,0,1,1,1,0,sg*0.08)); }
+  addCol({t:'c',x:o.x,z:o.z,r:0.14}); };
 // 迷宮の広間の台(段と光の輪)。{t:'dais',x,z,r}
 OB.dais=(o)=>{ const y=G(o.x,o.z), r=o.r||4; for(let i=0;i<3;i++) P_(cyl(r-i*0.7,r-i*0.7+0.15,0.3,28),[0xb3ada2,0xbdb7ac,0xc9c3b8][i],T(o.x,y+0.15+i*0.3,o.z),{vary:0.06});
   CUR.B.add(cyl(r-1.9,r-1.9,0.07,28,1,true),MAT.glow,T(o.x,y+0.96,o.z),{col:0x7fd6ff,shadow:false}); addCol({t:'c',x:o.x,z:o.z,r:r+0.1}); };
@@ -1335,7 +1334,8 @@ function npcMesh(o){ const B=new Builder(); CUR={B,cols:[],dyn:[],extra:[]}; con
   CUR=null; const g=new THREE.Group(); B.build(g); return g; }
 function makeLabel(text){ const e=document.createElement('div'); e.className='lbl'; e.textContent=text; document.body.appendChild(e); return e; }
 function initActors(){ for(const o of D.npcs){ const g=new THREE.Group(); g.position.set(o.x,0,o.z); g.rotation.y=(o.rot||0)*DEG; NPCS.push({o,g,x:o.x,z:o.z,r:0.36,yaw:(o.rot||0)*DEG,lbl:makeLabel(o.n),ph:Math.random()*6,pi:0,wait:0}); }
-  for(const o of D.wild) MONS.push({o,x:o.x,z:o.z,yaw:Math.random()*6.28,st:'idle',t:Math.random()*3,tx:o.x,tz:o.z,inst:null,want:false,wild:true,r:0.32});
+  for(const o of D.wild){ if(o.ancient&&SAVE&&SAVE.flags[o.flag||'guard1']) continue;   // 古代テリオン(守り)は認められたら広間からいなくなる
+    MONS.push({o,x:o.x,z:o.z,yaw:Math.random()*6.28,st:'idle',t:Math.random()*3,tx:o.x,tz:o.z,inst:null,want:false,wild:true,r:0.32}); }
   for(const o of D.helpers) MONS.push({o,x:o.x,z:o.z,yaw:(o.rot||0)*DEG,st:'still',t:0,inst:null,want:false,wild:false,r:0.32});
   for(const d of D.drones){ const B=new Builder(); CUR={B,cols:[],dyn:[],extra:[]}; P_(rbox(0.56,0.16,0.56,0.07,1),0xf6f6f4,T(0,0,0)); P_(rbox(0.58,0.05,0.12,0.02,1),0x3c9a9a,T(0,0.05,0));
     for(let i=0;i<4;i++){ const a=i/4*6.28+0.785; P_(rbox(0.4,0.04,0.05,0.02,1),0xd0d4da,T(Math.cos(a)*0.28,0.04,Math.sin(a)*0.28,-a)); P_(cyl(0.16,0.16,0.015,14),0xbfc8d4,T(Math.cos(a)*0.46,0.1,Math.sin(a)*0.46)); }
@@ -1428,7 +1428,8 @@ enterEl.addEventListener('click',()=>{ if(!ENTER||STORY) return; if(ENTER.npc){ 
 function enterPlace(n){ const f=SAVE?SAVE.flags:{};
   if(n==='記憶館'){ toast('記憶館'); return; }
   if(n==='旅人の宿'){ if(!f.tasos) storyField('tasos'); else toast('旅人の宿'); return; }
-  if(n==='ムネモ研究所'){ toast('ムネモ研究所 オリーヴァ支所'); return; }
+  if(n==='テリオン研究所'||n==='ムネモ研究所'){ toast('テリオン研究所 オリーヴァ支所'); return; }
+  if(n==='道しるべ'){ toast('→ アルカディアの森 → 港町ナフリア → 運河の町コリンタ → 山の村デルフィナ（準備中）'); return; }
   if(n==='店'){ ITEMS.heal=Math.max(ITEMS.heal||0,3); toast('回復の水筒 ×'+ITEMS.heal); saveGame(); return; }
   if(n==='いこいの泉'){ toast('みんな元気になった'); return; } toast(n); }
 function npcTalk(n){ const sc=n.o.scene, f=SAVE?SAVE.flags:{}; if(sc&&!n.o.trainer&&!f[sc]&&SC[sc]){ storyField(sc); return; }
@@ -1438,7 +1439,7 @@ const _pv=new THREE.Vector3();
 const talkEl=document.getElementById('talk'), bangEl=document.getElementById('bang'), flashEl=document.getElementById('flash'); let TALK=null;
 function talkTo(n,line){ TALK=n; n.talkT=4; const ty=Math.atan2(n.x-HERO.x,n.z-HERO.z); HERO.yaw=ty; if(HERO.hv) HERO.hv.play('Talk',0.15); if(n.rig&&n.rig.v3) n.rig.hv.play('Talk',0.2);
   if(n.rig&&n.rig.acts.agree){ const a=n.rig.acts.agree; a.setLoop(THREE.LoopOnce,1); a.reset().play(); const f=n.rig.acts[n.rig.cur]; if(f&&f!==a) f.crossFadeTo(a,0.2,false); n.rig.cur='agree'; setTimeout(()=>{ if(n.rig.cur==='agree'){ n.rig.acts.idle.reset().play(); a.crossFadeTo(n.rig.acts.idle,0.3,false); n.rig.cur='idle'; } },1500); }
-  talkEl.querySelector('b').textContent=n.o.n; talkEl.querySelector('p').textContent=line||n.o.line||'こんにちは。'; talkEl.style.display='block'; }
+  talkEl.querySelector('b').textContent=n.o.n; talkEl.querySelector('p').textContent=line||n.o.line||'……'; talkEl.style.display='block'; }
 function talkClose(){ TALK=null; talkEl.style.display='none'; }
 talkEl.addEventListener('click',talkClose);
 // ---- 自然の中の出会い → 盤のバトル(world_v2/battle/battle.js の startBattle) ----
@@ -1448,20 +1449,21 @@ function loadScript(src){ return new Promise((res,rej)=>{ const e=document.creat
 function placeAt(x,z){ if(TER.streamQ(x,z)[0]<8) return 'stream'; if(TER.coastD(x,z)<14) return 'seaside'; for(const e of D.grass.tall){ if(inEll(x,z,[e[0],e[1],e[2]+2,e[3]+2])<1) return 'meadow'; } if(x>-34&&x<46&&z>23&&z<50) return 'olive'; return 'meadow'; }
 function inTown(x,z){ if(!D) return true; if(D.quiet) return D.quiet.some(r=>x>r[0]&&x<r[2]&&z>r[1]&&z<r[3]); return !D.nature; }   // 街のマップは全部が静域。quiet(矩形の列)があればその中だけ静域(アテネ・クレタ 2026-10-25)
 function encounterCheck(dt){ encCool-=dt; if(WORLD.noEnc||ENC||STORY||TRANS||encCool>0||!READY.hero||inTown(HERO.x,HERO.z)) return;
-  for(const m of MONS){ if(!m.wild||!m.inst||m.gone) continue; if(Math.hypot(m.x-HERO.x,m.z-HERO.z)<1.5){ startEncounter({type:'wild',m}); return; } }
+  for(const m of MONS){ if(!m.wild||!m.inst||m.gone) continue; if(Math.hypot(m.x-HERO.x,m.z-HERO.z)<(m.o.ancient?2.8:1.5)){ startEncounter({type:'wild',m}); return; } }
   for(const n of NPCS){ if(!n.o.trainer||n.beaten||!n.rig) continue; if(Math.hypot(n.x-HERO.x,n.z-HERO.z)<3.4){ startEncounter({type:'trainer',n}); return; } } }
 async function startEncounter(e){ ENC=e; AUTO=null; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; enterEl.classList.remove('on');
   const who=e.m?e.m:e.n; const P=new THREE.Vector3(who.x,groundAt(who.x,who.z)+(e.m?e.m.o.h+0.3:1.9),who.z).project(camera);
   bangEl.style.left=((P.x*0.5+0.5)*innerWidth)+'px'; bangEl.style.top=((-P.y*0.5+0.5)*innerHeight)+'px'; bangEl.style.display='block';
   if(e.n){ HERO.yaw=Math.atan2(e.n.x-HERO.x,e.n.z-HERO.z); e.n.yaw=Math.atan2(HERO.x-e.n.x,HERO.z-e.n.z); talkTo(e.n,e.n.o.n+'が勝負をしかけてきた！'); if(e.n.o.scene&&SC[e.n.o.scene]&&!(SAVE&&SAVE.flags['seen_'+e.n.o.scene])){ await sleep(500); bangEl.style.display='none'; talkClose(); await storyField(e.n.o.scene); if(SAVE) SAVE.flags['seen_'+e.n.o.scene]=1; } }
-  if(e.m) toast('野生の'+monName(e.m.o.id)+'が飛び出してきた！');
+  if(e.m) toast(e.m.o.ancient?'古代テリオン・'+monName(e.m.o.id)+'が、角をこちらに向けた！':'野生の'+monName(e.m.o.id)+'が飛び出してきた！');
+  if(e.m&&e.m.o.scene&&SC[e.m.o.scene]&&!(SAVE&&SAVE.flags['seen_'+e.m.o.scene])){ await sleep(500); bangEl.style.display='none'; await storyField(e.m.o.scene); if(SAVE) SAVE.flags['seen_'+e.m.o.scene]=1; }   // 古代テリオン(守り)に会う場面
   const load=window.startBattle?Promise.resolve():loadScript('../battle/battle.js');
   await new Promise(r=>setTimeout(r,e.n?1300:700)); bangEl.style.display='none'; talkClose();
   flashEl.style.opacity=1; await load; await new Promise(r=>setTimeout(r,350));
   PAUSED=true; flashEl.style.opacity=0; const place=placeAt(HERO.x,HERO.z); STATS.battles=(STATS.battles||0)+1;
   const opt={ kind:e.m?'wild':(e.n.o.master?'master':'trainer'), size:e.m?7:(e.n.o.master?11:9), terrainTheme:place, backdrop:place==='seaside'?'aegean':'olive',
     player:{party:PARTY,items:ITEMS,box:BOX,rankCap:10,owned:ownedList()},
-    enemy:e.m?{party:[{mid:e.m.o.id,rank:3}]}:{name:e.n.o.n,party:(e.n.o.party||[{mid:1059,rank:4},{mid:1037,rank:3}]).map(x=>Object.assign({},x))} };
+    enemy:e.m?{party:[{mid:e.m.o.id,rank:e.m.o.rank||3}],name:e.m.o.ancient?'古代テリオン '+monName(e.m.o.id):undefined}:{name:e.n.o.n,party:(e.n.o.party||[{mid:1059,rank:4},{mid:1037,rank:3}]).map(x=>Object.assign({},x))} };
   if(unlocks().fusion) opt.fusionUnlocked=true;   // 融合は解禁のあとだけ渡す(見本の範囲=序盤は渡さない)
   if(D.battle){ const bt=(D.battle.byArea&&D.battle.byArea[zoneAt(HERO.x,HERO.z)])||D.battle[place]||D.battle.default; if(bt) Object.assign(opt,bt); }   // マップごとの盤の見た目(遺跡・海辺など)。バランスは触らない
   Object.assign(opt,WORLD.battleOpt||{});
@@ -1469,16 +1471,20 @@ async function startEncounter(e){ ENC=e; AUTO=null; IN.active=false; IN.sx=IN.sy
   endEncounter(e,res); }
 function endEncounter(e,res){ if(res&&res.result==='quit'){ WORLD.lastBattle=res; ENC=null; encCool=4; saveGame(); toTitle(); return; }
   PAUSED=false; LAST=performance.now(); WORLD.lastBattle=res; if(res&&res.items) ITEMS=res.items;
-  if(res&&res.caught){ const c=res.caught, b=c.base||c.mid; if(c.isNew){ BOX[b]={rank:c.rank||3,stack:c.stack||0}; if(PARTY.length<6) PARTY.push({mid:c.mid,rank:c.rank||3}); }
+  if(res&&res.caught&&!(e.m&&e.m.o.ancient)){ const c=res.caught, b=c.base||c.mid; if(c.isNew){ BOX[b]={rank:c.rank||3,stack:c.stack||0}; if(PARTY.length<6) PARTY.push({mid:c.mid,rank:c.rank||3}); }
     else { BOX[b]={rank:c.rankAfter||((BOX[b]||{}).rank||3),stack:c.stack||0}; for(const q of PARTY) if(q.mid===c.mid||q.mid===b){ q.rank=c.rankAfter||q.rank; q.stack=c.stack||0; } }
     flag('caught'); toast(monName(c.mid)+(c.isNew?'が仲間になった！':'の成長ランクが'+(c.rankAfter||'')+'になった！')); }
-  if(e.n&&SAVE){ if(e.n.o.scene==='dimi') flag('dimi'); if(res&&res.result==='win'){ SAVE.flags['beat_'+e.n.o.n]=1; if(e.n.o.scene==='stavros') flag('stavros'); } }
-  if(e.m){ if(res&&(res.result==='win'||res.result==='draw'||res.result==='flee')){ e.m.gone=true; if(e.m.inst&&e.m.inst.root.parent) scene.remove(e.m.inst.root); setTimeout(()=>{ e.m.gone=false; e.m.x=e.m.o.x; e.m.z=e.m.o.z; },60000); }
+  let after=null;   // 勝ったあとの場面(ログ＆パッチの撤収・アレクが道をあける・守り①に認められる)
+  if(e.n&&SAVE){ if(e.n.o.scene==='dimi') flag('dimi'); if(res&&res.result==='win'){ SAVE.flags['beat_'+e.n.o.n]=1; if(e.n.o.scene==='stavros') flag('stavros'); if(e.n.o.scene==='patch') flag('mission'); if(e.n.o.scene==='alek') flag('alek'); if(e.n.o.after&&SC[e.n.o.after]) after=e.n.o.after; } }
+  if(e.m&&e.m.o.ancient){ if(res&&res.result==='win'){ e.m.gone=true; if(e.m.inst&&e.m.inst.root.parent) scene.remove(e.m.inst.root); flag(e.m.o.flag||'guard1'); if(e.m.o.after&&SC[e.m.o.after]) after=e.m.o.after; }   // 古代テリオンは仲間にならない。認められた(勝った)ら広間からいなくなる
+    const dx=HERO.x-e.m.x, dz=HERO.z-e.m.z, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*1.6,HERO.z+dz/L*1.6); }
+  else if(e.m){ if(res&&(res.result==='win'||res.result==='draw'||res.result==='flee')){ e.m.gone=true; if(e.m.inst&&e.m.inst.root.parent) scene.remove(e.m.inst.root); setTimeout(()=>{ e.m.gone=false; e.m.x=e.m.o.x; e.m.z=e.m.o.z; },60000); }
     const dx=HERO.x-e.m.x, dz=HERO.z-e.m.z, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*1.2,HERO.z+dz/L*1.2); }
-  if(e.n){ if(res&&res.result==='win'){ e.n.beaten=true; e.n.o.line=e.n.o.lineAfter||'まいった！ いい手合わせだったよ。'; } const dx=HERO.x-e.n.x, dz=HERO.z-e.n.z, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*1.5,HERO.z+dz/L*1.5); }
+  if(e.n){ if(res&&res.result==='win'){ e.n.beaten=true; e.n.o.line=e.n.o.lineAfter||'……'; } const dx=HERO.x-e.n.x, dz=HERO.z-e.n.z, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*1.5,HERO.z+dz/L*1.5); }
   if(HERO.hv&&res&&res.result==='win') HERO.hv.play('Cheer',0.15);
-  encCool=4; ENC=null; flashEl.style.opacity=0.9; setTimeout(()=>flashEl.style.opacity=0,60); objUpdate(); saveGame(); }
-function uiUpdate(dt){ areaT-=dt; if(areaT<=0){ areaT=0.3; const z=zoneAt(HERO.x,HERO.z); if(z&&z!==AREA){ AREA=z; showArea(z); } }
+  encCool=4; ENC=null; flashEl.style.opacity=0.9; setTimeout(()=>flashEl.style.opacity=0,60); objUpdate(); saveGame();
+  if(after) setTimeout(()=>{ if(!STORY&&!TRANS) storyField(after); },500); }
+function uiUpdate(dt){ autosaveTick(dt); areaT-=dt; if(areaT<=0){ areaT=0.3; const z=zoneAt(HERO.x,HERO.z); if(z&&z!==AREA){ AREA=z; showArea(z); } }
   let best=null, bd=1.9; for(const ic of ICONS){ const e=ic.e; const p=e.x!=null?[e.x,e.z]:DOORS[e.door]; if(!p){ ic.sp.visible=false; continue; } const d=Math.hypot(HERO.x-p[0],HERO.z-p[1]);
     ic.sp.visible=d<45; if(ic.sp.visible){ const y=groundAt(p[0],p[1]); ic.sp.position.set(p[0],y+3.1+Math.sin(NOW*0.002+p[0])*0.08,p[1]); } if(d<bd){ bd=d; best=e; } }
   // 話しかけられる人(入口より優先)
@@ -1584,7 +1590,11 @@ async function goMap(to,at){ if(TRANS) return; TRANS=true; const t0=performance.
   await loadMap(to,at); await settleMap(3500); LAST=performance.now(); PAUSED=false; await sleep(40);
   fadeEl.classList.remove('on'); STATS.transMs=performance.now()-t0; await sleep(260); TRANS=false;
   if(D.nature) flag('hill'); objUpdate(); saveGame(); showArea(D.name); AREA=D.name; }
-function exitCheck(){ if(TRANS||STORY||ENC||!D||!D.exits) return; for(const e of D.exits){ const r=e.r; if(HERO.x>r[0]&&HERO.x<r[2]&&HERO.z>r[1]&&HERO.z<r[3]){ goMap(e.to,e.at); return; } } }
+function exitCheck(){ if(TRANS||STORY||ENC||!D||!D.exits) return; for(const e of D.exits){ const r=e.r; if(HERO.x>r[0]&&HERO.x<r[2]&&HERO.z>r[1]&&HERO.z<r[3]){
+    // todo=まだ作っていない土地(道しるべだけ)。need=物語の旗が立つまで通れない(迷路の入口はアレクに勝つまで)。手前へ押し戻す
+    if(e.todo||(e.need&&!(SAVE&&SAVE.flags[e.need]))){ if(!(exitCheck.t>NOW-2500)){ exitCheck.t=NOW; toast(e.todo?e.todo+'へ。（まだ作っていない）':(e.lock||'まだ進めない')); }
+      const cx=(r[0]+r[2])/2, cz=(r[1]+r[3])/2; const dx=HERO.x-cx, dz=HERO.z-cz, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*0.5,HERO.z+dz/L*0.5); return; }
+    goMap(e.to,e.at); return; } } }
 
 // ---------------------------------------------------------------- 相棒の連れ歩き
 const PALM={id:null,inst:null,x:0,z:0,yaw:0,ph:0};
@@ -1603,6 +1613,13 @@ function loadSave(){ try{ const s=JSON.parse(localStorage.getItem(SKEY)); return
 function saveGame(){ if(!SAVE||NOSAVE) return; if(D&&MAP&&READY.scene) Object.assign(SAVE,{map:MAP,x:+HERO.x.toFixed(2),z:+HERO.z.toFixed(2),yaw:+HERO.yaw.toFixed(3)});
   Object.assign(SAVE,{party:PARTY,box:BOX,items:ITEMS,tod:TODN,t:Date.now()}); try{ localStorage.setItem(SKEY,JSON.stringify(SAVE)); STATS.saves=(STATS.saves||0)+1; }catch(e){} }
 function flag(k){ if(SAVE&&!SAVE.flags[k]){ SAVE.flags[k]=1; objUpdate(); } }
+// 手動セーブ(HUDの「セーブ」)・自動セーブ(野歩き中30秒ごと・画面を閉じる/隠す時)。読むのはタイトルの「つづきから」(contGame)
+const saveBtn=document.getElementById('btSave'); let AUTOSAVE_T=0;
+function canSave(){ return !!(SAVE&&!NOSAVE&&READY.scene&&D&&MAP&&!STORY&&!TRANS&&!ENC&&!PAUSED); }
+saveBtn.addEventListener('click',()=>{ if(!canSave()) return; saveGame(); toast('セーブしました'); });
+function autosaveTick(dt){ saveBtn.style.display=canSave()?'block':'none'; if(!canSave()) return; AUTOSAVE_T+=dt; if(AUTOSAVE_T>30){ AUTOSAVE_T=0; saveGame(); } }
+addEventListener('pagehide',()=>{ if(SAVE&&!NOSAVE&&READY.scene&&D&&MAP) saveGame(); });
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'&&SAVE&&!NOSAVE&&READY.scene&&D&&MAP) saveGame(); });
 const MONN={1001:'エンジュ',1022:'ビリトラ',178:'クマッパ'};   // v3名簿(2026-10-25)の御三家
 let MNAME={}, MEVO={}, MMODEL={}; fetch('../battle/data/monsters.json').then(r=>r.json()).then(a=>{ for(const m of a){ MNAME[m.id]=m.name; MEVO[m.id]=m.evolves_to; MMODEL[m.id]=m.model3d!==false; } }).catch(()=>{});
 // 持っている種類(owned): 仲間にした子は、その系統(次の段・その次の段)を全部持っている扱い(game_design 9-2)。バトルでの進化の判定に渡す
@@ -1611,19 +1628,21 @@ function unlocks(){ const u=(SAVE&&SAVE.unlock)||{}; return {evo:!!u.evo,fusion:
 function ownedList(){ const o=new Set(); const evo=unlocks().evo; const add=id=>{ let k=+id, g=0; while(k!=null&&!o.has(k)&&g++<5){ o.add(k); if(!evo) break; k=MEVO[k]; } }; for(const id in BOX) add(id); for(const q of PARTY) add(q.mid); for(const id of (SAVE&&SAVE.owned)||[]) add(id); return [...o]; }
 function monName(id){ return MNAME[id]||MONN[id]||'この子'; }
 function objText(){ const f=SAVE?SAVE.flags:{}; if(!f.arrived) return '';
-  if(!f.hill) return '静域の門から、オリーブの丘へ'; if(!f.dimi) return '丘の道で、ハヤトと勝負';
-  if(!f.caught) return '野生の子を仲間にする'; if(!f.stavros) return '丘の上の農園で、スタヴロスに会う'; return '見本はここまで'; }
+  if(!f.hill) return '静域の門から、オリーブの丘へ'; if(!f.dimi) return '丘の道で、レンと勝負';
+  if(!f.mission) return '丘の上の競技場の跡へ。ゼロデイを止める'; if(!f.alek) return '丘の西のはずれ、迷路の入口へ';
+  if(!f.guard1) return '丘の下の迷路の底で、守り①に会う'; return '守り①クリア。次はアルカディアの森（準備中）'; }
 function objUpdate(){ const t=objText(); objEl.textContent=t; objEl.style.display=t&&!STORY&&!TRANS?'block':'none'; }
 
 // ---------------------------------------------------------------- 会話(立ち絵つき)・イントロ
 const $=id=>document.getElementById(id);
-const ST={el:$('st'),bg:$('stBg'),L:$('stL'),R:$('stR'),R2:$('stR2'),ph:$('stPh'),box:$('stBox'),nm:$('stBox').querySelector('b'),tx:$('stBox').querySelector('p'),card:$('stCard'),cap:$('stCard').querySelector('.cap'),skip:$('stSkip'),title:$('stTitle'),setup:$('stSetup'),pick:$('stPick')};
+const ST={el:$('st'),bg:$('stBg'),L:$('stL'),R:$('stR'),R2:$('stR2'),ph:$('stPh'),box:$('stBox'),nm:$('stBox').querySelector('b'),tx:$('stBox').querySelector('p'),card:$('stCard'),cap:$('stCard').querySelector('.cap'),skip:$('stSkip'),title:$('stTitle'),pick:$('stPick')};
 const PDIR='../v3/portraits/';
 const E7=['normal','smile','surprised','serious','sad','angry','hurt'];
 const FACES={hero_m:E7,hero_f:E7,genichi:['normal'],misaki:['normal','smile'],hana:['normal'],ryo:['normal'],
-  zoi:['normal','smile','surprised','serious','angry'],dimi:['normal','smile','surprised','serious'],elena:['normal','smile','serious'],tasos:['normal','smile','surprised'],petra:['normal','smile','surprised'],stavros:['normal','smile','serious']};
-const WHO={genichi:'じいちゃん',misaki:'母',hana:'ハナ',ryo:'父',zoi:'ゾイ',dimi:'ハヤト',elena:'エレナ博士',tasos:'タソス',petra:'ペトラ',stavros:'スタヴロス'};
-const DEFN=g=>g==='f'?'ツムギ':'カナタ';
+  elly:['normal','smile','surprised','sad','serious'],alek:['normal'],dimi:['normal','smile','surprised','serious'],elena:['normal','smile','serious'],tasos:['normal','smile','surprised'],petra:['normal','smile','surprised'],stavros:['normal','smile','serious']};
+// 立ち絵の鍵: elly=エリー(anime/chars/elly)・alek=アレク(anime/chars/alek)・dimi=レン(絵は dimi のまま)・stavros=ヤニス(絵は仮)。patch/log/x は絵なし(名前だけ)
+const WHO={genichi:'じいちゃん',misaki:'母',hana:'ハナ',ryo:'父',elly:'エリー',alek:'アレク',dimi:'レン',elena:'エレナ博士',tasos:'タソス',petra:'ペトラ',stavros:'ヤニス',patch:'パッチ',log:'ログ',x:''};
+const DEFN=g=>'ヤマト';   // 主人公はヤマトだけ(女の子版 hero_f は使わない)
 function fillT(t){ const g=SAVE?SAVE.g:'m'; return t.replace(/\{hero\}/g,SAVE?SAVE.name:DEFN(g)).replace(/\{partner\}/g,MONN[SAVE&&SAVE.partner]||'相棒').replace(/\{sib\}/g,g==='f'?'ねえね':'にいに'); }
 // 立ち絵の向き(絵ごと)。index.json を読むまでは全員右向きとして扱う
 const PFACE={}; fetch(PDIR+'index.json').then(r=>r.json()).then(j=>{ for(const k in j.chars){ const f=j.chars[k].facing||{}; for(const e in f) PFACE[PDIR+k+'_'+e+'.webp']=f[e]; } }).catch(()=>{});
@@ -1633,18 +1652,19 @@ for(const im of [ST.L,ST.R,ST.R2]) im.onerror=()=>im.classList.add('off');
 const PIMG={}; let ADV=null; function advance(){ if(ADV){ const f=ADV; ADV=null; f(); } }
 ST.box.addEventListener('click',e=>{ e.stopPropagation(); advance(); });
 ST.el.addEventListener('click',()=>{ if(!ST.el.classList.contains('field')&&ST.box.style.display==='block') advance(); });
-addEventListener('keydown',e=>{ if((e.code==='Space'||e.code==='Enter')&&ADV&&document.activeElement!==$('stName')){ e.preventDefault(); advance(); } });
+addEventListener('keydown',e=>{ if((e.code==='Space'||e.code==='Enter')&&ADV){ e.preventDefault(); advance(); } });
 function waitAdv(){ return new Promise(r=>{ ADV=r; }); }
 async function typeOut(el,t){ el.textContent=''; let skip=false; const prev=ADV; ADV=()=>{ skip=true; };
   for(let i=1;i<=t.length;i++){ if(skip){ el.textContent=t; break; } el.textContent=t.slice(0,i); await sleep(22); } ADV=null; }
 function stShow(mode,bg){ ST.el.style.display='block'; ST.el.classList.toggle('field',mode==='field'); if(bg) ST.bg.style.backgroundImage=`url(intro/bg_${bg}.webp)`;
-  ST.el.classList.remove('trio'); for(const k of ['card','title','setup','pick','ph']) ST[k].style.display='none'; ST.box.style.display='none'; for(const k of ['L','R','R2']){ ST[k].classList.add('off'); ST[k].dataset.w=''; } ST.skip.style.display='none'; }
+  ST.el.classList.remove('trio'); for(const k of ['card','title','pick','ph']) ST[k].style.display='none'; ST.box.style.display='none'; for(const k of ['L','R','R2']){ ST[k].classList.add('off'); ST[k].dataset.w=''; } ST.skip.style.display='none'; }
 function stHide(){ ST.el.style.display='none'; ST.box.style.display='none'; ADV=null; }
 // lines: {w:'hero'|'genzo'|...|'partner'|null(ナレ), t, f:表情, if:()=>bool, fn:async()=>{}}
 async function runScene(lines,opt){ opt=opt||{}; const field=!!opt.field; STORY=true; objUpdate(); enterEl.classList.remove('on'); talkClose(); IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; AUTO=null;
   stShow(field?'field':'full',opt.bg); if(!field) PAUSED=true; ST.L.removeAttribute('src'); ST.R.removeAttribute('src'); ST.R2.removeAttribute('src');
   { const ps=[]; for(const L of lines){ const q=L.w&&L.w!=='partner'?pSrc(L.w,L.f||'normal'):null; if(q&&!ps.includes(q)) ps.push(q); } await Promise.race([Promise.all(ps.map(u=>new Promise(r=>{ const im=new Image(); PIMG[u]=im; im.onload=im.onerror=r; im.src=u; }))),sleep(1500)]); }
-  for(const L of lines){ if(L.if&&!L.if()) continue; if(L.fn){ ST.box.style.display='none'; await L.fn(); continue; }
+  for(const L of lines){ if(L.todo||(!L.fn&&!L.t)) continue;   // 台詞の枠だけ(空)の行は飛ばす(物語はあとで貼る)
+    if(L.if&&!L.if()) continue; if(L.fn){ ST.box.style.display='none'; await L.fn(); continue; }
     const w=L.w; const nar=!w; ST.box.classList.toggle('nar',nar); ST.box.style.display='block';
     ST.nm.textContent=w==='hero'?(SAVE?SAVE.name:DEFN(SAVE&&SAVE.g)):(w==='partner'?(MONN[SAVE.partner]||''):(L.n||WHO[w]||w||''));
     const src=w&&w!=='partner'?pSrc(w,L.f||'normal'):null;
@@ -1661,16 +1681,16 @@ async function runScene(lines,opt){ opt=opt||{}; const field=!!opt.field; STORY=
     await typeOut(ST.tx,fillT(L.t)); await waitAdv(); }
   stHide(); STORY=false; if(!field){ PAUSED=!READY.scene||!!opt.keepPaused; LAST=performance.now(); } objUpdate(); saveGame(); }
 async function runCards(cards){ stShow('full'); PAUSED=true; ST.card.style.display='block'; ST.skip.style.display='block'; let skipAll=false; ST.skip.onclick=e=>{ e.stopPropagation(); skipAll=true; advance(); };
-  for(const c of cards){ if(skipAll) break; ST.bg.style.opacity=0; await sleep(250); ST.bg.style.backgroundImage=`url(intro/bg_${c.bg}.webp)`; ST.card.querySelectorAll('.mon2d').forEach(e=>e.remove());
+  for(const c of cards){ if(skipAll||!c.t) continue; ST.bg.style.opacity=0; await sleep(250); ST.bg.style.backgroundImage=`url(intro/bg_${c.bg}.webp)`; ST.card.querySelectorAll('.mon2d').forEach(e=>e.remove());
     for(const m of c.mons||[]){ const im=document.createElement('img'); im.className='mon2d'; im.src='../battle/img/'+m[0]+'.webp'; im.style.left=m[1]+'%'; im.style.top=m[2]+'%'; im.style.width=`min(${m[3]||30}vw,${(m[3]||30)*6.3}px)`; im.style.animationDelay=(Math.random()*2)+'s'; if(m[4]) im.style.opacity=m[4]; ST.card.appendChild(im); }
     ST.bg.style.opacity=1; ST.cap.classList.remove('on'); ST.cap.textContent=c.t; await sleep(200); ST.cap.classList.add('on');
     await new Promise(r=>{ ADV=r; ST.card.onclick=()=>advance(); }); }
   ST.card.onclick=null; ST.card.querySelectorAll('.mon2d').forEach(e=>e.remove()); ST.card.style.display='none'; ST.skip.style.display='none'; }
-const INTRO=[
-  {bg:'intro1_v3',t:'2100年。\n人と生き物が、となりで暮らす時代。'},
-  {bg:'intro3_v3',t:'生き物は、生まれた土地の記憶から姿をもらう。\n森には森の子、水辺には水辺の子。'},
-  {bg:'intro2_v3',t:'古い遺跡の記憶からは、\n昔の話そのもののような「いにしえの子」が生まれる。'},
-  {bg:'airship_v3',t:'毎年、世界から選ばれた子どもが、\n相棒と遺跡をめぐる旅に出る。\n「千の遺跡の旅」。'},
+const INTRO=[   // イントロの字幕カード(台詞は空。t が空のカードは飛ばす)
+  {bg:'intro1_v3',t:''},
+  {bg:'intro3_v3',t:''},
+  {bg:'intro2_v3',t:''},
+  {bg:'airship_v3',t:''},
 ]
 // 相棒を選ぶ(3体の3D)
 let PK=null;
@@ -1683,7 +1703,7 @@ function pickPartner(){ return new Promise(res=>{ ST.pick.style.display='flex'; 
       const sh=new THREE.Mesh(new THREE.PlaneGeometry(1.5,1.1).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:TEX.blob,transparent:true,depthWrite:false,opacity:0.8})); sh.position.set((i-1)*2.1,0.01,0); sc.add(sh); inst.sh=sh; })); }
   const size=()=>{ const w=cv.clientWidth||300, h=cv.clientHeight||130; PK.r.setSize(w,h,false); PK.cam.aspect=w/h; PK.cam.updateProjectionMatrix(); }; size();
   PK.on=true; PK.sel=null; go.style.display='none'; btns.forEach(b=>b.classList.remove('sel'));
-  const LINE={1001:'しっぽの先に、小さな火がともっている。',1022:'しましまの体に、小さな雷がはしっている。',178:'頭の双葉をゆらして、日なたぼっこをしている。'};
+  const LINE={1001:'炎タイプ。しっぽの先に、小さな火がともっている。',1022:'雷タイプ。しましまの体に、小さな雷がはしっている。',178:'森タイプ。頭の双葉をゆらして、日なたぼっこをしている。'};
   const choose=id=>{ if(PK.sel!==id&&PK.m[id]) PK.m[id].hopT=0; PK.sel=id; btns.forEach(b=>b.classList.toggle('sel',+b.dataset.m===id)); go.style.display='block'; ST.box.classList.add('nar'); ST.box.style.display='block'; ST.tx.textContent=MONN[id]+'――'+LINE[id]; ST.box.querySelector('i').style.display='none'; };
   btns.forEach(b=>b.onclick=e=>{ e.stopPropagation(); choose(+b.dataset.m); });
   cv.onclick=e=>{ e.stopPropagation(); const rc=cv.getBoundingClientRect(); const i=Math.min(2,Math.floor((e.clientX-rc.left)/rc.width*3)); choose([1001,1022,178][i]); };
@@ -1693,111 +1713,61 @@ function pickPartner(){ return new Promise(res=>{ ST.pick.style.display='flex'; 
     for(const id in PK.m){ const it=PK.m[id], s=+id===PK.sel; it.mixer.update(dt); const tk=it.k*(s?1.18:1); const cur=it.root.scale.x; it.root.scale.setScalar(cur+(tk-cur)*Math.min(1,dt*8)); if(it.hopT!=null){ it.hopT+=dt; const u=it.hopT/0.42; it.root.position.y=u<1?Math.sin(Math.PI*u)*0.16:0; if(u>=1) it.hopT=null; } else it.root.position.y=0;
       if(it.sh){ const hgt=it.root.position.y; it.sh.scale.setScalar(1-hgt*1.6); it.sh.material.opacity=0.8-hgt*2; } it.root.rotation.y+=angD(0,it.root.rotation.y)*dt*3; }
     PK.r.render(PK.sc,PK.cam); }; requestAnimationFrame(loop); }); }
+// ---- 物語の場面(2026-10-26 テリオン版)。**台詞は空**(オーナー指示: 物語はアニメ側で確定してから貼る)。
+//  各場面は「だれが・どの順で・どの表情で」出るかの枠だけ。t:'' の行はエンジンが飛ばす(runScene)。{fn} の行(相棒を選ぶ)だけ動く。
+//  台詞を入れる時は t に文を書くだけ。w: hero/elly/alek/dimi(レン)/elena/genichi/misaki/hana/stavros(ヤニス)/tasos/patch/log/partner/x(絵なし・n で名前)/null(ナレ)
+//  正本: ギリシャ編_設定まとめ_2026-10-26.md 6章(第1〜10話)・ゲーム用_登場人物仕様書.md 8章
 const SC={
- asuka:[
-  {w:null,t:'2100年、東京。\n空に浮かぶ道と、緑の塔の街。'},
-  {w:'hana',f:'normal',t:'{sib}、ほんとに今日行っちゃうの？'},
-  {w:'hero',f:'smile',t:'うん。千の遺跡の旅。1年かけて、ギリシャとエジプト！'},
-  {w:'hana',t:'1年……。ハナ、7つになっちゃうよ。'},
-  {w:'hero',f:'smile',t:'毎晩電話するよ。生き物の写真も、いっぱい送る。'},
-  {w:'misaki',t:'ほら、手帳に電話。お父さんから。'},
-  {w:null,t:'手首の上に光の画面が開き、海の上の風車が映った。'},
-  {w:'ryo',ph:1,t:'おう、間に合った！　気をつけて行けよ。'},
-  {w:'ryo',ph:1,t:'向こうの人に会ったら、まず名前を聞くんだぞ。'},
-  {w:'hero',f:'smile',t:'わかった！　お父さんも、海の上でがんばってね。'},
-  {w:'misaki',f:'smile',t:'見て。窓の外の塔、今朝はよく光ってる。'},
-  {w:'hero',t:'街の記憶が、元気ってことだよね。'},
-  {w:'misaki',f:'smile',t:'そう。人が来て、見て、覚えるとね。……あなたの旅も、それ。'},
-  {w:'genichi',t:'おお、早いな。眠れなかったか。'},
-  {w:'hero',f:'smile',t:'じいちゃん！　うん、ぜんぜん眠れなかった。'},
-  {w:'genichi',t:'これを持っていきなさい。わしが若いころ、発掘で使ったルーペだ。'},
-  {w:'hero',f:'surprised',t:'じいちゃんのルーペ！　いいの？'},
-  {w:'genichi',t:'手帳の光より、こっちのほうがよく見えるものもある。'},
-  {w:'genichi',t:'それと、発掘の記録の写しだ。古い石の前で読んでごらん。'},
-  {w:null,t:'記録の最後のページに、知らない島の名前があった。'},
-  {w:'hero',f:'surprised',t:'「ネシ島」……？　じいちゃん、これどこ？'},
-  {w:'genichi',t:'……海の底だ。今はな。'},
-  {w:'genichi',t:'オリンピアの走路、自分の足で歩いておいで。'},
-  {w:'genichi',t:'昔の人は、なんでそこで走ったんだろうな。答えは向こうで考えなさい。'},
-  {w:'misaki',f:'smile',t:'いってらっしゃい。ちゃんと食べて、ちゃんと寝るのよ。'},
-  {w:'hana',t:'{sib}、いってらっしゃい！'},
-  {w:'hero',f:'smile',t:'いってきます！'},
- ],
- skyport:[
-  {w:null,t:'浮上列車で、東京湾の空の港へ。'},
-  {w:null,t:'高速便は空の高い所を飛ぶ。窓の外に、丸い地球のふちが見えた。'},
-  {w:null,t:'3時間でアテネ。そこから西へは、ゆっくり飛ぶ飛行船に乗りかえる。'},
- ],
- airship:[
-  {w:null,n:'船の係の人',t:'（声）まもなくオリーヴァ。右手にオリーブの丘が見えますよ。'},
-  {w:'hero',f:'surprised',t:'海が二色だ！　浅い所が水色で、深い所が紺色！'},
-  {w:'hero',t:'あの丘の向こうが、オリンピア。2800年も前の競技場がある所……。'},
-  {w:null,t:'手首が小さくふるえた。手帳に電話。'},
-  {w:'hana',ph:1,t:'{sib}、もう着いた？　生き物いた？'},
-  {w:'hero',f:'smile',t:'まだ空の上。でも見て、下の畑。白い機械が、木の間を走ってる。'},
-  {w:'hana',ph:1,t:'ほんとだ！　ちっちゃい！　いいなあ。'},
-  {w:'hero',f:'smile',t:'着いたら、いちばんに写真送るよ。'},
- ],
- arrive:[
-  {w:null,t:'オリーヴァ村。\nオリーブの丘にかこまれた、遺跡のとなりの村。'},
-  {w:'zoi',f:'smile',t:'いた！　日本から来た旅の子でしょう？　ようこそ、オリーヴァへ！'},
-  {w:'hero',f:'smile',t:'うん、{hero}。きみは？'},
-  {w:'zoi',t:'ゾイ。村の記憶館で、案内の見習いをしてるの。'},
-  {w:'zoi',f:'smile',t:'あなたのギリシャの案内役よ。よろしくね。'},
-  {w:'hero',f:'surprised',t:'よろしく！　……あれ？　ギリシャの言葉なのに、わかる。'},
-  {w:'zoi',t:'手帳が耳もとで通訳してるの。わたしにも、あなたの言葉がわかるわ。'},
-  {w:'elena',f:'smile',t:'着いたわね。千の遺跡の旅、ギリシャの係のエレナです。'},
-  {w:'elena',t:'研究所で、あなたの相棒が待ってるわ。'},
-  {w:'hero',f:'surprised',t:'相棒……！'},
-  {w:'zoi',t:'見て、あの白い骨組み。古代オリンピアの遺跡を守る覆いよ。'},
-  {w:'hero',f:'smile',t:'あの下に、本物の競技場があるんだ……！'},
-  {w:'zoi',f:'smile',t:'明日、案内してあげる。神話ではね、英雄ヘラクレスが競技を始めたの。'},
-  {w:'hero',f:'surprised',t:'え、そうなの？　紀元前776年に始まった、とは本で読んだけど。'},
-  {w:'zoi',f:'smile',t:'ふふ。歴史は本で読めるけど、神話は人から聞くものよ。'},
- ],
- lab:[
-  {w:null,t:'ムネモ研究所 オリーヴァ支所。'},
-  {w:'elena',t:'この3体は、研究所のゆりかごで、旅のために生まれた子たち。'},
-  {w:'elena',t:'世界中の記録がまざって生まれたから、どこの土地の子でもないの。'},
-  {w:'elena',f:'smile',t:'あなたと同じ、これから旅に出る子たちよ。ゆっくり選んで。'},
+ // 第1話: 東京・ひまな夏(背景 tokyo_home)。ヤマト・ハナ・母・じいちゃん(エレナ博士の研究所を勧める)
+ tokyo:[ {todo:'story'},
+  {w:null,t:''},{w:'hero',f:'normal',t:''},{w:'hana',t:''},{w:'genichi',t:''},{w:'misaki',t:''},{w:'hero',f:'serious',t:''},{w:'misaki',f:'smile',t:''} ],
+ // 第1話: 空の港(背景 tokyo_port)。ハナ・じいちゃん(古いルーペ)・母
+ skyport:[ {todo:'story'},
+  {w:null,t:''},{w:'hana',t:''},{w:'genichi',t:''},{w:'hero',f:'smile',t:''},{w:'misaki',f:'smile',t:''} ],
+ // 第1話: 飛行船(背景 airship_v3)。夜明けのエーゲ海、並んで飛ぶヒヨドルの群れ。初めて本物を見て大はしゃぎ
+ airship:[ {todo:'story'},
+  {w:null,t:''},{w:'hero',f:'surprised',t:''},{w:'x',n:'乗客',t:''},{w:'x',n:'野生のヒヨドル',t:''},{w:'hero',f:'smile',t:''} ],
+ // 第1〜2話: オリーヴァ村に着く(村の中・立ち絵)。エレナ博士の電話→逃げる炎の狐→石板の前のエリー→「テリオン」の名の由来→エレナ博士
+ arrive:[ {todo:'story'},
+  {w:null,t:''},{w:'elena',ph:1,t:''},{w:'hero',f:'surprised',t:''},{w:'elly',f:'surprised',t:''},{w:'hero',t:''},{w:'elly',f:'smile',t:''},{w:'x',n:'炎の狐',t:''},{w:'elena',f:'normal',t:''},{w:'elly',t:''},{w:'elena',f:'serious',t:''} ],
+ // 第2話: 手のひらの約束。研究所から逃げた3体から相棒を選ぶ(ゲームだけ。アニメはエンジュ)。そのあとレン登場
+ lab:[ {todo:'story'},
+  {w:null,t:''},{w:'elena',t:''},
   {fn:async()=>{ const id=await pickPartner(); SAVE.partner=id; PARTY=[{mid:id,rank:5}]; BOX={[id]:{rank:5}}; partnerSet(id); }},
-  {w:'elena',f:'smile',t:'{partner}ね。いい顔。もう、あなたを見てる。'},
-  {w:'partner',t:'コンッ！　（尾の火が、ぱっと大きくなった）',if:()=>SAVE.partner===1001},
-  {w:'partner',t:'ぷぅ……ふわぁ。（{hero}の足にもたれて、眠ってしまった）',if:()=>SAVE.partner===178},
-  {w:'partner',t:'ガウッ！　（しっぽをふると、ぱちっと小さな雷がとんだ）',if:()=>SAVE.partner===1022},
-  {w:'elena',t:'手帳に、旅の画面を入れたわ。地図と、出会った子の記録よ。'},
-  {w:'elena',t:'大事な決まりを3つ。'},
-  {w:'elena',t:'1つ。街の中は「静域」。勝負はできないの。'},
-  {w:'elena',t:'2つ。自然の中で、生き物を連れた人と目が合ったら、勝負。'},
-  {w:'elena',t:'3つ。野生の子は、勝負で勝つと、ついてきてくれるわ。'},
-  {w:'hero',f:'smile',t:'わかった！　よろしくね、{partner}！'},
-  {w:'elena',f:'serious',t:'それと……最近、このあたりの遺跡の記憶が、少し薄いの。'},
-  {w:'elena',t:'旅の記録で、何か気づいたら教えてね。'},
-  {w:'zoi',f:'smile',t:'泊まるのは広場の「旅人の宿」よ。タソスさんのごはん、おいしいの。'},
-  {w:'zoi',t:'村の南の「静域の門」を出ると、オリーブの丘。門の外で、勝負のやり方を教えるわ。'},
- ],
- tasos:[
-  {w:'tasos',f:'smile',t:'おう、旅の子か！　旅人の宿へようこそ。わしはタソスだ。'},
-  {w:'tasos',t:'野で材料を拾ってきたら、うまいおやつにしてやる。連れてる子にあげるといい。'},
-  {w:'hero',f:'smile',t:'おやつ！　{partner}、よかったね。'},
-  {w:'tasos',f:'smile',t:'腹がへっては、勝負はできん！　夜はちゃんと、ここへ帰ってくるんだぞ。'},
-  {fn:async()=>flag('tasos')},
- ],
- dimi:[
-  {w:'dimi',t:'……{hero}か。お前も来たのか。'},
-  {w:'hero',f:'surprised',t:'ハヤト！　となりのクラスの……先に来てたんだ。'},
-  {w:'dimi',t:'おれは一人で旅をしてる。仲間はいらない。'},
-  {w:'zoi',f:'surprised',t:'知り合い？　なんか、こわい子だね。'},
-  {w:'dimi',f:'serious',t:'遺跡の昔話なんて役に立たない。大事なのは強さだけだ。'},
-  {w:'hero',f:'serious',t:'古いものの中にも、すごいものはあるよ。'},
-  {w:'dimi',f:'smile',t:'口だけなら何とでも言える。勝負だ！'},
- ],
- stavros:[
-  {w:'stavros',t:'……日本から来た旅の子か。ゾイから聞いとる。'},
-  {w:'stavros',t:'この千年オリーブは、切られても、根から芽が出た。'},
-  {w:'stavros',f:'smile',t:'木は急がん。お前さんの子も、な。'},
-  {w:'hero',f:'serious',t:'勝負、お願いします！'},
- ],
+  {w:'hero',t:''},{w:'partner',t:'',if:()=>SAVE.partner===1001},{w:'partner',t:'',if:()=>SAVE.partner!==1001},{w:'elena',f:'smile',t:''},{w:'elly',f:'smile',t:''},
+  {w:'elena',t:''},{w:'elly',t:''},
+  {w:'dimi',f:'normal',t:''},{w:'hero',f:'surprised',t:''},{w:'dimi',f:'serious',t:''},{w:'partner',t:''},{w:'hero',f:'serious',t:''} ],
+ // 村の宿のタソス(入ると一度だけ)
+ tasos:[ {todo:'story'},
+  {w:'tasos',f:'smile',t:''},{w:'hero',f:'smile',t:''},{fn:async()=>flag('tasos')} ],
+ // 丘の道でレン(勝負の前)
+ dimi:[ {todo:'story'},
+  {w:'dimi',t:''},{w:'hero',f:'surprised',t:''},{w:'dimi',f:'serious',t:''},{w:'hero',f:'serious',t:''} ],
+ // 第4話: 競技場の跡でログ＆パッチの網(初バトルの前)。パッチ=スミヤモ
+ patch:[ {todo:'story'},
+  {w:null,t:''},{w:'x',n:'ヒヨドル',t:''},{w:'hero',f:'angry',t:''},{w:'patch',t:''},{w:'log',t:''},{w:'elly',f:'serious',t:''},{w:'patch',t:''},{w:'partner',t:''},{w:'hero',f:'serious',t:''} ],
+ // 第4〜5話: 勝ったあと。撤収の決まり文句→ヒヨドルがエリーの相棒に→石の言い伝え「王は、四つの守りに認められた子の前でだけ、目をさます」→エレナ博士のミッション→守り①は丘の下の迷路
+ patch_win:[ {todo:'story'},
+  {w:'patch',t:''},{w:'log',t:''},{w:'patch',t:''},{w:null,t:''},{w:'x',n:'ヒヨドル',t:''},{w:'elly',f:'surprised',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'sad',t:''},{w:'partner',t:''},
+  {w:null,t:''},{w:'elly',f:'serious',t:''},{w:'hero',t:''},{w:'elena',ph:1,t:''},{w:'hero',f:'serious',t:''},{w:'elly',t:''} ],
+ // 第8話: 町いちばんの使い手ヤニス(オリーブの冠の古印)。絵は仮(stavros)
+ stavros:[ {todo:'story'},
+  {w:'stavros',t:''},{w:'stavros',f:'smile',t:''},{w:'hero',f:'serious',t:''} ],
+ // 第5〜7話を圧縮: 迷路の入口でアレク(ゼロデイの表の会社に雇われた案内役・最初は敵)。相棒フクピィ
+ alek:[ {todo:'story'},
+  {w:null,t:''},{w:'alek',t:''},{w:'hero',t:''},{w:'elly',f:'surprised',t:''},{w:'alek',t:''},{w:'x',n:'フクピィ',t:''},{w:'hero',f:'serious',t:''} ],
+ // アレクに勝ったあと。雇い主の正体を知り、道をあける(仲間になるのはこの先)
+ alek_win:[ {todo:'story'},
+  {w:'alek',t:''},{w:'hero',t:''},{w:'alek',t:''},{w:null,t:''},{w:'elly',t:''} ],
+ // 第9話: 迷路で迷子のログ(寄り道の部屋・勝負の前)
+ log:[ {todo:'story'},
+  {w:'log',t:''},{w:'hero',f:'surprised',t:''},{w:'log',t:''},{w:'hero',f:'serious',t:''} ],
+ // 第10話: 迷路の底、守り①ミノタス(古代テリオン・チップなし)。大人には角を向ける。エリーの古い言葉で試される
+ minotas:[ {todo:'story'},
+  {w:null,t:''},{w:'x',n:'ミノタス',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:null,t:''},{w:'partner',t:''},{w:'hero',f:'serious',t:''} ],
+ // 守り①に認められる(勝ったあと)。次はアルカディアの森(守り②ルミナドール)へ
+ minotas_win:[ {todo:'story'},
+  {w:null,t:''},{w:'elly',f:'smile',t:''},{w:'x',n:'ミノタス',t:''},{w:'elly',t:''},{w:'hero',f:'smile',t:''},{w:'partner',t:''} ],
 };
 async function storyField(k){ if(!SC[k]) return; await runScene(SC[k],{field:true}); }
 function toast(t){ toastEl.textContent=t; toastEl.style.opacity=1; clearTimeout(toast.t); toast.t=setTimeout(()=>toastEl.style.opacity=0,1600); }
@@ -1806,21 +1776,19 @@ async function arriveTown(){ fadeEl.classList.add('on'); await sleep(260); stHid
   if(MAP!=='oliva_town') await loadMap('oliva_town','start'); else { const p=D.arrive.start; WORLD.tp(p[0],p[1],p[2]); partnerPlace(); }
   partnerSet(SAVE.partner); SAVE.stage='field'; await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); await sleep(300);
   showArea(D.name); AREA=D.name; await storyField('arrive'); if(!SAVE.partner) await storyField('lab'); partnerSet(SAVE.partner); flag('arrived'); saveGame(); }
+// 主人公はヤマト(男の子)だけ(2026-10-26 オーナー)。性別・名前の設定画面は無し。古い記録(g:'f')はヤマトとして読む
 async function newGame(){ ST.title.style.display='none'; await runCards(INTRO);
-  stShow('full'); ST.bg.style.backgroundImage='none'; ST.setup.style.display='flex'; ST.setup.querySelectorAll('img[data-src]').forEach(im=>{ if(!im.src) im.src=im.dataset.src; }); let g=null; const nm=$('stName'); nm.value='';
-  const gb=[...ST.setup.querySelectorAll('.g')]; const sel=x=>{ g=x; gb.forEach(b=>b.classList.toggle('sel',b.dataset.g===x)); if(!nm.value||nm.value==='カナタ'||nm.value==='ツムギ') nm.value=DEFN(x); }; sel('m');
-  gb.forEach(b=>b.onclick=()=>sel(b.dataset.g));
-  await new Promise(r=>{ $('btSetup').onclick=r; });
-  SAVE={v:1,g,name:(nm.value.trim()||DEFN(g)).slice(0,6),partner:null,flags:{},unlock:{evo:false,fusion:false},owned:[],stage:'asuka'}; NOSAVE=false; saveGame();
-  heroGo(g); fadeEl.classList.add('on'); await sleep(260); ST.setup.style.display='none';
+  stShow('full'); ST.bg.style.backgroundImage='none'; const g='m';
+  SAVE={v:1,g,name:DEFN(g),partner:null,flags:{},unlock:{evo:false,fusion:false},owned:[],stage:'tokyo'}; NOSAVE=false; saveGame();
+  heroGo(g); fadeEl.classList.add('on'); await sleep(260);
   LOADP=loadMap('oliva_town','start').catch(e=>console.error(e));   // 会話のあいだに村を読んでおく
   await sleep(60); fadeEl.classList.remove('on');
-  await runScene(SC.asuka,{bg:'tokyo_home',keepPaused:true}); SAVE.stage='airship'; saveGame();
+  await runScene(SC.tokyo,{bg:'tokyo_home',keepPaused:true}); SAVE.stage='airship'; saveGame();
   await runScene(SC.skyport,{bg:'tokyo_port',keepPaused:true});
   await runScene(SC.airship,{bg:'airship_v3',keepPaused:true});
   await arriveTown(); }
-async function contGame(sv){ ST.title.style.display='none'; SAVE=sv; SAVE.unlock=SAVE.unlock||{evo:false,fusion:false}; SAVE.owned=SAVE.owned||[]; PARTY=sv.party||PARTY; BOX=sv.box||BOX; ITEMS=sv.items||ITEMS; heroGo(sv.g);
-  if(sv.stage!=='field'||!sv.map||!sv.partner){ stShow('full'); LOADP=loadMap('oliva_town','start'); if(sv.stage==='asuka'){ await runScene(SC.asuka,{bg:'tokyo_home',keepPaused:true}); SAVE.stage='airship'; saveGame(); }
+async function contGame(sv){ ST.title.style.display='none'; SAVE=sv; if(sv.g!=='m'){ sv.g='m'; sv.name=DEFN('m'); } SAVE.unlock=SAVE.unlock||{evo:false,fusion:false}; SAVE.owned=SAVE.owned||[]; PARTY=sv.party||PARTY; BOX=sv.box||BOX; ITEMS=sv.items||ITEMS; heroGo(sv.g);
+  if(sv.stage!=='field'||!sv.map||!sv.partner){ stShow('full'); LOADP=loadMap('oliva_town','start'); if(sv.stage==='asuka'||sv.stage==='tokyo'){ await runScene(SC.tokyo,{bg:'tokyo_home',keepPaused:true}); SAVE.stage='airship'; saveGame(); await runScene(SC.skyport,{bg:'tokyo_port',keepPaused:true}); }
     await runScene(SC.airship,{bg:'airship_v3',keepPaused:true}); await arriveTown(); return; }
   fadeEl.classList.add('on'); stHide(); await loadMap(sv.map,null,[sv.x,sv.z,sv.yaw]); partnerSet(sv.partner); if(sv.tod) setTime(sv.tod,true);
   await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); showArea(D.name); AREA=D.name; objUpdate(); }
@@ -1837,9 +1805,9 @@ async function boot(){ const t0=performance.now();
   MOTES=makePoints(IS_MOBILE?50:80,1,{box:[44,3,44],size:0.16,map:TEX.mote,add:true,alpha:0.5,c:['#fff6d8','#fff1c8','#ffffff']});
   resize(); setTime(Q.get('t')||'noon',true); requestAnimationFrame(frame); READY.bootMs=performance.now()-t0;
   const gq=Q.get('g');
-  if(gq==='m'||gq==='f'){   // 確認用: タイトルとイントロを飛ばして、その場から(記録しない)
-    NOSAVE=true; const pid=+(Q.get('partner')||1001); SAVE={v:1,g:gq,name:DEFN(gq),partner:pid,flags:{arrived:1},unlock:{evo:Q.get('evo')==='1',fusion:Q.get('fusion')==='1'},owned:[],stage:'field'}; PARTY=[{mid:pid,rank:5}]; BOX={[pid]:{rank:5}};
-    heroGo(gq); const x=Q.get('x'), z=Q.get('z'); await loadMap(CFG.map0,null,x!=null?[+x,+z,Math.PI]:null); partnerSet(pid); PAUSED=false; LAST=performance.now(); objUpdate(); return; }
+  if(gq==='m'||gq==='f'){   // 確認用: タイトルとイントロを飛ばして、その場から(記録しない)。主人公はヤマトだけ
+    NOSAVE=true; const pid=+(Q.get('partner')||1001); SAVE={v:1,g:'m',name:DEFN('m'),partner:pid,flags:{arrived:1},unlock:{evo:Q.get('evo')==='1',fusion:Q.get('fusion')==='1'},owned:[],stage:'field'}; PARTY=[{mid:pid,rank:5}]; BOX={[pid]:{rank:5}};
+    heroGo('m'); const x=Q.get('x'), z=Q.get('z'); await loadMap(CFG.map0,null,x!=null?[+x,+z,Math.PI]:null); partnerSet(pid); PAUSED=false; LAST=performance.now(); objUpdate(); return; }
   titleScreen(); }
 boot().catch(e=>{ console.error(e); });
 

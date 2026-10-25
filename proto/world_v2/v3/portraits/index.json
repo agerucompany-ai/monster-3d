@@ -2,7 +2,7 @@
  "note": "全員「右向き」(体と顔が画面の右を向く)にそろえた。facing は絵ごとの向き(目・鼻・耳の位置で確認済み)。ゲームは置く側に合わせて反転する: 左の枠=右向きで出す、右の枠=左向きで出す。ryo は電話の画面(正面)",
  "chars": {
   "hero_m": {
-   "name": "カナタ",
+   "name": "ヤマト",
    "faces": {
     "normal": "hero_m_normal.webp",
     "smile": "hero_m_smile.webp",
@@ -102,10 +102,11 @@
     "surprised": "right",
     "serious": "right",
     "angry": "right"
-   }
+   },
+   "note": "旧ヒロイン。2026-10-26 以降ゲームでは使わない(エリーに置きかえ)"
   },
   "dimi": {
-   "name": "ディミ",
+   "name": "レン",
    "faces": {
     "normal": "dimi_normal.webp",
     "smile": "dimi_smile.webp",
@@ -169,6 +170,34 @@
     "normal": "right",
     "smile": "right",
     "serious": "right"
+   }
+  },
+  "elly": {
+   "name": "エリー",
+   "note": "anime/chars/elly/elly_*.png を rembg で背景抜き→640角(2026-10-26)。顔は画面の左向き",
+   "faces": {
+    "normal": "elly_normal.webp",
+    "smile": "elly_smile.webp",
+    "surprised": "elly_surprised.webp",
+    "sad": "elly_sad.webp",
+    "serious": "elly_serious.webp"
+   },
+   "facing": {
+    "normal": "left",
+    "smile": "left",
+    "surprised": "left",
+    "sad": "left",
+    "serious": "left"
+   }
+  },
+  "alek": {
+   "name": "アレク",
+   "note": "anime/chars/alek/alek_normal.png を rembg で背景抜き→640角(2026-10-26)。表情違いはまだ無い",
+   "faces": {
+    "normal": "alek_normal.webp"
+   },
+   "facing": {
+    "normal": "left"
    }
   }
  }
