@@ -242,10 +242,11 @@ function ensureLeaders(){
 function checkWin(){
   if(!state || state.phase==='end') return true;
   if(state.phase!=='battle') return false;
-  const a0=leaderAlive(0), a1=leaderAlive(1);
+  const wa=!!(BT.diff&&BT.diff.winAll);   // 2026-10-27 終盤のボス戦(enemy.ai.winAll): 相手はリーダーを倒しても終わらない=全員倒せば勝ち(自分はリーダーが倒れたら負けのまま)
+  const a0=leaderAlive(0), a1=wa?alive(1).length>0:leaderAlive(1);
   if(a0 && a1) return false;
   if(!a0 && !a1){ endGame(state.cur, state.cur===0?'敵のリーダーを倒した！':'リーダーが倒れた…'); return true; }
-  if(!a1){ endGame(0, '敵のリーダーを倒した！'); return true; }
+  if(!a1){ endGame(0, wa?'敵を全員倒した！':'敵のリーダーを倒した！'); return true; }
   endGame(1, 'リーダーが倒れた…'); return true;
 }
 
@@ -569,7 +570,7 @@ function moveTargets(u){
   return {move:res, fuse};
 }
 function fuseWindow(o){ const T=BT.tune||TUNE; if(!state) return false; return T.fuseBehind==null || hpShare(o)<T.fuseBehind; }   // 既定は勝ち負けを問わない(2026-10-27)
-function fuseRelaxed(o){ const T=BT.tune||TUNE; return !!(state&&state.fallen&&state.fallen[o]&&state.fallen[o].length>=T.fuseRelax); }
+function fuseRelaxed(o){ const T=BT.tune||TUNE; if((BT.startStage||1)>=3) return true; return !!(state&&state.fallen&&state.fallen[o]&&state.fallen[o].length>=T.fuseRelax); }   // 2026-10-27: 3段目から出す地方(エジプト後半・北欧)は「戦いの中で進化した子」の条件なし(Lv2 の子は戦いの中で Lv2 に進化できない・融合は普通にできる)。2段目の地方は今まで通り(シムで中国・エジプト前半が易しくなりすぎた)
 function fusionResult(a,b){
   if(!campFusionOK()) return null;
   if(!a||!b||a.uid===b.uid||a.owner!==b.owner) return null;
@@ -604,7 +605,12 @@ function typeBonus(at,dt){ return (STRONG[at]||[]).includes(dt)?0.2:0; }
 function typePenalty(at,dt){ return (WEAK[at]||[]).includes(dt)?-0.2:0; }   // 苦手相手は-20%
 function terrBonus(type,terr){ return (TERR_BONUS[terr]||[]).includes(type)?TERR_X:((TERR_WEAK[terr]||[]).includes(type)?-TERR_X:0); }
 // 複属性対応：攻撃側のいずれかのタイプが防御側のいずれかのタイプに有利/苦手なら成立
-function typeBonusM(am,dm){ for(const a of monTypes(am)) for(const d of monTypes(dm)) if((STRONG[a]||[]).includes(d)) return 0.2; return 0; }
+// 2026-10-27 オーナー案B: 2タイプの子(融合など)は、もう片方のタイプがその攻撃に強ければ弱点が打ち消される(弱点×耐性=等倍)。
+//   耐性 = WEAK[攻撃]に守りのタイプ か 守りのタイプが攻撃のタイプに強い(STRONG[守り]に攻撃)。攻撃側は一番よいタイプで見る。1タイプの守りは今まで通り(耐性で打ち消さない)
+function typeResExt(a,d){ return (WEAK[a]||[]).includes(d) || (STRONG[d]||[]).includes(a); }
+function typeBonusM(am,dm){ const ds=monTypes(dm);
+  if(ds.length<2){ for(const a of monTypes(am)) for(const d of ds) if((STRONG[a]||[]).includes(d)) return 0.2; return 0; }
+  for(const a of monTypes(am)){ let net=0; for(const d of ds){ if((STRONG[a]||[]).includes(d)) net++; else if(typeResExt(a,d)) net--; } if(net>0) return 0.2; } return 0; }
 function typePenaltyM(am,dm){ for(const a of monTypes(am)) for(const d of monTypes(dm)) if((WEAK[a]||[]).includes(d)) return -0.2; return 0; }
 function terrBonusM(am,terr){ if(INSECT.has(am.id)&&terr==='forest') return TERR_X; for(const a of monTypes(am)) if((TERR_BONUS[terr]||[]).includes(a)) return TERR_X; for(const a of monTypes(am)) if((TERR_WEAK[terr]||[]).includes(a)) return -TERR_X; return 0; }
 // タイプ別の防御（被ダメ軽減率の基礎値）。地/竜=高い、風/光=低い、他=中
@@ -622,7 +628,8 @@ function calcDamage(att, def, move){
   if(tb>0) red *= 0.3;                                                     // 弱点を突くと防御をほぼ貫通
   dmg *= (1 - red);
   if(def.ancTired) dmg*=ANCIENT.breakX;                                    // 古代テリオン: 大技を放った直後の「隙」
-  return Math.max(1, Math.round(dmg*0.62*(BT.dmgX||1)*finalX()));   // 全体のダメージ倍率(決着までのターンを延ばす)・finalX=人の3段目の決戦
+  const rg=(att.owner===1&&BT.diff&&BT.diff.rage)?1+BT.diff.rage*((state.koN&&state.koN[1])||0):1;   // enemy.ai.rage: 相手が1体倒れるごとに残りの攻撃 +rage
+  return Math.max(1, Math.round(dmg*0.62*(BT.dmgX||1)*finalX()*rg));   // 全体のダメージ倍率(決着までのターンを延ばす)・finalX=人の3段目の決戦
 }
 
 function doAttack(att, def, move){
@@ -798,6 +805,8 @@ function killUnit(u){
     return false;
   }
   (state.fallen||(state.fallen=[[],[]]))[u.owner].push({mid:u.mid, rank:u.rank||1, src:u.src||[]});   // 蘇生魔法用に撃破された仲間を記録
+  (state.koN||(state.koN=[0,0]))[u.owner]++;   // 倒された数(蘇生しても減らない)
+  if(u.owner===1 && BT.diff && BT.diff.rage && !BT.headless){ const L=leaderOf(1); if(L && L.uid!==u.uid) floatText(L.r,L.c,`本気 攻撃+${Math.round(BT.diff.rage*state.koN[1]*100)}%`,'#ff8a60'); }   // 2026-10-27 終盤のボス: 部下が倒れるほど本気
   if(_seq && !_seq.done && _seq.q[u.r+','+u.c] && sprites[u.uid]){ const r0=u.r, c0=u.c, ow=u.owner, md=u.mid; _hold[u.uid]=_seq; _seq.q[r0+','+c0].push(()=>deathFx(r0,c0,ow,md)); }   // 着弾まで絵を残す
   else deathFx(u.r,u.c,u.owner,u.mid);
   state.board[u.r][u.c]=null; delete state.units[u.uid]; markSprite(u.uid,'dead');
@@ -4253,6 +4262,7 @@ function startBattle(opts){
     $id('ovEnd').style.display='none'; closeMenu();
     enterPlace();
     if(opts.intro!==false) playIntro();
+    if(BT.diff&&BT.diff.winAll) setTimeout(()=>toast('全員倒せば勝ち'), opts.intro!==false?1600:200);
     if(kind==='wild'){ const L=BT.enemyParty.find(e=>e.leader)||BT.enemyParty[0]; setTimeout(()=>toast(BT.enemyParty.length>1?`野生の${MID[L.mid].name}の群れが現れた！`:`野生の${MID[L.mid].name}が飛び出してきた！`), opts.intro!==false?900:100); }
     if(opts.autoPlace){ autoPlace(); if(opts.autoStart) beginBattle(); }
   }));

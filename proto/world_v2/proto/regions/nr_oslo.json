@@ -212,7 +212,7 @@
      "fixed": true
     },
     {
-     "mid": 111,
+     "mid": 1050,
      "lv": 50,
      "fixed": true
     },
@@ -223,10 +223,9 @@
      "evo": true
     },
     {
-     "mid": 1008,
+     "mid": 1047,
      "lv": 49,
-     "stage": 2,
-     "evo": true
+     "fixed": true
     }
    ],
    "master": 1,

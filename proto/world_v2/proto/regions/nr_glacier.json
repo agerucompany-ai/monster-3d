@@ -141,8 +141,10 @@
    "size": 13,
    "final": 1,
    "ai": {
-    "leadHpX": 2.2,
-    "atkX": 1.15
+    "winAll": true,
+    "hpX": 0.6,
+    "atkX": 0.6,
+    "rage": 0.4
    },
    "scene": "ransom3",
    "after": "ransom3_win",
@@ -197,8 +199,10 @@
    "size": 13,
    "final": 1,
    "ai": {
-    "leadHpX": 1.5,
-    "atkX": 0.85
+    "winAll": true,
+    "hpX": 0.45,
+    "atkX": 0.45,
+    "rage": 0.4
    },
    "scene": "bot",
    "after": "bot_win",

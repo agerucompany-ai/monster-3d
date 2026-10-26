@@ -133,16 +133,14 @@
      "fixed": true
     },
     {
-     "mid": 1005,
+     "mid": 1006,
      "lv": 39,
-     "stage": 2,
-     "evo": true
+     "fixed": true
     },
     {
-     "mid": 1012,
+     "mid": 1038,
      "lv": 39,
-     "stage": 2,
-     "evo": true
+     "fixed": true
     }
    ],
    "master": 1,
