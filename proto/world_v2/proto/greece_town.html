@@ -91,6 +91,9 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 .stBtn:disabled{opacity:.45;cursor:default}
 #stTitle{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:flex-end;gap:14px;padding-bottom:calc(70px + env(safe-area-inset-bottom))}
 #stTitle h1{position:absolute;top:17%;left:0;right:0;margin:0;text-align:center;color:#fff;font-size:clamp(32px,9.5vw,58px);letter-spacing:.14em;text-shadow:0 3px 16px rgba(20,30,60,.6),0 0 3px rgba(20,30,60,.7)}
+#st.ttl #stBg{animation:ttlZoom 26s ease-in-out infinite alternate;transform-origin:50% 70%}   /* タイトル(2026-10-27): ゆっくり寄る */
+@keyframes ttlZoom{from{transform:scale(1)}to{transform:scale(1.04)}}
+#st.ttl #stTitle{background:linear-gradient(to bottom,rgba(20,40,80,.22),rgba(20,40,80,0) 30%,rgba(20,40,80,0) 74%,rgba(20,40,80,.28))}
 #stTitle h1 small{display:block;font-size:.34em;letter-spacing:.3em;margin-top:8px;opacity:.9}
 #stTitle h1 img{display:block;width:88vw;max-width:560px;height:auto;margin:0 auto;filter:drop-shadow(0 4px 10px rgba(20,30,60,.55)) drop-shadow(0 0 2px rgba(20,30,60,.6))}   /* オーナーのロゴ(ui/logo.webp 1400×296・2026-10-26) */
 #stPick{position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);width:min(96vw,640px);display:none;flex-direction:column;align-items:center;gap:8px;z-index:2}
@@ -2645,11 +2648,15 @@ async function contGame(sv){ ST.title.style.display='none'; SAVE=sv; if(sv.g!=='
   fadeEl.classList.add('on'); stHide(); await loadMap(sv.map,null,[sv.x,sv.z,sv.yaw]); followersSet(); if(sv.tod) setTime(sv.tod,true);
   await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); showArea(D.name); AREA=D.name; objUpdate(); }
 function toTitle(){ PAUSED=true; AUTO=null; STORY=false; TRANS=false; objEl.style.display='none'; fadeEl.classList.remove('on'); talkClose(); titleScreen(); }
-function titleBg(){ return innerWidth<innerHeight?'anime_title_portrait':'anime_aegean_dawn'; }   // タイトルの背景: 縦はアニメの冒頭(9:16)・横は夜明けのエーゲ海
-addEventListener('resize',()=>{ if(ST.title.style.display==='flex') ST.bg.style.backgroundImage=`url(${bgUrl(titleBg())})`; });
+// タイトルの背景(2026-10-27 オーナー:「オープニングはテリオンが何体も出てないと。飛行船は意味不明」→「2Dでいい」)
+//  承認済みの2D絵を広場の地面に立たせて合成したキービジュアル(intro/title_keyart_p=縦 1080×1920・_l=横 1920×1080)。3D版は greece_town.html.bak_title3d_scene_20261027
+function titleBg(){ return 'intro/title_keyart_'+(innerWidth<innerHeight?'p':'l')+'.webp'; }
+function titleBgSet(){ ST.bg.style.backgroundImage=`url(${titleBg()})`; ST.bg.style.backgroundPosition=innerWidth<innerHeight?'center 60%':'center bottom'; }
+addEventListener('resize',()=>{ if(ST.title.style.display==='flex') titleBgSet(); });
 function titleScreen(){ for(const c of INTRO){ const im=new Image(); PIMG[c.bg]=im; im.src=bgUrl(c.bg); for(const m of c.mons||[]){ const j=new Image(); PIMG['m'+m[0]]=j; j.src='../battle/img/'+m[0]+'.webp'; } }
-  stShow('full',titleBg()); ST.bg.style.opacity=1; ST.title.style.display='flex'; const sv=loadSave(); const bc=$('btCont'); bc.disabled=!sv;
-  $('btNew').onclick=()=>newGame().catch(e=>console.error(e)); bc.onclick=()=>{ if(sv) contGame(sv).catch(e=>console.error(e)); }; }
+  stShow('full'); titleBgSet(); ST.bg.style.opacity=1; ST.el.classList.add('ttl'); ST.title.style.display='flex'; const sv=loadSave(); const bc=$('btCont'); bc.disabled=!sv;
+  const off=()=>{ ST.el.classList.remove('ttl'); ST.bg.style.backgroundPosition=''; };
+  $('btNew').onclick=()=>{ off(); newGame().catch(e=>console.error(e)); }; bc.onclick=()=>{ if(sv){ off(); contGame(sv).catch(e=>console.error(e)); } }; }
 
 // ---------------------------------------------------------------- 起動
 const bar=document.querySelector('#bar i'); const READY={scene:false,hero:false};
