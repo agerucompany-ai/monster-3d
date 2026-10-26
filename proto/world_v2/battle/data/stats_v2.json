@@ -1,0 +1,8672 @@
+{
+ "_meta": {
+  "version": "v2-phaseA-mece",
+  "made": "2026-10-27",
+  "note": "battle.js にはまだつないでいない(Phase A)。数の決め方は STATS_MOVES_SPEC.md",
+  "formula": {
+   "hp": "monsters.json の hp × (1-今の軽減率)/(1-新しい軽減率)。神の融合は ×1.12",
+   "atk": "monsters.json の atk。炎タイプ(type2 も)は ×1.15。神の融合は ×1.12",
+   "def": "red = TYPE_DEF[type] + 0.09×(段-1) + ARCH_DEF_ADJ[archetype]、def = 100×red/(1-red)。神の融合は def×1.12。戦いでは red = def/(def+100×statX(攻撃側のLv))",
+   "spd": "(TYPE_SPD(融合は2タイプの平均)+ARCH_SPD)×STAGE_SPD{1:1,2:1.6,3:2.2}・最低8。神の融合は×1.12・ラグナディオ60。よける=clamp(0.08+0.30×(守spd−攻spd)/(和),0.03,0.25)(範囲×0.5・マップ0)、受ける会心=(技の会心+5)×clamp(1−(守spd−攻spd)/(和),0.5,1.5)。spd は statX(lv) 倍",
+   "mob": "風タイプ(type2 も)=3、ほかは monsters.json の move。神の融合のうちラーは+1",
+   "lv": "Lv1〜99。体力・攻撃・防御は statX(lv)=1+0.02×(lvRank(lv)-1) 倍(progress.js と同じ)"
+  },
+  "god": {
+   "2061": "英雄ヘラクレス(半神)",
+   "2011": "太陽の神ラー",
+   "2010": "よみがえりの神オシリス",
+   "2028": "火の神カグツチ",
+   "2030": "蛇の神ナーガ",
+   "2032": "カバの女神タウエレト",
+   "2055": "大地の女神ガイア",
+   "2029": "ヴィシュヌの亀クールマ(神の化身)",
+   "2067": "天をささえる巨人アトラス(ティタン神族)",
+   "2038": "山の神のイノシシ",
+   "2004": "朱雀(四神)・ベンヌ(エジプトの神の鳥)",
+   "2053": "玄武(四神)"
+  }
+ },
+ "creatures": {
+  "1001": {
+   "name": "エンジュ",
+   "type": "炎",
+   "type2": null,
+   "stage": 1,
+   "line": "enou",
+   "archetype": "火獣型",
+   "hp": 131,
+   "atk": 38,
+   "def": 20,
+   "mob": 2,
+   "spd": 26,
+   "red": 0.167,
+   "src_hp": 135,
+   "src_atk": 33,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "fire_ladder2",
+     "lv": 1
+    },
+    {
+     "move": "fire_ail",
+     "lv": 4
+    },
+    {
+     "move": "fire_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1002": {
+   "name": "エンレオ",
+   "type": "炎",
+   "type2": null,
+   "stage": 2,
+   "line": "enou",
+   "archetype": "火獣型",
+   "hp": 420,
+   "atk": 113,
+   "def": 35,
+   "mob": 2,
+   "spd": 42,
+   "red": 0.259,
+   "src_hp": 430,
+   "src_atk": 98,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder1",
+     "lv": 1,
+     "from": 1001
+    },
+    {
+     "move": "fire_ladder2",
+     "lv": 1,
+     "from": 1001
+    },
+    {
+     "move": "fire_toss",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "fire_ail",
+     "lv": 4,
+     "from": 1001
+    },
+    {
+     "move": "starter_enou",
+     "lv": 12
+    },
+    {
+     "move": "fire_ladder3",
+     "lv": 15,
+     "from": 1001
+    },
+    {
+     "move": "fire_arrow",
+     "lv": 22
+    },
+    {
+     "move": "fire_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1003": {
+   "name": "エンオウ",
+   "type": "炎",
+   "type2": null,
+   "stage": 3,
+   "line": "enou",
+   "archetype": "火獣型",
+   "hp": 1165,
+   "atk": 187,
+   "def": 54,
+   "mob": 2,
+   "spd": 57,
+   "red": 0.351,
+   "src_hp": 1200,
+   "src_atk": 163,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder1",
+     "lv": 1,
+     "from": 1001
+    },
+    {
+     "move": "fire_ladder2",
+     "lv": 1,
+     "from": 1001
+    },
+    {
+     "move": "fire_toss",
+     "lv": 1,
+     "from": 1002
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "fire_ail",
+     "lv": 4,
+     "from": 1001
+    },
+    {
+     "move": "starter_enou",
+     "lv": 12,
+     "from": 1002
+    },
+    {
+     "move": "fire_ladder3",
+     "lv": 15,
+     "from": 1001
+    },
+    {
+     "move": "fire_arrow",
+     "lv": 22,
+     "from": 1002
+    },
+    {
+     "move": "fire_ladder4",
+     "lv": 34,
+     "from": 1002
+    },
+    {
+     "move": "fire_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_enou",
+     "lv": 52
+    }
+   ]
+  },
+  "1004": {
+   "name": "ヒソリン",
+   "type": "炎",
+   "type2": null,
+   "stage": 1,
+   "line": "sasori",
+   "archetype": "火獣型",
+   "hp": 122,
+   "atk": 39,
+   "def": 20,
+   "mob": 2,
+   "spd": 26,
+   "red": 0.167,
+   "src_hp": 125,
+   "src_atk": 34,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "fire_ail",
+     "lv": 4
+    },
+    {
+     "move": "fire_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "fire_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1005": {
+   "name": "ヒノサソリ",
+   "type": "炎",
+   "type2": null,
+   "stage": 2,
+   "line": "sasori",
+   "archetype": "火獣型",
+   "hp": 455,
+   "atk": 107,
+   "def": 35,
+   "mob": 2,
+   "spd": 42,
+   "red": 0.259,
+   "src_hp": 470,
+   "src_atk": 93,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder1",
+     "lv": 1,
+     "from": 1004
+    },
+    {
+     "move": "fire_toss",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "fire_ail",
+     "lv": 4,
+     "from": 1004
+    },
+    {
+     "move": "fire_ladder2",
+     "lv": 8,
+     "from": 1004
+    },
+    {
+     "move": "fire_ladder3",
+     "lv": 15,
+     "from": 1004
+    },
+    {
+     "move": "fire_arrow",
+     "lv": 22
+    },
+    {
+     "move": "fire_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1006": {
+   "name": "メテオラ",
+   "type": "炎",
+   "type2": null,
+   "stage": 3,
+   "line": "sasori",
+   "archetype": "火獣型",
+   "hp": 1155,
+   "atk": 186,
+   "def": 54,
+   "mob": 2,
+   "spd": 57,
+   "red": 0.351,
+   "src_hp": 1190,
+   "src_atk": 162,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder1",
+     "lv": 1,
+     "from": 1004
+    },
+    {
+     "move": "fire_toss",
+     "lv": 1,
+     "from": 1005
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "fire_ail",
+     "lv": 4,
+     "from": 1004
+    },
+    {
+     "move": "fire_ladder2",
+     "lv": 8,
+     "from": 1004
+    },
+    {
+     "move": "fire_ladder3",
+     "lv": 15,
+     "from": 1004
+    },
+    {
+     "move": "fire_arrow",
+     "lv": 22,
+     "from": 1005
+    },
+    {
+     "move": "fire_ladder4",
+     "lv": 34,
+     "from": 1005
+    },
+    {
+     "move": "fire_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_sasori",
+     "lv": 52
+    }
+   ]
+  },
+  "1007": {
+   "name": "スミヤモ",
+   "type": "炎",
+   "type2": null,
+   "stage": 1,
+   "line": "sala",
+   "archetype": "火獣型",
+   "hp": 126,
+   "atk": 34,
+   "def": 20,
+   "mob": 2,
+   "spd": 26,
+   "red": 0.167,
+   "src_hp": 130,
+   "src_atk": 30,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "fire_ail",
+     "lv": 4
+    },
+    {
+     "move": "fire_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "fire_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1008": {
+   "name": "オキヤモ",
+   "type": "炎",
+   "type2": null,
+   "stage": 2,
+   "line": "sala",
+   "archetype": "火獣型",
+   "hp": 465,
+   "atk": 97,
+   "def": 35,
+   "mob": 2,
+   "spd": 42,
+   "red": 0.259,
+   "src_hp": 480,
+   "src_atk": 84,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder1",
+     "lv": 1,
+     "from": 1007
+    },
+    {
+     "move": "fire_toss",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "fire_ail",
+     "lv": 4,
+     "from": 1007
+    },
+    {
+     "move": "fire_ladder2",
+     "lv": 8,
+     "from": 1007
+    },
+    {
+     "move": "fire_ladder3",
+     "lv": 15,
+     "from": 1007
+    },
+    {
+     "move": "fire_arrow",
+     "lv": 22
+    },
+    {
+     "move": "fire_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1009": {
+   "name": "マグヤモラ",
+   "type": "炎",
+   "type2": null,
+   "stage": 3,
+   "line": "sala",
+   "archetype": "火獣型",
+   "hp": 1250,
+   "atk": 182,
+   "def": 54,
+   "mob": 2,
+   "spd": 57,
+   "red": 0.351,
+   "src_hp": 1290,
+   "src_atk": 158,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder1",
+     "lv": 1,
+     "from": 1007
+    },
+    {
+     "move": "fire_toss",
+     "lv": 1,
+     "from": 1008
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "fire_ail",
+     "lv": 4,
+     "from": 1007
+    },
+    {
+     "move": "fire_ladder2",
+     "lv": 8,
+     "from": 1007
+    },
+    {
+     "move": "fire_ladder3",
+     "lv": 15,
+     "from": 1007
+    },
+    {
+     "move": "fire_arrow",
+     "lv": 22,
+     "from": 1008
+    },
+    {
+     "move": "fire_ladder4",
+     "lv": 34,
+     "from": 1008
+    },
+    {
+     "move": "fire_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_sala",
+     "lv": 52
+    }
+   ]
+  },
+  "26": {
+   "name": "ウンディー",
+   "type": "水",
+   "type2": null,
+   "stage": 1,
+   "line": "otter",
+   "archetype": "海棲型",
+   "hp": 175,
+   "atk": 29,
+   "def": 30,
+   "mob": 2,
+   "spd": 14,
+   "red": 0.231,
+   "src_hp": 170,
+   "src_atk": 29,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "water_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "water_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "water_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "111": {
+   "name": "ラッコン",
+   "type": "水",
+   "type2": null,
+   "stage": 2,
+   "line": "otter",
+   "archetype": "海棲型",
+   "hp": 595,
+   "atk": 83,
+   "def": 47,
+   "mob": 2,
+   "spd": 22,
+   "red": 0.32,
+   "src_hp": 580,
+   "src_atk": 83,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "water_ladder1",
+     "lv": 1,
+     "from": 26
+    },
+    {
+     "move": "water_spear",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "water_ladder2",
+     "lv": 8,
+     "from": 26
+    },
+    {
+     "move": "water_ladder3",
+     "lv": 15,
+     "from": 26
+    },
+    {
+     "move": "water_pierce",
+     "lv": 22
+    },
+    {
+     "move": "water_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1010": {
+   "name": "ウズオウ",
+   "type": "水",
+   "type2": null,
+   "stage": 3,
+   "line": "otter",
+   "archetype": "海棲型",
+   "hp": 1495,
+   "atk": 148,
+   "def": 69,
+   "mob": 2,
+   "spd": 31,
+   "red": 0.408,
+   "src_hp": 1450,
+   "src_atk": 148,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "water_ladder1",
+     "lv": 1,
+     "from": 26
+    },
+    {
+     "move": "water_spear",
+     "lv": 1,
+     "from": 111
+    },
+    {
+     "move": "water_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "water_ladder2",
+     "lv": 8,
+     "from": 26
+    },
+    {
+     "move": "water_ladder3",
+     "lv": 15,
+     "from": 26
+    },
+    {
+     "move": "water_pierce",
+     "lv": 22,
+     "from": 111
+    },
+    {
+     "move": "water_ladder4",
+     "lv": 34,
+     "from": 111
+    },
+    {
+     "move": "water_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_otter",
+     "lv": 52
+    }
+   ]
+  },
+  "1011": {
+   "name": "クロッコ",
+   "type": "水",
+   "type2": null,
+   "stage": 1,
+   "line": "croc",
+   "archetype": "海棲型",
+   "hp": 154,
+   "atk": 29,
+   "def": 30,
+   "mob": 2,
+   "spd": 14,
+   "red": 0.231,
+   "src_hp": 150,
+   "src_atk": 29,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "water_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "water_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "water_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1012": {
+   "name": "クロベク",
+   "type": "水",
+   "type2": null,
+   "stage": 2,
+   "line": "croc",
+   "archetype": "海棲型",
+   "hp": 575,
+   "atk": 84,
+   "def": 47,
+   "mob": 2,
+   "spd": 22,
+   "red": 0.32,
+   "src_hp": 560,
+   "src_atk": 84,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "water_ladder1",
+     "lv": 1,
+     "from": 1011
+    },
+    {
+     "move": "water_spear",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "water_ladder2",
+     "lv": 8,
+     "from": 1011
+    },
+    {
+     "move": "water_ladder3",
+     "lv": 15,
+     "from": 1011
+    },
+    {
+     "move": "water_pierce",
+     "lv": 22
+    },
+    {
+     "move": "water_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1013": {
+   "name": "クロコドン",
+   "type": "水",
+   "type2": null,
+   "stage": 3,
+   "line": "croc",
+   "archetype": "海棲型",
+   "hp": 1650,
+   "atk": 148,
+   "def": 69,
+   "mob": 2,
+   "spd": 31,
+   "red": 0.408,
+   "src_hp": 1600,
+   "src_atk": 148,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "water_ladder1",
+     "lv": 1,
+     "from": 1011
+    },
+    {
+     "move": "water_spear",
+     "lv": 1,
+     "from": 1012
+    },
+    {
+     "move": "water_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "water_ladder2",
+     "lv": 8,
+     "from": 1011
+    },
+    {
+     "move": "water_ladder3",
+     "lv": 15,
+     "from": 1011
+    },
+    {
+     "move": "water_pierce",
+     "lv": 22,
+     "from": 1012
+    },
+    {
+     "move": "water_ladder4",
+     "lv": 34,
+     "from": 1012
+    },
+    {
+     "move": "water_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_croc",
+     "lv": 52
+    }
+   ]
+  },
+  "1014": {
+   "name": "プクジラ",
+   "type": "水",
+   "type2": null,
+   "stage": 1,
+   "line": "whale",
+   "archetype": "海棲型",
+   "hp": 159,
+   "atk": 31,
+   "def": 30,
+   "mob": 2,
+   "spd": 14,
+   "red": 0.231,
+   "src_hp": 155,
+   "src_atk": 31,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "water_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "water_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "water_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1015": {
+   "name": "ザトウマル",
+   "type": "水",
+   "type2": null,
+   "stage": 2,
+   "line": "whale",
+   "archetype": "海棲型",
+   "hp": 545,
+   "atk": 85,
+   "def": 47,
+   "mob": 2,
+   "spd": 22,
+   "red": 0.32,
+   "src_hp": 530,
+   "src_atk": 85,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "water_ladder1",
+     "lv": 1,
+     "from": 1014
+    },
+    {
+     "move": "water_spear",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "water_ladder2",
+     "lv": 8,
+     "from": 1014
+    },
+    {
+     "move": "water_ladder3",
+     "lv": 15,
+     "from": 1014
+    },
+    {
+     "move": "water_pierce",
+     "lv": 22
+    },
+    {
+     "move": "water_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1016": {
+   "name": "カイゲイオウ",
+   "type": "水",
+   "type2": null,
+   "stage": 3,
+   "line": "whale",
+   "archetype": "海棲型",
+   "hp": 1620,
+   "atk": 141,
+   "def": 69,
+   "mob": 2,
+   "spd": 31,
+   "red": 0.408,
+   "src_hp": 1570,
+   "src_atk": 141,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "water_ladder1",
+     "lv": 1,
+     "from": 1014
+    },
+    {
+     "move": "water_spear",
+     "lv": 1,
+     "from": 1015
+    },
+    {
+     "move": "water_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "water_ladder2",
+     "lv": 8,
+     "from": 1014
+    },
+    {
+     "move": "water_ladder3",
+     "lv": 15,
+     "from": 1014
+    },
+    {
+     "move": "water_pierce",
+     "lv": 22,
+     "from": 1015
+    },
+    {
+     "move": "water_ladder4",
+     "lv": 34,
+     "from": 1015
+    },
+    {
+     "move": "water_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_whale",
+     "lv": 52
+    }
+   ]
+  },
+  "178": {
+   "name": "クマッパ",
+   "type": "森",
+   "type2": null,
+   "stage": 1,
+   "line": "kuma",
+   "archetype": "草獣型",
+   "hp": 142,
+   "atk": 28,
+   "def": 25,
+   "mob": 2,
+   "spd": 14,
+   "red": 0.2,
+   "src_hp": 140,
+   "src_atk": 28,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "forest_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "forest_ladder2",
+     "lv": 1
+    },
+    {
+     "move": "forest_ail",
+     "lv": 4
+    },
+    {
+     "move": "forest_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "179": {
+   "name": "ベルクマ",
+   "type": "森",
+   "type2": null,
+   "stage": 2,
+   "line": "kuma",
+   "archetype": "草獣型",
+   "hp": 520,
+   "atk": 81,
+   "def": 41,
+   "mob": 2,
+   "spd": 22,
+   "red": 0.291,
+   "src_hp": 510,
+   "src_atk": 81,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "forest_ladder1",
+     "lv": 1,
+     "from": 178
+    },
+    {
+     "move": "forest_ladder2",
+     "lv": 1,
+     "from": 178
+    },
+    {
+     "move": "forest_toss",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "forest_ail",
+     "lv": 4,
+     "from": 178
+    },
+    {
+     "move": "starter_kuma",
+     "lv": 12
+    },
+    {
+     "move": "forest_ladder3",
+     "lv": 15,
+     "from": 178
+    },
+    {
+     "move": "forest_arrow",
+     "lv": 22
+    },
+    {
+     "move": "forest_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1071": {
+   "name": "グリズガルド",
+   "type": "森",
+   "type2": null,
+   "stage": 3,
+   "line": "kuma",
+   "archetype": "草獣型",
+   "hp": 1520,
+   "atk": 139,
+   "def": 61,
+   "mob": 2,
+   "spd": 31,
+   "red": 0.379,
+   "src_hp": 1500,
+   "src_atk": 139,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "forest_ladder1",
+     "lv": 1,
+     "from": 178
+    },
+    {
+     "move": "forest_ladder2",
+     "lv": 1,
+     "from": 178
+    },
+    {
+     "move": "forest_toss",
+     "lv": 1,
+     "from": 179
+    },
+    {
+     "move": "forest_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "forest_ail",
+     "lv": 4,
+     "from": 178
+    },
+    {
+     "move": "starter_kuma",
+     "lv": 12,
+     "from": 179
+    },
+    {
+     "move": "forest_ladder3",
+     "lv": 15,
+     "from": 178
+    },
+    {
+     "move": "forest_arrow",
+     "lv": 22,
+     "from": 179
+    },
+    {
+     "move": "forest_ladder4",
+     "lv": 34,
+     "from": 179
+    },
+    {
+     "move": "forest_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_kuma",
+     "lv": 52
+    }
+   ]
+  },
+  "1017": {
+   "name": "アロピコ",
+   "type": "森",
+   "type2": null,
+   "stage": 1,
+   "line": "aloe",
+   "archetype": "草獣型",
+   "hp": 152,
+   "atk": 26,
+   "def": 25,
+   "mob": 2,
+   "spd": 14,
+   "red": 0.2,
+   "src_hp": 150,
+   "src_atk": 26,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "forest_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "forest_ail",
+     "lv": 4
+    },
+    {
+     "move": "forest_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "forest_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "185": {
+   "name": "アロガルド",
+   "type": "森",
+   "type2": null,
+   "stage": 2,
+   "line": "aloe",
+   "archetype": "草獣型",
+   "hp": 495,
+   "atk": 83,
+   "def": 41,
+   "mob": 2,
+   "spd": 22,
+   "red": 0.291,
+   "src_hp": 490,
+   "src_atk": 83,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "forest_ladder1",
+     "lv": 1,
+     "from": 1017
+    },
+    {
+     "move": "forest_toss",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "forest_ail",
+     "lv": 4,
+     "from": 1017
+    },
+    {
+     "move": "forest_ladder2",
+     "lv": 8,
+     "from": 1017
+    },
+    {
+     "move": "forest_ladder3",
+     "lv": 15,
+     "from": 1017
+    },
+    {
+     "move": "forest_arrow",
+     "lv": 22
+    },
+    {
+     "move": "forest_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1018": {
+   "name": "ユグドラン",
+   "type": "森",
+   "type2": null,
+   "stage": 3,
+   "line": "aloe",
+   "archetype": "草獣型",
+   "hp": 1470,
+   "atk": 131,
+   "def": 61,
+   "mob": 2,
+   "spd": 31,
+   "red": 0.379,
+   "src_hp": 1450,
+   "src_atk": 131,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "forest_ladder1",
+     "lv": 1,
+     "from": 1017
+    },
+    {
+     "move": "forest_toss",
+     "lv": 1,
+     "from": 185
+    },
+    {
+     "move": "forest_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "forest_ail",
+     "lv": 4,
+     "from": 1017
+    },
+    {
+     "move": "forest_ladder2",
+     "lv": 8,
+     "from": 1017
+    },
+    {
+     "move": "forest_ladder3",
+     "lv": 15,
+     "from": 1017
+    },
+    {
+     "move": "forest_arrow",
+     "lv": 22,
+     "from": 185
+    },
+    {
+     "move": "forest_ladder4",
+     "lv": 34,
+     "from": 185
+    },
+    {
+     "move": "forest_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_aloe",
+     "lv": 52
+    }
+   ]
+  },
+  "1019": {
+   "name": "カマコロ",
+   "type": "森",
+   "type2": null,
+   "stage": 1,
+   "line": "mantis",
+   "archetype": "蟲型",
+   "hp": 161,
+   "atk": 30,
+   "def": 28,
+   "mob": 2,
+   "spd": 18,
+   "red": 0.219,
+   "src_hp": 155,
+   "src_atk": 30,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "forest_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "forest_ail",
+     "lv": 4
+    },
+    {
+     "move": "forest_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "forest_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1020": {
+   "name": "カマケン",
+   "type": "森",
+   "type2": null,
+   "stage": 2,
+   "line": "mantis",
+   "archetype": "蟲型",
+   "hp": 520,
+   "atk": 71,
+   "def": 45,
+   "mob": 2,
+   "spd": 29,
+   "red": 0.31,
+   "src_hp": 500,
+   "src_atk": 71,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "forest_ladder1",
+     "lv": 1,
+     "from": 1019
+    },
+    {
+     "move": "forest_toss",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "forest_ail",
+     "lv": 4,
+     "from": 1019
+    },
+    {
+     "move": "forest_ladder2",
+     "lv": 8,
+     "from": 1019
+    },
+    {
+     "move": "forest_ladder3",
+     "lv": 15,
+     "from": 1019
+    },
+    {
+     "move": "forest_arrow",
+     "lv": 22
+    },
+    {
+     "move": "forest_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1021": {
+   "name": "カマキリオウ",
+   "type": "森",
+   "type2": null,
+   "stage": 3,
+   "line": "mantis",
+   "archetype": "蟲型",
+   "hp": 1475,
+   "atk": 140,
+   "def": 67,
+   "mob": 2,
+   "spd": 40,
+   "red": 0.401,
+   "src_hp": 1400,
+   "src_atk": 140,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "forest_ladder1",
+     "lv": 1,
+     "from": 1019
+    },
+    {
+     "move": "forest_toss",
+     "lv": 1,
+     "from": 1020
+    },
+    {
+     "move": "forest_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "forest_ail",
+     "lv": 4,
+     "from": 1019
+    },
+    {
+     "move": "forest_ladder2",
+     "lv": 8,
+     "from": 1019
+    },
+    {
+     "move": "forest_ladder3",
+     "lv": 15,
+     "from": 1019
+    },
+    {
+     "move": "forest_arrow",
+     "lv": 22,
+     "from": 1020
+    },
+    {
+     "move": "forest_ladder4",
+     "lv": 34,
+     "from": 1020
+    },
+    {
+     "move": "forest_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_mantis",
+     "lv": 52
+    }
+   ]
+  },
+  "1022": {
+   "name": "ビリトラ",
+   "type": "雷",
+   "type2": null,
+   "stage": 1,
+   "line": "tora",
+   "archetype": "電撃型",
+   "hp": 127,
+   "atk": 32,
+   "def": 15,
+   "mob": 2,
+   "spd": 32,
+   "red": 0.13,
+   "src_hp": 130,
+   "src_atk": 32,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "thunder_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ladder2",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 4
+    },
+    {
+     "move": "thunder_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1023": {
+   "name": "ライガ",
+   "type": "雷",
+   "type2": null,
+   "stage": 2,
+   "line": "tora",
+   "archetype": "電撃型",
+   "hp": 400,
+   "atk": 99,
+   "def": 28,
+   "mob": 2,
+   "spd": 51,
+   "red": 0.219,
+   "src_hp": 410,
+   "src_atk": 99,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "thunder_ladder1",
+     "lv": 1,
+     "from": 1022
+    },
+    {
+     "move": "thunder_ladder2",
+     "lv": 1,
+     "from": 1022
+    },
+    {
+     "move": "thunder_toss",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 4,
+     "from": 1022
+    },
+    {
+     "move": "starter_tora",
+     "lv": 12
+    },
+    {
+     "move": "thunder_ladder3",
+     "lv": 15,
+     "from": 1022
+    },
+    {
+     "move": "thunder_arrow",
+     "lv": 22
+    },
+    {
+     "move": "thunder_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1024": {
+   "name": "ボルケン",
+   "type": "雷",
+   "type2": null,
+   "stage": 3,
+   "line": "tora",
+   "archetype": "電撃型",
+   "hp": 1185,
+   "atk": 152,
+   "def": 45,
+   "mob": 2,
+   "spd": 70,
+   "red": 0.31,
+   "src_hp": 1220,
+   "src_atk": 152,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "thunder_ladder1",
+     "lv": 1,
+     "from": 1022
+    },
+    {
+     "move": "thunder_ladder2",
+     "lv": 1,
+     "from": 1022
+    },
+    {
+     "move": "thunder_toss",
+     "lv": 1,
+     "from": 1023
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 4,
+     "from": 1022
+    },
+    {
+     "move": "starter_tora",
+     "lv": 12,
+     "from": 1023
+    },
+    {
+     "move": "thunder_ladder3",
+     "lv": 15,
+     "from": 1022
+    },
+    {
+     "move": "thunder_arrow",
+     "lv": 22,
+     "from": 1023
+    },
+    {
+     "move": "thunder_ladder4",
+     "lv": 34,
+     "from": 1023
+    },
+    {
+     "move": "thunder_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_tora",
+     "lv": 52
+    }
+   ],
+   "ancient": [
+    "cn_plateau"
+   ],
+   "ancient_set": [
+    "thunder_ladder1",
+    "thunder_ladder2",
+    "thunder_toss",
+    "thunder_ring",
+    "thunder_ail",
+    "starter_tora",
+    "thunder_ladder3",
+    "thunder_arrow",
+    "thunder_ladder4",
+    "thunder_map",
+    "sig_tora"
+   ]
+  },
+  "70": {
+   "name": "ピリポン",
+   "type": "雷",
+   "type2": null,
+   "stage": 1,
+   "line": "piri",
+   "archetype": "電撃型",
+   "hp": 122,
+   "atk": 34,
+   "def": 15,
+   "mob": 2,
+   "spd": 32,
+   "red": 0.13,
+   "src_hp": 125,
+   "src_atk": 34,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "thunder_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 4
+    },
+    {
+     "move": "thunder_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "thunder_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "71": {
+   "name": "ピリムサ",
+   "type": "雷",
+   "type2": null,
+   "stage": 2,
+   "line": "piri",
+   "archetype": "電撃型",
+   "hp": 440,
+   "atk": 89,
+   "def": 28,
+   "mob": 2,
+   "spd": 51,
+   "red": 0.219,
+   "src_hp": 450,
+   "src_atk": 89,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "thunder_ladder1",
+     "lv": 1,
+     "from": 70
+    },
+    {
+     "move": "thunder_toss",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 4,
+     "from": 70
+    },
+    {
+     "move": "thunder_ladder2",
+     "lv": 8,
+     "from": 70
+    },
+    {
+     "move": "thunder_ladder3",
+     "lv": 15,
+     "from": 70
+    },
+    {
+     "move": "thunder_arrow",
+     "lv": 22
+    },
+    {
+     "move": "thunder_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1025": {
+   "name": "ナルカミ",
+   "type": "雷",
+   "type2": null,
+   "stage": 3,
+   "line": "piri",
+   "archetype": "電撃型",
+   "hp": 1225,
+   "atk": 155,
+   "def": 45,
+   "mob": 2,
+   "spd": 70,
+   "red": 0.31,
+   "src_hp": 1260,
+   "src_atk": 155,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "thunder_ladder1",
+     "lv": 1,
+     "from": 70
+    },
+    {
+     "move": "thunder_toss",
+     "lv": 1,
+     "from": 71
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 4,
+     "from": 70
+    },
+    {
+     "move": "thunder_ladder2",
+     "lv": 8,
+     "from": 70
+    },
+    {
+     "move": "thunder_ladder3",
+     "lv": 15,
+     "from": 70
+    },
+    {
+     "move": "thunder_arrow",
+     "lv": 22,
+     "from": 71
+    },
+    {
+     "move": "thunder_ladder4",
+     "lv": 34,
+     "from": 71
+    },
+    {
+     "move": "thunder_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_piri",
+     "lv": 52
+    }
+   ]
+  },
+  "1026": {
+   "name": "トールキッド",
+   "type": "雷",
+   "type2": null,
+   "stage": 1,
+   "line": "thor",
+   "archetype": "電撃型",
+   "hp": 117,
+   "atk": 35,
+   "def": 15,
+   "mob": 2,
+   "spd": 32,
+   "red": 0.13,
+   "src_hp": 120,
+   "src_atk": 35,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "thunder_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 4
+    },
+    {
+     "move": "thunder_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "thunder_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1027": {
+   "name": "トールジン",
+   "type": "雷",
+   "type2": null,
+   "stage": 2,
+   "line": "thor",
+   "archetype": "電撃型",
+   "hp": 410,
+   "atk": 90,
+   "def": 28,
+   "mob": 2,
+   "spd": 51,
+   "red": 0.219,
+   "src_hp": 420,
+   "src_atk": 90,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "thunder_ladder1",
+     "lv": 1,
+     "from": 1026
+    },
+    {
+     "move": "thunder_toss",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 4,
+     "from": 1026
+    },
+    {
+     "move": "thunder_ladder2",
+     "lv": 8,
+     "from": 1026
+    },
+    {
+     "move": "thunder_ladder3",
+     "lv": 15,
+     "from": 1026
+    },
+    {
+     "move": "thunder_arrow",
+     "lv": 22
+    },
+    {
+     "move": "thunder_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1028": {
+   "name": "トールガ",
+   "type": "雷",
+   "type2": null,
+   "stage": 3,
+   "line": "thor",
+   "archetype": "電撃型",
+   "hp": 1225,
+   "atk": 155,
+   "def": 45,
+   "mob": 2,
+   "spd": 70,
+   "red": 0.31,
+   "src_hp": 1260,
+   "src_atk": 155,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "thunder_ladder1",
+     "lv": 1,
+     "from": 1026
+    },
+    {
+     "move": "thunder_toss",
+     "lv": 1,
+     "from": 1027
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 4,
+     "from": 1026
+    },
+    {
+     "move": "thunder_ladder2",
+     "lv": 8,
+     "from": 1026
+    },
+    {
+     "move": "thunder_ladder3",
+     "lv": 15,
+     "from": 1026
+    },
+    {
+     "move": "thunder_arrow",
+     "lv": 22,
+     "from": 1027
+    },
+    {
+     "move": "thunder_ladder4",
+     "lv": 34,
+     "from": 1027
+    },
+    {
+     "move": "thunder_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_thor",
+     "lv": 52
+    }
+   ],
+   "ancient": [
+    "cloudroad(野生のボス)"
+   ],
+   "ancient_set": [
+    "thunder_ladder1",
+    "thunder_toss",
+    "thunder_ring",
+    "thunder_ail",
+    "thunder_ladder2",
+    "thunder_ladder3",
+    "thunder_arrow",
+    "thunder_ladder4",
+    "thunder_map",
+    "sig_thor"
+   ]
+  },
+  "49": {
+   "name": "ソヨカ",
+   "type": "風",
+   "type2": null,
+   "stage": 1,
+   "line": "momonga",
+   "archetype": "風獣型",
+   "hp": 122,
+   "atk": 28,
+   "def": 8,
+   "mob": 3,
+   "spd": 36,
+   "red": 0.074,
+   "src_hp": 125,
+   "src_atk": 28,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "wind_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "wind_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1029": {
+   "name": "ソヨモモ",
+   "type": "風",
+   "type2": null,
+   "stage": 2,
+   "line": "momonga",
+   "archetype": "風獣型",
+   "hp": 435,
+   "atk": 79,
+   "def": 19,
+   "mob": 3,
+   "spd": 58,
+   "red": 0.16,
+   "src_hp": 450,
+   "src_atk": 79,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "wind_ladder1",
+     "lv": 1,
+     "from": 49
+    },
+    {
+     "move": "wind_combo",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "wind_ladder2",
+     "lv": 8,
+     "from": 49
+    },
+    {
+     "move": "wind_ladder3",
+     "lv": 15,
+     "from": 49
+    },
+    {
+     "move": "wind_pierce",
+     "lv": 22
+    },
+    {
+     "move": "wind_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "51": {
+   "name": "カゼモモ",
+   "type": "風",
+   "type2": null,
+   "stage": 3,
+   "line": "momonga",
+   "archetype": "風獣型",
+   "hp": 1235,
+   "atk": 150,
+   "def": 33,
+   "mob": 3,
+   "spd": 79,
+   "red": 0.248,
+   "src_hp": 1290,
+   "src_atk": 150,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "wind_ladder1",
+     "lv": 1,
+     "from": 49
+    },
+    {
+     "move": "wind_combo",
+     "lv": 1,
+     "from": 1029
+    },
+    {
+     "move": "wind_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "wind_ladder2",
+     "lv": 8,
+     "from": 49
+    },
+    {
+     "move": "wind_ladder3",
+     "lv": 15,
+     "from": 49
+    },
+    {
+     "move": "wind_pierce",
+     "lv": 22,
+     "from": 1029
+    },
+    {
+     "move": "wind_ladder4",
+     "lv": 34,
+     "from": 1029
+    },
+    {
+     "move": "wind_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_momonga",
+     "lv": 52
+    }
+   ]
+  },
+  "1030": {
+   "name": "ヒヨドル",
+   "type": "風",
+   "type2": null,
+   "stage": 1,
+   "line": "taka",
+   "archetype": "風獣型",
+   "hp": 112,
+   "atk": 28,
+   "def": 8,
+   "mob": 3,
+   "spd": 36,
+   "red": 0.074,
+   "src_hp": 115,
+   "src_atk": 28,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "wind_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "wind_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1031": {
+   "name": "ハヤタカ",
+   "type": "風",
+   "type2": null,
+   "stage": 2,
+   "line": "taka",
+   "archetype": "風獣型",
+   "hp": 435,
+   "atk": 76,
+   "def": 19,
+   "mob": 3,
+   "spd": 58,
+   "red": 0.16,
+   "src_hp": 450,
+   "src_atk": 76,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "wind_ladder1",
+     "lv": 1,
+     "from": 1030
+    },
+    {
+     "move": "wind_combo",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "wind_ladder2",
+     "lv": 8,
+     "from": 1030
+    },
+    {
+     "move": "wind_ladder3",
+     "lv": 15,
+     "from": 1030
+    },
+    {
+     "move": "wind_pierce",
+     "lv": 22
+    },
+    {
+     "move": "wind_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1032": {
+   "name": "アラワシ",
+   "type": "風",
+   "type2": null,
+   "stage": 3,
+   "line": "taka",
+   "archetype": "風獣型",
+   "hp": 1245,
+   "atk": 136,
+   "def": 33,
+   "mob": 3,
+   "spd": 79,
+   "red": 0.248,
+   "src_hp": 1300,
+   "src_atk": 136,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "wind_ladder1",
+     "lv": 1,
+     "from": 1030
+    },
+    {
+     "move": "wind_combo",
+     "lv": 1,
+     "from": 1031
+    },
+    {
+     "move": "wind_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "wind_ladder2",
+     "lv": 8,
+     "from": 1030
+    },
+    {
+     "move": "wind_ladder3",
+     "lv": 15,
+     "from": 1030
+    },
+    {
+     "move": "wind_pierce",
+     "lv": 22,
+     "from": 1031
+    },
+    {
+     "move": "wind_ladder4",
+     "lv": 34,
+     "from": 1031
+    },
+    {
+     "move": "wind_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_taka",
+     "lv": 52
+    }
+   ]
+  },
+  "1033": {
+   "name": "カブッコ",
+   "type": "風",
+   "type2": null,
+   "stage": 1,
+   "line": "kabuto",
+   "archetype": "蟲型",
+   "hp": 129,
+   "atk": 28,
+   "def": 15,
+   "mob": 3,
+   "spd": 32,
+   "red": 0.13,
+   "src_hp": 125,
+   "src_atk": 28,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "wind_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "wind_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1034": {
+   "name": "ヘラツノ",
+   "type": "風",
+   "type2": null,
+   "stage": 2,
+   "line": "kabuto",
+   "archetype": "蟲型",
+   "hp": 455,
+   "atk": 80,
+   "def": 28,
+   "mob": 3,
+   "spd": 51,
+   "red": 0.219,
+   "src_hp": 440,
+   "src_atk": 80,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "wind_ladder1",
+     "lv": 1,
+     "from": 1033
+    },
+    {
+     "move": "wind_combo",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "wind_ladder2",
+     "lv": 8,
+     "from": 1033
+    },
+    {
+     "move": "wind_ladder3",
+     "lv": 15,
+     "from": 1033
+    },
+    {
+     "move": "wind_pierce",
+     "lv": 22
+    },
+    {
+     "move": "wind_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1035": {
+   "name": "ツノムシャ",
+   "type": "風",
+   "type2": null,
+   "stage": 3,
+   "line": "kabuto",
+   "archetype": "蟲型",
+   "hp": 1345,
+   "atk": 146,
+   "def": 45,
+   "mob": 3,
+   "spd": 70,
+   "red": 0.31,
+   "src_hp": 1290,
+   "src_atk": 146,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "wind_ladder1",
+     "lv": 1,
+     "from": 1033
+    },
+    {
+     "move": "wind_combo",
+     "lv": 1,
+     "from": 1034
+    },
+    {
+     "move": "wind_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "wind_ladder2",
+     "lv": 8,
+     "from": 1033
+    },
+    {
+     "move": "wind_ladder3",
+     "lv": 15,
+     "from": 1033
+    },
+    {
+     "move": "wind_pierce",
+     "lv": 22,
+     "from": 1034
+    },
+    {
+     "move": "wind_ladder4",
+     "lv": 34,
+     "from": 1034
+    },
+    {
+     "move": "wind_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_kabuto",
+     "lv": 52
+    }
+   ]
+  },
+  "1036": {
+   "name": "アルマド",
+   "type": "地",
+   "type2": null,
+   "stage": 1,
+   "line": "armad",
+   "archetype": "甲殻型",
+   "hp": 166,
+   "atk": 26,
+   "def": 43,
+   "mob": 2,
+   "spd": 8,
+   "red": 0.301,
+   "src_hp": 155,
+   "src_atk": 26,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1037": {
+   "name": "アルマガネ",
+   "type": "地",
+   "type2": null,
+   "stage": 2,
+   "line": "armad",
+   "archetype": "甲殻型",
+   "hp": 575,
+   "atk": 79,
+   "def": 64,
+   "mob": 2,
+   "spd": 8,
+   "red": 0.39,
+   "src_hp": 530,
+   "src_atk": 79,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1,
+     "from": 1036
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1,
+     "from": 1036
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "earth_ladder2",
+     "lv": 8,
+     "from": 1036
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 15,
+     "from": 1036
+    },
+    {
+     "move": "earth_pierce",
+     "lv": 22
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1038": {
+   "name": "アルマゴウ",
+   "type": "地",
+   "type2": null,
+   "stage": 3,
+   "line": "armad",
+   "archetype": "甲殻型",
+   "hp": 1850,
+   "atk": 130,
+   "def": 92,
+   "mob": 2,
+   "spd": 9,
+   "red": 0.479,
+   "src_hp": 1690,
+   "src_atk": 130,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1,
+     "from": 1036
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1,
+     "from": 1036
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1,
+     "from": 1037
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "earth_ladder2",
+     "lv": 8,
+     "from": 1036
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 15,
+     "from": 1036
+    },
+    {
+     "move": "earth_pierce",
+     "lv": 22,
+     "from": 1037
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 34,
+     "from": 1037
+    },
+    {
+     "move": "earth_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_armad",
+     "lv": 52
+    }
+   ]
+  },
+  "1039": {
+   "name": "コクワッコ",
+   "type": "地",
+   "type2": null,
+   "stage": 1,
+   "line": "kuwa",
+   "archetype": "蟲型",
+   "hp": 182,
+   "atk": 27,
+   "def": 39,
+   "mob": 2,
+   "spd": 12,
+   "red": 0.281,
+   "src_hp": 175,
+   "src_atk": 27,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1040": {
+   "name": "クワダチ",
+   "type": "地",
+   "type2": null,
+   "stage": 2,
+   "line": "kuwa",
+   "archetype": "蟲型",
+   "hp": 575,
+   "atk": 80,
+   "def": 59,
+   "mob": 2,
+   "spd": 19,
+   "red": 0.371,
+   "src_hp": 550,
+   "src_atk": 80,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1,
+     "from": 1039
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1,
+     "from": 1039
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "earth_ladder2",
+     "lv": 8,
+     "from": 1039
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 15,
+     "from": 1039
+    },
+    {
+     "move": "earth_pierce",
+     "lv": 22
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1041": {
+   "name": "コウガロ",
+   "type": "地",
+   "type2": null,
+   "stage": 3,
+   "line": "kuwa",
+   "archetype": "蟲型",
+   "hp": 1645,
+   "atk": 143,
+   "def": 85,
+   "mob": 2,
+   "spd": 26,
+   "red": 0.459,
+   "src_hp": 1560,
+   "src_atk": 143,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1,
+     "from": 1039
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1,
+     "from": 1039
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1,
+     "from": 1040
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "earth_ladder2",
+     "lv": 8,
+     "from": 1039
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 15,
+     "from": 1039
+    },
+    {
+     "move": "earth_pierce",
+     "lv": 22,
+     "from": 1040
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 34,
+     "from": 1040
+    },
+    {
+     "move": "earth_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_kuwa",
+     "lv": 52
+    }
+   ]
+  },
+  "1042": {
+   "name": "パオッコ",
+   "type": "地",
+   "type2": null,
+   "stage": 1,
+   "line": "zou",
+   "archetype": "甲殻型",
+   "hp": 177,
+   "atk": 28,
+   "def": 43,
+   "mob": 2,
+   "spd": 8,
+   "red": 0.301,
+   "src_hp": 165,
+   "src_atk": 28,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1043": {
+   "name": "パオドン",
+   "type": "地",
+   "type2": null,
+   "stage": 2,
+   "line": "zou",
+   "archetype": "甲殻型",
+   "hp": 630,
+   "atk": 72,
+   "def": 64,
+   "mob": 2,
+   "spd": 8,
+   "red": 0.39,
+   "src_hp": 580,
+   "src_atk": 72,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1,
+     "from": 1042
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1,
+     "from": 1042
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "earth_ladder2",
+     "lv": 8,
+     "from": 1042
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 15,
+     "from": 1042
+    },
+    {
+     "move": "earth_pierce",
+     "lv": 22
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1044": {
+   "name": "マンモガイア",
+   "type": "地",
+   "type2": null,
+   "stage": 3,
+   "line": "zou",
+   "archetype": "甲殻型",
+   "hp": 1695,
+   "atk": 140,
+   "def": 92,
+   "mob": 2,
+   "spd": 9,
+   "red": 0.479,
+   "src_hp": 1550,
+   "src_atk": 140,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1,
+     "from": 1042
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1,
+     "from": 1042
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1,
+     "from": 1043
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "earth_ladder2",
+     "lv": 8,
+     "from": 1042
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 15,
+     "from": 1042
+    },
+    {
+     "move": "earth_pierce",
+     "lv": 22,
+     "from": 1043
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 34,
+     "from": 1043
+    },
+    {
+     "move": "earth_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_zou",
+     "lv": 52
+    }
+   ]
+  },
+  "1045": {
+   "name": "ユキダマ",
+   "type": "氷",
+   "type2": null,
+   "stage": 1,
+   "line": "yuki",
+   "archetype": "氷獣型",
+   "hp": 150,
+   "atk": 30,
+   "def": 22,
+   "mob": 2,
+   "spd": 18,
+   "red": 0.18,
+   "src_hp": 150,
+   "src_atk": 30,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "ice_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "ice_ail",
+     "lv": 4
+    },
+    {
+     "move": "ice_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "ice_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1046": {
+   "name": "ユキマダラ",
+   "type": "氷",
+   "type2": null,
+   "stage": 2,
+   "line": "yuki",
+   "archetype": "氷獣型",
+   "hp": 500,
+   "atk": 79,
+   "def": 37,
+   "mob": 2,
+   "spd": 29,
+   "red": 0.27,
+   "src_hp": 500,
+   "src_atk": 79,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "ice_ladder1",
+     "lv": 1,
+     "from": 1045
+    },
+    {
+     "move": "ice_spear",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "ice_ail",
+     "lv": 4,
+     "from": 1045
+    },
+    {
+     "move": "ice_ladder2",
+     "lv": 8,
+     "from": 1045
+    },
+    {
+     "move": "ice_ladder3",
+     "lv": 15,
+     "from": 1045
+    },
+    {
+     "move": "ice_pierce",
+     "lv": 22
+    },
+    {
+     "move": "ice_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1047": {
+   "name": "ユキヒョウガ",
+   "type": "氷",
+   "type2": null,
+   "stage": 3,
+   "line": "yuki",
+   "archetype": "氷獣型",
+   "hp": 1430,
+   "atk": 145,
+   "def": 56,
+   "mob": 2,
+   "spd": 40,
+   "red": 0.359,
+   "src_hp": 1430,
+   "src_atk": 145,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "ice_ladder1",
+     "lv": 1,
+     "from": 1045
+    },
+    {
+     "move": "ice_spear",
+     "lv": 1,
+     "from": 1046
+    },
+    {
+     "move": "ice_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "ice_ail",
+     "lv": 4,
+     "from": 1045
+    },
+    {
+     "move": "ice_ladder2",
+     "lv": 8,
+     "from": 1045
+    },
+    {
+     "move": "ice_ladder3",
+     "lv": 15,
+     "from": 1045
+    },
+    {
+     "move": "ice_pierce",
+     "lv": 22,
+     "from": 1046
+    },
+    {
+     "move": "ice_ladder4",
+     "lv": 34,
+     "from": 1046
+    },
+    {
+     "move": "ice_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_yuki",
+     "lv": 52
+    }
+   ]
+  },
+  "1048": {
+   "name": "ペンギー",
+   "type": "氷",
+   "type2": null,
+   "stage": 1,
+   "line": "pen",
+   "archetype": "氷獣型",
+   "hp": 160,
+   "atk": 30,
+   "def": 22,
+   "mob": 2,
+   "spd": 18,
+   "red": 0.18,
+   "src_hp": 160,
+   "src_atk": 30,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "ice_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "ice_ail",
+     "lv": 4
+    },
+    {
+     "move": "ice_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "ice_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1049": {
+   "name": "グレイスペン",
+   "type": "氷",
+   "type2": null,
+   "stage": 2,
+   "line": "pen",
+   "archetype": "氷獣型",
+   "hp": 530,
+   "atk": 87,
+   "def": 37,
+   "mob": 2,
+   "spd": 29,
+   "red": 0.27,
+   "src_hp": 530,
+   "src_atk": 87,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "ice_ladder1",
+     "lv": 1,
+     "from": 1048
+    },
+    {
+     "move": "ice_spear",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "ice_ail",
+     "lv": 4,
+     "from": 1048
+    },
+    {
+     "move": "ice_ladder2",
+     "lv": 8,
+     "from": 1048
+    },
+    {
+     "move": "ice_ladder3",
+     "lv": 15,
+     "from": 1048
+    },
+    {
+     "move": "ice_pierce",
+     "lv": 22
+    },
+    {
+     "move": "ice_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1050": {
+   "name": "グレイザル",
+   "type": "氷",
+   "type2": null,
+   "stage": 3,
+   "line": "pen",
+   "archetype": "氷獣型",
+   "hp": 1410,
+   "atk": 148,
+   "def": 56,
+   "mob": 2,
+   "spd": 40,
+   "red": 0.359,
+   "src_hp": 1410,
+   "src_atk": 148,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "ice_ladder1",
+     "lv": 1,
+     "from": 1048
+    },
+    {
+     "move": "ice_spear",
+     "lv": 1,
+     "from": 1049
+    },
+    {
+     "move": "ice_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "ice_ail",
+     "lv": 4,
+     "from": 1048
+    },
+    {
+     "move": "ice_ladder2",
+     "lv": 8,
+     "from": 1048
+    },
+    {
+     "move": "ice_ladder3",
+     "lv": 15,
+     "from": 1048
+    },
+    {
+     "move": "ice_pierce",
+     "lv": 22,
+     "from": 1049
+    },
+    {
+     "move": "ice_ladder4",
+     "lv": 34,
+     "from": 1049
+    },
+    {
+     "move": "ice_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_pen",
+     "lv": 52
+    }
+   ]
+  },
+  "16": {
+   "name": "ポチャラシ",
+   "type": "氷",
+   "type2": null,
+   "stage": 1,
+   "line": "seal",
+   "archetype": "氷獣型",
+   "hp": 155,
+   "atk": 27,
+   "def": 22,
+   "mob": 2,
+   "spd": 18,
+   "red": 0.18,
+   "src_hp": 155,
+   "src_atk": 27,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "ice_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "ice_ail",
+     "lv": 4
+    },
+    {
+     "move": "ice_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "ice_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1051": {
+   "name": "キバラシ",
+   "type": "氷",
+   "type2": null,
+   "stage": 2,
+   "line": "seal",
+   "archetype": "氷獣型",
+   "hp": 490,
+   "atk": 76,
+   "def": 37,
+   "mob": 2,
+   "spd": 29,
+   "red": 0.27,
+   "src_hp": 490,
+   "src_atk": 76,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "ice_ladder1",
+     "lv": 1,
+     "from": 16
+    },
+    {
+     "move": "ice_spear",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "ice_ail",
+     "lv": 4,
+     "from": 16
+    },
+    {
+     "move": "ice_ladder2",
+     "lv": 8,
+     "from": 16
+    },
+    {
+     "move": "ice_ladder3",
+     "lv": 15,
+     "from": 16
+    },
+    {
+     "move": "ice_pierce",
+     "lv": 22
+    },
+    {
+     "move": "ice_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1052": {
+   "name": "セイウオウ",
+   "type": "氷",
+   "type2": null,
+   "stage": 3,
+   "line": "seal",
+   "archetype": "氷獣型",
+   "hp": 1605,
+   "atk": 144,
+   "def": 56,
+   "mob": 2,
+   "spd": 40,
+   "red": 0.359,
+   "src_hp": 1610,
+   "src_atk": 144,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "ice_ladder1",
+     "lv": 1,
+     "from": 16
+    },
+    {
+     "move": "ice_spear",
+     "lv": 1,
+     "from": 1051
+    },
+    {
+     "move": "ice_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "ice_ail",
+     "lv": 4,
+     "from": 16
+    },
+    {
+     "move": "ice_ladder2",
+     "lv": 8,
+     "from": 16
+    },
+    {
+     "move": "ice_ladder3",
+     "lv": 15,
+     "from": 16
+    },
+    {
+     "move": "ice_pierce",
+     "lv": 22,
+     "from": 1051
+    },
+    {
+     "move": "ice_ladder4",
+     "lv": 34,
+     "from": 1051
+    },
+    {
+     "move": "ice_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_seal",
+     "lv": 52
+    }
+   ]
+  },
+  "166": {
+   "name": "ニジッコ",
+   "type": "光",
+   "type2": null,
+   "stage": 1,
+   "line": "prism",
+   "archetype": "妖精型",
+   "hp": 135,
+   "atk": 28,
+   "def": 11,
+   "mob": 2,
+   "spd": 26,
+   "red": 0.099,
+   "src_hp": 140,
+   "src_atk": 28,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 4
+    },
+    {
+     "move": "light_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 12
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "167": {
+   "name": "イリュネ",
+   "type": "光",
+   "type2": null,
+   "stage": 2,
+   "line": "prism",
+   "archetype": "妖精型",
+   "hp": 460,
+   "atk": 78,
+   "def": 23,
+   "mob": 2,
+   "spd": 42,
+   "red": 0.187,
+   "src_hp": 480,
+   "src_atk": 78,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1,
+     "from": 166
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1,
+     "from": 166
+    },
+    {
+     "move": "light_toss",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "light_cure",
+     "lv": 4,
+     "from": 166
+    },
+    {
+     "move": "light_ladder2",
+     "lv": 8,
+     "from": 166
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 12,
+     "from": 166
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 15,
+     "from": 166
+    },
+    {
+     "move": "light_arrow",
+     "lv": 22
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "276": {
+   "name": "イリディア",
+   "type": "光",
+   "type2": null,
+   "stage": 3,
+   "line": "prism",
+   "archetype": "妖精型",
+   "hp": 1370,
+   "atk": 151,
+   "def": 39,
+   "mob": 2,
+   "spd": 57,
+   "red": 0.281,
+   "src_hp": 1430,
+   "src_atk": 151,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1,
+     "from": 166
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1,
+     "from": 166
+    },
+    {
+     "move": "light_toss",
+     "lv": 1,
+     "from": 167
+    },
+    {
+     "move": "light_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "light_revive",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "light_cure",
+     "lv": 4,
+     "from": 166
+    },
+    {
+     "move": "light_ladder2",
+     "lv": 8,
+     "from": 166
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 12,
+     "from": 166
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 15,
+     "from": 166
+    },
+    {
+     "move": "light_arrow",
+     "lv": 22,
+     "from": 167
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 34,
+     "from": 167
+    },
+    {
+     "move": "light_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_prism",
+     "lv": 52
+    }
+   ]
+  },
+  "1053": {
+   "name": "コグリフ",
+   "type": "光",
+   "type2": null,
+   "stage": 1,
+   "line": "grif",
+   "archetype": "妖精型",
+   "hp": 130,
+   "atk": 32,
+   "def": 11,
+   "mob": 2,
+   "spd": 26,
+   "red": 0.099,
+   "src_hp": 135,
+   "src_atk": 32,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 4
+    },
+    {
+     "move": "light_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 12
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1054": {
+   "name": "グリフォ",
+   "type": "光",
+   "type2": null,
+   "stage": 2,
+   "line": "grif",
+   "archetype": "妖精型",
+   "hp": 420,
+   "atk": 81,
+   "def": 23,
+   "mob": 2,
+   "spd": 42,
+   "red": 0.187,
+   "src_hp": 440,
+   "src_atk": 81,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1,
+     "from": 1053
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1,
+     "from": 1053
+    },
+    {
+     "move": "light_toss",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "light_cure",
+     "lv": 4,
+     "from": 1053
+    },
+    {
+     "move": "light_ladder2",
+     "lv": 8,
+     "from": 1053
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 12,
+     "from": 1053
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 15,
+     "from": 1053
+    },
+    {
+     "move": "light_arrow",
+     "lv": 22
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1055": {
+   "name": "グリフォード",
+   "type": "光",
+   "type2": null,
+   "stage": 3,
+   "line": "grif",
+   "archetype": "妖精型",
+   "hp": 1220,
+   "atk": 153,
+   "def": 39,
+   "mob": 2,
+   "spd": 57,
+   "red": 0.281,
+   "src_hp": 1270,
+   "src_atk": 153,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1,
+     "from": 1053
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1,
+     "from": 1053
+    },
+    {
+     "move": "light_toss",
+     "lv": 1,
+     "from": 1054
+    },
+    {
+     "move": "light_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "light_revive",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "light_cure",
+     "lv": 4,
+     "from": 1053
+    },
+    {
+     "move": "light_ladder2",
+     "lv": 8,
+     "from": 1053
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 12,
+     "from": 1053
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 15,
+     "from": 1053
+    },
+    {
+     "move": "light_arrow",
+     "lv": 22,
+     "from": 1054
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 34,
+     "from": 1054
+    },
+    {
+     "move": "light_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_grif",
+     "lv": 52
+    }
+   ]
+  },
+  "1056": {
+   "name": "ホタリィ",
+   "type": "光",
+   "type2": null,
+   "stage": 1,
+   "line": "hotaru",
+   "archetype": "妖精型",
+   "hp": 135,
+   "atk": 32,
+   "def": 11,
+   "mob": 2,
+   "spd": 26,
+   "red": 0.099,
+   "src_hp": 140,
+   "src_atk": 32,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 4
+    },
+    {
+     "move": "light_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 12
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1057": {
+   "name": "ホタルン",
+   "type": "光",
+   "type2": null,
+   "stage": 2,
+   "line": "hotaru",
+   "archetype": "妖精型",
+   "hp": 460,
+   "atk": 78,
+   "def": 23,
+   "mob": 2,
+   "spd": 42,
+   "red": 0.187,
+   "src_hp": 480,
+   "src_atk": 78,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1,
+     "from": 1056
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1,
+     "from": 1056
+    },
+    {
+     "move": "light_toss",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "light_cure",
+     "lv": 4,
+     "from": 1056
+    },
+    {
+     "move": "light_ladder2",
+     "lv": 8,
+     "from": 1056
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 12,
+     "from": 1056
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 15,
+     "from": 1056
+    },
+    {
+     "move": "light_arrow",
+     "lv": 22
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1058": {
+   "name": "タマボタル",
+   "type": "光",
+   "type2": null,
+   "stage": 3,
+   "line": "hotaru",
+   "archetype": "妖精型",
+   "hp": 1345,
+   "atk": 155,
+   "def": 39,
+   "mob": 2,
+   "spd": 57,
+   "red": 0.281,
+   "src_hp": 1400,
+   "src_atk": 155,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1,
+     "from": 1056
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1,
+     "from": 1056
+    },
+    {
+     "move": "light_toss",
+     "lv": 1,
+     "from": 1057
+    },
+    {
+     "move": "light_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "light_revive",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "light_cure",
+     "lv": 4,
+     "from": 1056
+    },
+    {
+     "move": "light_ladder2",
+     "lv": 8,
+     "from": 1056
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 12,
+     "from": 1056
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 15,
+     "from": 1056
+    },
+    {
+     "move": "light_arrow",
+     "lv": 22,
+     "from": 1057
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 34,
+     "from": 1057
+    },
+    {
+     "move": "light_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_hotaru",
+     "lv": 52
+    }
+   ]
+  },
+  "1059": {
+   "name": "オバケロ",
+   "type": "闇",
+   "type2": null,
+   "stage": 1,
+   "line": "ghost",
+   "archetype": "魔獣型",
+   "hp": 155,
+   "atk": 31,
+   "def": 15,
+   "mob": 2,
+   "spd": 24,
+   "red": 0.13,
+   "src_hp": 155,
+   "src_atk": 31,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dark_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dark_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "dark_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1060": {
+   "name": "ボロウル",
+   "type": "闇",
+   "type2": null,
+   "stage": 2,
+   "line": "ghost",
+   "archetype": "魔獣型",
+   "hp": 520,
+   "atk": 82,
+   "def": 28,
+   "mob": 2,
+   "spd": 38,
+   "red": 0.219,
+   "src_hp": 520,
+   "src_atk": 82,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dark_ladder1",
+     "lv": 1,
+     "from": 1059
+    },
+    {
+     "move": "dark_spear",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "dark_ladder2",
+     "lv": 8,
+     "from": 1059
+    },
+    {
+     "move": "dark_ladder3",
+     "lv": 15,
+     "from": 1059
+    },
+    {
+     "move": "dark_pierce",
+     "lv": 22
+    },
+    {
+     "move": "dark_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1061": {
+   "name": "グリムル",
+   "type": "闇",
+   "type2": null,
+   "stage": 3,
+   "line": "ghost",
+   "archetype": "魔獣型",
+   "hp": 1420,
+   "atk": 143,
+   "def": 45,
+   "mob": 2,
+   "spd": 53,
+   "red": 0.31,
+   "src_hp": 1420,
+   "src_atk": 143,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dark_ladder1",
+     "lv": 1,
+     "from": 1059
+    },
+    {
+     "move": "dark_spear",
+     "lv": 1,
+     "from": 1060
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "dark_ladder2",
+     "lv": 8,
+     "from": 1059
+    },
+    {
+     "move": "dark_ladder3",
+     "lv": 15,
+     "from": 1059
+    },
+    {
+     "move": "dark_pierce",
+     "lv": 22,
+     "from": 1060
+    },
+    {
+     "move": "dark_ladder4",
+     "lv": 34,
+     "from": 1060
+    },
+    {
+     "move": "dark_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_ghost",
+     "lv": 52
+    }
+   ]
+  },
+  "1062": {
+   "name": "フクピィ",
+   "type": "闇",
+   "type2": null,
+   "stage": 1,
+   "line": "owl",
+   "archetype": "魔獣型",
+   "hp": 150,
+   "atk": 29,
+   "def": 15,
+   "mob": 2,
+   "spd": 24,
+   "red": 0.13,
+   "src_hp": 150,
+   "src_atk": 29,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dark_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dark_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "dark_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1063": {
+   "name": "ヨルフク",
+   "type": "闇",
+   "type2": null,
+   "stage": 2,
+   "line": "owl",
+   "archetype": "魔獣型",
+   "hp": 490,
+   "atk": 85,
+   "def": 28,
+   "mob": 2,
+   "spd": 38,
+   "red": 0.219,
+   "src_hp": 490,
+   "src_atk": 85,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dark_ladder1",
+     "lv": 1,
+     "from": 1062
+    },
+    {
+     "move": "dark_spear",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "dark_ladder2",
+     "lv": 8,
+     "from": 1062
+    },
+    {
+     "move": "dark_ladder3",
+     "lv": 15,
+     "from": 1062
+    },
+    {
+     "move": "dark_pierce",
+     "lv": 22
+    },
+    {
+     "move": "dark_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1064": {
+   "name": "ツキミズク",
+   "type": "闇",
+   "type2": null,
+   "stage": 3,
+   "line": "owl",
+   "archetype": "魔獣型",
+   "hp": 1440,
+   "atk": 150,
+   "def": 45,
+   "mob": 2,
+   "spd": 53,
+   "red": 0.31,
+   "src_hp": 1440,
+   "src_atk": 150,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dark_ladder1",
+     "lv": 1,
+     "from": 1062
+    },
+    {
+     "move": "dark_spear",
+     "lv": 1,
+     "from": 1063
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "dark_ladder2",
+     "lv": 8,
+     "from": 1062
+    },
+    {
+     "move": "dark_ladder3",
+     "lv": 15,
+     "from": 1062
+    },
+    {
+     "move": "dark_pierce",
+     "lv": 22,
+     "from": 1063
+    },
+    {
+     "move": "dark_ladder4",
+     "lv": 34,
+     "from": 1063
+    },
+    {
+     "move": "dark_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_owl",
+     "lv": 52
+    }
+   ]
+  },
+  "1065": {
+   "name": "コモリン",
+   "type": "闇",
+   "type2": null,
+   "stage": 1,
+   "line": "bat",
+   "archetype": "魔獣型",
+   "hp": 160,
+   "atk": 31,
+   "def": 15,
+   "mob": 2,
+   "spd": 24,
+   "red": 0.13,
+   "src_hp": 160,
+   "src_atk": 31,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dark_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dark_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "dark_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1066": {
+   "name": "コモリーナ",
+   "type": "闇",
+   "type2": null,
+   "stage": 2,
+   "line": "bat",
+   "archetype": "魔獣型",
+   "hp": 540,
+   "atk": 78,
+   "def": 28,
+   "mob": 2,
+   "spd": 38,
+   "red": 0.219,
+   "src_hp": 540,
+   "src_atk": 78,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dark_ladder1",
+     "lv": 1,
+     "from": 1065
+    },
+    {
+     "move": "dark_spear",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "dark_ladder2",
+     "lv": 8,
+     "from": 1065
+    },
+    {
+     "move": "dark_ladder3",
+     "lv": 15,
+     "from": 1065
+    },
+    {
+     "move": "dark_pierce",
+     "lv": 22
+    },
+    {
+     "move": "dark_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1067": {
+   "name": "ヴァンモリ",
+   "type": "闇",
+   "type2": null,
+   "stage": 3,
+   "line": "bat",
+   "archetype": "魔獣型",
+   "hp": 1540,
+   "atk": 154,
+   "def": 45,
+   "mob": 2,
+   "spd": 53,
+   "red": 0.31,
+   "src_hp": 1540,
+   "src_atk": 154,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dark_ladder1",
+     "lv": 1,
+     "from": 1065
+    },
+    {
+     "move": "dark_spear",
+     "lv": 1,
+     "from": 1066
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "dark_ladder2",
+     "lv": 8,
+     "from": 1065
+    },
+    {
+     "move": "dark_ladder3",
+     "lv": 15,
+     "from": 1065
+    },
+    {
+     "move": "dark_pierce",
+     "lv": 22,
+     "from": 1066
+    },
+    {
+     "move": "dark_ladder4",
+     "lv": 34,
+     "from": 1066
+    },
+    {
+     "move": "dark_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_bat",
+     "lv": 52
+    }
+   ]
+  },
+  "1068": {
+   "name": "ティラチ",
+   "type": "竜",
+   "type2": null,
+   "stage": 1,
+   "line": "dino",
+   "archetype": "竜型",
+   "hp": 159,
+   "atk": 33,
+   "def": 35,
+   "mob": 2,
+   "spd": 18,
+   "red": 0.259,
+   "src_hp": 155,
+   "src_atk": 33,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "1069": {
+   "name": "ラプント",
+   "type": "竜",
+   "type2": null,
+   "stage": 2,
+   "line": "dino",
+   "archetype": "竜型",
+   "hp": 525,
+   "atk": 91,
+   "def": 54,
+   "mob": 2,
+   "spd": 29,
+   "red": 0.351,
+   "src_hp": 510,
+   "src_atk": 91,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1,
+     "from": 1068
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "dragon_ladder2",
+     "lv": 8,
+     "from": 1068
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 15,
+     "from": 1068
+    },
+    {
+     "move": "dragon_arrow",
+     "lv": 22
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "1070": {
+   "name": "ティラノス",
+   "type": "竜",
+   "type2": null,
+   "stage": 3,
+   "line": "dino",
+   "archetype": "竜型",
+   "hp": 1380,
+   "atk": 155,
+   "def": 79,
+   "mob": 2,
+   "spd": 40,
+   "red": 0.441,
+   "src_hp": 1330,
+   "src_atk": 155,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1,
+     "from": 1068
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1,
+     "from": 1069
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "dragon_ladder2",
+     "lv": 8,
+     "from": 1068
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 15,
+     "from": 1068
+    },
+    {
+     "move": "dragon_arrow",
+     "lv": 22,
+     "from": 1069
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 34,
+     "from": 1069
+    },
+    {
+     "move": "dragon_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_dino",
+     "lv": 52
+    }
+   ]
+  },
+  "195": {
+   "name": "セイリュン",
+   "type": "竜",
+   "type2": null,
+   "stage": 1,
+   "line": "seiryu",
+   "archetype": "竜型",
+   "hp": 139,
+   "atk": 30,
+   "def": 35,
+   "mob": 2,
+   "spd": 18,
+   "red": 0.259,
+   "src_hp": 135,
+   "src_atk": 30,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "196": {
+   "name": "セイリュ",
+   "type": "竜",
+   "type2": null,
+   "stage": 2,
+   "line": "seiryu",
+   "archetype": "竜型",
+   "hp": 485,
+   "atk": 89,
+   "def": 54,
+   "mob": 2,
+   "spd": 29,
+   "red": 0.351,
+   "src_hp": 470,
+   "src_atk": 89,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1,
+     "from": 195
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "dragon_ladder2",
+     "lv": 8,
+     "from": 195
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 15,
+     "from": 195
+    },
+    {
+     "move": "dragon_arrow",
+     "lv": 22
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "291": {
+   "name": "セイリュウ",
+   "type": "竜",
+   "type2": null,
+   "stage": 3,
+   "line": "seiryu",
+   "archetype": "竜型",
+   "hp": 1420,
+   "atk": 144,
+   "def": 79,
+   "mob": 2,
+   "spd": 40,
+   "red": 0.441,
+   "src_hp": 1370,
+   "src_atk": 144,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1,
+     "from": 195
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1,
+     "from": 196
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "dragon_ladder2",
+     "lv": 8,
+     "from": 195
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 15,
+     "from": 195
+    },
+    {
+     "move": "dragon_arrow",
+     "lv": 22,
+     "from": 196
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 34,
+     "from": 196
+    },
+    {
+     "move": "dragon_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_seiryu",
+     "lv": 52
+    }
+   ],
+   "ancient": [
+    "cn_sea"
+   ],
+   "ancient_set": [
+    "dragon_ladder1",
+    "dragon_toss",
+    "dragon_ring",
+    "dragon_ladder2",
+    "dragon_ladder3",
+    "dragon_arrow",
+    "dragon_ladder4",
+    "dragon_map",
+    "sig_seiryu"
+   ]
+  },
+  "198": {
+   "name": "リュッコ",
+   "type": "竜",
+   "type2": null,
+   "stage": 1,
+   "line": "lind",
+   "archetype": "竜型",
+   "hp": 159,
+   "atk": 30,
+   "def": 35,
+   "mob": 2,
+   "spd": 18,
+   "red": 0.259,
+   "src_hp": 155,
+   "src_atk": 30,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder2",
+     "lv": 8
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 15
+    }
+   ]
+  },
+  "199": {
+   "name": "リュバーン",
+   "type": "竜",
+   "type2": null,
+   "stage": 2,
+   "line": "lind",
+   "archetype": "竜型",
+   "hp": 545,
+   "atk": 90,
+   "def": 54,
+   "mob": 2,
+   "spd": 29,
+   "red": 0.351,
+   "src_hp": 530,
+   "src_atk": 90,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1,
+     "from": 198
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "dragon_ladder2",
+     "lv": 8,
+     "from": 198
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 15,
+     "from": 198
+    },
+    {
+     "move": "dragon_arrow",
+     "lv": 22
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 34
+    }
+   ]
+  },
+  "290": {
+   "name": "リンドヴルム",
+   "type": "竜",
+   "type2": null,
+   "stage": 3,
+   "line": "lind",
+   "archetype": "竜型",
+   "hp": 1535,
+   "atk": 149,
+   "def": 79,
+   "mob": 2,
+   "spd": 40,
+   "red": 0.441,
+   "src_hp": 1480,
+   "src_atk": 149,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1,
+     "from": 198
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1,
+     "from": 199
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1,
+     "evo": true
+    },
+    {
+     "move": "dragon_ladder2",
+     "lv": 8,
+     "from": 198
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 15,
+     "from": 198
+    },
+    {
+     "move": "dragon_arrow",
+     "lv": 22,
+     "from": 199
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 34,
+     "from": 199
+    },
+    {
+     "move": "dragon_map",
+     "lv": 45
+    },
+    {
+     "move": "sig_lind",
+     "lv": 52
+    }
+   ]
+  },
+  "2061": {
+   "name": "ゴッドヘラク",
+   "type": "風",
+   "type2": "光",
+   "stage": 3,
+   "line": null,
+   "archetype": "蟲型",
+   "hp": 1765,
+   "atk": 172,
+   "def": 50,
+   "mob": 3,
+   "spd": 69,
+   "red": 0.333,
+   "src_hp": 1510,
+   "src_atk": 154,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "wind_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "wind_combo",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "wind_ring",
+     "lv": 1
+    },
+    {
+     "move": "light_ring",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "wind_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2061",
+     "lv": 1
+    },
+    {
+     "move": "godherak_cross",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 1
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 1
+    },
+    {
+     "move": "light_revive",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "god": "英雄ヘラクレス(半神)",
+   "god_base": {
+    "hp": 1575,
+    "atk": 154,
+    "def": 45,
+    "mob": 3,
+    "spd": 62
+   },
+   "ancient": [
+    "stadium_under"
+   ]
+  },
+  "2001": {
+   "name": "ライエンオウ",
+   "type": "炎",
+   "type2": "雷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1515,
+   "atk": 206,
+   "def": 59,
+   "mob": 2,
+   "spd": 57,
+   "red": 0.371,
+   "src_hp": 1510,
+   "src_atk": 179,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "fire_toss",
+     "lv": 1
+    },
+    {
+     "move": "fire_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1
+    },
+    {
+     "move": "fire_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "fire_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2001",
+     "lv": 1
+    },
+    {
+     "move": "fire_ail",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "cn_capital"
+   ]
+  },
+  "2004": {
+   "name": "フェニク",
+   "type": "風",
+   "type2": "炎",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1455,
+   "atk": 188,
+   "def": 44,
+   "mob": 3,
+   "spd": 67,
+   "red": 0.306,
+   "src_hp": 1300,
+   "src_atk": 146,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "wind_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "wind_combo",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "wind_ring",
+     "lv": 1
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "wind_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2004",
+     "lv": 1
+    },
+    {
+     "move": "fire_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "god": "朱雀(四神)・ベンヌ(エジプトの神の鳥)",
+   "god_base": {
+    "hp": 1300,
+    "atk": 168,
+    "def": 39,
+    "mob": 3,
+    "spd": 59
+   },
+   "ancient": [
+    "cn_karst"
+   ]
+  },
+  "2005": {
+   "name": "ラドーグ",
+   "type": "森",
+   "type2": "竜",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1565,
+   "atk": 148,
+   "def": 59,
+   "mob": 2,
+   "spd": 37,
+   "red": 0.371,
+   "src_hp": 1560,
+   "src_atk": 148,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "forest_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "forest_toss",
+     "lv": 1
+    },
+    {
+     "move": "forest_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "forest_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "forest_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "forest_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2005",
+     "lv": 1
+    },
+    {
+     "move": "forest_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2006": {
+   "name": "ツノクワオウ",
+   "type": "地",
+   "type2": "風",
+   "stage": 3,
+   "line": null,
+   "archetype": "蟲型",
+   "hp": 1570,
+   "atk": 143,
+   "def": 85,
+   "mob": 3,
+   "spd": 48,
+   "red": 0.459,
+   "src_hp": 1490,
+   "src_atk": 143,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "wind_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "earth_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2006",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2007": {
+   "name": "ツバサウルス",
+   "type": "竜",
+   "type2": "風",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1505,
+   "atk": 158,
+   "def": 72,
+   "mob": 3,
+   "spd": 53,
+   "red": 0.419,
+   "src_hp": 1510,
+   "src_atk": 158,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "wind_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2007",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2008": {
+   "name": "クビナガオウ",
+   "type": "竜",
+   "type2": "水",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1775,
+   "atk": 161,
+   "def": 72,
+   "mob": 2,
+   "spd": 37,
+   "red": 0.419,
+   "src_hp": 1780,
+   "src_atk": 161,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "water_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2008",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "nr_fjord"
+   ]
+  },
+  "2009": {
+   "name": "ミツヅノザウル",
+   "type": "森",
+   "type2": "竜",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1705,
+   "atk": 158,
+   "def": 59,
+   "mob": 2,
+   "spd": 37,
+   "red": 0.371,
+   "src_hp": 1700,
+   "src_atk": 158,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "forest_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "forest_toss",
+     "lv": 1
+    },
+    {
+     "move": "forest_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "forest_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "forest_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "forest_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2009",
+     "lv": 1
+    },
+    {
+     "move": "forest_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2010": {
+   "name": "オシラント",
+   "type": "炎",
+   "type2": "竜",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1760,
+   "atk": 202,
+   "def": 66,
+   "mob": 2,
+   "spd": 52,
+   "red": 0.398,
+   "src_hp": 1570,
+   "src_atk": 157,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "fire_toss",
+     "lv": 1
+    },
+    {
+     "move": "fire_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "fire_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "fire_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2010",
+     "lv": 1
+    },
+    {
+     "move": "fire_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "god": "よみがえりの神オシリス",
+   "god_base": {
+    "hp": 1575,
+    "atk": 181,
+    "def": 59,
+    "mob": 2,
+    "spd": 46
+   },
+   "ancient": [
+    "eg_luxor"
+   ]
+  },
+  "2011": {
+   "name": "ラーガ",
+   "type": "光",
+   "type2": "竜",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1725,
+   "atk": 162,
+   "def": 50,
+   "mob": 3,
+   "spd": 49,
+   "red": 0.333,
+   "src_hp": 1540,
+   "src_atk": 145,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "light_toss",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "light_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "light_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2011",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 1
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 1
+    },
+    {
+     "move": "light_revive",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "god": "太陽の神ラー",
+   "god_base": {
+    "hp": 1540,
+    "atk": 145,
+    "def": 45,
+    "mob": 2,
+    "spd": 44
+   },
+   "ancient": [
+    "eg_abusimbel"
+   ]
+  },
+  "2012": {
+   "name": "ヒョウセキオウ",
+   "type": "地",
+   "type2": "氷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1605,
+   "atk": 134,
+   "def": 75,
+   "mob": 2,
+   "spd": 31,
+   "red": 0.429,
+   "src_hp": 1610,
+   "src_atk": 134,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "ice_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "earth_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2012",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    },
+    {
+     "move": "ice_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "nr_glacier"
+   ]
+  },
+  "2013": {
+   "name": "ゲンシマンモ",
+   "type": "地",
+   "type2": "竜",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1705,
+   "atk": 149,
+   "def": 75,
+   "mob": 2,
+   "spd": 31,
+   "red": 0.429,
+   "src_hp": 1710,
+   "src_atk": 149,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "earth_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2013",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "nr_svalbard"
+   ]
+  },
+  "2014": {
+   "name": "ブレイグリオ",
+   "type": "光",
+   "type2": "炎",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1530,
+   "atk": 171,
+   "def": 45,
+   "mob": 2,
+   "spd": 51,
+   "red": 0.31,
+   "src_hp": 1530,
+   "src_atk": 149,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "light_toss",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "light_ring",
+     "lv": 1
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "light_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2014",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 1
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 1
+    },
+    {
+     "move": "light_revive",
+     "lv": 1
+    },
+    {
+     "move": "fire_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2015": {
+   "name": "エレグリオ",
+   "type": "光",
+   "type2": "雷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1570,
+   "atk": 168,
+   "def": 45,
+   "mob": 2,
+   "spd": 55,
+   "red": 0.31,
+   "src_hp": 1570,
+   "src_atk": 168,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "light_toss",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "light_ring",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "light_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2015",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 1
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 1
+    },
+    {
+     "move": "light_revive",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2016": {
+   "name": "スフィンガ",
+   "type": "光",
+   "type2": "地",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1670,
+   "atk": 144,
+   "def": 45,
+   "mob": 2,
+   "spd": 35,
+   "red": 0.31,
+   "src_hp": 1670,
+   "src_atk": 144,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "light_toss",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "light_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "light_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2016",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 1
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 1
+    },
+    {
+     "move": "light_revive",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "eg_giza"
+   ]
+  },
+  "2017": {
+   "name": "ルミナドール",
+   "type": "光",
+   "type2": "竜",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1450,
+   "atk": 152,
+   "def": 45,
+   "mob": 2,
+   "spd": 44,
+   "red": 0.31,
+   "src_hp": 1450,
+   "src_atk": 152,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "light_toss",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "light_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "light_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2017",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 1
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 1
+    },
+    {
+     "move": "light_revive",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "arcadia"
+   ]
+  },
+  "2018": {
+   "name": "リヴァイア",
+   "type": "竜",
+   "type2": "水",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1775,
+   "atk": 160,
+   "def": 72,
+   "mob": 2,
+   "spd": 37,
+   "red": 0.419,
+   "src_hp": 1780,
+   "src_atk": 160,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "water_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2018",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "eg_redsea"
+   ]
+  },
+  "2020": {
+   "name": "キマドラ",
+   "type": "竜",
+   "type2": "炎",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1415,
+   "atk": 197,
+   "def": 72,
+   "mob": 2,
+   "spd": 46,
+   "red": 0.419,
+   "src_hp": 1420,
+   "src_atk": 171,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2020",
+     "lv": 1
+    },
+    {
+     "move": "fire_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2022": {
+   "name": "ジョウキリン",
+   "type": "炎",
+   "type2": "水",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1460,
+   "atk": 179,
+   "def": 59,
+   "mob": 2,
+   "spd": 44,
+   "red": 0.371,
+   "src_hp": 1460,
+   "src_atk": 156,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "fire_toss",
+     "lv": 1
+    },
+    {
+     "move": "fire_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1
+    },
+    {
+     "move": "water_ring",
+     "lv": 1
+    },
+    {
+     "move": "fire_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "fire_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2022",
+     "lv": 1
+    },
+    {
+     "move": "fire_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2024": {
+   "name": "ホムライジュ",
+   "type": "雷",
+   "type2": "炎",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1320,
+   "atk": 201,
+   "def": 49,
+   "mob": 2,
+   "spd": 57,
+   "red": 0.329,
+   "src_hp": 1320,
+   "src_atk": 175,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "thunder_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "thunder_toss",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "thunder_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2024",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 1
+    },
+    {
+     "move": "fire_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2025": {
+   "name": "カザンガメ",
+   "type": "地",
+   "type2": "炎",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1495,
+   "atk": 176,
+   "def": 75,
+   "mob": 2,
+   "spd": 37,
+   "red": 0.429,
+   "src_hp": 1500,
+   "src_atk": 153,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "earth_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2025",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    },
+    {
+     "move": "fire_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2026": {
+   "name": "ヒョウエンコ",
+   "type": "炎",
+   "type2": "氷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1440,
+   "atk": 178,
+   "def": 59,
+   "mob": 2,
+   "spd": 46,
+   "red": 0.371,
+   "src_hp": 1440,
+   "src_atk": 155,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "fire_toss",
+     "lv": 1
+    },
+    {
+     "move": "fire_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1
+    },
+    {
+     "move": "ice_ring",
+     "lv": 1
+    },
+    {
+     "move": "fire_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "fire_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2026",
+     "lv": 1
+    },
+    {
+     "move": "fire_ail",
+     "lv": 1
+    },
+    {
+     "move": "ice_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2027": {
+   "name": "ミツガルム",
+   "type": "炎",
+   "type2": "闇",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1575,
+   "atk": 191,
+   "def": 59,
+   "mob": 2,
+   "spd": 51,
+   "red": 0.371,
+   "src_hp": 1570,
+   "src_atk": 166,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "fire_toss",
+     "lv": 1
+    },
+    {
+     "move": "fire_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1
+    },
+    {
+     "move": "fire_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "fire_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2027",
+     "lv": 1
+    },
+    {
+     "move": "fire_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "nr_fjord"
+   ]
+  },
+  "2028": {
+   "name": "カグヅチ",
+   "type": "竜",
+   "type2": "炎",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1700,
+   "atk": 209,
+   "def": 81,
+   "mob": 2,
+   "spd": 52,
+   "red": 0.448,
+   "src_hp": 1520,
+   "src_atk": 162,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2028",
+     "lv": 1
+    },
+    {
+     "move": "fire_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "god": "火の神カグツチ",
+   "god_base": {
+    "hp": 1515,
+    "atk": 186,
+    "def": 72,
+    "mob": 2,
+    "spd": 46
+   },
+   "ancient": [
+    "cn_fossil"
+   ]
+  },
+  "2029": {
+   "name": "ハスガメ",
+   "type": "地",
+   "type2": "水",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 2045,
+   "atk": 157,
+   "def": 84,
+   "mob": 2,
+   "spd": 32,
+   "red": 0.457,
+   "src_hp": 1830,
+   "src_atk": 140,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "water_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "earth_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2029",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "god": "ヴィシュヌの亀クールマ(神の化身)",
+   "god_base": {
+    "hp": 1825,
+    "atk": 140,
+    "def": 75,
+    "mob": 2,
+    "spd": 29
+   }
+  },
+  "2030": {
+   "name": "エレキナギ",
+   "type": "竜",
+   "type2": "雷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1610,
+   "atk": 192,
+   "def": 81,
+   "mob": 2,
+   "spd": 57,
+   "red": 0.448,
+   "src_hp": 1440,
+   "src_atk": 171,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2030",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "god": "蛇の神ナーガ",
+   "god_base": {
+    "hp": 1435,
+    "atk": 171,
+    "def": 72,
+    "mob": 2,
+    "spd": 51
+   },
+   "ancient": [
+    "eg_aswan"
+   ]
+  },
+  "2031": {
+   "name": "ソラクジラ",
+   "type": "水",
+   "type2": "風",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1530,
+   "atk": 136,
+   "def": 64,
+   "mob": 3,
+   "spd": 51,
+   "red": 0.39,
+   "src_hp": 1530,
+   "src_atk": 136,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "water_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "water_spear",
+     "lv": 1
+    },
+    {
+     "move": "water_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "water_ring",
+     "lv": 1
+    },
+    {
+     "move": "wind_ring",
+     "lv": 1
+    },
+    {
+     "move": "water_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "water_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2031",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2032": {
+   "name": "ドロカバ",
+   "type": "地",
+   "type2": "水",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1935,
+   "atk": 169,
+   "def": 84,
+   "mob": 2,
+   "spd": 32,
+   "red": 0.457,
+   "src_hp": 1730,
+   "src_atk": 151,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "water_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "earth_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2032",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "god": "カバの女神タウエレト",
+   "god_base": {
+    "hp": 1725,
+    "atk": 151,
+    "def": 75,
+    "mob": 2,
+    "spd": 29
+   },
+   "ancient": [
+    "eg_delta"
+   ]
+  },
+  "2033": {
+   "name": "イッカクオウ",
+   "type": "氷",
+   "type2": "水",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1565,
+   "atk": 150,
+   "def": 56,
+   "mob": 2,
+   "spd": 37,
+   "red": 0.359,
+   "src_hp": 1570,
+   "src_atk": 150,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "ice_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "ice_spear",
+     "lv": 1
+    },
+    {
+     "move": "ice_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "ice_ring",
+     "lv": 1
+    },
+    {
+     "move": "water_ring",
+     "lv": 1
+    },
+    {
+     "move": "ice_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "ice_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2033",
+     "lv": 1
+    },
+    {
+     "move": "ice_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "nr_svalbard"
+   ]
+  },
+  "2034": {
+   "name": "ルミオネ",
+   "type": "光",
+   "type2": "水",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1680,
+   "atk": 140,
+   "def": 45,
+   "mob": 2,
+   "spd": 42,
+   "red": 0.31,
+   "src_hp": 1680,
+   "src_atk": 140,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "light_toss",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "light_ring",
+     "lv": 1
+    },
+    {
+     "move": "water_ring",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "light_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2034",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 1
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 1
+    },
+    {
+     "move": "light_revive",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2035": {
+   "name": "クラーク",
+   "type": "水",
+   "type2": "闇",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1580,
+   "atk": 151,
+   "def": 64,
+   "mob": 2,
+   "spd": 42,
+   "red": 0.39,
+   "src_hp": 1580,
+   "src_atk": 151,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "water_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "water_spear",
+     "lv": 1
+    },
+    {
+     "move": "water_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "water_ring",
+     "lv": 1
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1
+    },
+    {
+     "move": "water_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "water_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2035",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "nr_lofoten"
+   ]
+  },
+  "2036": {
+   "name": "イカヅチジカ",
+   "type": "地",
+   "type2": "雷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1675,
+   "atk": 164,
+   "def": 75,
+   "mob": 2,
+   "spd": 42,
+   "red": 0.429,
+   "src_hp": 1680,
+   "src_atk": 164,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "earth_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2036",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2037": {
+   "name": "フワタンポ",
+   "type": "風",
+   "type2": "森",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1490,
+   "atk": 149,
+   "def": 39,
+   "mob": 3,
+   "spd": 51,
+   "red": 0.281,
+   "src_hp": 1490,
+   "src_atk": 149,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "wind_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "wind_combo",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "wind_ring",
+     "lv": 1
+    },
+    {
+     "move": "forest_ring",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "wind_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2037",
+     "lv": 1
+    },
+    {
+     "move": "forest_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2038": {
+   "name": "モスノシシ",
+   "type": "地",
+   "type2": "森",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1820,
+   "atk": 168,
+   "def": 84,
+   "mob": 2,
+   "spd": 32,
+   "red": 0.457,
+   "src_hp": 1630,
+   "src_atk": 150,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "forest_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "earth_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2038",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    },
+    {
+     "move": "forest_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "god": "山の神のイノシシ",
+   "god_base": {
+    "hp": 1625,
+    "atk": 150,
+    "def": 75,
+    "mob": 2,
+    "spd": 29
+   }
+  },
+  "2039": {
+   "name": "ジュヒョカイ",
+   "type": "氷",
+   "type2": "森",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1585,
+   "atk": 151,
+   "def": 56,
+   "mob": 2,
+   "spd": 37,
+   "red": 0.359,
+   "src_hp": 1590,
+   "src_atk": 151,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "ice_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "ice_spear",
+     "lv": 1
+    },
+    {
+     "move": "ice_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "ice_ring",
+     "lv": 1
+    },
+    {
+     "move": "forest_ring",
+     "lv": 1
+    },
+    {
+     "move": "ice_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "ice_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2039",
+     "lv": 1
+    },
+    {
+     "move": "ice_ail",
+     "lv": 1
+    },
+    {
+     "move": "forest_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2040": {
+   "name": "ヒナタケモノ",
+   "type": "森",
+   "type2": "光",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1450,
+   "atk": 146,
+   "def": 59,
+   "mob": 2,
+   "spd": 42,
+   "red": 0.371,
+   "src_hp": 1450,
+   "src_atk": 146,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "forest_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "forest_toss",
+     "lv": 1
+    },
+    {
+     "move": "forest_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "forest_ring",
+     "lv": 1
+    },
+    {
+     "move": "light_ring",
+     "lv": 1
+    },
+    {
+     "move": "forest_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "forest_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2040",
+     "lv": 1
+    },
+    {
+     "move": "forest_ail",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 1
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 1
+    },
+    {
+     "move": "light_revive",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2041": {
+   "name": "ドクバナー",
+   "type": "雷",
+   "type2": "森",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1470,
+   "atk": 166,
+   "def": 49,
+   "mob": 2,
+   "spd": 48,
+   "red": 0.329,
+   "src_hp": 1470,
+   "src_atk": 166,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "thunder_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "thunder_toss",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1
+    },
+    {
+     "move": "forest_ring",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "thunder_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2041",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 1
+    },
+    {
+     "move": "forest_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2042": {
+   "name": "ライジンドリ",
+   "type": "風",
+   "type2": "雷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1300,
+   "atk": 152,
+   "def": 39,
+   "mob": 3,
+   "spd": 64,
+   "red": 0.281,
+   "src_hp": 1300,
+   "src_atk": 152,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "wind_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "wind_combo",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "wind_ring",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "wind_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2042",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2043": {
+   "name": "イナズマサイ",
+   "type": "地",
+   "type2": "雷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1675,
+   "atk": 162,
+   "def": 75,
+   "mob": 2,
+   "spd": 42,
+   "red": 0.429,
+   "src_hp": 1680,
+   "src_atk": 162,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "earth_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2043",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2044": {
+   "name": "オーロフ",
+   "type": "氷",
+   "type2": "雷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1500,
+   "atk": 160,
+   "def": 56,
+   "mob": 2,
+   "spd": 51,
+   "red": 0.359,
+   "src_hp": 1500,
+   "src_atk": 160,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "ice_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "ice_spear",
+     "lv": 1
+    },
+    {
+     "move": "ice_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "ice_ring",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1
+    },
+    {
+     "move": "ice_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "ice_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2044",
+     "lv": 1
+    },
+    {
+     "move": "ice_ail",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "nr_lapland"
+   ]
+  },
+  "2045": {
+   "name": "テンマライ",
+   "type": "光",
+   "type2": "雷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1430,
+   "atk": 161,
+   "def": 45,
+   "mob": 2,
+   "spd": 55,
+   "red": 0.31,
+   "src_hp": 1430,
+   "src_atk": 161,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "light_toss",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "light_ring",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "light_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2045",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 1
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 1
+    },
+    {
+     "move": "light_revive",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "corinth"
+   ]
+  },
+  "2046": {
+   "name": "ヌエガミ",
+   "type": "雷",
+   "type2": "闇",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1535,
+   "atk": 170,
+   "def": 49,
+   "mob": 2,
+   "spd": 55,
+   "red": 0.329,
+   "src_hp": 1540,
+   "src_atk": 170,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "thunder_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "thunder_toss",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "thunder_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2046",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "cn_thunder"
+   ]
+  },
+  "2047": {
+   "name": "イカヅチドラ",
+   "type": "竜",
+   "type2": "雷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1405,
+   "atk": 165,
+   "def": 72,
+   "mob": 2,
+   "spd": 51,
+   "red": 0.419,
+   "src_hp": 1410,
+   "src_atk": 165,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2047",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2048": {
+   "name": "サジンオロチ",
+   "type": "竜",
+   "type2": "地",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1575,
+   "atk": 148,
+   "def": 72,
+   "mob": 2,
+   "spd": 31,
+   "red": 0.419,
+   "src_hp": 1580,
+   "src_atk": 148,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2048",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "cn_thunder"
+   ]
+  },
+  "2049": {
+   "name": "フブキヤク",
+   "type": "氷",
+   "type2": "風",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1500,
+   "atk": 158,
+   "def": 56,
+   "mob": 3,
+   "spd": 53,
+   "red": 0.359,
+   "src_hp": 1500,
+   "src_atk": 158,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "ice_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "ice_spear",
+     "lv": 1
+    },
+    {
+     "move": "ice_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "ice_ring",
+     "lv": 1
+    },
+    {
+     "move": "wind_ring",
+     "lv": 1
+    },
+    {
+     "move": "ice_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "ice_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2049",
+     "lv": 1
+    },
+    {
+     "move": "ice_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2050": {
+   "name": "ルミクジャ",
+   "type": "風",
+   "type2": "光",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1460,
+   "atk": 159,
+   "def": 39,
+   "mob": 3,
+   "spd": 57,
+   "red": 0.281,
+   "src_hp": 1460,
+   "src_atk": 159,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "wind_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "wind_combo",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "wind_ring",
+     "lv": 1
+    },
+    {
+     "move": "light_ring",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "wind_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2050",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 1
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 1
+    },
+    {
+     "move": "light_revive",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2051": {
+   "name": "ヤタクロウ",
+   "type": "風",
+   "type2": "闇",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1540,
+   "atk": 159,
+   "def": 39,
+   "mob": 3,
+   "spd": 57,
+   "red": 0.281,
+   "src_hp": 1540,
+   "src_atk": 159,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "wind_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "wind_combo",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "wind_ring",
+     "lv": 1
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "wind_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2051",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2052": {
+   "name": "アラシドラ",
+   "type": "竜",
+   "type2": "風",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1535,
+   "atk": 160,
+   "def": 72,
+   "mob": 3,
+   "spd": 53,
+   "red": 0.419,
+   "src_hp": 1540,
+   "src_atk": 160,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "wind_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2052",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2053": {
+   "name": "ヒョウガイア",
+   "type": "地",
+   "type2": "氷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1990,
+   "atk": 155,
+   "def": 84,
+   "mob": 2,
+   "spd": 34,
+   "red": 0.457,
+   "src_hp": 1780,
+   "src_atk": 138,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "ice_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "earth_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2053",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    },
+    {
+     "move": "ice_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "god": "玄武(四神)",
+   "god_base": {
+    "hp": 1775,
+    "atk": 138,
+    "def": 75,
+    "mob": 2,
+    "spd": 31
+   },
+   "ancient": [
+    "cn_gorges"
+   ]
+  },
+  "2054": {
+   "name": "バジリク",
+   "type": "地",
+   "type2": "闇",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1625,
+   "atk": 146,
+   "def": 75,
+   "mob": 2,
+   "spd": 35,
+   "red": 0.429,
+   "src_hp": 1630,
+   "src_atk": 146,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "earth_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2054",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2055": {
+   "name": "ガイアドラ",
+   "type": "竜",
+   "type2": "地",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1855,
+   "atk": 170,
+   "def": 81,
+   "mob": 2,
+   "spd": 34,
+   "red": 0.448,
+   "src_hp": 1660,
+   "src_atk": 152,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2055",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "god": "大地の女神ガイア",
+   "god_base": {
+    "hp": 1655,
+    "atk": 152,
+    "def": 72,
+    "mob": 2,
+    "spd": 31
+   }
+  },
+  "2056": {
+   "name": "クリスユニ",
+   "type": "氷",
+   "type2": "光",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1500,
+   "atk": 140,
+   "def": 56,
+   "mob": 2,
+   "spd": 44,
+   "red": 0.359,
+   "src_hp": 1500,
+   "src_atk": 140,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "ice_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "ice_spear",
+     "lv": 1
+    },
+    {
+     "move": "ice_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "ice_ring",
+     "lv": 1
+    },
+    {
+     "move": "light_ring",
+     "lv": 1
+    },
+    {
+     "move": "ice_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "ice_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2056",
+     "lv": 1
+    },
+    {
+     "move": "ice_ail",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 1
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 1
+    },
+    {
+     "move": "light_revive",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "nr_ygg"
+   ]
+  },
+  "2058": {
+   "name": "セツリュウ",
+   "type": "竜",
+   "type2": "氷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1545,
+   "atk": 157,
+   "def": 72,
+   "mob": 2,
+   "spd": 40,
+   "red": 0.419,
+   "src_hp": 1550,
+   "src_atk": 157,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "ice_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2058",
+     "lv": 1
+    },
+    {
+     "move": "ice_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "cn_kunlun"
+   ]
+  },
+  "2059": {
+   "name": "エクリオン",
+   "type": "光",
+   "type2": "闇",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1480,
+   "atk": 164,
+   "def": 45,
+   "mob": 2,
+   "spd": 48,
+   "red": 0.31,
+   "src_hp": 1480,
+   "src_atk": 164,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "light_toss",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "light_ring",
+     "lv": 1
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "light_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2059",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 1
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 1
+    },
+    {
+     "move": "light_revive",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "eg_white"
+   ]
+  },
+  "2062": {
+   "name": "ニドグラ",
+   "type": "竜",
+   "type2": "闇",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1615,
+   "atk": 164,
+   "def": 72,
+   "mob": 2,
+   "spd": 44,
+   "red": 0.419,
+   "src_hp": 1620,
+   "src_atk": 164,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2062",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "nr_ygg"
+   ]
+  },
+  "2063": {
+   "name": "シニガマキリ",
+   "type": "森",
+   "type2": "闇",
+   "stage": 3,
+   "line": null,
+   "archetype": "蟲型",
+   "hp": 1660,
+   "atk": 143,
+   "def": 67,
+   "mob": 2,
+   "spd": 46,
+   "red": 0.401,
+   "src_hp": 1580,
+   "src_atk": 143,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "forest_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "forest_toss",
+     "lv": 1
+    },
+    {
+     "move": "forest_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "forest_ring",
+     "lv": 1
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1
+    },
+    {
+     "move": "forest_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "forest_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2063",
+     "lv": 1
+    },
+    {
+     "move": "forest_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2064": {
+   "name": "フェンガロ",
+   "type": "氷",
+   "type2": "闇",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1695,
+   "atk": 156,
+   "def": 56,
+   "mob": 2,
+   "spd": 44,
+   "red": 0.359,
+   "src_hp": 1700,
+   "src_atk": 156,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "ice_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "ice_spear",
+     "lv": 1
+    },
+    {
+     "move": "ice_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "ice_ring",
+     "lv": 1
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1
+    },
+    {
+     "move": "ice_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "ice_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2064",
+     "lv": 1
+    },
+    {
+     "move": "ice_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "nr_lapland"
+   ]
+  },
+  "2065": {
+   "name": "スレイプニア",
+   "type": "光",
+   "type2": "氷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1460,
+   "atk": 143,
+   "def": 45,
+   "mob": 2,
+   "spd": 44,
+   "red": 0.31,
+   "src_hp": 1460,
+   "src_atk": 143,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "light_toss",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "light_ring",
+     "lv": 1
+    },
+    {
+     "move": "ice_ring",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "light_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2065",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 1
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 1
+    },
+    {
+     "move": "light_revive",
+     "lv": 1
+    },
+    {
+     "move": "ice_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "nr_uppsala"
+   ]
+  },
+  "2066": {
+   "name": "ミノタス",
+   "type": "地",
+   "type2": "森",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1675,
+   "atk": 142,
+   "def": 75,
+   "mob": 2,
+   "spd": 29,
+   "red": 0.429,
+   "src_hp": 1680,
+   "src_atk": 142,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "forest_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "earth_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2066",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    },
+    {
+     "move": "forest_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "oliva_maze"
+   ]
+  },
+  "2067": {
+   "name": "アトラード",
+   "type": "光",
+   "type2": "地",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1950,
+   "atk": 169,
+   "def": 50,
+   "mob": 2,
+   "spd": 39,
+   "red": 0.333,
+   "src_hp": 1740,
+   "src_atk": 151,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "light_toss",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "light_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "light_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "light_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2067",
+     "lv": 1
+    },
+    {
+     "move": "light_heal1",
+     "lv": 1
+    },
+    {
+     "move": "light_cure",
+     "lv": 1
+    },
+    {
+     "move": "light_heal_all",
+     "lv": 1
+    },
+    {
+     "move": "light_revive",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "god": "天をささえる巨人アトラス(ティタン神族)",
+   "god_base": {
+    "hp": 1740,
+    "atk": 151,
+    "def": 45,
+    "mob": 2,
+    "spd": 35
+   },
+   "ancient": [
+    "delphi"
+   ]
+  },
+  "2068": {
+   "name": "アヌビド",
+   "type": "地",
+   "type2": "闇",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1635,
+   "atk": 147,
+   "def": 75,
+   "mob": 2,
+   "spd": 35,
+   "red": 0.429,
+   "src_hp": 1640,
+   "src_atk": 147,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "earth_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "earth_spear",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "earth_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2068",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "eg_tomb"
+   ]
+  },
+  "2069": {
+   "name": "オーディガル",
+   "type": "雷",
+   "type2": "闇",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1470,
+   "atk": 169,
+   "def": 49,
+   "mob": 2,
+   "spd": 55,
+   "red": 0.329,
+   "src_hp": 1470,
+   "src_atk": 169,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "thunder_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "thunder_toss",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "thunder_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2069",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "nr_uppsala"
+   ]
+  },
+  "2070": {
+   "name": "スルヴァ",
+   "type": "炎",
+   "type2": "地",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1525,
+   "atk": 166,
+   "def": 59,
+   "mob": 2,
+   "spd": 37,
+   "red": 0.371,
+   "src_hp": 1520,
+   "src_atk": 144,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "fire_toss",
+     "lv": 1
+    },
+    {
+     "move": "fire_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1
+    },
+    {
+     "move": "earth_ring",
+     "lv": 1
+    },
+    {
+     "move": "fire_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "fire_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2070",
+     "lv": 1
+    },
+    {
+     "move": "fire_ail",
+     "lv": 1
+    },
+    {
+     "move": "earth_dig",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "nr_iceland"
+   ]
+  },
+  "2071": {
+   "name": "ラグナディオ",
+   "type": "竜",
+   "type2": "雷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 2655,
+   "atk": 255,
+   "def": 72,
+   "mob": 2,
+   "spd": 60,
+   "red": 0.419,
+   "src_hp": 2660,
+   "src_atk": 255,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "dragon_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "dragon_toss",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder3",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ring",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2071",
+     "lv": 1
+    },
+    {
+     "move": "ragna_dark",
+     "lv": 1
+    },
+    {
+     "move": "ragna_fire",
+     "lv": 1
+    },
+    {
+     "move": "thunder_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "ancient": [
+    "nr_core"
+   ]
+  }
+ }
+}

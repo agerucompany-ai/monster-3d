@@ -142,8 +142,8 @@
    "final": 1,
    "ai": {
     "winAll": true,
-    "hpX": 0.6,
-    "atkX": 0.6,
+    "hpX": 0.62,
+    "atkX": 0.66,
     "rage": 0.4
    },
    "scene": "ransom3",
@@ -200,8 +200,8 @@
    "final": 1,
    "ai": {
     "winAll": true,
-    "hpX": 0.45,
-    "atkX": 0.45,
+    "hpX": 0.58,
+    "atkX": 0.73,
     "rage": 0.4
    },
    "scene": "bot",

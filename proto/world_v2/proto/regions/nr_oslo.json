@@ -233,7 +233,11 @@
    "scene": "oslo_champ",
    "after": "oslo_champ_win",
    "flagWin": "nr_champ0",
-   "todo": "使い手の絵は未作成(ヤニスの体を仮に使用)"
+   "todo": "使い手の絵は未作成(ヤニスの体を仮に使用)",
+   "ai": {
+    "hpX": 1.01,
+    "atkX": 1.02
+   }
   },
   {
    "n": "港の人",

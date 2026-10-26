@@ -1,0 +1,5009 @@
+{
+ "_meta": {
+  "version": "v2-phaseA-mece",
+  "made": "2026-10-27",
+  "fields": {
+   "name": "技の名前",
+   "yomi": "よみ(照合用)",
+   "type": "タイプ",
+   "category": "attack 攻撃 / ailment 状態異常 / heal 回復 / revive 蘇生 / cure 浄化 / buff 強化 / debuff 弱体 / move 移動(ひとつだけ)",
+   "role": "ladder / toss / arrow / spear / combo / pierce / ring / map / ail / buff / debuff / heal / cure / revive / move / sig_line / sig_starter / sig_fusion / sig_boss",
+   "rank": "はしごの段 1小 2中 3大 4特大(はしご以外は null)",
+   "target": "single / area(射程内の敵みんな) / map(形・味方も ff 倍) / self / ally / ally_all / fallen",
+   "range": "[最小, 最大] チェビシェフ距離。map は shape",
+   "range_class": "near / mid / far / shape / self / support",
+   "p": "true=移動したあとでも使える",
+   "mp": "1回の戦いで使える回数。0=何回でも",
+   "cost": "free / many(6〜10) / some(4〜5) / few(2〜3) / once(1)",
+   "power": "基礎威力(100=攻撃力そのまま)",
+   "hit": "命中(%)",
+   "crit": "会心(%)。会心は×1.5",
+   "effect": "ail+chance(stage=段で30/38/46%) / drain / pierce / hits(回数) / knock(おしだすマス) / heal+cap / regen{x,turns} / cure[状態] / revive / dig / jump / buff{stat:atk,def,mob,charge,hide} / debuff{stat:atk,def,mob}",
+   "shape": "around(r) / cross(r) / line(len・8方向) / blast(r, reach)",
+   "ff": "map 技が味方に当たった時の倍率",
+   "group": "heal=回復の技は合わせて3回まで",
+   "noWild": "野生戦では出さない"
+  }
+ },
+ "moves": {
+  "fire_ladder1": {
+   "name": "ボルカ",
+   "type": "炎",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 1,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 0,
+   "power": 80,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "burn",
+    "chance": "stage"
+   },
+   "desc": "炎の力で たたく。何回でも使える",
+   "range_class": "near",
+   "cost": "free",
+   "yomi": "ぼるか"
+  },
+  "fire_ladder2": {
+   "name": "ボルカラ",
+   "type": "炎",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 2,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 100,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "burn",
+    "chance": "stage"
+   },
+   "desc": "炎の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "ぼるから"
+  },
+  "fire_ladder3": {
+   "name": "ボルカドン",
+   "type": "炎",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 3,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 6,
+   "power": 120,
+   "hit": 100,
+   "crit": 5,
+   "effect": {
+    "ail": "burn",
+    "chance": "stage"
+   },
+   "desc": "大きな炎の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "ぼるかどん"
+  },
+  "fire_ladder4": {
+   "name": "ボルカドーン",
+   "type": "炎",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 4,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": false,
+   "mp": 3,
+   "power": 125,
+   "hit": 90,
+   "crit": 15,
+   "effect": {
+    "ail": "burn",
+    "chance": "stage"
+   },
+   "desc": "いちばん大きな炎の力。移動したら使えない",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ぼるかどーん"
+  },
+  "fire_toss": {
+   "name": "ボウボウショット",
+   "type": "炎",
+   "category": "attack",
+   "role": "toss",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 0,
+   "power": 62,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "burn",
+    "chance": "stage"
+   },
+   "desc": "炎を飛ばす。2マス先までとどく",
+   "range_class": "mid",
+   "cost": "free",
+   "yomi": "ぼうぼうしょっと"
+  },
+  "fire_arrow": {
+   "name": "ボウボウアロー",
+   "type": "炎",
+   "category": "attack",
+   "role": "arrow",
+   "rank": null,
+   "target": "single",
+   "range": [
+    2,
+    3
+   ],
+   "p": true,
+   "mp": 5,
+   "power": 100,
+   "hit": 95,
+   "crit": 5,
+   "effect": {
+    "ail": "burn",
+    "chance": "stage"
+   },
+   "desc": "遠くの敵をねらう。隣には撃てない",
+   "range_class": "far",
+   "cost": "some",
+   "yomi": "ぼうぼうあろー"
+  },
+  "fire_ring": {
+   "name": "ボウボウリング",
+   "type": "炎",
+   "category": "attack",
+   "role": "ring",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 94,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "burn",
+    "chance": "stage"
+   },
+   "desc": "射程内の敵みんなに当たる",
+   "range_class": "mid",
+   "cost": "many",
+   "yomi": "ぼうぼうりんぐ"
+  },
+  "fire_map": {
+   "name": "ボウボウレイン",
+   "type": "炎",
+   "category": "attack",
+   "role": "map",
+   "rank": null,
+   "target": "map",
+   "range": [
+    0,
+    0
+   ],
+   "p": false,
+   "mp": 2,
+   "power": 110,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "burn",
+    "chance": "stage"
+   },
+   "shape": {
+    "shape": "blast",
+    "r": 1,
+    "reach": 3
+   },
+   "ff": 0.3,
+   "desc": "ねらった場所のまわりに当たる",
+   "range_class": "shape",
+   "cost": "few",
+   "yomi": "ぼうぼうれいん"
+  },
+  "fire_ail": {
+   "name": "ボウボウバーン",
+   "type": "炎",
+   "category": "ailment",
+   "role": "ail",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 4,
+   "power": 40,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.8
+   },
+   "desc": "やけどにしやすい",
+   "range_class": "near",
+   "cost": "some",
+   "yomi": "ぼうぼうばーん"
+  },
+  "fire_buff": {
+   "name": "ボウボウパワー",
+   "type": "炎",
+   "category": "buff",
+   "role": "buff",
+   "rank": null,
+   "target": "self",
+   "range": [
+    0,
+    0
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "buff": {
+     "stat": "atk",
+     "x": 0.2,
+     "turns": 2
+    }
+   },
+   "desc": "2ターン 自分の攻撃が上がる",
+   "enabled": false,
+   "range_class": "self",
+   "cost": "few",
+   "yomi": "ぼうぼうぱわー"
+  },
+  "water_ladder1": {
+   "name": "ザッパ",
+   "type": "水",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 1,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 0,
+   "power": 80,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "水の力で たたく。何回でも使える",
+   "range_class": "near",
+   "cost": "free",
+   "yomi": "ざっぱ"
+  },
+  "water_ladder2": {
+   "name": "ザッパラ",
+   "type": "水",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 2,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 100,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "水の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "ざっぱら"
+  },
+  "water_ladder3": {
+   "name": "ザッパドン",
+   "type": "水",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 3,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 6,
+   "power": 120,
+   "hit": 100,
+   "crit": 5,
+   "effect": {},
+   "desc": "大きな水の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "ざっぱどん"
+  },
+  "water_ladder4": {
+   "name": "ザッパドーン",
+   "type": "水",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 4,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": false,
+   "mp": 3,
+   "power": 160,
+   "hit": 90,
+   "crit": 15,
+   "effect": {},
+   "desc": "いちばん大きな水の力。移動したら使えない",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "ざっぱどーん"
+  },
+  "water_spear": {
+   "name": "ジャブジャブランス",
+   "type": "水",
+   "category": "attack",
+   "role": "spear",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 6,
+   "power": 78,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "2マス先までつく",
+   "range_class": "mid",
+   "cost": "many",
+   "yomi": "じゃぶじゃぶらんす"
+  },
+  "water_pierce": {
+   "name": "ジャブジャブドリル",
+   "type": "水",
+   "category": "attack",
+   "role": "pierce",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 4,
+   "power": 110,
+   "hit": 100,
+   "crit": 5,
+   "effect": {
+    "pierce": 0.5
+   },
+   "desc": "守りを半分つらぬく",
+   "range_class": "near",
+   "cost": "some",
+   "yomi": "じゃぶじゃぶどりる"
+  },
+  "water_ring": {
+   "name": "ジャブジャブリング",
+   "type": "水",
+   "category": "attack",
+   "role": "ring",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 120,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "射程内の敵みんなに当たる",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "じゃぶじゃぶりんぐ"
+  },
+  "water_map": {
+   "name": "ジャブジャブライン",
+   "type": "水",
+   "category": "attack",
+   "role": "map",
+   "rank": null,
+   "target": "map",
+   "range": [
+    0,
+    0
+   ],
+   "p": false,
+   "mp": 2,
+   "power": 110,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "shape": {
+    "shape": "line",
+    "len": 4
+   },
+   "ff": 0.3,
+   "desc": "まっすぐ4マスに走る",
+   "range_class": "shape",
+   "cost": "few",
+   "yomi": "じゃぶじゃぶらいん"
+  },
+  "water_debuff": {
+   "name": "ジャブジャブスロウ",
+   "type": "水",
+   "category": "debuff",
+   "role": "debuff",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "debuff": {
+     "stat": "mob",
+     "add": -1,
+     "turns": 2
+    }
+   },
+   "desc": "2ターン 相手の移動が1へる",
+   "enabled": false,
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "じゃぶじゃぶすろう"
+  },
+  "water_cure": {
+   "name": "ジャブジャブウォッシュ",
+   "type": "水",
+   "category": "cure",
+   "role": "cure",
+   "rank": null,
+   "target": "ally",
+   "range": [
+    0,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "cure": [
+     "burn",
+     "poison"
+    ]
+   },
+   "desc": "味方1体の やけど・どくを洗い流す",
+   "enabled": false,
+   "range_class": "support",
+   "cost": "few",
+   "yomi": "じゃぶじゃぶうぉっしゅ"
+  },
+  "forest_ladder1": {
+   "name": "モリダ",
+   "type": "森",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 1,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 0,
+   "power": 60,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage",
+    "drain": 0.5
+   },
+   "desc": "森の力で たたく。何回でも使える",
+   "range_class": "near",
+   "cost": "free",
+   "yomi": "もりだ"
+  },
+  "forest_ladder2": {
+   "name": "モリダラ",
+   "type": "森",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 2,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 75,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage",
+    "drain": 0.5
+   },
+   "desc": "森の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "もりだら"
+  },
+  "forest_ladder3": {
+   "name": "モリダドン",
+   "type": "森",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 3,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 6,
+   "power": 90,
+   "hit": 100,
+   "crit": 5,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage",
+    "drain": 0.5
+   },
+   "desc": "大きな森の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "もりだどん"
+  },
+  "forest_ladder4": {
+   "name": "モリダドーン",
+   "type": "森",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 4,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": false,
+   "mp": 3,
+   "power": 94,
+   "hit": 90,
+   "crit": 15,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage",
+    "drain": 0.5
+   },
+   "desc": "いちばん大きな森の力。移動したら使えない",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "もりだどーん"
+  },
+  "forest_toss": {
+   "name": "ワサワサショット",
+   "type": "森",
+   "category": "attack",
+   "role": "toss",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 0,
+   "power": 46,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage",
+    "drain": 0.5
+   },
+   "desc": "森を飛ばす。2マス先までとどく",
+   "range_class": "mid",
+   "cost": "free",
+   "yomi": "わさわさしょっと"
+  },
+  "forest_arrow": {
+   "name": "ワサワサアロー",
+   "type": "森",
+   "category": "attack",
+   "role": "arrow",
+   "rank": null,
+   "target": "single",
+   "range": [
+    2,
+    3
+   ],
+   "p": true,
+   "mp": 5,
+   "power": 75,
+   "hit": 95,
+   "crit": 5,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage",
+    "drain": 0.5
+   },
+   "desc": "遠くの敵をねらう。隣には撃てない",
+   "range_class": "far",
+   "cost": "some",
+   "yomi": "わさわさあろー"
+  },
+  "forest_ring": {
+   "name": "ワサワサリング",
+   "type": "森",
+   "category": "attack",
+   "role": "ring",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 70,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage",
+    "drain": 0.5
+   },
+   "desc": "射程内の敵みんなに当たる",
+   "range_class": "mid",
+   "cost": "many",
+   "yomi": "わさわさりんぐ"
+  },
+  "forest_map": {
+   "name": "ワサワサスパイラル",
+   "type": "森",
+   "category": "attack",
+   "role": "map",
+   "rank": null,
+   "target": "map",
+   "range": [
+    0,
+    0
+   ],
+   "p": false,
+   "mp": 2,
+   "power": 82,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage",
+    "drain": 0.5
+   },
+   "shape": {
+    "shape": "around",
+    "r": 2
+   },
+   "ff": 0.3,
+   "desc": "自分のまわり2マスに当たる",
+   "range_class": "shape",
+   "cost": "few",
+   "yomi": "わさわさすぱいらる"
+  },
+  "forest_ail": {
+   "name": "ワサワサポイズン",
+   "type": "森",
+   "category": "ailment",
+   "role": "ail",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 4,
+   "power": 30,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.8
+   },
+   "desc": "どくにしやすい",
+   "range_class": "near",
+   "cost": "some",
+   "yomi": "わさわさぽいずん"
+  },
+  "forest_regen": {
+   "name": "ワサワサグロウ",
+   "type": "森",
+   "category": "heal",
+   "role": "heal",
+   "rank": null,
+   "target": "self",
+   "range": [
+    0,
+    0
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "regen": {
+     "x": 0.1,
+     "turns": 3
+    }
+   },
+   "desc": "3ターン 毎ターン体力が10%もどる",
+   "enabled": false,
+   "range_class": "self",
+   "cost": "few",
+   "yomi": "わさわさぐろう"
+  },
+  "thunder_ladder1": {
+   "name": "ピシャ",
+   "type": "雷",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 1,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 0,
+   "power": 80,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "para",
+    "chance": "stage"
+   },
+   "desc": "雷の力で たたく。何回でも使える",
+   "range_class": "near",
+   "cost": "free",
+   "yomi": "ぴしゃ"
+  },
+  "thunder_ladder2": {
+   "name": "ピシャラ",
+   "type": "雷",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 2,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 100,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "para",
+    "chance": "stage"
+   },
+   "desc": "雷の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "ぴしゃら"
+  },
+  "thunder_ladder3": {
+   "name": "ピシャドン",
+   "type": "雷",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 3,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 6,
+   "power": 120,
+   "hit": 100,
+   "crit": 5,
+   "effect": {
+    "ail": "para",
+    "chance": "stage"
+   },
+   "desc": "大きな雷の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "ぴしゃどん"
+  },
+  "thunder_ladder4": {
+   "name": "ピシャドーン",
+   "type": "雷",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 4,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": false,
+   "mp": 3,
+   "power": 125,
+   "hit": 90,
+   "crit": 15,
+   "effect": {
+    "ail": "para",
+    "chance": "stage"
+   },
+   "desc": "いちばん大きな雷の力。移動したら使えない",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ぴしゃどーん"
+  },
+  "thunder_toss": {
+   "name": "バリバリショット",
+   "type": "雷",
+   "category": "attack",
+   "role": "toss",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 0,
+   "power": 62,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "para",
+    "chance": "stage"
+   },
+   "desc": "雷を飛ばす。2マス先までとどく",
+   "range_class": "mid",
+   "cost": "free",
+   "yomi": "ばりばりしょっと"
+  },
+  "thunder_arrow": {
+   "name": "バリバリアロー",
+   "type": "雷",
+   "category": "attack",
+   "role": "arrow",
+   "rank": null,
+   "target": "single",
+   "range": [
+    2,
+    3
+   ],
+   "p": true,
+   "mp": 5,
+   "power": 100,
+   "hit": 95,
+   "crit": 5,
+   "effect": {
+    "ail": "para",
+    "chance": "stage"
+   },
+   "desc": "遠くの敵をねらう。隣には撃てない",
+   "range_class": "far",
+   "cost": "some",
+   "yomi": "ばりばりあろー"
+  },
+  "thunder_ring": {
+   "name": "バリバリリング",
+   "type": "雷",
+   "category": "attack",
+   "role": "ring",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 94,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "para",
+    "chance": "stage"
+   },
+   "desc": "射程内の敵みんなに当たる",
+   "range_class": "mid",
+   "cost": "many",
+   "yomi": "ばりばりりんぐ"
+  },
+  "thunder_map": {
+   "name": "バリバリライン",
+   "type": "雷",
+   "category": "attack",
+   "role": "map",
+   "rank": null,
+   "target": "map",
+   "range": [
+    0,
+    0
+   ],
+   "p": false,
+   "mp": 2,
+   "power": 110,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "para",
+    "chance": "stage"
+   },
+   "shape": {
+    "shape": "line",
+    "len": 5
+   },
+   "ff": 0.3,
+   "desc": "まっすぐ5マスに走る",
+   "range_class": "shape",
+   "cost": "few",
+   "yomi": "ばりばりらいん"
+  },
+  "thunder_ail": {
+   "name": "バリバリショック",
+   "type": "雷",
+   "category": "ailment",
+   "role": "ail",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 4,
+   "power": 40,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "para",
+    "chance": 0.8
+   },
+   "desc": "マヒにしやすい",
+   "range_class": "near",
+   "cost": "some",
+   "yomi": "ばりばりしょっく"
+  },
+  "thunder_buff": {
+   "name": "バリバリチャージ",
+   "type": "雷",
+   "category": "buff",
+   "role": "buff",
+   "rank": null,
+   "target": "self",
+   "range": [
+    0,
+    0
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "buff": {
+     "stat": "charge",
+     "x": 0.5,
+     "turns": 1
+    }
+   },
+   "desc": "次の攻撃1回が1.5倍",
+   "enabled": false,
+   "range_class": "self",
+   "cost": "few",
+   "yomi": "ばりばりちゃーじ"
+  },
+  "wind_ladder1": {
+   "name": "ヒュル",
+   "type": "風",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 1,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 0,
+   "power": 80,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "風の力で たたく。何回でも使える",
+   "range_class": "near",
+   "cost": "free",
+   "yomi": "ひゅる"
+  },
+  "wind_ladder2": {
+   "name": "ヒュルラ",
+   "type": "風",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 2,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 100,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "風の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "ひゅるら"
+  },
+  "wind_ladder3": {
+   "name": "ヒュルドン",
+   "type": "風",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 3,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 6,
+   "power": 120,
+   "hit": 100,
+   "crit": 5,
+   "effect": {},
+   "desc": "大きな風の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "ひゅるどん"
+  },
+  "wind_ladder4": {
+   "name": "ヒュルドーン",
+   "type": "風",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 4,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": false,
+   "mp": 3,
+   "power": 160,
+   "hit": 90,
+   "crit": 15,
+   "effect": {},
+   "desc": "いちばん大きな風の力。移動したら使えない",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "ひゅるどーん"
+  },
+  "wind_combo": {
+   "name": "ビュンビュンダブル",
+   "type": "風",
+   "category": "attack",
+   "role": "combo",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 5,
+   "power": 55,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "hits": 2
+   },
+   "desc": "2回つづけて たたき、相手を1マスおしだす",
+   "range_class": "near",
+   "cost": "some",
+   "yomi": "びゅんびゅんだぶる"
+  },
+  "wind_pierce": {
+   "name": "ビュンビュンドリル",
+   "type": "風",
+   "category": "attack",
+   "role": "pierce",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 4,
+   "power": 110,
+   "hit": 100,
+   "crit": 5,
+   "effect": {
+    "pierce": 0.5
+   },
+   "desc": "守りを半分つらぬく",
+   "range_class": "near",
+   "cost": "some",
+   "yomi": "びゅんびゅんどりる"
+  },
+  "wind_ring": {
+   "name": "ビュンビュンリング",
+   "type": "風",
+   "category": "attack",
+   "role": "ring",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 120,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "射程内の敵みんなに当たる",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "びゅんびゅんりんぐ"
+  },
+  "wind_map": {
+   "name": "ビュンビュンクロス",
+   "type": "風",
+   "category": "attack",
+   "role": "map",
+   "rank": null,
+   "target": "map",
+   "range": [
+    0,
+    0
+   ],
+   "p": false,
+   "mp": 2,
+   "power": 110,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "shape": {
+    "shape": "cross",
+    "r": 2
+   },
+   "ff": 0.3,
+   "desc": "自分のたて・よこ2マスに当たる",
+   "range_class": "shape",
+   "cost": "few",
+   "yomi": "びゅんびゅんくろす"
+  },
+  "wind_buff": {
+   "name": "ビュンビュンステップ",
+   "type": "風",
+   "category": "buff",
+   "role": "buff",
+   "rank": null,
+   "target": "ally_all",
+   "range": [
+    0,
+    1
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "buff": {
+     "stat": "mob",
+     "add": 1,
+     "turns": 1
+    }
+   },
+   "desc": "自分と隣の味方の移動が次のターン+1",
+   "enabled": false,
+   "range_class": "support",
+   "cost": "few",
+   "yomi": "びゅんびゅんすてっぷ"
+  },
+  "wind_move": {
+   "name": "ビュンビュンジャンプ",
+   "type": "風",
+   "category": "move",
+   "role": "move",
+   "rank": null,
+   "target": "self",
+   "range": [
+    0,
+    3
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "jump": 3
+   },
+   "desc": "3マス先まで 敵や味方を飛びこえて動く",
+   "enabled": false,
+   "range_class": "support",
+   "cost": "few",
+   "yomi": "びゅんびゅんじゃんぷ"
+  },
+  "earth_ladder1": {
+   "name": "ゴロ",
+   "type": "地",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 1,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 0,
+   "power": 80,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "大地の力で たたく。何回でも使える",
+   "range_class": "near",
+   "cost": "free",
+   "yomi": "ごろ"
+  },
+  "earth_ladder2": {
+   "name": "ゴロラ",
+   "type": "地",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 2,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 100,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "大地の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "ごろら"
+  },
+  "earth_ladder3": {
+   "name": "ゴロドン",
+   "type": "地",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 3,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 6,
+   "power": 120,
+   "hit": 100,
+   "crit": 5,
+   "effect": {},
+   "desc": "大きな大地の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "ごろどん"
+  },
+  "earth_ladder4": {
+   "name": "ゴロドーン",
+   "type": "地",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 4,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": false,
+   "mp": 3,
+   "power": 160,
+   "hit": 90,
+   "crit": 15,
+   "effect": {},
+   "desc": "いちばん大きな大地の力。移動したら使えない",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "ごろどーん"
+  },
+  "earth_spear": {
+   "name": "グラグラランス",
+   "type": "地",
+   "category": "attack",
+   "role": "spear",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 6,
+   "power": 78,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "2マス先までつく",
+   "range_class": "mid",
+   "cost": "many",
+   "yomi": "ぐらぐららんす"
+  },
+  "earth_pierce": {
+   "name": "グラグラドリル",
+   "type": "地",
+   "category": "attack",
+   "role": "pierce",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 4,
+   "power": 110,
+   "hit": 100,
+   "crit": 5,
+   "effect": {
+    "pierce": 0.5
+   },
+   "desc": "守りを半分つらぬく",
+   "range_class": "near",
+   "cost": "some",
+   "yomi": "ぐらぐらどりる"
+  },
+  "earth_ring": {
+   "name": "グラグラリング",
+   "type": "地",
+   "category": "attack",
+   "role": "ring",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 120,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "射程内の敵みんなに当たる",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "ぐらぐらりんぐ"
+  },
+  "earth_map": {
+   "name": "グラグラスパイラル",
+   "type": "地",
+   "category": "attack",
+   "role": "map",
+   "rank": null,
+   "target": "map",
+   "range": [
+    0,
+    0
+   ],
+   "p": false,
+   "mp": 2,
+   "power": 110,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "shape": {
+    "shape": "around",
+    "r": 2
+   },
+   "ff": 0.3,
+   "desc": "自分のまわり2マスに当たる",
+   "range_class": "shape",
+   "cost": "few",
+   "yomi": "ぐらぐらすぱいらる"
+  },
+  "earth_dig": {
+   "name": "グラグラモグラ",
+   "type": "地",
+   "category": "move",
+   "role": "move",
+   "rank": null,
+   "target": "self",
+   "range": [
+    0,
+    0
+   ],
+   "p": false,
+   "mp": 3,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "dig": 2
+   },
+   "desc": "地面にもぐって2ターン無敵(攻撃はできない)",
+   "range_class": "self",
+   "cost": "few",
+   "yomi": "ぐらぐらもぐら"
+  },
+  "earth_buff": {
+   "name": "グラグラガード",
+   "type": "地",
+   "category": "buff",
+   "role": "buff",
+   "rank": null,
+   "target": "self",
+   "range": [
+    0,
+    0
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "buff": {
+     "stat": "def",
+     "x": 0.3,
+     "turns": 2
+    }
+   },
+   "desc": "2ターン 自分の守りが上がる",
+   "enabled": false,
+   "range_class": "self",
+   "cost": "few",
+   "yomi": "ぐらぐらがーど"
+  },
+  "ice_ladder1": {
+   "name": "ヒエ",
+   "type": "氷",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 1,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 0,
+   "power": 80,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "freeze",
+    "chance": "stage"
+   },
+   "desc": "氷の力で たたく。何回でも使える",
+   "range_class": "near",
+   "cost": "free",
+   "yomi": "ひえ"
+  },
+  "ice_ladder2": {
+   "name": "ヒエラ",
+   "type": "氷",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 2,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 100,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "freeze",
+    "chance": "stage"
+   },
+   "desc": "氷の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "ひえら"
+  },
+  "ice_ladder3": {
+   "name": "ヒエドン",
+   "type": "氷",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 3,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 6,
+   "power": 120,
+   "hit": 100,
+   "crit": 5,
+   "effect": {
+    "ail": "freeze",
+    "chance": "stage"
+   },
+   "desc": "大きな氷の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "ひえどん"
+  },
+  "ice_ladder4": {
+   "name": "ヒエドーン",
+   "type": "氷",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 4,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": false,
+   "mp": 3,
+   "power": 160,
+   "hit": 90,
+   "crit": 15,
+   "effect": {
+    "ail": "freeze",
+    "chance": "stage"
+   },
+   "desc": "いちばん大きな氷の力。移動したら使えない",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "ひえどーん"
+  },
+  "ice_spear": {
+   "name": "カチコチランス",
+   "type": "氷",
+   "category": "attack",
+   "role": "spear",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 6,
+   "power": 78,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "freeze",
+    "chance": "stage"
+   },
+   "desc": "2マス先までつく",
+   "range_class": "mid",
+   "cost": "many",
+   "yomi": "かちこちらんす"
+  },
+  "ice_pierce": {
+   "name": "カチコチドリル",
+   "type": "氷",
+   "category": "attack",
+   "role": "pierce",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 4,
+   "power": 110,
+   "hit": 100,
+   "crit": 5,
+   "effect": {
+    "ail": "freeze",
+    "chance": "stage",
+    "pierce": 0.5
+   },
+   "desc": "守りを半分つらぬく",
+   "range_class": "near",
+   "cost": "some",
+   "yomi": "かちこちどりる"
+  },
+  "ice_ring": {
+   "name": "カチコチリング",
+   "type": "氷",
+   "category": "attack",
+   "role": "ring",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 120,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "freeze",
+    "chance": "stage"
+   },
+   "desc": "射程内の敵みんなに当たる",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "かちこちりんぐ"
+  },
+  "ice_map": {
+   "name": "カチコチクロス",
+   "type": "氷",
+   "category": "attack",
+   "role": "map",
+   "rank": null,
+   "target": "map",
+   "range": [
+    0,
+    0
+   ],
+   "p": false,
+   "mp": 2,
+   "power": 110,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "freeze",
+    "chance": "stage"
+   },
+   "shape": {
+    "shape": "cross",
+    "r": 3
+   },
+   "ff": 0.3,
+   "desc": "自分のたて・よこ3マスに当たる",
+   "range_class": "shape",
+   "cost": "few",
+   "yomi": "かちこちくろす"
+  },
+  "ice_ail": {
+   "name": "カチコチフリーズ",
+   "type": "氷",
+   "category": "ailment",
+   "role": "ail",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 4,
+   "power": 40,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "freeze",
+    "chance": 0.8
+   },
+   "desc": "こおらせやすい",
+   "range_class": "near",
+   "cost": "some",
+   "yomi": "かちこちふりーず"
+  },
+  "ice_debuff": {
+   "name": "カチコチウィーク",
+   "type": "氷",
+   "category": "debuff",
+   "role": "debuff",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "debuff": {
+     "stat": "atk",
+     "x": -0.2,
+     "turns": 2
+    }
+   },
+   "desc": "2ターン 相手の攻撃が下がる",
+   "enabled": false,
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "かちこちうぃーく"
+  },
+  "light_ladder1": {
+   "name": "キラ",
+   "type": "光",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 1,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 0,
+   "power": 80,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "光の力で たたく。何回でも使える",
+   "range_class": "near",
+   "cost": "free",
+   "yomi": "きら"
+  },
+  "light_ladder2": {
+   "name": "キララ",
+   "type": "光",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 2,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 100,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "光の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "きらら"
+  },
+  "light_ladder3": {
+   "name": "キラドン",
+   "type": "光",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 3,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 6,
+   "power": 120,
+   "hit": 100,
+   "crit": 5,
+   "effect": {},
+   "desc": "大きな光の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "きらどん"
+  },
+  "light_ladder4": {
+   "name": "キラドーン",
+   "type": "光",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 4,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": false,
+   "mp": 3,
+   "power": 125,
+   "hit": 90,
+   "crit": 15,
+   "effect": {},
+   "desc": "いちばん大きな光の力。移動したら使えない",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "きらどーん"
+  },
+  "light_toss": {
+   "name": "ピカピカショット",
+   "type": "光",
+   "category": "attack",
+   "role": "toss",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 0,
+   "power": 62,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "光を飛ばす。2マス先までとどく",
+   "range_class": "mid",
+   "cost": "free",
+   "yomi": "ぴかぴかしょっと"
+  },
+  "light_arrow": {
+   "name": "ピカピカアロー",
+   "type": "光",
+   "category": "attack",
+   "role": "arrow",
+   "rank": null,
+   "target": "single",
+   "range": [
+    2,
+    3
+   ],
+   "p": true,
+   "mp": 5,
+   "power": 100,
+   "hit": 95,
+   "crit": 5,
+   "effect": {},
+   "desc": "遠くの敵をねらう。隣には撃てない",
+   "range_class": "far",
+   "cost": "some",
+   "yomi": "ぴかぴかあろー"
+  },
+  "light_ring": {
+   "name": "ピカピカリング",
+   "type": "光",
+   "category": "attack",
+   "role": "ring",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 94,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "射程内の敵みんなに当たる",
+   "range_class": "mid",
+   "cost": "many",
+   "yomi": "ぴかぴかりんぐ"
+  },
+  "light_map": {
+   "name": "ピカピカレイン",
+   "type": "光",
+   "category": "attack",
+   "role": "map",
+   "rank": null,
+   "target": "map",
+   "range": [
+    0,
+    0
+   ],
+   "p": false,
+   "mp": 2,
+   "power": 110,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "shape": {
+    "shape": "blast",
+    "r": 1,
+    "reach": 4
+   },
+   "ff": 0.3,
+   "desc": "ねらった場所のまわりに当たる",
+   "range_class": "shape",
+   "cost": "few",
+   "yomi": "ぴかぴかれいん"
+  },
+  "light_heal1": {
+   "name": "ピカピカヒール",
+   "type": "光",
+   "category": "heal",
+   "role": "heal",
+   "rank": null,
+   "target": "ally",
+   "range": [
+    0,
+    4
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "heal": 0.3,
+    "cap": 600,
+    "pick": "most_hurt"
+   },
+   "desc": "いちばん弱った味方1体の体力を回復",
+   "group": "heal",
+   "noWild": true,
+   "range_class": "support",
+   "cost": "few",
+   "yomi": "ぴかぴかひーる"
+  },
+  "light_cure": {
+   "name": "ピカピカクリア",
+   "type": "光",
+   "category": "cure",
+   "role": "cure",
+   "rank": null,
+   "target": "ally",
+   "range": [
+    0,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "cure": [
+     "burn",
+     "poison",
+     "freeze",
+     "para"
+    ]
+   },
+   "desc": "味方1体の状態異常をなおす",
+   "group": "heal",
+   "noWild": true,
+   "range_class": "support",
+   "cost": "few",
+   "yomi": "ぴかぴかくりあ"
+  },
+  "light_heal_all": {
+   "name": "ピカピカシャワー",
+   "type": "光",
+   "category": "heal",
+   "role": "heal",
+   "rank": null,
+   "target": "ally_all",
+   "range": [
+    0,
+    4
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "heal": 0.2,
+    "cap": 400
+   },
+   "desc": "まわりの味方みんなの体力を回復",
+   "group": "heal",
+   "noWild": true,
+   "range_class": "support",
+   "cost": "few",
+   "yomi": "ぴかぴかしゃわー"
+  },
+  "light_revive": {
+   "name": "ピカピカリバイブ",
+   "type": "光",
+   "category": "revive",
+   "role": "revive",
+   "rank": null,
+   "target": "fallen",
+   "range": [
+    0,
+    0
+   ],
+   "p": true,
+   "mp": 1,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "revive": true,
+    "gauge": 50,
+    "as": "stage1"
+   },
+   "desc": "倒れた仲間を1段目の姿で自陣にもどす(闘気50)",
+   "group": "heal",
+   "noWild": true,
+   "range_class": "self",
+   "cost": "once",
+   "yomi": "ぴかぴかりばいぶ"
+  },
+  "dark_ladder1": {
+   "name": "ヨミ",
+   "type": "闇",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 1,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 0,
+   "power": 80,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage"
+   },
+   "desc": "闇の力で たたく。何回でも使える",
+   "range_class": "near",
+   "cost": "free",
+   "yomi": "よみ"
+  },
+  "dark_ladder2": {
+   "name": "ヨミラ",
+   "type": "闇",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 2,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 100,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage"
+   },
+   "desc": "闇の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "よみら"
+  },
+  "dark_ladder3": {
+   "name": "ヨミドン",
+   "type": "闇",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 3,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 6,
+   "power": 120,
+   "hit": 100,
+   "crit": 5,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage"
+   },
+   "desc": "大きな闇の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "よみどん"
+  },
+  "dark_ladder4": {
+   "name": "ヨミドーン",
+   "type": "闇",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 4,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": false,
+   "mp": 3,
+   "power": 160,
+   "hit": 90,
+   "crit": 15,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage"
+   },
+   "desc": "いちばん大きな闇の力。移動したら使えない",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "よみどーん"
+  },
+  "dark_spear": {
+   "name": "ゾクゾクランス",
+   "type": "闇",
+   "category": "attack",
+   "role": "spear",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 6,
+   "power": 78,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage"
+   },
+   "desc": "2マス先までつく",
+   "range_class": "mid",
+   "cost": "many",
+   "yomi": "ぞくぞくらんす"
+  },
+  "dark_pierce": {
+   "name": "ゾクゾクドリル",
+   "type": "闇",
+   "category": "attack",
+   "role": "pierce",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 4,
+   "power": 110,
+   "hit": 100,
+   "crit": 5,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage",
+    "pierce": 0.5
+   },
+   "desc": "守りを半分つらぬく",
+   "range_class": "near",
+   "cost": "some",
+   "yomi": "ぞくぞくどりる"
+  },
+  "dark_ring": {
+   "name": "ゾクゾクリング",
+   "type": "闇",
+   "category": "attack",
+   "role": "ring",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 120,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage"
+   },
+   "desc": "射程内の敵みんなに当たる",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "ぞくぞくりんぐ"
+  },
+  "dark_map": {
+   "name": "ゾクゾクスパイラル",
+   "type": "闇",
+   "category": "attack",
+   "role": "map",
+   "rank": null,
+   "target": "map",
+   "range": [
+    0,
+    0
+   ],
+   "p": false,
+   "mp": 2,
+   "power": 110,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage"
+   },
+   "shape": {
+    "shape": "around",
+    "r": 2
+   },
+   "ff": 0.3,
+   "desc": "自分のまわり2マスに当たる",
+   "range_class": "shape",
+   "cost": "few",
+   "yomi": "ぞくぞくすぱいらる"
+  },
+  "dark_debuff": {
+   "name": "ゾクゾクブレイク",
+   "type": "闇",
+   "category": "debuff",
+   "role": "debuff",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "debuff": {
+     "stat": "def",
+     "x": -0.2,
+     "turns": 2
+    }
+   },
+   "desc": "2ターン 相手の守りが下がる",
+   "enabled": false,
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ぞくぞくぶれいく"
+  },
+  "dark_hide": {
+   "name": "ゾクゾクハイド",
+   "type": "闇",
+   "category": "buff",
+   "role": "buff",
+   "rank": null,
+   "target": "self",
+   "range": [
+    0,
+    0
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "buff": {
+     "stat": "hide",
+     "turns": 1
+    }
+   },
+   "desc": "次の相手の番のあいだ ねらわれない",
+   "enabled": false,
+   "range_class": "self",
+   "cost": "few",
+   "yomi": "ぞくぞくはいど"
+  },
+  "dragon_ladder1": {
+   "name": "リュガ",
+   "type": "竜",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 1,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 0,
+   "power": 80,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "竜の力で たたく。何回でも使える",
+   "range_class": "near",
+   "cost": "free",
+   "yomi": "りゅが"
+  },
+  "dragon_ladder2": {
+   "name": "リュガラ",
+   "type": "竜",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 2,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 100,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "竜の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "りゅがら"
+  },
+  "dragon_ladder3": {
+   "name": "リュガドン",
+   "type": "竜",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 3,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 6,
+   "power": 120,
+   "hit": 100,
+   "crit": 5,
+   "effect": {},
+   "desc": "大きな竜の力をぶつける",
+   "range_class": "near",
+   "cost": "many",
+   "yomi": "りゅがどん"
+  },
+  "dragon_ladder4": {
+   "name": "リュガドーン",
+   "type": "竜",
+   "category": "attack",
+   "role": "ladder",
+   "rank": 4,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": false,
+   "mp": 3,
+   "power": 125,
+   "hit": 90,
+   "crit": 15,
+   "effect": {},
+   "desc": "いちばん大きな竜の力。移動したら使えない",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "りゅがどーん"
+  },
+  "dragon_toss": {
+   "name": "ガオガオショット",
+   "type": "竜",
+   "category": "attack",
+   "role": "toss",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 0,
+   "power": 62,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "竜を飛ばす。2マス先までとどく",
+   "range_class": "mid",
+   "cost": "free",
+   "yomi": "がおがおしょっと"
+  },
+  "dragon_arrow": {
+   "name": "ガオガオアロー",
+   "type": "竜",
+   "category": "attack",
+   "role": "arrow",
+   "rank": null,
+   "target": "single",
+   "range": [
+    2,
+    3
+   ],
+   "p": true,
+   "mp": 5,
+   "power": 100,
+   "hit": 95,
+   "crit": 5,
+   "effect": {},
+   "desc": "遠くの敵をねらう。隣には撃てない",
+   "range_class": "far",
+   "cost": "some",
+   "yomi": "がおがおあろー"
+  },
+  "dragon_ring": {
+   "name": "ガオガオリング",
+   "type": "竜",
+   "category": "attack",
+   "role": "ring",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 8,
+   "power": 94,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "射程内の敵みんなに当たる",
+   "range_class": "mid",
+   "cost": "many",
+   "yomi": "がおがおりんぐ"
+  },
+  "dragon_map": {
+   "name": "ガオガオライン",
+   "type": "竜",
+   "category": "attack",
+   "role": "map",
+   "rank": null,
+   "target": "map",
+   "range": [
+    0,
+    0
+   ],
+   "p": false,
+   "mp": 2,
+   "power": 110,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "shape": {
+    "shape": "line",
+    "len": 4
+   },
+   "ff": 0.3,
+   "desc": "まっすぐ4マスに走る",
+   "range_class": "shape",
+   "cost": "few",
+   "yomi": "がおがおらいん"
+  },
+  "dragon_buff": {
+   "name": "ガオガオパワー",
+   "type": "竜",
+   "category": "buff",
+   "role": "buff",
+   "rank": null,
+   "target": "self",
+   "range": [
+    0,
+    0
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "buff": {
+     "stat": "atk",
+     "x": 0.2,
+     "turns": 2
+    },
+    "buff2": {
+     "stat": "def",
+     "x": 0.1,
+     "turns": 2
+    }
+   },
+   "desc": "2ターン 自分の攻撃と守りが上がる",
+   "enabled": false,
+   "range_class": "self",
+   "cost": "few",
+   "yomi": "がおがおぱわー"
+  },
+  "dragon_debuff": {
+   "name": "ガオガオロア",
+   "type": "竜",
+   "category": "debuff",
+   "role": "debuff",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 0,
+   "hit": 100,
+   "crit": 0,
+   "effect": {
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
+   },
+   "desc": "ほえて まわりの敵の攻撃を下げる",
+   "enabled": false,
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "がおがおろあ"
+  },
+  "sig_enou": {
+   "name": "キツネビカッター",
+   "type": "炎",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 117,
+   "hit": 100,
+   "crit": 20,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "燃やすべき線だけを焼く王のきつね火",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "きつねびかったー"
+  },
+  "starter_enou": {
+   "name": "キツネビダッシュ",
+   "type": "炎",
+   "category": "attack",
+   "role": "sig_starter",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 100,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "だれにもつかまらない速さで火をまとって走る",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "きつねびだっしゅ"
+  },
+  "sig_sasori": {
+   "name": "サソリメテオ",
+   "type": "炎",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 117,
+   "hit": 100,
+   "crit": 20,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "流れ星のようなしっぽの一撃",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "さそりめてお"
+  },
+  "sig_sala": {
+   "name": "ヨウガンスライド",
+   "type": "炎",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 117,
+   "hit": 100,
+   "crit": 20,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "溶岩の上をすべって体当たり",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ようがんすらいど"
+  },
+  "sig_otter": {
+   "name": "プカプカタイフーン",
+   "type": "水",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 150,
+   "hit": 100,
+   "crit": 20,
+   "effect": {},
+   "desc": "浮かんだまま大きなうずをまく",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "ぷかぷかたいふーん"
+  },
+  "sig_croc": {
+   "name": "オオアゴガブリ",
+   "type": "水",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 150,
+   "hit": 100,
+   "crit": 20,
+   "effect": {},
+   "desc": "親分の大きなあごでかみつく",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "おおあごがぶり"
+  },
+  "sig_whale": {
+   "name": "オヤブンウェーブ",
+   "type": "水",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 150,
+   "hit": 100,
+   "crit": 20,
+   "effect": {},
+   "desc": "小さい子を守る大きな波",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "おやぶんうぇーぶ"
+  },
+  "sig_kuma": {
+   "name": "グリズリーバーサーク",
+   "type": "森",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 88,
+   "hit": 100,
+   "crit": 20,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5,
+    "drain": 0.5
+   },
+   "desc": "怒ると止まらない大きな爪",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ぐりずりーばーさーく"
+  },
+  "starter_kuma": {
+   "name": "ベルベルパンチ",
+   "type": "森",
+   "category": "attack",
+   "role": "sig_starter",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 75,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5,
+    "drain": 0.5
+   },
+   "desc": "鈴の音がひびくパンチ",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "べるべるぱんち"
+  },
+  "sig_aloe": {
+   "name": "ユグドラドレイン",
+   "type": "森",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 88,
+   "hit": 100,
+   "crit": 20,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5,
+    "drain": 0.5
+   },
+   "desc": "大樹の力ですいとって大きく回復",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ゆぐどらどれいん"
+  },
+  "sig_mantis": {
+   "name": "カマキリケンポー",
+   "type": "森",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 88,
+   "hit": 100,
+   "crit": 20,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5,
+    "drain": 0.5
+   },
+   "desc": "百回練習した型で切る",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "かまきりけんぽー"
+  },
+  "sig_tora": {
+   "name": "ビャッコサンダー",
+   "type": "雷",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 117,
+   "hit": 100,
+   "crit": 20,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "西の門を守る白い虎の雷",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "びゃっこさんだー"
+  },
+  "starter_tora": {
+   "name": "マケンキダッシュ",
+   "type": "雷",
+   "category": "attack",
+   "role": "sig_starter",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 100,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "勝つまでやめない突進",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "まけんきだっしゅ"
+  },
+  "sig_piri": {
+   "name": "ナルカミボルト",
+   "type": "雷",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 117,
+   "hit": 100,
+   "crit": 20,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "雨を知らせる大きな雷",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "なるかみぼると"
+  },
+  "sig_thor": {
+   "name": "ゴウカイスマッシュ",
+   "type": "雷",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 117,
+   "hit": 100,
+   "crit": 20,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "豪快にふりおろす雷のつち",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ごうかいすまっしゅ"
+  },
+  "sig_momonga": {
+   "name": "ヨカゼグライド",
+   "type": "風",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 150,
+   "hit": 100,
+   "crit": 20,
+   "effect": {},
+   "desc": "よく気がつく見張りの夜風",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "よかぜぐらいど"
+  },
+  "sig_taka": {
+   "name": "イーグルダイブ",
+   "type": "風",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 150,
+   "hit": 100,
+   "crit": 20,
+   "effect": {},
+   "desc": "約束を守る鷲の急降下",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "いーぐるだいぶ"
+  },
+  "sig_kabuto": {
+   "name": "ツノムシャチャージ",
+   "type": "風",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 150,
+   "hit": 100,
+   "crit": 20,
+   "effect": {},
+   "desc": "主の前に立つ一途なツノの突進",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "つのむしゃちゃーじ"
+  },
+  "sig_armad": {
+   "name": "マンマルローリング",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 150,
+   "hit": 100,
+   "crit": 20,
+   "effect": {},
+   "desc": "まるくなって ころがって ぶつかる",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "まんまるろーりんぐ"
+  },
+  "sig_kuwa": {
+   "name": "クワガタギリ",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 150,
+   "hit": 100,
+   "crit": 20,
+   "effect": {},
+   "desc": "武者のかぶとの一太刀",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "くわがたぎり"
+  },
+  "sig_zou": {
+   "name": "マンモスストンプ",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 150,
+   "hit": 100,
+   "crit": 20,
+   "effect": {},
+   "desc": "白い象が大地をふみならす",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "まんもすすとんぷ"
+  },
+  "sig_yuki": {
+   "name": "コンロンファング",
+   "type": "氷",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 150,
+   "hit": 100,
+   "crit": 20,
+   "effect": {
+    "ail": "freeze",
+    "chance": 0.5
+   },
+   "desc": "雪の山の白い牙",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "こんろんふぁんぐ"
+  },
+  "sig_pen": {
+   "name": "ヨロイスライド",
+   "type": "氷",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 150,
+   "hit": 100,
+   "crit": 20,
+   "effect": {
+    "ail": "freeze",
+    "chance": 0.5
+   },
+   "desc": "氷のよろいで すべってぶつかる",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "よろいすらいど"
+  },
+  "sig_seal": {
+   "name": "セイウチファング",
+   "type": "氷",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 150,
+   "hit": 100,
+   "crit": 20,
+   "effect": {
+    "ail": "freeze",
+    "chance": 0.5
+   },
+   "desc": "群れの長の大きなキバ",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "せいうちふぁんぐ"
+  },
+  "sig_prism": {
+   "name": "ニジイロビーム",
+   "type": "光",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 117,
+   "hit": 100,
+   "crit": 20,
+   "effect": {},
+   "desc": "雨上がりのにじの光",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "にじいろびーむ"
+  },
+  "sig_grif": {
+   "name": "ゴールデンクロー",
+   "type": "光",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 117,
+   "hit": 100,
+   "crit": 20,
+   "effect": {},
+   "desc": "黄金を守る門番の爪",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ごーるでんくろー"
+  },
+  "sig_hotaru": {
+   "name": "ミチシルベビーム",
+   "type": "光",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 117,
+   "hit": 100,
+   "crit": 20,
+   "effect": {},
+   "desc": "道しるべの光",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "みちしるべびーむ"
+  },
+  "sig_ghost": {
+   "name": "オバケマチブセ",
+   "type": "闇",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 150,
+   "hit": 100,
+   "crit": 20,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5
+   },
+   "desc": "何年でも待つお化けの一撃",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "おばけまちぶせ"
+  },
+  "sig_owl": {
+   "name": "ナイトウィスパー",
+   "type": "闇",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 150,
+   "hit": 100,
+   "crit": 20,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5
+   },
+   "desc": "ひと声で弱点を見ぬく",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "ないとうぃすぱー"
+  },
+  "sig_bat": {
+   "name": "ヨマワリバイト",
+   "type": "闇",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 150,
+   "hit": 100,
+   "crit": 20,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5
+   },
+   "desc": "悪いやつにだけ向ける夜の牙",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "よまわりばいと"
+  },
+  "sig_dino": {
+   "name": "アマエンボチャージ",
+   "type": "竜",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 117,
+   "hit": 100,
+   "crit": 20,
+   "effect": {},
+   "desc": "主のためなら止まらない大突進",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "あまえんぼちゃーじ"
+  },
+  "sig_seiryu": {
+   "name": "セイリュウストリーム",
+   "type": "竜",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 117,
+   "hit": 100,
+   "crit": 20,
+   "effect": {},
+   "desc": "自分で決めて守る青い龍の流れ",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "せいりゅうすとりーむ"
+  },
+  "sig_lind": {
+   "name": "ゴールドブレス",
+   "type": "竜",
+   "category": "attack",
+   "role": "sig_line",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 117,
+   "hit": 100,
+   "crit": 20,
+   "effect": {},
+   "desc": "宝より守り方。誇り高い竜の息",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ごーるどぶれす"
+  },
+  "fsig_2061": {
+   "name": "ヘラクレスチャージ",
+   "type": "風",
+   "category": "attack",
+   "role": "sig_boss",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    1
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 170,
+   "hit": 100,
+   "crit": 25,
+   "effect": {},
+   "desc": "王のツノで突進する",
+   "range_class": "near",
+   "cost": "few",
+   "yomi": "へらくれすちゃーじ"
+  },
+  "godherak_cross": {
+   "name": "オウジャクロス",
+   "type": "光",
+   "category": "attack",
+   "role": "sig_boss",
+   "rank": null,
+   "target": "map",
+   "range": [
+    0,
+    0
+   ],
+   "p": false,
+   "mp": 2,
+   "power": 120,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "desc": "自分のたて・よこ4マスに光を走らせる",
+   "shape": {
+    "shape": "cross",
+    "r": 4
+   },
+   "ff": 0.3,
+   "range_class": "shape",
+   "cost": "few",
+   "yomi": "おうじゃくろす"
+  },
+  "fsig_2001": {
+   "name": "カラジシバーニング",
+   "type": "炎",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "雷と炎をまとう獅子",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "からじしばーにんぐ"
+  },
+  "fsig_2004": {
+   "name": "スザクストーム",
+   "type": "風",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "南を守る火の鳥のつばさ",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "すざくすとーむ"
+  },
+  "fsig_2005": {
+   "name": "ラドーンバイト",
+   "type": "森",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 82,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5,
+    "drain": 0.5
+   },
+   "desc": "黄金のりんごを守る竜",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "らどーんばいと"
+  },
+  "fsig_2006": {
+   "name": "ダブルホーンアタック",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "ツノとクワの二つの一撃",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "だぶるほーんあたっく"
+  },
+  "fsig_2007": {
+   "name": "プテラグライド",
+   "type": "竜",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "大むかしの空を飛ぶ",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ぷてらぐらいど"
+  },
+  "fsig_2008": {
+   "name": "ロングネックスイング",
+   "type": "竜",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "長い首でおそいかかる",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ろんぐねっくすいんぐ"
+  },
+  "fsig_2009": {
+   "name": "トリプルホーンチャージ",
+   "type": "森",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 82,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5,
+    "drain": 0.5
+   },
+   "desc": "三本の角でつっこむ",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "とりぷるほーんちゃーじ"
+  },
+  "fsig_2010": {
+   "name": "ヨミガエリフレイム",
+   "type": "炎",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "よみがえりの神の炎",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "よみがえりふれいむ"
+  },
+  "fsig_2011": {
+   "name": "タイヨウフレア",
+   "type": "光",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "太陽の神の光",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "たいようふれあ"
+  },
+  "fsig_2012": {
+   "name": "アイスロックプレス",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "freeze",
+    "chance": 0.5
+   },
+   "desc": "氷の岩ごとのしかかる",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "あいすろっくぷれす"
+  },
+  "fsig_2013": {
+   "name": "マンモスドスン",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "大むかしの大きな牙",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "まんもすどすん"
+  },
+  "fsig_2014": {
+   "name": "フレイムウイング",
+   "type": "光",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "金色の炎のつばさ",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ふれいむういんぐ"
+  },
+  "fsig_2015": {
+   "name": "サンダーウイング",
+   "type": "光",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "金色の雷のつばさ",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "さんだーういんぐ"
+  },
+  "fsig_2016": {
+   "name": "ナゾナゾロア",
+   "type": "光",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "なぞをかけるほえ声",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "なぞなぞろあ"
+  },
+  "fsig_2017": {
+   "name": "ライトウイング",
+   "type": "光",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "光のつばさで打つ",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "らいとういんぐ"
+  },
+  "fsig_2018": {
+   "name": "ディープタイダル",
+   "type": "竜",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "深い海の大きなうねり",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "でぃーぷたいだる"
+  },
+  "fsig_2020": {
+   "name": "トリプルヘッドバーン",
+   "type": "竜",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "三つの首から炎",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "とりぷるへっどばーん"
+  },
+  "fsig_2022": {
+   "name": "スチームキック",
+   "type": "炎",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "あつい湯けむりのキック",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "すちーむきっく"
+  },
+  "fsig_2024": {
+   "name": "ライジュウボルト",
+   "type": "雷",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "雷の獣の火花",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "らいじゅうぼると"
+  },
+  "fsig_2025": {
+   "name": "カザンシェルプレス",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "火山のような甲羅でのしかかる",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "かざんしぇるぷれす"
+  },
+  "fsig_2026": {
+   "name": "ホワイトフレイム",
+   "type": "炎",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "白い炎",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ほわいとふれいむ"
+  },
+  "fsig_2027": {
+   "name": "ガルムファング",
+   "type": "炎",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "冥界の番犬の牙",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "がるむふぁんぐ"
+  },
+  "fsig_2028": {
+   "name": "ゴッドフレイム",
+   "type": "竜",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "火の神の炎",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ごっどふれいむ"
+  },
+  "fsig_2029": {
+   "name": "ロータスウェーブ",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "はすの池の大きな波",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ろーたすうぇーぶ"
+  },
+  "fsig_2030": {
+   "name": "ナーガボルト",
+   "type": "竜",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "蛇の神の雷",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "なーがぼると"
+  },
+  "fsig_2031": {
+   "name": "スカイダイブ",
+   "type": "水",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "空を泳ぐくじらの潮",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "すかいだいぶ"
+  },
+  "fsig_2032": {
+   "name": "マッドボム",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "どろをはね上げる",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "まっどぼむ"
+  },
+  "fsig_2033": {
+   "name": "イッカクスラスト",
+   "type": "氷",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "freeze",
+    "chance": 0.5
+   },
+   "desc": "一本角でつく",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "いっかくすらすと"
+  },
+  "fsig_2034": {
+   "name": "ルミナスウェーブ",
+   "type": "光",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "光る波でつつむ",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "るみなすうぇーぶ"
+  },
+  "fsig_2035": {
+   "name": "タコアシスイング",
+   "type": "水",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5
+   },
+   "desc": "八本の腕で大うずをまく",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "たこあしすいんぐ"
+  },
+  "fsig_2036": {
+   "name": "イカヅチホーン",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "雷の角でつっこむ",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "いかづちほーん"
+  },
+  "fsig_2037": {
+   "name": "ワタゲフライト",
+   "type": "風",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5,
+    "drain": 0.5
+   },
+   "desc": "わた毛を飛ばす",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "わたげふらいと"
+  },
+  "fsig_2038": {
+   "name": "ヤマガミチャージ",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5,
+    "drain": 0.5
+   },
+   "desc": "山の神のイノシシの突進",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "やまがみちゃーじ"
+  },
+  "fsig_2039": {
+   "name": "ジュヒョウストーム",
+   "type": "氷",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "freeze",
+    "chance": 0.5,
+    "drain": 0.5
+   },
+   "desc": "凍った木の森のあらし",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "じゅひょうすとーむ"
+  },
+  "fsig_2040": {
+   "name": "ヒナタボッコビーム",
+   "type": "森",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 82,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5,
+    "drain": 0.5
+   },
+   "desc": "あたたかい光",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ひなたぼっこびーむ"
+  },
+  "fsig_2041": {
+   "name": "ドクハナショック",
+   "type": "雷",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5,
+    "drain": 0.5
+   },
+   "desc": "しびれる毒の花",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "どくはなしょっく"
+  },
+  "fsig_2042": {
+   "name": "ライチョウダイブ",
+   "type": "風",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "雷の鳥の急降下",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "らいちょうだいぶ"
+  },
+  "fsig_2043": {
+   "name": "サンダーホーン",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "いなずまの角",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "さんだーほーん"
+  },
+  "fsig_2044": {
+   "name": "オーロラハウル",
+   "type": "氷",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "freeze",
+    "chance": 0.5
+   },
+   "desc": "オーロラの下のとおぼえ",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "おーろらはうる"
+  },
+  "fsig_2045": {
+   "name": "ペガサスボルト",
+   "type": "光",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "天を走る馬の雷",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ぺがさすぼると"
+  },
+  "fsig_2046": {
+   "name": "ヌエシャウト",
+   "type": "雷",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "夜にひびく鳴き声",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ぬえしゃうと"
+  },
+  "fsig_2047": {
+   "name": "ハチライボム",
+   "type": "竜",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "八つの雷の竜",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "はちらいぼむ"
+  },
+  "fsig_2048": {
+   "name": "オロチサンドストーム",
+   "type": "竜",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "砂あらしの八つの首",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "おろちさんどすとーむ"
+  },
+  "fsig_2049": {
+   "name": "ヤクスタンピード",
+   "type": "氷",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "freeze",
+    "chance": 0.5
+   },
+   "desc": "ふぶきの中を群れで走る",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "やくすたんぴーど"
+  },
+  "fsig_2050": {
+   "name": "ピーコックビーム",
+   "type": "風",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "千の目の羽が光る",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ぴーこっくびーむ"
+  },
+  "fsig_2051": {
+   "name": "ミチビキダイブ",
+   "type": "風",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5
+   },
+   "desc": "三本足のからすの道案内",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "みちびきだいぶ"
+  },
+  "fsig_2052": {
+   "name": "アラシウイング",
+   "type": "竜",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "あらしをよぶ竜のつばさ",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "あらしういんぐ"
+  },
+  "fsig_2053": {
+   "name": "ゲンブプレス",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "freeze",
+    "chance": 0.5
+   },
+   "desc": "北を守る亀の氷のこうらでのしかかる",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "げんぶぷれす"
+  },
+  "fsig_2054": {
+   "name": "ストーンゲイズ",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5
+   },
+   "desc": "にらんで石のように動けなくする",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "すとーんげいず"
+  },
+  "fsig_2055": {
+   "name": "ガイアストンプ",
+   "type": "竜",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "大地の女神の力",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "がいあすとんぷ"
+  },
+  "fsig_2056": {
+   "name": "クリスタルホーン",
+   "type": "氷",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "freeze",
+    "chance": 0.5
+   },
+   "desc": "水晶の一本角",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "くりすたるほーん"
+  },
+  "fsig_2058": {
+   "name": "セツリュウブレス",
+   "type": "竜",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "freeze",
+    "chance": 0.5
+   },
+   "desc": "雪の竜の白い息",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "せつりゅうぶれす"
+  },
+  "fsig_2059": {
+   "name": "エクリプスビーム",
+   "type": "光",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5
+   },
+   "desc": "太陽がかくれる光と闇",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "えくりぷすびーむ"
+  },
+  "fsig_2062": {
+   "name": "ネカジリバイト",
+   "type": "竜",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5
+   },
+   "desc": "世界樹の根をかじる",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ねかじりばいと"
+  },
+  "fsig_2063": {
+   "name": "ミッドナイトサイズ",
+   "type": "森",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 82,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5,
+    "drain": 0.5
+   },
+   "desc": "まよなかの大きなかま",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "みっどないとさいず"
+  },
+  "fsig_2064": {
+   "name": "フェンリルバイト",
+   "type": "氷",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "freeze",
+    "chance": 0.5
+   },
+   "desc": "鎖の狼の大きな口",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ふぇんりるばいと"
+  },
+  "fsig_2065": {
+   "name": "エイトレッグダッシュ",
+   "type": "光",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "freeze",
+    "chance": 0.5
+   },
+   "desc": "八本の脚で走りぬける",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "えいとれっぐだっしゅ"
+  },
+  "fsig_2066": {
+   "name": "ラビリンスチャージ",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5,
+    "drain": 0.5
+   },
+   "desc": "迷路の主の大きな角",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "らびりんすちゃーじ"
+  },
+  "fsig_2067": {
+   "name": "アトラスプレス",
+   "type": "光",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {},
+   "desc": "天をささえる力でのしかかる",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "あとらすぷれす"
+  },
+  "fsig_2068": {
+   "name": "テンビンジャッジ",
+   "type": "地",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5
+   },
+   "desc": "心の重さをはかる天秤",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "てんびんじゃっじ"
+  },
+  "fsig_2069": {
+   "name": "グングニルスロー",
+   "type": "雷",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "神々の王の槍を投げる",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ぐんぐにるすろー"
+  },
+  "fsig_2070": {
+   "name": "スルトブレード",
+   "type": "炎",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "炎の巨人の剣",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "するとぶれーど"
+  },
+  "fsig_2071": {
+   "name": "ラグナサンダー",
+   "type": "雷",
+   "category": "attack",
+   "role": "sig_boss",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    3
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 140,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "雷鳴で射程3の敵みんなを打つ",
+   "range_class": "far",
+   "cost": "few",
+   "yomi": "らぐなさんだー"
+  },
+  "ragna_dark": {
+   "name": "ラグナダークネス",
+   "type": "闇",
+   "category": "attack",
+   "role": "sig_boss",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    3
+   ],
+   "p": true,
+   "mp": 2,
+   "power": 180,
+   "hit": 95,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": 0.5
+   },
+   "desc": "闇の大きな一撃",
+   "range_class": "far",
+   "cost": "few",
+   "yomi": "らぐなだーくねす"
+  },
+  "ragna_fire": {
+   "name": "ラグナインフェルノ",
+   "type": "炎",
+   "category": "attack",
+   "role": "sig_boss",
+   "rank": null,
+   "target": "single",
+   "range": [
+    1,
+    3
+   ],
+   "p": false,
+   "mp": 1,
+   "power": 200,
+   "hit": 90,
+   "crit": 15,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.6
+   },
+   "desc": "すべてを焼く炎。移動したら使えない",
+   "range_class": "far",
+   "cost": "once",
+   "yomi": "らぐないんふぇるの"
+  }
+ }
+}

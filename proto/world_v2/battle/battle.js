@@ -12,7 +12,7 @@ const IS_NODE = (typeof document==='undefined');
 const BT = { headless:IS_NODE, running:false, kind:'trainer', size:11, auto:false, opts:null, diff:null, rules:null, look:'olive', mix:null, place:null,
   party:[], enemyParty:[], items:{}, fusedNew:[], startedAt:0, onEnd:null, resolve:null, loop:false, dmgX:1, aiSkill:[1,1], log:null };
 // 部品の置き場所(既定=この battle.js のあるフォルダ)。init({base}) で変えられる
-const CFG = { base:'', data:'data/monsters.json', img:'img/', ci:'../../img/ci/', models:'../../design_v2/models/', zIndex:9000 };
+const CFG = { base:'', data:'data/monsters.json', stats:'data/stats_v2.json', moves:'data/moves.json', img:'img/', ci:'../../img/ci/', models:'../../design_v2/models/', zIndex:9000 };
 try{ if(!IS_NODE){ const cs=document.currentScript; if(cs&&cs.src) CFG.base=cs.src.replace(/[^\/]*$/,''); } }catch(e){}
 function $id(k){ return IS_NODE?null:document.getElementById('mb-'+k); }
 
@@ -91,7 +91,10 @@ const TERR_JP = {plain:'平原',forest:'森',wasteland:'荒地',sea:'海',water:
 const TERR_HEX = {plain:0x83c258, forest:0x2c6a3a, wasteland:0xc39a57, sea:0x265f9e, water:0x4f9fb0, ruins:0xcfc4a8, lava:0x3a1206, snow:0xdde8f2, gloom:0x4a2e5e};
 const TERR_BONUS = {forest:['炎','風','森'], wasteland:['地','闇'], sea:['水','雷','氷'], water:['水','森'], ruins:['地','光'], plain:[], lava:['炎','竜'], snow:['氷','光'], gloom:['闇','地']};
 const TERR_WEAK  = {forest:['水','地'], wasteland:['水','森'], sea:['炎','地'], water:['炎','雷'], ruins:['森','風'], plain:[], lava:['氷','森','水'], snow:['炎','森'], gloom:['光','風']};   // 不得意(-30%)
-const TERR_X = 0.30;   // 地形の得意/不得意の強さ   // 森=森/氷=海・雪原/竜=溶岩でも+20%
+const TERR_X = 0.30;
+// 2026-10-27 オーナー「地形の効果や相性を重視したい」: 守る側の地形(技 v2)。遺跡=柱のかげで受けるダメージ−15%・荒地(岩場)=−10%・森=木のかげで よける+8%(マップの技は よけられない)
+const TERR_GUARD = {ruins:0.15, wasteland:0.10};
+const TERR_COVER = {forest:0.08};   // 地形の得意/不得意の強さ   // 森=森/氷=海・雪原/竜=溶岩でも+20%
 let mapType='normal';   // 'normal' | 'volcano'
 let campTheme=null;     // ストーリー章のマップテーマ（nullなら通常生成）
 // ==== [template 611-783] 技・MP・リーダー・闘気・融合 ====
@@ -141,6 +144,108 @@ function canAtkMP(u){ return atkLeft(u)>=1; }
 function canHealMP(u){ return healLeft(u)>=1; }
 function spendAtkMP(u){ if(noMP(u))return; u.amp=Math.max(0, atkLeft(u)-1); }
 function spendHealMP(u){ if(noMP(u))return; u.hmp=Math.max(0, healLeft(u)-1); }
+// ===== 技 v2(2026-10-27 Phase B・STATS_MOVES_SPEC.md 6章): 技ごとの回数(MP)・射程[min,max]・P(移動後に使えるか)・威力・命中/会心・効果・形 =====
+//   data/stats_v2.json(体力・攻撃・防御・素早さ・機動・覚える技) と data/moves.json(202技) を読む。startBattle/simulate の moveSystem:'v1' で前のしくみ(全体の攻撃MP10・回復MP3)に戻せる(シムの比べ用)
+const MV2={};            // 技id → 技(moves.json の1件 + id)
+let V2DATA=false;        // stats_v2.json と moves.json を読めたか
+// 素早さ: よける = clamp(base + k×e, min, max)(e=(守spd−攻spd)/(和))・範囲の技は ×areaX・マップの技は よけられない・どんな時も minHit 以上は当たる / 受ける会心 = (技の会心+base)% × clamp(1−e, 0.5, 1.5)・会心は ×x
+const V2={ EVADE:{base:0.08, k:0.30, min:0.03, max:0.25, areaX:0.5}, CRIT:{base:5, x:1.5}, minHit:0.75, HEAL_GROUP:3, FF:0.3,
+  dmgX:1,                // v2 の全体のダメージ倍率(盤の dmgX の上に掛ける・バランスのつまみ)
+  ancX:0.8,              // 古代テリオン(大技以外の技)のダメージ倍率(つまみ・シムで 1→0.8)
+  ai:{ support:true } }; // AI が支えの技(回復・浄化・強化・弱体・グロウ・ハイド)を使うか
+function V2ON(){ return V2DATA && BT.v2!==false; }
+try{ if(IS_NODE && process.env.V2K) Object.assign(V2, JSON.parse(process.env.V2K)); }catch(e){}   // シムのつまみ: V2K='{"dmgX":1.06,"ancX":0.9}'
+function mvName(mv){ return mv ? (mv.name||mv.n||'') : ''; }
+// 体の数を v1(monsters.json)/v2(stats_v2.json)で切り替える(MID の hp・atk・move・def・spd)
+function setStatMode(v2){ for(const k in MID){ const m=MID[k]; if(!m._v1) m._v1={hp:m.hp, atk:m.atk, move:m.move};
+    const s=(v2&&m._v2)?m._v2:null; m.hp=s?s.hp:m._v1.hp; m.atk=s?s.atk:m._v1.atk; m.move=s?s.mob:m._v1.move; m.def=s?s.def:null; m.spd=s?s.spd:null; } }
+function applyV2Data(stats, moves){ try{
+    const C=(stats&&stats.creatures)||stats||{}, M=(moves&&moves.moves)||moves||{};
+    for(const k in MV2) delete MV2[k]; for(const id in M){ if(id[0]==='_') continue; MV2[id]=Object.assign({id}, M[id]); }
+    let n=0; for(const id in C){ const m=MID[+id]; if(!m) continue; const s=C[id]; if(!m._v1) m._v1={hp:m.hp, atk:m.atk, move:m.move};
+      m._v2={hp:s.hp, atk:s.atk, def:s.def, spd:s.spd, mob:s.mob, learnset:s.learnset||[], fixed:!!s.fixed, ancient_set:s.ancient_set||null, god:s.god||null}; n++; }
+    V2DATA = n>0 && Object.keys(MV2).length>0; setStatMode(V2DATA);
+  }catch(e){ console.error('stats_v2/moves', e); V2DATA=false; } }
+function lvOf(u){ return (u&&u.lv) || Math.max(1, Math.min(99, Math.round(1+(((u&&u.rank)||1)-1)*98/19))); }
+// 覚えている技(今の姿の learnset で lv≤その子のLv。融合=全部・古代テリオン=ancient_set)
+// 古代テリオン(敵のボス)は融合でも Lv の帯に合わせる: マップの技は Lv45・特大は Lv34・系統の技は Lv52 から(ふつうの子が覚える Lv と同じ。ギリシャ・中国の古代は使わない)
+const ANC_GATE={map:45, ladder4:34, sig_line:52};
+function ancGateOk(id, lv){ const mv=MV2[id]; if(!mv) return false; const k=mv.role==='ladder'&&mv.rank===4?'ladder4':mv.role; return !(ANC_GATE[k]>lv); }
+function learnedIds(mid, lv, anc){ const m=MID[+mid]; const L=m&&m._v2; if(!L) return [];
+  if(anc && L.ancient_set) return L.ancient_set.filter(id=>MV2[id] && MV2[id].enabled!==false && ancGateOk(id,lv));
+  const out=[]; for(const e of L.learnset){ if(!MV2[e.move] || MV2[e.move].enabled===false || out.includes(e.move)) continue; if((L.fixed && !anc) || (L.fixed && anc && ancGateOk(e.move,lv)) || (!L.fixed && (e.lv||1)<=lv)) out.push(e.move); } return out; }
+function movesV2(u){ return learnedIds(u.mid, lvOf(u), !!u.anc).map(id=>MV2[id]).filter(mv=>!(mv.noWild && BT.kind==='wild')); }
+const OFFENSE={attack:1, ailment:1, debuff:1};
+function isOffense(mv){ return !!mv && !!OFFENSE[mv.category]; }
+function usesLeft(u, mv){ let n = mv.mp>0 ? ((u.mp&&u.mp[mv.id]!=null)?u.mp[mv.id]:mv.mp) : Infinity; if(mv.group==='heal') n=Math.min(n, u.hg!=null?u.hg:V2.HEAL_GROUP); return n; }
+function usesMax(mv){ return mv.mp>0 ? mv.mp : Infinity; }
+function spendMove(u, mv){ if(state&&state.stats){ const mu=state.stats.mvUse||(state.stats.mvUse={}); const k=(u.anc?'A':u.owner)+':'+mv.id; mu[k]=(mu[k]||0)+1; } if(mv.mp>0){ if(!u.mp) u.mp={}; u.mp[mv.id]=Math.max(0, usesLeft(u,mv)-1); } if(mv.group==='heal') u.hg=Math.max(0,(u.hg!=null?u.hg:V2.HEAL_GROUP)-1); }
+// その技を今使えるか(回数・移動後・行動済み・潜行)。moved を渡すと「その位置まで動いた後なら」で見る(AI)
+function moveUsable(u, mv, moved){ if(!mv || u.acted || u.dug>0) return false; if(usesLeft(u,mv)<1) return false; const mvd=(moved!=null)?moved:u.moved; if(mv.p===false && mvd) return false; return true; }
+// ---- 強化・弱体(u.buf / u.dbf)。until = state.ht(半ターンの数)で切れる ----
+function bufOn(b){ return !!b && state && (state.ht||0) < b.until; }
+function statMod(u, k){ let v=0; const b=u.buf&&u.buf[k], d=u.dbf&&u.dbf[k]; if(bufOn(b)) v+=(b.x!=null?b.x:(b.add||0)); if(bufOn(d)) v+=(d.x!=null?d.x:(d.add||0)); return v; }
+function isHidden(u){ return !!(u.buf && bufOn(u.buf.hide)); }
+function setBuf(u, key, e, foe){ const t=(e.turns||1); const o={x:e.x, add:e.add, until:(state.ht||0)+2*t+1}; if(foe){ (u.dbf||(u.dbf={}))[e.stat]=o; } else { (u.buf||(u.buf={}))[e.stat]=o; } }
+// ---- 射程: [min, max + 地形の+1]。凍結/マヒは max=1。地形の+1 は技のタイプ(水・氷=海 / 炎・森=森 / 闇=瘴気) ----
+function terrRangeUp(u, ty){ if((ty==='水'||ty==='氷') && nearTerrain(u,'sea')) return 1; if((ty==='炎'||ty==='森') && nearTerrain(u,'forest')) return 1; if(ty==='闇' && nearTerrain(u,'gloom')) return 1; return 0; }
+function moveRange(u, mv){ let a=mv.range[0], b=mv.range[1]; if(isOffense(mv) && mv.target!=='map') b+=terrRangeUp(u, mv.type); if(isOffense(mv) && (u.freeze>0||u.para>0)) b=Math.min(b,1); return [a,b]; }
+// 地形の範囲(雷×海の通電・炎×森の延焼・闇×瘴気)は技のタイプで(攻撃の技だけ)
+function isAreaTerrainMv(u, mv){ if(!mv || mv.category!=='attack' || mv.target==='map') return false; const t=mv.type;
+  return (t==='雷'&&nearTerrain(u,'sea')) || (t==='炎'&&nearTerrain(u,'forest')) || (t==='闇'&&nearTerrain(u,'gloom')); }
+function terrAreaSet(u, mv){ const t=mv.type; return connectedTerr(u, t==='雷'?'sea':t==='炎'?'forest':'gloom'); }
+function attackTargetsV2(u, mv){
+  if(!mv){ const all=new Set(); for(const m2 of movesV2(u)) if(isOffense(m2) && m2.target!=='map') for(const e of attackTargetsV2(u,m2)) all.add(e); return [...all]; }
+  if(!isOffense(mv) || mv.target==='map' || !moveUsable(u,mv)) return [];
+  const [a,b]=moveRange(u,mv), res=[]; const thunderSea=(mv.type==='雷' && mv.category==='attack' && nearTerrain(u,'sea')); const sea=thunderSea?connectedSea(u):null;
+  for(const e of alive(1-u.owner)){ if(e.dug>0) continue; if(mv.target==='single' && isHidden(e)) continue;
+    const d=cheby(e,u); let ok=d>=a && d<=b; if(!ok && thunderSea && sea.has(e.r+','+e.c)) ok=true; if(ok) res.push(e); }
+  return res; }
+function reachV2(u){ let R=0; for(const mv of movesV2(u)) if(isOffense(mv) && mv.target!=='map' && usesLeft(u,mv)>=1) R=Math.max(R, moveRange(u,mv)[1]); return Math.max(1,R); }
+// マップの技の形: around(r)=まわり / cross(r)=たて・よこ / line(len)=8方向の1本(aim=[dr,dc]) / blast(r,reach)=reach 以内のマス(aim=[r,c])のまわり r
+function mapAims(u, mv){ const S=mv.shape||{}; if(S.shape==='line') return [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+  if(S.shape==='blast'){ const out=[]; for(let r=Math.max(0,u.r-S.reach);r<=Math.min(N-1,u.r+S.reach);r++) for(let c=Math.max(0,u.c-S.reach);c<=Math.min(N-1,u.c+S.reach);c++) out.push([r,c]); return out; }
+  return [null]; }
+function mapCells(u, mv, aim){ const S=mv.shape||{}, out=[]; const inB=(r,c)=>r>=0&&c>=0&&r<N&&c<N;
+  if(S.shape==='line'){ const d=aim||[-1,0]; for(let k=1;k<=(S.len||4);k++){ const r=u.r+d[0]*k, c=u.c+d[1]*k; if(!inB(r,c)) break; out.push([r,c]); } return out; }
+  if(S.shape==='blast'){ const a=aim||[u.r,u.c]; for(let r=a[0]-S.r;r<=a[0]+S.r;r++) for(let c=a[1]-S.r;c<=a[1]+S.r;c++){ if(!inB(r,c)||(r===u.r&&c===u.c)) continue; out.push([r,c]); } return out; }
+  const R=S.r||2; for(let r=u.r-R;r<=u.r+R;r++) for(let c=u.c-R;c<=u.c+R;c++){ if(!inB(r,c)||(r===u.r&&c===u.c)) continue; if(S.shape==='cross' && r!==u.r && c!==u.c) continue; out.push([r,c]); }
+  return out; }
+function mapUnits(u, mv, aim){ const res=[]; for(const [r,c] of mapCells(u,mv,aim)){ const x=unitAt(r,c); if(x && x.uid!==u.uid && !(x.dug>0)) res.push(x); } return res; }
+// 1本の道すじの aim をタップしたマスから決める(line=向き・blast=そのマス)
+function aimFromCell(u, mv, r, c){ const S=mv.shape||{}; if(S.shape==='line'){ const dr=Math.sign(r-u.r), dc=Math.sign(c-u.c); if(!dr&&!dc) return null; return [dr,dc]; }
+  if(S.shape==='blast'){ if(Math.max(Math.abs(r-u.r),Math.abs(c-u.c))>S.reach) return null; return [r,c]; } return null; }
+// ---- 相性(技のタイプ × 守る側のタイプ・2タイプは案B) ----
+function typeBonusT(at, dm){ const ds=monTypes(dm); if(ds.length<2) return ds.some(d=>(STRONG[at]||[]).includes(d))?0.2:0;
+  let net=0; for(const d of ds){ if((STRONG[at]||[]).includes(d)) net++; else if(typeResExt(at,d)) net--; } return net>0?0.2:0; }
+function typePenaltyT(at, dm){ return monTypes(dm).some(d=>(WEAK[at]||[]).includes(d))?-0.2:0; }
+const STAGE_SPD={1:1, 2:1.6, 3:2.2};   // 素早さの段の倍率(stats_v2 と同じ)。古代テリオンは挑む側の段に合わせて目覚める(体力・攻撃の stageRef と同じ考え)
+function spdOf(u){ const m=mon(u); let v=(m.spd||20)*rankX(u.rank||1); if(u.anc && BT.anc) v*=(STAGE_SPD[BT.anc.pst]||2.2)/2.2; return Math.max(1,v); }
+function spdE(att, def){ const a=spdOf(att), d=spdOf(def); return (d-a)/(d+a); }
+function hitChance(att, def, mv, area){ if(!mv || mv.target==='map') return 1; const E=V2.EVADE; let ev=Math.max(E.min, Math.min(E.max, E.base+E.k*spdE(att,def)))+(TERR_COVER[state.terrain[def.r][def.c]]||0); if(area) ev*=E.areaX;
+  return Math.max(V2.minHit, Math.min(1,((mv.hit!=null?mv.hit:100)/100)*(1-ev))); }
+function critChance(att, def, mv){ if(!mv) return 0; return Math.max(0, ((mv.crit||0)+V2.CRIT.base)/100*Math.max(0.5, Math.min(1.5, 1-spdE(att,def)))); }
+// ダメージ(STATS_MOVES_SPEC.md 2章)。mv が {p:x}(古代の大技など・威力のない物)なら 威力=100×x・相性は攻撃する子のタイプ
+function calcDamageV2(att, def, mv, o){
+  const ma=mon(att), md=mon(def); mv=mv||{p:1}; const legacy=(mv.power==null);
+  const power = legacy ? (mv.p||1)*100 : mv.power;
+  const tb = legacy ? typeBonusM(ma,md) : typeBonusT(mv.type||ma.type, md);
+  const pen = legacy ? typePenaltyM(ma,md) : typePenaltyT(mv.type||ma.type, md);
+  const trb = terrBonusM(ma, state.terrain[att.r][att.c]);
+  const chg = (!legacy && att.buf && bufOn(att.buf.charge)) ? 1+(att.buf.charge.x||0.5) : 1;
+  const A = ma.atk*(att.atkX||1)*Math.max(0.2,1+statMod(att,'atk'))*chg;
+  const sxA=rankX(att.rank||1), sxD=rankX(def.rank||1);
+  let D=(md.def!=null?md.def:30)*sxD*Math.max(0,1+statMod(def,'def'))*(1-((mv.effect&&mv.effect.pierce)||0)); if(tb>0) D*=0.3;
+  const red=Math.min(0.62, D/(D+100*sxA));
+  let dmg = A*(power/100)*(1+tb+pen+trb)*(1-red);
+  if(o&&o.crit) dmg*=V2.CRIT.x;
+  if(!legacy) dmg*=1-(TERR_GUARD[state.terrain[def.r][def.c]]||0);   // 守る側の地形(遺跡・荒地)
+  if(def.ancTired) dmg*=ANCIENT.breakX;
+  if(att.anc && !legacy) dmg*=V2.ancX;
+  const rg=(att.owner===1&&BT.diff&&BT.diff.rage)?1+BT.diff.rage*((state.koN&&state.koN[1])||0):1;
+  return Math.max(1, Math.round(dmg*0.62*(BT.dmgX||1)*V2.dmgX*finalX()*rg)); }
+// 演出の段(1〜3): はしごは段・ショット等=2・リング/マップ/系統の技=3
+function fxTier(mv){ if(!mv) return 1; if(mv.tier) return mv.tier; if(mv.role==='ladder') return Math.min(3, mv.rank||1); if(/^(ring|map|sig_)/.test(mv.role||'')) return 3; if(mv.category!=='attack') return 1; return 2; }
 // タイプ別の地形特性（攻撃範囲補正）の説明
 const TYPE_TRAIT = {
   炎:'森に隣接/上で攻撃範囲+1＆その範囲を全体攻撃（山火事・範囲内の味方も巻き込む）',
@@ -212,8 +317,11 @@ function enemyEvoLeft(){ const D=storyDiff(); if(!D||D.evo==null) return Infinit
 function evoNeed(u){ const m=mon(u); return m.evolves_to==null?null:(EVO_GAUGE[m.level]||GAUGE_MAX); }
 function gaugeReady(u){ const n=evoNeed(u); return n!=null && gaugeOf(u)>=n; }
 function canEvolveHere(u){ return !!u && gaugeReady(u) && isEvoCell(u.r,u.c) && !u.acted && !(u.dug>0); }
-function finalStart(){ const F=BT.sh&&BT.sh.final; return F ? MAX_TURN-F.left+1 : Infinity; }   // 決戦が始まるターン(STAGE_HUMAN.final)
-function finalX(){ if(!state||!BT.sh||!BT.sh.final) return 1; const k=state.turn-finalStart()+1; return k>0 ? 1+BT.sh.final.step*k : 1; }   // 決戦: 1ターン目+step・2ターン目+2step…
+// 2026-10-27 技 v2: 古代テリオン・人(9×9 以上)の戦いも 最後の left ターンは「決戦」(ダメージ +step ずつ)。時間切れを減らすつまみ(人の3段目は STAGE_HUMAN.final のまま)
+const FINAL_V2={left:6, step:0.35}; try{ if(IS_NODE && process.env.FINV2) Object.assign(FINAL_V2, JSON.parse(process.env.FINV2)); }catch(e){}
+function finCfg(){ if(BT.sh&&BT.sh.final) return BT.sh.final; if(V2ON() && FINAL_V2 && BT.size!==7 && (BT.kind==='ancient'||BT.kind==='trainer'||BT.kind==='master')) return FINAL_V2; return null; }
+function finalStart(){ const F=finCfg(); return F ? MAX_TURN-F.left+1 : Infinity; }   // 決戦が始まるターン(STAGE_HUMAN.final)
+function finalX(){ const F=state&&finCfg(); if(!F) return 1; const k=state.turn-finalStart()+1; return k>0 ? 1+F.step*k : 1; }   // 決戦: 1ターン目+step・2ターン目+2step…
 function shPush(me){ const P=BT.sh&&BT.sh.push; if(!P||!state) return false; return state.turn>=P.turn || hpShare(me)>=P.ahead; }   // 人の3段目: リーダーが前に出る(下がって守り続けない)
 function hpShare(o){ let a=0,b=0; for(const u of Object.values(state.units)){ const v=Math.max(0,u.hp); if(u.owner===o) a+=v; else b+=v; } return (a+b)>0?a/(a+b):0.5; }
 function gaugeMul(o){ const sh=hpShare(o); return sh<0.45 ? Math.min(1.6, 1+(0.45-sh)*2.4) : 1; }   // 背水: 押されている側ほど溜まりやすい
@@ -467,6 +575,7 @@ function effMove(u){ const m=mon(u);
   if(hasType(m,'水') && (state.terrain[u.r][u.c]==='sea'||state.terrain[u.r][u.c]==='water')) v+=1;   // 水辺(浅い川)でも+1
   let cap=4;
   if(INSECT.has(u.mid) && state.terrain[u.r][u.c]==='forest'){ v+=1; cap=5; }   // 昆虫は森で移動+1
+  if(V2ON()) v=Math.max(1, v+Math.round(statMod(u,'mob')));   // 技 v2: 移動の強化・弱体
   return Math.min(v,cap);
 }
 // 自マス含む隣接8マスに terr があるか（=「海/森に隣接または上」）
@@ -480,7 +589,7 @@ function nearTerrain(u, terr){
 // タイプ×地形の攻撃範囲補正
 function rangeBase(m){ return (m.level===1) ? 1 : (m.type==='風' ? 1 : m.atk_range); }  // Lv1・風は隣接(1)
 function rangePower(m){ return rangeBase(m)>=2 ? 0.78 : 1.0; }   // 遠射程の攻撃は威力ダウン(近射程との差別化)
-function effRange(u){ const m=mon(u);
+function effRange(u){ if(V2ON()) return reachV2(u); const m=mon(u);
   if(u.freeze>0 || u.para>0) return 1;                                   // 凍結/マヒ：攻撃範囲が最小(1)
   let R = rangeBase(m);                                                  // Lv1=隣接 / Lv2+はデータ射程
   if((hasType(m,'水')||hasType(m,'氷')) && nearTerrain(u,'sea')) R+=1;   // 水/氷：海に隣接/上で射程+1
@@ -579,6 +688,7 @@ function fusionResult(a,b){
   return fusePair(a.mid,b.mid);   // Lv2どうし・決まった組(recipe)だけ(所持は不要)
 }
 function attackTargets(u, range){
+  if(V2ON()) return attackTargetsV2(u, (range&&typeof range==='object')?range:null);   // 技 v2: 2つめは技
   if(!canAttack(u)) return [];
   const m=mon(u), R=(range!=null?range:effRange(u)), res=[];
   const thunderSea = (hasType(m,'雷') && nearTerrain(u,'sea'));
@@ -595,7 +705,7 @@ function attackTargets(u, range){
 function canAttack(u){
   if(u.acted) return false;                       // 攻撃済みは行動不能（進化/融合直後でも攻撃は可）
   if(u.dug>0) return false;                        // 潜行中は攻撃できない
-  if(!canAtkMP(u)) return false;                   // 攻撃MP切れ（ボスは無限）
+  if(!V2ON() && !canAtkMP(u)) return false;        // 攻撃MP切れ（ボスは無限）。技 v2 は技ごとの回数(moveUsable)
   return true;
 }
 function canMove(u){ return !u.moved && !u.acted; }  // 攻撃/進化/融合後は移動できない
@@ -617,7 +727,8 @@ function terrBonusM(am,terr){ if(INSECT.has(am.id)&&terr==='forest') return TERR
 const TYPE_DEF = {地:0.25, 竜:0.24, 水:0.21, 森:0.19, 氷:0.18, 闇:0.13, 炎:0.19, 雷:0.15, 光:0.13, 風:0.1};   // 差を縮めた(旧 地0.34〜風0.04)
 function defReductionM(m){ return Math.min(0.62, (TYPE_DEF[m.type]!=null?TYPE_DEF[m.type]:0.15) + 0.09*(m.level-1)); }  // Lvで+9%/段
 function defReduction(u){ return defReductionM(mon(u)); }
-function calcDamage(att, def, move){
+function calcDamage(att, def, move, o){
+  if(V2ON()) return calcDamageV2(att, def, move, o);   // 技 v2(2章の式)
   const ma=mon(att), md=mon(def);
   const tb = typeBonusM(ma, md);                                           // 相性(弱点)+0.2（複属性集約）
   const pen = typePenaltyM(ma, md);                                        // 苦手 -0.2
@@ -633,6 +744,7 @@ function calcDamage(att, def, move){
 }
 
 function doAttack(att, def, move){
+  if(V2ON()) return doAttackV2(att, def, move);
   if(netGuestIntercept('attack',{uid:att.uid, targetUid:def&&def.uid, move:move&&move.n})) return;
   if(!canAtkMP(att)){ if(att.owner===0&&!ONLINE) toast('攻撃MPが切れた（1バトル10回まで）'); return; }   // 攻撃MP切れ(ボスは無限)
   const m=mon(att);
@@ -687,6 +799,97 @@ function doAttack(att, def, move){
   toast(msg);
   afterAction();
 }
+// ===== 技 v2: 攻撃・状態異常・弱体の技(1体/範囲)。当たる/よけた・会心・2回・吸収・つらぬき・状態異常 =====
+function inflictStatusV2(att, t, mv){
+  const e=mv.effect||{}; const ail=e.ail; if(!ail || !state.units[t.uid] || t.hp<=0) return;
+  if(ail==='para' && uHasType(t,'地')) return; if(ail==='freeze' && (mapType==='volcano'||uHasType(t,'炎'))) return; if(ail==='poison' && uHasType(t,'闇')) return; if(ail==='burn' && uHasType(t,'水')) return;
+  const ch = e.chance==='stage' ? procChance(mon(att).level) : (+e.chance||0);
+  if(Math.random()<ch){ t[ail]=Math.max(t[ail]||0, AIL_TURNS[ail]); floatText(t.r,t.c,AIL_ICON[ail]+AIL_LABEL[ail],'#e0b0ff'); statusFx(t.r,t.c,ail); } }
+function knockBack(att, t, n){ if(!n || !state.units[t.uid] || t.hp<=0 || t.anc) return; const dr=Math.sign(t.r-att.r), dc=Math.sign(t.c-att.c); const r=t.r+dr, c=t.c+dc;
+  if(r<0||c<0||r>=N||c>=N||unitAt(r,c)) return; state.board[t.r][t.c]=null; t.r=r; t.c=c; state.board[r][c]=t.uid; floatText(r,c,'おしだし','#cfe0ff'); }
+function hitOne(att, t, mv, area, sure){   // 1体に当てる。戻り値 {dmg, miss, crit, kill}
+  const isFoe=t.owner!==att.owner;
+  if(isFoe && !sure && Math.random()>=hitChance(att,t,mv,area)){ floatText(t.r,t.c,'よけた','#cfe8ff','tag'); if(state.stats){ const s=state.stats.miss||(state.stats.miss=[0,0]); s[att.owner]++; } return {miss:true, isFoe}; }
+  let dmg=0, crit=false;
+  if(mv.power>0){ const H=(mv.effect&&mv.effect.hits)||1; for(let h=0;h<H;h++){ const c=isFoe && Math.random()<critChance(att,t,mv); if(c) crit=true; dmg+=calcDamage(att,t,mv,{crit:c}); }
+    if(!isFoe) dmg=Math.max(1,Math.round(dmg*(mv.ff||V2.FF))); }
+  if(crit && state.stats){ const s=state.stats.crit||(state.stats.crit=[0,0]); s[att.owner]++; }
+  const adv=isFoe && typeBonusT(mv.type,mon(t))>0, res=isFoe && typePenaltyT(mv.type,mon(t))<0;
+  if(dmg>0){ t.hp-=dmg; floatText(t.r,t.c,`-${dmg}`, adv?'#ffd24a':(res?'#aab4c0':(t.owner===0?'#ff7a5a':'#ffb0a0')), adv?'num weak':(res?'num res':'num')); if(crit) floatText(t.r,t.c,'会心!','#fff07a','tag'); }
+  let kill=false;
+  if(t.hp<=0){ const wasLeader=!!t.leader; if(killUnit(t)){ kill=true; if(t.owner===1) state.killLv=(state.killLv||0)+mon(t).level; toast(`${wasLeader?'リーダーの ':''}${mon(t).name} を撃破！`); } }
+  else { if(dmg>0) addGauge(t,(t.hp<=t.maxhp/2)?GAUGE_TAKEN_LOW:GAUGE_TAKEN);
+    if(isFoe){ inflictStatusV2(att,t,mv); const ef=mv.effect||{}; if(ef.debuff){ setBuf(t,'dbf',ef.debuff,true); floatText(t.r,t.c,'弱体','#c8b0ff','tag'); } if(ef.knock) knockBack(att,t,ef.knock); } }
+  return {dmg, crit, kill, adv, res, isFoe}; }
+function doAttackV2(att, def, mv){
+  if(!mv) mv=defaultMoveV2(att);
+  if(!mv || !moveUsable(att,mv)){ if(att.owner===0) toast('その技は使えない'); return; }
+  if(mv.target==='map') return doMapAttack(att, mv, null);
+  const m=mon(att); const terr=isAreaTerrainMv(att,mv); let targets;
+  if(terr){ const set=terrAreaSet(att,mv); targets=Object.values(state.units).filter(x=>x.uid!==att.uid && set.has(x.r+','+x.c)); }
+  else if(mv.target==='area') targets=attackTargetsV2(att,mv);
+  else targets=def?[def]:[];
+  if(def && !targets.includes(def)) targets.push(def);
+  if(!targets.length) return;
+  att.acted=true; spendMove(att,mv); if(state.stats&&state.stats.atk) state.stats.atk[att.owner]++;
+  attackFx(att, targets, def, mv);
+  const advTerr=terrBonusM(m, state.terrain[att.r][att.c])>0;
+  let dealt=0, hitN=0, first=null;
+  for(const t of targets){ if(!state.units[t.uid] || t.uid===att.uid || t.dug>0) continue;
+    const r=hitOne(att, t, mv, mv.target==='area'||terr, false);
+    if(r.miss) continue; if(r.isFoe){ dealt+=r.dmg; hitN++; if(!first) first={t, r}; } }
+  if(att.buf && att.buf.charge && mv.power>0) delete att.buf.charge;   // ためた攻撃は1回で消える
+  if(hitN) addGauge(att, (first&&first.r.adv)?GAUGE_HIT_WEAK:GAUGE_HIT);
+  if(mv.type==='炎') cureBurnByFire(att, targets);
+  const dr=(mv.effect&&mv.effect.drain)||0;
+  if(dealt>0 && dr>0 && !att.anc && state.units[att.uid] && att.hp>0){ const heal=Math.min(att.maxhp-att.hp, Math.round(dealt*dr*sustainX())); if(heal>0){ att.hp+=heal; floatText(att.r,att.c,`+${heal}`,'#7ee08a'); } }
+  if(first) toast(`${m.name}の「${mvName(mv)}」→ ${mon(first.t).name} に ${first.r.dmg}`+(first.r.adv?' '+IC('weak')+'弱点!':'')+(first.r.res?' '+IC('resist')+'いまひとつ':'')+(advTerr?' '+IC('terrain')+'地形+':'')+(targets.length>1?` 他${targets.length-1}体`:''));
+  else toast(`${m.name}の「${mvName(mv)}」は よけられた`);
+  afterAction(); }
+// マップの技: 形のマスにいる子みんな(味方は ×ff)。よけられない
+function doMapAttack(att, mv, aim){
+  if(!moveUsable(att,mv)) return;
+  if(aim==null){ const p=aiMapBest(att,mv); aim=p?p.aim:mapAims(att,mv)[0]; }
+  const cells=mapCells(att,mv,aim); const targets=mapUnits(att,mv,aim);
+  att.acted=true; spendMove(att,mv); if(state.stats&&state.stats.atk) state.stats.atk[att.owner]++; if(state.stats){ const s=state.stats.map||(state.stats.map=[0,0]); s[att.owner]++; }
+  attackFx(att, targets.length?targets:cells.slice(0,8).map(([r,c])=>({r,c})), targets.find(t=>t.owner!==att.owner)||targets[0]||(cells[0]?{r:cells[0][0],c:cells[0][1]}:null), mv);
+  if(!BT.headless){ camPunch(att.r,att.c,0.7,600); for(const [r,c] of cells) if(Math.random()<0.3) fxTerrain(r,c,1.4); }
+  let n=0, dealt=0; for(const t of targets){ if(!state.units[t.uid]) continue; const r=hitOne(att,t,mv,false,true); if(r.isFoe){ n++; dealt+=r.dmg; } }
+  if(n) addGauge(att, GAUGE_HIT);
+  if(mv.type==='炎') cureBurnByFire(att, targets);
+  const dr=(mv.effect&&mv.effect.drain)||0; if(dealt>0 && dr>0 && !att.anc && state.units[att.uid]){ const heal=Math.min(att.maxhp-att.hp, Math.round(dealt*dr*sustainX())); if(heal>0){ att.hp+=heal; floatText(att.r,att.c,`+${heal}`,'#7ee08a'); } }
+  toast(`${IC('map')}${mon(att).name}の「${mvName(mv)}」！ 敵${n}体${targets.length>n?`・味方${targets.length-n}体`:''}`);
+  afterAction(); }
+// 支えの技(回復・浄化・蘇生・潜行。データには強化・移動も)。必ず効く
+function supportTargets(u, mv){ const R=mv.range[1]; const al=alive(u.owner).filter(a=>cheby(a,u)<=R && !(a.dug>0));
+  if(mv.category==='heal' && mv.target!=='self') return al.filter(a=>a.hp<a.maxhp);
+  if(mv.category==='cure'){ const L=(mv.effect&&mv.effect.cure)||[]; return al.filter(a=>L.some(k=>a[k]>0)); }
+  return al; }
+function supportReady(u, mv){ if(!moveUsable(u,mv)) return false; const e=mv.effect||{};
+  if(mv.category==='revive') return ((state.fallen&&state.fallen[u.owner])||[]).length>0 && gaugeOf(u)>=(e.gauge||REVIVE_GAUGE) && !!freeCastleCell(u.owner);
+  if(mv.category==='heal' && mv.target!=='self') return supportTargets(u,mv).length>0;
+  if(mv.category==='cure') return supportTargets(u,mv).length>0;
+  if(e.dig) return !(u.dug>0);
+  if(e.jump) return jumpCells(u,mv).length>0;
+  return true; }
+function jumpCells(u, mv){ const n=(mv.effect&&mv.effect.jump)||3, out=[]; for(let r=0;r<N;r++) for(let c=0;c<N;c++){ const d=Math.abs(r-u.r)+Math.abs(c-u.c); if(d<1||d>n||unitAt(r,c)) continue; if(state.terrain[r][c]==='lava') continue; out.push([r,c]); } return out; }
+function doSupport(u, mv, tgt, cell){
+  if(!supportReady(u,mv)){ if(u.owner===0) toast('その技は使えない'); return false; }
+  const e=mv.effect||{}; const nm=mon(u).name; let msg='';
+  if(mv.category==='heal' && e.heal){ const cs=supportTargets(u,mv); const list = mv.target==='ally_all' ? cs : [ (tgt&&cs.includes(tgt))?tgt:cs.slice().sort((a,b)=>(a.hp/a.maxhp)-(b.hp/b.maxhp))[0] ];
+    let tot=0; for(const a of list){ if(!a) continue; const h=Math.min(a.maxhp-a.hp, Math.min(e.cap||9999, Math.round(a.maxhp*e.heal*sustainX()))); if(h>0){ a.hp+=h; tot+=h; healFx(a.r,a.c); floatText(a.r,a.c,`+${h}`,'#7be0a0'); } }
+    msg=`${nm}の「${mvName(mv)}」 ${IC('heal')}+${tot}`; }
+  else if(mv.category==='heal' && e.regen){ u.regen={x:e.regen.x, n:e.regen.turns}; healFx(u.r,u.c); msg=`${nm}の「${mvName(mv)}」`; }
+  else if(mv.category==='cure'){ const L=e.cure||[]; const c=supportTargets(u,mv); const t=(tgt&&c.includes(tgt))?tgt:c[0]; for(const k of L) t[k]=0; healFx(t.r,t.c); floatText(t.r,t.c,IC('cure')+'浄化','#bfffe0'); msg=`${nm}の「${mvName(mv)}」→ ${mon(t).name}`; }
+  else if(mv.category==='revive'){ const fl=state.fallen[u.owner].shift(); const cl=freeCastleCell(u.owner); const baseId=baseFormId(fl.mid);
+    u.g=gaugeOf(u)-(e.gauge||REVIVE_GAUGE); const nu=addUnit(u.owner,baseId,cl[0],cl[1]); unitMul(nu, fl.rank, u.owner===1&&BT.diff?BT.diff.hpX:1, u.owner===1&&BT.diff?BT.diff.atkX:1); if(fl.lv) nu.lv=fl.lv; nu.src=(fl.src||[]).slice(); nu.mid0=baseId;
+    healFx(cl[0],cl[1]); floatText(cl[0],cl[1],IC('revive')+'蘇生','#ffe6a0'); msg=`${nm}の「${mvName(mv)}」→ ${MID[baseId].name} が復活！`; }
+  else if(e.dig){ u.dug=e.dig; spendMove(u,mv); healFx(u.r,u.c); floatText(u.r,u.c,IC('dig')+'潜行！','#c9a24a'); toast(`${nm}の「${mvName(mv)}」 ${e.dig}ターン無敵`);
+    syncUnits(); updateUI(); return true; }   // 潜行は今まで通り行動を終えない(地中を移動できる)
+  else if(e.jump){ const cs=jumpCells(u,mv); const to=cell&&cs.find(p=>p[0]===cell[0]&&p[1]===cell[1]); if(!to) return false; state.board[u.r][u.c]=null; u.r=to[0]; u.c=to[1]; state.board[to[0]][to[1]]=u.uid; u.moved=true; msg=`${nm}の「${mvName(mv)}」`; }
+  else if(e.buff){ const list = mv.target==='ally_all' ? alive(u.owner).filter(a=>cheby(a,u)<=mv.range[1]) : [u]; for(const a of list){ setBuf(a,'buf',e.buff,false); if(e.buff2) setBuf(a,'buf',e.buff2,false); floatText(a.r,a.c,'強化','#ffe680','tag'); } msg=`${nm}の「${mvName(mv)}」`; }
+  u.acted=true; spendMove(u,mv); toast(msg); afterAction(); return true; }
+function defaultMoveV2(u){ const p=aiPlanAt(u, u.moved, true); return p?p.mv:(movesV2(u).find(mv=>isOffense(mv)&&moveUsable(u,mv))||null); }
 function doCastleAttack(att){
   if(netGuestIntercept('castle',{uid:att.uid})) return;
   if(!canAtkMP(att)){ if(att.owner===0&&!ONLINE) toast('攻撃MPが切れた'); return; }
@@ -804,7 +1007,7 @@ function killUnit(u){
     toast('ニドグラを喰らい——真・ラグナディオが顕現！ 敵味方すべてを虚無へ還す！');
     return false;
   }
-  (state.fallen||(state.fallen=[[],[]]))[u.owner].push({mid:u.mid, rank:u.rank||1, src:u.src||[]});   // 蘇生魔法用に撃破された仲間を記録
+  (state.fallen||(state.fallen=[[],[]]))[u.owner].push({mid:u.mid, rank:u.rank||1, lv:u.lv, src:u.src||[]});   // 蘇生魔法用に撃破された仲間を記録
   (state.koN||(state.koN=[0,0]))[u.owner]++;   // 倒された数(蘇生しても減らない)
   if(u.owner===1 && BT.diff && BT.diff.rage && !BT.headless){ const L=leaderOf(1); if(L && L.uid!==u.uid) floatText(L.r,L.c,`本気 攻撃+${Math.round(BT.diff.rage*state.koN[1]*100)}%`,'#ff8a60'); }   // 2026-10-27 終盤のボス: 部下が倒れるほど本気
   if(_seq && !_seq.done && _seq.q[u.r+','+u.c] && sprites[u.uid]){ const r0=u.r, c0=u.c, ow=u.owner, md=u.mid; _hold[u.uid]=_seq; _seq.q[r0+','+c0].push(()=>deathFx(r0,c0,ow,md)); }   // 着弾まで絵を残す
@@ -998,7 +1201,7 @@ function tryFusion(a, b, r, c){
   setTimeout(()=>{ if(state.units[nu.uid]) animUnit(nu.uid,'cast',{dur:900,flash:true}); },0);
   let first=false;
   if(a.owner===0 && !BT.fusedNew.includes(fid)){ BT.fusedNew.push(fid); first=true; }   // world_v2: 作った融合は結果の fusions で返す(融合の記録)
-  toast(`融合！ ${MID[fid].name} 誕生！`+fuseNoteShow(nu, fnote));
+  toast(`融合！ ${MID[fid].name} 誕生！`+fuseNoteShow(nu, fnote)+learnedNote(nu, []));
   afterAction();
 }
 // 3体融合(v3 2026-10-25): a が b のマスに重なり、b に隣接する c も一緒に重なって recipe3 の子になる(物語の最後。startBattle の tripleUnlocked で解禁)
@@ -1030,6 +1233,10 @@ function tryTriple(a, b, c, r, cc){
   afterAction();
 }
 // 進化: 闘気が溜まった状態で盤中央の進化エリアにいれば(移動後でも、攻撃前なら)進化できる
+// 技 v2: 進化・融合で覚えた技(自分の子だけ「〇〇を覚えた」)
+function learnedNote(u, before){ if(!V2ON() || !before || u.owner!==0 || BT.headless) return ''; const nw=movesV2(u).filter(x=>!before.includes(x.id)); if(!nw.length) return '';
+  const pick = before.length ? nw : nw.filter(x=>/^sig_/.test(x.role||'')).concat(nw.filter(x=>!/^sig_/.test(x.role||''))); const names=pick.slice(0,2).map(mvName);
+  return ` ・「${names.join('」「')}」${pick.length>2?`ほか${pick.length-2}つ`:''}を覚えた`; }
 function evolveUnit(u, free){
   if(!free && netGuestIntercept('evolve',{uid:u.uid})) return false;
   const m=mon(u); if(m.evolves_to==null) return false;
@@ -1045,6 +1252,7 @@ function evolveUnit(u, free){
     u.g=0;
   }
   const dmgTaken = u.maxhp - u.hp;           // 受けたダメージは進化後も維持
+  const mv0 = V2ON() ? movesV2(u).map(x=>x.id) : null;
   u.mid=m.evolves_to; const nm=mon(u);
   u.maxhp=Math.max(1,Math.round(nm.hp*(u.hx||1))); u.hp=Math.max(1, u.maxhp - dmgTaken);
   { const T=BT.tune||TUNE; const h=Math.min(u.maxhp-u.hp, Math.round(u.maxhp*T.evoHeal)); if(h>0){ u.hp+=h; floatText(u.r,u.c,'+'+h,'#7ee08a'); } }   // 進化で体力が少し戻る
@@ -1057,7 +1265,7 @@ function evolveUnit(u, free){
   u.spReady=true;    // 進化した子の次の攻撃=必殺技(カットイン)
   setTimeout(()=>{ if(state.units[u.uid]) animUnit(u.uid,'cast',{dur:900,flash:true}); },0);
   syncUnits();
-  toast(`${m.name} → ${nm.name} に進化！`);
+  toast(`${m.name} → ${nm.name} に進化！`+learnedNote(u, mv0));
   if(ONLINE&&isHost()) netPush();
   return true;
 }
@@ -1085,7 +1293,7 @@ function repairBoard(){
 function startTurn(side){
   if(side===0 && !BT.headless){ const d=$id('ovDetail'); if(d) d.style.display='none'; }
   repairBoard();   // ターン開始ごとに盤を健全化(重なり/ゴースト/盤外を修復)
-  state.cur=side;
+  state.cur=side; state.ht=(state.ht||0)+1;   // 技 v2: 半ターンの数(強化・弱体が切れる時)
   for(const u of alive(side)){ u.moved=false; u.acted=false; if(u.ancTired) u.ancTired=false;   // 古代テリオンの「隙」は自分の手番の始めまで
     if(u.dug>0){ u.dug--; if(u.dug<=0){ floatText(u.r,u.c,IC('dig')+'浮上','#e0c060'); } else { floatText(u.r,u.c,`${IC('dig')}潜行(残${u.dug})`,'#c9a24a'); } }
   }
@@ -1189,7 +1397,43 @@ function aiTargetScore(u,e){ const d=calcDamage(u,e,null); let s=d*0.5+(1-e.hp/e
 function aiPickTarget(u,list){ if(list.length>1 && Math.random()>aiSkillOf(u)) return list[(Math.random()*list.length)|0];   // world_v2: AIの強さ(skill)が低いほど、狙いが散る
   let b=null,bs=-1e9; for(const e of list){ const sc=aiTargetScore(u,e); if(sc>bs){bs=sc;b=e;} } return b; }
 function aiSkillOf(u){ const k=BT.aiSkill&&BT.aiSkill[u.owner]; return k==null?1:k; }
-function aiStrike(u){ if(!state.units[u.uid] || !canAttack(u)) return false; const t=attackTargets(u); if(!t.length) return false; doAttack(u, aiPickTarget(u,t)); return true; }
+// ===== 技 v2 の AI: 期待ダメージ(威力×命中×(1+会心/2)×当たる数)で技と相手を選ぶ =====
+function expDmg(u, e, mv, area){ const d=calcDamage(u,e,mv)*((mv.effect&&mv.effect.hits)||1); return {raw:d, ev:d*hitChance(u,e,mv,area)*(1+critChance(u,e,mv)*(V2.CRIT.x-1))}; }
+function ailValue(u, e, mv){ const a=mv.effect&&mv.effect.ail; if(!a || e[a]>0) return 0; if(a==='para'&&uHasType(e,'地')||a==='freeze'&&uHasType(e,'炎')||a==='poison'&&uHasType(e,'闇')||a==='burn'&&uHasType(e,'水')) return 0;
+  const ch=mv.effect.chance==='stage'?procChance(mon(u).level):(+mv.effect.chance||0); return ch*(a==='freeze'||a==='para'?30:22); }
+function costPen(u, mv){ if(!(mv.mp>0)) return 0; const left=usesLeft(u,mv); return 4+14/Math.max(1,left); }   // 回数のある技は少しだけ惜しむ(倒せる時は ∞ の技で)
+function aiScoreTarget(u, e, mv, area){ const x=expDmg(u,e,mv,area); const hp=Math.max(1,e.hp); let s=Math.min(x.ev,hp)*0.5+(1-e.hp/e.maxhp)*80*(x.raw>0?1:0);
+  if(e.leader) s+=900; if(x.raw>=hp) s+=500*hitChance(u,e,mv,area); if(typeBonusT(mv.type,mon(e))>0) s+=40; s+=ailValue(u,e,mv);
+  if(mv.effect&&mv.effect.debuff && !(e.dbf&&bufOn(e.dbf[mv.effect.debuff.stat]))) s+=18; return s; }
+function aiMapScore(u, mv, aim){ let s=0, foes=0; for(const t of mapUnits(u,mv,aim)){ const d=calcDamage(u,t,mv); if(t.owner!==u.owner){ foes++; s+=Math.min(d,t.hp)*0.5+(d>=t.hp?500:0)+(t.leader?300:0); } else { const df=d*(mv.ff||V2.FF); s-=df*0.8+(df>=t.hp?900:0)+(t.leader?400:0); } }
+  return foes?s:-1e9; }
+function aiMapBest(u, mv){ let b=null; for(const aim of mapAims(u,mv)){ const s=aiMapScore(u,mv,aim); if(!b||s>b.sc) b={sc:s,aim}; } return b; }
+// 今の位置(u.r,u.c)で使える攻撃の技のうち一番の手。moved=その位置まで動いた後か。noRand=迷わない
+function aiPlanAt(u, moved, noRand){ const opts=[];
+  for(const mv of movesV2(u)){ if(!isOffense(mv) || !moveUsable(u,mv,moved)) continue;
+    if(mv.target==='map'){ const b=aiMapBest(u,mv); if(b && b.sc>40) opts.push({sc:b.sc*0.9-costPen(u,mv), mv, aim:b.aim}); continue; }
+    const tg=attackTargetsV2(u,mv); if(!tg.length) continue; const terr=isAreaTerrainMv(u,mv);
+    if(mv.target==='area' || terr){ let tot=0, bt=null, bs=-1e9; const hits=terr?(()=>{ const set=terrAreaSet(u,mv); return Object.values(state.units).filter(x=>x.uid!==u.uid && set.has(x.r+','+x.c)); })():tg;
+      for(const e of hits){ if(e.owner===u.owner){ const d=calcDamage(u,e,mv)*(mv.ff||V2.FF); tot-=d*0.8+(d>=e.hp?900:0); continue; } const s=aiScoreTarget(u,e,mv,true); tot+=s; if(s>bs){ bs=s; bt=e; } }
+      if(!bt) bt=tg[0]; const extra=Math.max(0,tot-bs)*0.6; opts.push({sc:bs+extra-costPen(u,mv), mv, t:bt}); continue; }
+    for(const e of tg) opts.push({sc:aiScoreTarget(u,e,mv,false)-costPen(u,mv), mv, t:e}); }
+  if(!opts.length) return null; opts.sort((a,b)=>b.sc-a.sc);
+  if(!noRand && opts.length>1 && Math.random()>aiSkillOf(u)) return opts[1+((Math.random()*Math.min(3,opts.length-1))|0)];
+  return opts[0]; }
+function aiPlanFrom(u, r, c){ if(r===u.r && c===u.c) return aiPlanAt(u, u.moved, true);
+  const or=u.r, oc=u.c; state.board[or][oc]=null; u.r=r; u.c=c; state.board[r][c]=u.uid;
+  const p=aiPlanAt(u, true, true); state.board[r][c]=null; u.r=or; u.c=oc; state.board[or][oc]=u.uid; return p; }
+function aiStrikeV2(u){ if(!state.units[u.uid] || u.acted || u.dug>0) return false; const p=aiPlanAt(u, u.moved, false); if(!p) return false;
+  if(p.mv.target==='map') doMapAttack(u, p.mv, p.aim); else doAttackV2(u, p.t, p.mv); return true; }
+// 支えの技: 回復(手負いの味方)・浄化・蘇生。動く前に(今の場所から届く時)
+function aiSupportV2(u){ if(!V2.ai.support || u.acted || u.dug>0) return false; const ms=movesV2(u).filter(mv=>!isOffense(mv) && supportReady(u,mv)); if(!ms.length) return false;
+  const rev=ms.find(mv=>mv.category==='revive'); if(rev) return doSupport(u,rev);
+  const hl=ms.filter(mv=>mv.category==='heal' && mv.effect && mv.effect.heal);
+  if(hl.length){ const R=Math.max(...hl.map(mv=>mv.range[1])); const w=alive(u.owner).filter(a=>cheby(a,u)<=R && a.hp<a.maxhp*0.55);
+    if(w.length){ const all=hl.find(mv=>mv.target==='ally_all'), one=hl.find(mv=>mv.target!=='ally_all'); const pick=(w.length>=2&&all)?all:(one||all); if(pick) return doSupport(u,pick); } }
+  const cu=ms.find(mv=>mv.category==='cure'); if(cu && supportTargets(u,cu).some(a=>a.freeze>0||a.para>0||a.hp<a.maxhp*0.7)) return doSupport(u,cu);
+  return false; }
+function aiStrike(u){ if(V2ON()) return aiStrikeV2(u); if(!state.units[u.uid] || !canAttack(u)) return false; const t=attackTargets(u); if(!t.length) return false; doAttack(u, aiPickTarget(u,t)); return true; }
 function aiFusePartner(u){ if(mon(u).level!==2) return null; let best=null;
   const pairOK=campFusionOK() && fuseWindow(u.owner); if(!pairOK && !BT.tripleOn) return null;
   for(const p of alive(u.owner)){ if(p.uid===u.uid) continue; const t3=tripleResult(u,p); let f=t3?t3.id:null;   // 3体融合(ラスボス級)があれば最優先
@@ -1228,8 +1472,9 @@ function aiBestMove(u){
   let best=null, bs=-1e9; const cand=[];
   for(const [r,c] of cells){
     let sc=0;
-    const tg=aiTargetsFrom(u,r,c);
-    if(tg.length){ let m=0; for(const e of tg) m=Math.max(m, aiTargetScore(u,e)); sc+=120+m*0.6; }
+    if(V2ON()){ const pl=aiPlanFrom(u,r,c); if(pl) sc+=120+pl.sc*0.6; }   // 技 v2: その場所から使える一番の技(P×の技は動かない時だけ)
+    else { const tg=aiTargetsFrom(u,r,c);
+    if(tg.length){ let m=0; for(const e of tg) m=Math.max(m, aiTargetScore(u,e)); sc+=120+m*0.6; } }
     if(goal) sc-=man(r,c,goal.r,goal.c)*(mode==='evo'?40:mode==='fuse'?25:mode==='heal'?30:pullW);
     if(isHealCellFor(me,r,c)){ const hv=Math.min(u.maxhp-u.hp, u.maxhp*HEAL_SPRING); sc+=hv*0.9+(mode==='heal'?260:0); }   // 回復の泉
     if(mode==='evo' && isEvoCell(r,c)) sc+=600;
@@ -1259,7 +1504,8 @@ function aiOneUnit(u){
   const fz=aiFuseCell(u);
   if(fz){ moveUnit(u,fz[0],fz[1]); const nu=unitAt(fz[0],fz[1]); if(nu && nu.owner===me && state.phase!=='end') aiStrike(nu); return; }
   // 光タイプ：手負いの味方がいれば回復、状態異常の味方がいれば浄化を優先
-  if(uHasType(u,'光') && canAttack(u)){
+  if(V2ON()){ if(aiSupportV2(u)) return; }   // 技 v2: 回復・浄化・蘇生の技
+  else if(uHasType(u,'光') && canAttack(u)){
     const wounded=healTargets(u).filter(a=>a.hp<a.maxhp*0.55);
     const afflicted=healTargets(u).filter(hasAnyStatus);
     if(wounded.length && canHealMP(u)){ doHeal(u); return; }
@@ -1354,16 +1600,24 @@ function clearHL(){ for(const m of hlMeshes) fxGroup.remove(m); hlMeshes=[]; }
 const _tagTex={};
 function tagTex(text,kind){ const k=text+'|'+kind; if(_tagTex[k]) return _tagTex[k]; const cv=document.createElement('canvas'); cv.width=256; cv.height=72; const x=cv.getContext('2d');
   const draw=()=>{ x.clearRect(0,0,256,72);
-  x.font='900 40px sans-serif'; const w=Math.min(244,icMeasure(x,text,44)+34); x.fillStyle=kind==='weak'?'rgba(120,60,0,.92)':'rgba(30,34,48,.88)'; roundRect(x,(256-w)/2,6,w,58,14); x.fill();
+  let fs=40; x.font='900 40px sans-serif'; while(fs>22 && icMeasure(x,text,fs*1.1)+34>248){ fs-=2; x.font=`900 ${fs}px sans-serif`; } const w=Math.min(250,icMeasure(x,text,fs*1.1)+34); x.fillStyle=kind==='weak'?'rgba(120,60,0,.92)':'rgba(30,34,48,.88)'; roundRect(x,(256-w)/2,6,w,58,14); x.fill();
   x.lineWidth=4; x.strokeStyle=kind==='weak'?'#ffd24a':'#8a94aa'; roundRect(x,(256-w)/2,6,w,58,14); x.stroke();
-  x.fillStyle=kind==='weak'?'#ffe680':'#c8cfdc'; x.textAlign='center'; x.textBaseline='middle'; return icText(x,text,128,37,44,'center'); };
+  x.fillStyle=kind==='weak'?'#ffe680':'#c8cfdc'; x.textAlign='center'; x.textBaseline='middle'; return icText(x,text,128,37,fs*1.1,'center'); };
   const ok=draw(); const tex=_tagTex[k]=new THREE.CanvasTexture(cv);
   if(!ok){ const f=()=>{ if(!draw()) _icWait.push(f); tex.needsUpdate=true; }; _icWait.push(f); }   // アイコンが読めたら描き直す
   return tex; }
 function addTag(r,c,text,kind,h){ const m=new THREE.SpriteMaterial({map:tagTex(text,kind),transparent:true,depthTest:false,depthWrite:false}); m.toneMapped=false; const sp=new THREE.Sprite(m);
   sp.scale.set(1.6,0.45,1); sp.position.copy(cell2world(r,c)); sp.position.y=cellH(r,c)+(h||1.95); sp.position.set(sp.position.x,sp.position.y,sp.position.z); const w=cell2world(r,c); sp.position.x=w.x; sp.position.z=w.z; sp.renderOrder=45; fxGroup.add(sp); hlMeshes.push(sp); }
 function affinityOf(a,d){ const ma=mon(a), md=mon(d); return typeBonusM(ma,md)>0?'weak':(typePenaltyM(ma,md)<0?'res':''); }
-function addAffTags(list){ if(!sel) return; for(const e of list){ if(!e||e.owner===sel.owner||e.mid==null) continue; const a=affinityOf(sel,e); if(!a) continue; const sp=sprites[e.uid]; const h=(sp&&sp.m3d?sp.m3d.h:(sp?sp.sc:1.4))+0.55;
+// 技 v2(2026-10-27 オーナー「相性と地形を重視」): 当てる前に、相手の頭の上に 弱点/いまひとつ/地形+ のアイコンと だいたいのダメージ
+function previewTag(u, e, mv){ const ally=e.owner===u.owner; let d=0; if(mv.power>0){ d=calcDamage(u,e,mv)*((mv.effect&&mv.effect.hits)||1); if(ally) d*=(mv.ff||V2.FF); }
+  const adv=!ally && typeBonusT(mv.type,mon(e))>0, res=!ally && typePenaltyT(mv.type,mon(e))<0, tup=terrBonusM(mon(u),state.terrain[u.r][u.c])>0, tdn=terrBonusM(mon(u),state.terrain[u.r][u.c])<0;
+  const gd=!ally && (TERR_GUARD[state.terrain[e.r][e.c]]||TERR_COVER[state.terrain[e.r][e.c]]);
+  let t=(adv?IC('weak')+'弱点':res?IC('resist')+'いまひとつ':'')+(tup?IC('terrain'):'')+(gd?'かげ':''); if(d>0) t+=(t?' ':'')+'-'+Math.round(d); if(!t) return null;
+  return {text:t, kind:adv?'weak':(res||ally||tdn)?'res':'', kill:!ally && d>=e.hp}; }
+function addAffTags(list, mv){ if(!sel) return;
+  if(V2ON() && mv){ for(const e of list){ if(!e||e.mid==null) continue; const p=previewTag(sel,e,mv); if(!p) continue; const sp=sprites[e.uid]; const h=(sp&&sp.m3d?sp.m3d.h:(sp?sp.sc:1.4))+0.55; addTag(e.r,e.c,p.text+(p.kill?' KO':''),p.kind,h); } return; }
+  for(const e of list){ if(!e||e.owner===sel.owner||e.mid==null) continue; const a=affinityOf(sel,e); if(!a) continue; const sp=sprites[e.uid]; const h=(sp&&sp.m3d?sp.m3d.h:(sp?sp.sc:1.4))+0.55;
   addTag(e.r,e.c,a==='weak'?'弱点！':'いまひとつ',a,h); } }
 function addHL(r,c,color,op){
   const o2=Math.min(0.95,(op||0.45)*1.35);
@@ -2621,11 +2875,12 @@ const HIT_FX={
 };
 // hitImpact: FX2 版(下の FX2 の節)に移した
 function attackFx(att, targets, def, move){ if(BT.headless) return;
-  const m=mon(att), ty=m.type, cf=ATK_FX[ty]||ATK_FX['炎'];
+  const m=mon(att), ty=(move&&move.type)||m.type, cf=ATK_FX[ty]||ATK_FX['炎'];   // 技 v2: 色と当たりは技のタイプ
   const special = !!att.spReady && att.owner!=null; if(special) att.spReady=false;
-  const tier = special ? 3 : ((move && move.tier) ? move.tier : Math.min(3, m.level));   // 必殺技は盤の演出も最大
+  const tier = special ? 3 : ((move && move.tier) ? move.tier : (move && move.power!=null ? fxTier(move) : Math.min(3, m.level)));   // 必殺技は盤の演出も最大
   const terrUp = terrBonusM(m, state.terrain[att.r][att.c])>0;
-  const adv = !!(def && def.mid!=null && typeBonusM(m, mon(def))>0), res=!!(def && def.mid!=null && typePenaltyM(m, mon(def))<0);
+  const vt = !!(move && move.power!=null && move.type);   // 技 v2: 相性は技のタイプ
+  const adv = !!(def && def.mid!=null && (vt?typeBonusT(move.type,mon(def)):typeBonusM(m, mon(def)))>0), res=!!(def && def.mid!=null && (vt?typePenaltyT(move.type,mon(def)):typePenaltyM(m, mon(def)))<0);
   const ar=att.r, ac=att.c, auid=att.uid;
   const cells=[]; const seen={}; for(const t of targets){ const k=t.r+','+t.c; if(seen[k]) continue; seen[k]=1; cells.push({r:t.r,c:t.c,k,uid:t.uid}); }
   const seq={q:{}, after:[], left:cells.length, done:false}; for(const x of cells) seq.q[x.k]=[]; _seq=seq;
@@ -2651,8 +2906,8 @@ function attackFx(att, targets, def, move){ if(BT.headless) return;
     BT.fxUntil=performance.now()+((220+far*70)*EFF_SLOW+520)/sp;
     setTimeout(finish, ((220+far*70)*EFF_SLOW+1500)/sp);   // 念のため(着弾が呼ばれなかった時)
   };
-  if(ONLINE && isHost()) pendingFx = {ty, tier, a:[att.r,att.c], ts:targets.map(t=>[t.r,t.c]), mid:att.mid, n:(move&&move.n)||'', owner:att.owner};
-  if(special) cutin('sp',{mid:att.mid, n:(move&&move.n)||'', owner:att.owner, ty, fz:!!att.fz});
+  if(ONLINE && isHost()) pendingFx = {ty, tier, a:[att.r,att.c], ts:targets.map(t=>[t.r,t.c]), mid:att.mid, n:mvName(move), owner:att.owner};
+  if(special) cutin('sp',{mid:att.mid, n:mvName(move), owner:att.owner, ty, fz:!!att.fz});
   cutinAfter(play);
 }
 // evolveFx: FX2 版(下の FX2 の節)に移した
@@ -3106,7 +3361,7 @@ function drawLabel(x,u,m){
   x.fillStyle='#fff'; x.font='bold 21px sans-serif'; x.fillText(`HP ${Math.max(0,u.hp)} / ${u.maxhp}`,128,68);
   // MPバー（攻撃と回復の残り回数。ボスは無限なので非表示）
   let stY=98;
-  if(!noMP(u)){ const my=85, ah=13;
+  if(!noMP(u) && !V2ON()){ const my=85, ah=13;
     const amp=atkLeft(u), amm=atkMax(u), hmp=healLeft(u), hmm=healMax(u);
     // 攻撃MP（左・青）
     x.fillStyle='#0d0d16'; roundRect(x,8,my,150,ah,5); x.fill();
@@ -3314,7 +3569,8 @@ function handlePick(sc, tc){
   }
   // 攻撃モード：敵スプライト優先で当てる
   if(sel && selMode==='attack'){
-    const cand = (sc&&isAtkTarget(sc))?sc : (tc&&isAtkTarget(tc))?tc : (sc&&isCastleTarget(sc))?sc : (tc&&isCastleTarget(tc))?tc : null;
+    if(V2ON()){ const a1=sc||tc, a2=tc||sc; if((a1&&v2Tap(a1[0],a1[1])) || (a2&&a2!==a1&&v2Tap(a2[0],a2[1]))) return; }   // 技 v2: マップ・回復・浄化・自分の技
+    const cand =(sc&&isAtkTarget(sc))?sc : (tc&&isAtkTarget(tc))?tc : (sc&&isCastleTarget(sc))?sc : (tc&&isCastleTarget(tc))?tc : null;
     if(cand){
       const ec=CASTLE[1];
       if(false){ /* 城は廃止 */ }
@@ -3336,6 +3592,7 @@ function handlePick(sc, tc){
   if(pickU){ selectUnit(pickU); return; }
   { const t=sc||tc; if(t){ const u=unitAt(t[0],t[1]); if(u&&u.owner!==0){ showMonsterDetail(u.mid, u); return; } } }   // 敵タップ=モンスター情報
   clearSel();
+  if(V2ON()){ const t=tc||sc; if(t && !unitAt(t[0],t[1])){ BT.tileInfo={r:t[0],c:t[1]}; addHL(t[0],t[1],0xffffff,0.55); updateUI(); } else if(BT.tileInfo){ BT.tileInfo=null; updateUI(); } }   // 地形の札
 }
 // 隣接する融合可能な味方（進化直後で移動済みでも、未行動なら融合できる）
 function adjFuse(u){ const out=[]; if(!u||u.acted) return out;
@@ -3345,14 +3602,38 @@ function adjFuse(u){ const out=[]; if(!u||u.acted) return out;
 function recompute(){ if(!sel){selMoves=null;selAtks=null;return;}
   selMoves = canMove(sel)?moveTargets(sel):{move:[],fuse:[]};
   for(const p of adjFuse(sel)){ if(!selMoves.fuse.some(q=>q[0]===p[0]&&q[1]===p[1])) selMoves.fuse.push(p); }   // 移動済みでも隣接融合を許可
+  if(V2ON()){ selAtks = (selMove && isOffense(selMove) && selMove.target!=='map') ? attackTargetsV2(sel, selMove) : (selMove&&selMove.target==='map'&&moveUsable(sel,selMove) ? mapUnits(sel,selMove,selAim).filter(x=>x.owner!==sel.owner) : []); return; }
   selAtks=attackTargets(sel, selMove?selMove.range:null); }
+// 技 v2: 選んだ技(マップの技のねらい selAim)
+let selAim=null;
+function pickSelMove(u){ if(!V2ON()) return movesFor(u)[0]||null;   // 自分の子の最初の技 = 相手に届く「何回でも」の技の一番強い物(回数のある技は自分で選ぶ)
+  const free=movesV2(u).filter(mv=>isOffense(mv)&&mv.target!=='map'&&!(mv.mp>0)&&attackTargetsV2(u,mv).length).sort((a,b)=>b.power-a.power)[0]; return free||defaultMoveV2(u); }
+function selectMoveV2(mv){ if(!sel||!mv) return; selMove=mv; selAim=null;
+  if(mv.target==='map'){ const b=aiMapBest(sel,mv); selAim=b&&b.sc>-1e8?b.aim:mapAims(sel,mv)[0]; }
+  selMode='attack'; recompute(); drawSelHL(); updateUI(); }
+// 自分だけ・味方みんな・倒れた仲間 の技は、選んでもう一度押す(か自分をタップ)で使う
+function noAimMove(mv){ return mv && !isOffense(mv) && (mv.target==='self'||mv.target==='ally_all'||mv.target==='fallen') && !(mv.effect&&mv.effect.jump); }
+function useSelMoveV2(){ if(!sel||!selMove) return false; const mv=selMove;
+  if(mv.target==='map'){ if(!moveUsable(sel,mv)) return false; pushUndo(); doMapAttack(sel,mv,selAim); reselectAfter(); return true; }
+  if(!isOffense(mv)){ if(!supportReady(sel,mv)) return false; pushUndo(); if(!doSupport(sel,mv)) undoStack.pop(); reselectAfter(); return true; }
+  return false; }
+// マップの技・支えの技のタップ(攻撃モード)。使えたら true
+function v2Tap(r,c){ if(!V2ON()||!sel||!selMove) return false; const mv=selMove;
+  if(mv.target==='map'){ if(!moveUsable(sel,mv)) return false; const S=mv.shape||{};
+    if(S.shape==='line'||S.shape==='blast'){ const a=aimFromCell(sel,mv,r,c); if(!a) return false; if(selAim && a[0]===selAim[0] && a[1]===selAim[1]) return useSelMoveV2(); selAim=a; recompute(); drawSelHL(); updateUI(); return true; }
+    if(mapCells(sel,mv,null).some(p=>p[0]===r&&p[1]===c) || (r===sel.r&&c===sel.c)) return useSelMoveV2(); return false; }
+  if(isOffense(mv)) return false;
+  if(mv.effect&&mv.effect.jump){ if(!jumpCells(sel,mv).some(p=>p[0]===r&&p[1]===c)) return false; pushUndo(); if(!doSupport(sel,mv,null,[r,c])) undoStack.pop(); reselectAfter(); return true; }
+  if(mv.target==='ally' && (mv.category==='heal'||mv.category==='cure')){ const t=unitAt(r,c); if(!t||t.owner!==sel.owner||!supportTargets(sel,mv).includes(t)) return false; pushUndo(); if(!doSupport(sel,mv,t)) undoStack.pop(); reselectAfter(); return true; }
+  if(r===sel.r&&c===sel.c && noAimMove(mv)) return useSelMoveV2();
+  return false; }
 function setSelGhost(uid){ for(const k in sprites){ const s=sprites[k]; const o=(+k===uid)?0.55:1; if(s.mat.opacity!==o) s.mat.opacity=o; } }
-function selectUnit(u){ sel=u; selMove=(movesFor(u)[0]||null); recompute(); selMode = canMove(u)?'move':'attack'; setSelGhost(u.uid); drawSelHL(); updateUI(); }
+function selectUnit(u){ sel=u; BT.tileInfo=null; selMove=pickSelMove(u); selAim=null; if(V2ON()&&selMove&&selMove.target==='map'){ const b=aiMapBest(u,selMove); selAim=b?b.aim:null; } recompute(); selMode = canMove(u)?'move':'attack'; setSelGhost(u.uid); drawSelHL(); updateUI(); }
 function setMode(mode){
   if(!sel) return;
   if(mode==='evolve'){ pushUndo(); if(evolveUnit(sel,false)) reselectAfter(); else undoStack.pop(); return; }
   selMode=mode; recompute();
-  if(mode==='attack' && selAtks.length===0 && !(castleAdjacent(sel)&&canAttack(sel))) toast('射程内に敵・城がいない');
+  if(mode==='attack' && !V2ON() && selAtks.length===0 && !(castleAdjacent(sel)&&canAttack(sel))) toast('射程内に敵・城がいない');
   if(mode==='move' && selMoves.move.length===0 && selMoves.fuse.length===0) toast('移動できるマスがない');
   drawSelHL(); updateUI();
 }
@@ -3364,6 +3645,7 @@ function drawSelHL(){
   addHL(sel.r,sel.c,0xffe089,0.5);
   if(gaugeReady(sel) && aiCanEvo(sel) && !sel.acted) for(const [r,c] of EVO_CELLS){ if(!(r===sel.r&&c===sel.c)) addHL(r,c,0xffd24a,0.6); }   // 進化エリア
   if(selMode==='move' && selMoves && sel.hp<sel.maxhp) for(const [r,c] of HEAL_CELLS[sel.owner]){ if(selMoves.move.some(p=>p[0]===r&&p[1]===c)) addHL(r,c,0x50f0b0,0.7); }   // 届く回復の泉
+  if(V2ON()){ drawSelHLV2(); return; }
   const aoe = effMulti(sel) || isAreaTerrain(sel);
   const drawAtk=(strong)=>{
     if(!canAttack(sel)) return;
@@ -3384,6 +3666,25 @@ function drawSelHL(){
   if(selMode==='attack'){ if(selMoves) for(const [r,c] of selMoves.fuse) addHL(r,c,0xc060ff,0.65);   // 攻撃モードでも融合マス(紫)を表示
     drawAtk(true); }
 }
+// 技 v2 のハイライト: 移動=赤 / 融合=紫 / 射程のマス=薄い橙(最小射程の内側は塗らない) / 当たる敵=赤い照準・巻きこむ味方=黄 / マップの技=形のマス / 回復=緑 / 跳ぶ先=水色
+function drawSelHLV2(){
+  if(selMoves) for(const [r,c] of selMoves.fuse) addHL(r,c,0xc060ff,0.65);
+  if(selMode==='move' && selMoves) for(const [r,c] of selMoves.move) addHL(r,c,0xff3838,0.5);
+  const mv=selMove; if(!mv || sel.acted) return; const strong=selMode==='attack';
+  if(mv.target==='map'){ if(!moveUsable(sel,mv)) return;
+    if(strong && (mv.shape||{}).shape==='blast'){ for(const [r,c] of mapAims(sel,mv)) if(!(r===sel.r&&c===sel.c)) addHL(r,c,0xffd080,0.12); }
+    for(const [r,c] of mapCells(sel,mv,selAim)) addHL(r,c,0xff7a30, strong?0.42:0.25);
+    const hits=mapUnits(sel,mv,selAim); for(const x of hits) addReticle(x.r,x.c, x.owner===sel.owner?0xffe020:0xff2820); addAffTags(hits, mv); return; }
+  if(isOffense(mv)){ if(!moveUsable(sel,mv)) return; const [a,b]=moveRange(sel,mv); const terr=isAreaTerrainMv(sel,mv);
+    if(terr){ for(const k of terrAreaSet(sel,mv)){ const p=k.split(','); addHL(+p[0],+p[1],0xff7a30, strong?0.30:0.18); } }
+    else if(strong || mv.target==='area'){ for(let r=Math.max(0,sel.r-b);r<=Math.min(N-1,sel.r+b);r++) for(let c=Math.max(0,sel.c-b);c<=Math.min(N-1,sel.c+b);c++){ const d=Math.max(Math.abs(r-sel.r),Math.abs(c-sel.c)); if(d<a||d>b||d===0) continue; addHL(r,c,0xff7a30, mv.target==='area'?(strong?0.30:0.2):0.16); } }
+    let hits=selAtks||[]; if(terr){ const set=terrAreaSet(sel,mv); hits=Object.values(state.units).filter(x=>x.uid!==sel.uid && set.has(x.r+','+x.c)); }
+    for(const x of hits) addReticle(x.r,x.c, x.owner===sel.owner?0xffe020:0xff2820); addAffTags(hits, mv); return; }
+  if(!strong) return;
+  if(mv.effect&&mv.effect.jump){ for(const [r,c] of jumpCells(sel,mv)) addHL(r,c,0x60d8ff,0.5); return; }
+  if(mv.category==='heal'||mv.category==='cure'){ const R=mv.range[1]; for(const a of alive(sel.owner)) if(cheby(a,sel)<=R) addHL(a.r,a.c, supportTargets(sel,mv).includes(a)?0x50f090:0x2a6050, supportTargets(sel,mv).includes(a)?0.6:0.25); return; }
+  if(mv.category==='revive'){ const cl=freeCastleCell(sel.owner); if(cl) addHL(cl[0],cl[1],0xffe6a0,0.6); return; }
+  if(mv.target==='ally_all'){ for(const a of alive(sel.owner)) if(cheby(a,sel)<=mv.range[1]) addHL(a.r,a.c,0xffe680,0.45); } }
 function clearSel(){ sel=null; selMode='none'; selMoves=null; selAtks=null; selMove=null; setSelGhost(null); clearHL(); syncUnits(); updateUI(); }
 
 // ---- 待った（1手戻す）----
@@ -3474,7 +3775,16 @@ function updateUI(){ if(BT.headless) return;
     sd.innerHTML = `<img src="${IMG[sel.mid]}"><div><b style="color:#ffd86b">${sel.leader?LMK():''}${m.name}</b>${terrChip(sel)} <span class="muted">${m.type}・${DAN[m.level]}・${rkStr(sel)}</span> ${mpStr} ${gStr}<br>`
       +`<span class="muted">HP ${sel.hp}/${sel.maxhp}・ATK ${m.atk}・防御-${Math.round(defReduction(sel)*100)}%・移動 ${effMove(sel)}・射程 ${R}${R>m.atk_range?'↑':''}</span>`
       +(note?`<br><span style="color:#7be0a0;font-size:11px">${note}</span>`:'')+`</div>`;
-    if(selMode==='attack'){
+    if(V2ON()) sd.innerHTML = `<img src="${IMG[sel.mid]}"><div><b style="color:#ffd86b">${sel.leader?LMK():''}${m.name}</b>${terrChip(sel)} <span class="muted">${typeBadges(m)}・${DAN[m.level]}・${rkStr(sel)}</span> ${gStr}<br>`
+      +`<span class="muted">HP ${sel.hp}/${sel.maxhp}・攻撃 ${Math.round(m.atk*(sel.atkX||1))}・防御 ${Math.round((m.def||0)*rankX(sel.rank||1))}・素早さ ${Math.round(spdOf(sel))}・移動 ${effMove(sel)}</span>${statusChips(sel)}</div>`;
+    if(V2ON() && selMode==='attack'){
+      if(selMove && !sel.acted && (selMove.target==='map' || noAimMove(selMove))){ const okU = selMove.target==='map' ? (moveUsable(sel,selMove) && mapUnits(sel,selMove,selAim).some(x=>x.owner!==sel.owner)) : supportReady(sel,selMove);
+        ac.appendChild(mkbt(`${IC(selMove.target==='map'?'map':'atk')}${mvName(selMove)}`,'go', !!okU, ()=>{ useSelMoveV2(); })); }
+      if(!sel.acted) ac.appendChild(moveMenuV2());
+      appendFuseBtns();
+      if(canMove(sel)) ac.appendChild(mkbt(IC('move')+'移動にもどる','',true,()=>setMode('move')));
+      ac.appendChild(mkbt(IC('cancel')+'解除','',true,clearSel));
+    } else if(selMode==='attack'){
       // 技選択 → 敵をタップ
       const movesRow=document.createElement('div'); movesRow.style.cssText='width:100%;display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:4px';
       const lab=document.createElement('span'); lab.className='muted'; lab.textContent='技:'; movesRow.appendChild(lab);
@@ -3493,7 +3803,9 @@ function updateUI(){ if(BT.headless) return;
       // 既定＝移動モード：選択した時点で赤マスが出る→タップで即移動（攻撃/進化はボタン）
       const atkOk = canAttack(sel) && (selAtks.length || (castleAdjacent(sel)&&canAttack(sel)));
       const outMP = !noMP(sel) && !sel.acted && !canAtkMP(sel);   // 攻撃MP切れ
-      ac.appendChild(mkbt(`${IC('atk')}攻撃${sel.acted?'(済)':(outMP?'(MP切れ)':(noMP(sel)?'':`(残${atkLeft(sel)})`))}`,'go', !!atkOk, ()=>setMode('attack')));
+      if(V2ON()){ const anyOk=!sel.acted && !(sel.dug>0) && movesV2(sel).some(mv=>moveReady(sel,mv));
+        ac.appendChild(mkbt(`${IC('atk')}技${sel.acted?'(済)':''}`,'go', !!anyOk, ()=>setMode('attack'))); }
+      else ac.appendChild(mkbt(`${IC('atk')}攻撃${sel.acted?'(済)':(outMP?'(MP切れ)':(noMP(sel)?'':`(残${atkLeft(sel)})`))}`,'go', !!atkOk, ()=>setMode('attack')));
       // 合体攻撃: 対象トリオが近くに揃っていれば発動可
       { const cr=comboFor(sel);
         if(cr){ const cb=cr.cb; const okC=canAtkMP(sel);
@@ -3511,7 +3823,7 @@ function updateUI(){ if(BT.headless) return;
             floatText(sel.r,sel.c,'+'+h2,'#bfffe0'); sel.acted=true; toast(`${IC('elixir')}霊薬エリク！ 全回復`); syncUnits(); updateUI(); }));
       }
       // 光タイプ：回復・浄化（攻撃の代わりに味方/自分を癒やす）
-      if(uHasType(sel,'光') && BT.kind!=='wild'){
+      if(!V2ON() && uHasType(sel,'光') && BT.kind!=='wild'){
         const healMP = canHealMP(sel);
         // 回復は攻撃MPと別枠：acted(行動済み)でなく回復MPが残っていれば撃てる
         const canAct = !sel.acted && sel.dug<=0;
@@ -3528,7 +3840,7 @@ function updateUI(){ if(BT.headless) return;
         }
       }
       // 地タイプ：潜行（2ターン地中で無敵移動）
-      if(uHasType(sel,'地') && sel.dug<=0){
+      if(!V2ON() && uHasType(sel,'地') && sel.dug<=0){
         const digOk = canAttack(sel) && !sel.moved;
         ac.appendChild(mkbt(`${IC('dig')}潜行(${DIG_TURNS}T無敵)`,'evo', !!digOk, ()=>{ pushUndo(); doDig(sel); reselectAfter(); }));
       }
@@ -3545,7 +3857,7 @@ function updateUI(){ if(BT.headless) return;
       ac.appendChild(mkbt(IC('cancel')+'解除','',true,clearSel));
     }
   } else {
-    sd.innerHTML='<span class="muted">'+icTag('ally')+'動かす子をタップ</span>';
+    sd.innerHTML = (V2ON()&&BT.tileInfo) ? tileInfoHTML(BT.tileInfo.r, BT.tileInfo.c) : '<span class="muted">'+icTag('ally')+'動かす子をタップ</span>';
   }
   // 下段：待った・降参・ターン終了
   if(!ONLINE && (STORY.items.ki||0)>0 && sel && sel.owner===0)
@@ -3558,6 +3870,33 @@ function updateUI(){ if(BT.headless) return;
   // detail (相手等)
   $id('detail').style.display='none';
 }
+// ---- 技 v2 の画面の部品 ----
+function typeBadge(t){ return `<span class="tyb" style="background:${TYPE_COL[t]||'#666'}">${t}</span>`; }
+function typeBadges(m){ return typeBadge(m.type)+(m.type2?typeBadge(m.type2):''); }
+function statusChips(u){ const st=[]; if(u.poison>0)st.push(icTag('poison')); if(u.burn>0)st.push(icTag('burn')); if(u.freeze>0)st.push(icTag('freeze')); if(u.para>0)st.push(icTag('para')); if(u.dug>0) st.push(icTag('dig')); return st.length?' '+st.join(''):''; }
+const CAT_LB={heal:'回復', cure:'浄化', revive:'蘇生', buff:'強化', debuff:'弱体', move:'移動', ailment:'状態'};
+function rangeStr(mv){ if(mv.target==='map'||mv.target==='self'||mv.target==='fallen') return ''; const [a,b]=mv.range; const a2=(mv.target==='ally'||mv.target==='ally_all')?0:a; return a2===b?`${b}`:`${a2}-${b}`; }
+// 技の札: タイプ・名前・威力・射程・残り回数。使えない時は暗く(理由は色だけ)。弱点を突ける相手が射程にいれば金の縁と弱点のアイコン
+function moveReady(u, mv){ if(isOffense(mv)){ if(mv.target==='map'){ if(!moveUsable(u,mv)) return false; const b=aiMapBest(u,mv); return !!b && b.sc>-1e8; } return attackTargetsV2(u,mv).length>0; } return supportReady(u,mv); }
+function moveMenuV2(){ const box=document.createElement('div'); box.className='mvgrid';
+  const list=movesV2(sel); const ord=list.filter(isOffense).concat(list.filter(x=>!isOffense(x)));   // 攻撃の技 → 支えの技
+  for(const mv of ord){ const ok=moveReady(sel,mv); const on=!!(selMove&&selMove.id===mv.id); const left=usesLeft(sel,mv), mx=usesMax(mv);
+    let tg=[]; if(ok && isOffense(mv) && mv.power>0) tg = mv.target==='map' ? mapUnits(sel,mv,on?selAim:(aiMapBest(sel,mv)||{}).aim).filter(e=>e.owner!==sel.owner) : attackTargetsV2(sel,mv);
+    const weak = tg.some(e=>typeBonusT(mv.type,mon(e))>0);
+    const res = !weak && tg.length>0 && tg.every(e=>typePenaltyT(mv.type,mon(e))<0);
+    const b=document.createElement('button'); b.className='bt mvb'+(on?' on':'')+(weak?' wk':''); b.disabled=!ok;
+    const kind = mv.target==='map'?icTag('map'):(mv.target==='area'?icTag('area'):'');
+    const stat = isOffense(mv)&&mv.power>0 ? `威${mv.power}` : (CAT_LB[mv.category]||'');
+    const rg=rangeStr(mv);
+    b.innerHTML=`<span class="mvn">${typeBadge(mv.type)}${escH(mvName(mv))}${weak?icTag('weak'):(res?icTag('resist'):'')}</span><span class="mvs">${kind}${stat}${rg?`・${rg}`:''}・${left===Infinity?'∞':left+'/'+mx}${mv.p===false?'・移動前':''}</span>`;
+    b.onclick=()=>{ if(on && (mv.target==='map'||noAimMove(mv))){ useSelMoveV2(); return; } selectMoveV2(mv); };
+    box.appendChild(b); }
+  return box; }
+// 地形の札(何もない所をタップした時): その地形で得意なタイプ +30%・苦手 −30%・守り(遺跡・荒地)・かげ(森)・移動
+function tileInfoHTML(r,c){ const t=state.terrain[r][c]; const up=TERR_BONUS[t]||[], dn=TERR_WEAK[t]||[]; const g=TERR_GUARD[t], cv=TERR_COVER[t];
+  const ex=[]; if(g) ex.push(`受けるダメージ −${Math.round(g*100)}%`); if(cv) ex.push(`よける +${Math.round(cv*100)}%`); if(t==='forest') ex.push('蟲 移動+1'); if(t==='sea'||t==='water') ex.push(`${typeBadge('水')}移動+1`);
+  if(t==='sea') ex.push(`${typeBadge('雷')}通電・${typeBadge('水')}${typeBadge('氷')}射程+1`); if(t==='forest') ex.push(`${typeBadge('炎')}延焼・${typeBadge('炎')}${typeBadge('森')}射程+1`); if(t==='gloom') ex.push(`${typeBadge('闇')}射程+1`);
+  return `<div class="tinfo"><b>${icTag('terrain')}${TERR_JP[t]||t}</b>`+(up.length?`<span class="up">+${Math.round(TERR_X*100)}% ${up.map(typeBadge).join('')}</span>`:'')+(dn.length?`<span class="dn">−${Math.round(TERR_X*100)}% ${dn.map(typeBadge).join('')}</span>`:'')+(ex.length?`<span class="ex">${ex.join('・')}</span>`:'')+`</div>`; }
 function terrChip(u){ const tr=state.terrain[u.r][u.c], tb=terrBonusM(mon(u),tr); if(!tb) return ''; return ` <span class="tchipT ${tb>0?'up':'dn'}">${TERR_JP[tr]||tr} ${tb>0?'+':'−'}${Math.round(Math.abs(tb)*100)}%</span>`; }
 function mkbt(label,cls,enabled,fn){ const b=document.createElement('button'); b.className='bt '+(cls||''); setIc(b,label); b.disabled=!enabled; b.onclick=fn; return b; }
 
@@ -3566,6 +3905,24 @@ function evoChain(id){ const names=[]; let cur=id; const seen={};
   while(cur!=null && !seen[cur]){ seen[cur]=1; names.push(`${MID[cur].name}(Lv${MID[cur].level})`); cur=MID[cur].evolves_to; }
   return names;
 }
+function detailV2(id, u, unitRow, recipeHtml, fuseHtml, chain, isFusion){ const m=MID[id], L=m._v2||{}; const lv=u?lvOf(u):99; const sx=u?rankX(u.rank||1):1;
+  const own = u ? new Set(movesV2(u).map(x=>x.id)) : null;
+  const rows=(L.learnset||[]).filter(e=>MV2[e.move]&&MV2[e.move].enabled!==false).map(e=>{ const mv=MV2[e.move]; const got = own ? own.has(mv.id) : true; const left=u&&got?usesLeft(u,mv):usesMax(mv);
+    const lab = L.fixed ? '' : (e.evo ? '進化' : `Lv${e.lv}`);
+    return `<div class="mvi ${got?'':'lock'}"><span class="muted" style="display:inline-block;min-width:3.2em">${lab}</span>${typeBadge(mv.type)}<b>${escH(mvName(mv))}</b> <span class="muted">${mv.target==='map'?icTag('map'):(mv.target==='area'?icTag('area'):'')}${isOffense(mv)&&mv.power>0?'威'+mv.power:(CAT_LB[mv.category]||'')}${rangeStr(mv)?'・射程'+rangeStr(mv):''}・${left===Infinity?'∞':(u&&got?left+'/'+usesMax(mv):usesMax(mv)+'回')}${mv.p===false?'・移動前':''}</span></div>`; }).join('');
+  return `<div class="hd"><img src="${IMG[id]}"><div><h3>${m.name}${m.archetype?` <span style="font-size:12px;color:#9be1ff;font-weight:700">${m.archetype}</span>`:''}</h3>`
+    +`<div class="muted">${typeBadges(m)}・${DAN[m.level]}${u?'・'+rkStr(u):''}</div></div></div>`
+    +((m.desc||m.profile)?`<div class="chain" style="color:#e0d2a4;font-style:italic;margin:6px 0 0">${m.desc||('「'+m.profile+'」')}</div>`:'')
+    +unitRow
+    +`<div class="row"><span>HP</span><b>${u?u.maxhp:m.hp}</b></div>`
+    +`<div class="row"><span>攻撃</span><b>${Math.round(m.atk*(u?(u.atkX||1):1))}</b></div>`
+    +`<div class="row"><span>防御</span><b>${Math.round((m.def||0)*sx)}</b></div>`
+    +`<div class="row"><span>素早さ</span><b>${Math.round((m.spd||0)*sx)}</b></div>`
+    +`<div class="row"><span>移動</span><b>${m.move}</b></div>`
+    +`<div class="sec">技</div>${rows}`
+    +(isFusion ? `<div class="sec">入手方法</div><div class="chain">融合でだけ生まれる子</div>` : `<div class="sec">進化ライン</div><div class="chain">${chain.join(' → ')||'進化なし'}</div>`)
+    +recipeHtml+fuseHtml
+    +`<button class="bt go" id="mb-detailClose" style="margin-top:12px;width:100%">とじる</button>`; }
 function showMonsterDetail(id, u){
   const m=MID[id]; const box=$id('detailBox');
   let unitRow='';
@@ -3597,6 +3954,7 @@ function showMonsterDetail(id, u){
   const asMat=[]; for(const k in FUSE_IDX){ const [xa,xb]=k.split(',').map(Number); if(xa===id||xb===id) asMat.push({others:[xa===id?xb:xa], f:FUSE_IDX[k]}); }
   for(const f of FUSE3){ if(f.mats.includes(id)) asMat.push({others:f.mats.filter(x=>x!==id), f:f.id, triple:true}); }
   if(asMat.length){ fuseHtml = `<div class="sec">融合素材になる</div>`+asMat.map(o=>`<div class="chain">+ ${o.others.map(x=>MID[x]?MID[x].name:'?').join('＋')} → <b>${MID[o.f].name}</b>${o.triple?'（3体融合）':''}</div>`).join(''); }
+  if(V2ON()){ box.innerHTML=detailV2(id,u,unitRow,recipeHtml,fuseHtml,chain,isFusion); $id('ovDetail').style.display='flex'; $id('detailClose').onclick=()=>{ $id('ovDetail').style.display='none'; }; return; }
   box.innerHTML =
     `<div class="hd"><img src="${IMG[id]}"><div><h3>${m.name}${m.archetype?` <span style="font-size:12px;color:#9be1ff;font-weight:700">${m.archetype}</span>`:''}</h3>`
     +`<div class="muted">${m.type}${m.type2?'/'+m.type2:''}（${m.type_alias}）・${DAN[m.level]}</div></div></div>`
@@ -3743,12 +4101,12 @@ const ANCIENT={
   size:9, maxTurn:18, maxTurn13:24, atkMP13:20, cover:['ruins','forest'], coverX:0.5, breakX:1.5, minionX:0.85, minionLvDown:3,
   stageRef:{hp:{1:135,2:460,3:1350}, atk:{1:30,2:85,3:150}},   // 段ごとの体力・攻撃のめやす(表の平均)
   tiers:{   // シム(sim_ancient.js 60・その土地のレベル帯のパーティ・相棒3系統・AI同士・各180戦・2026-10-26): 勝率 守り①89% ②75% ③73% ボス82% ④69% 王63%・時間切れ ①1.7% ②5% ③2% ボス3% ④2% 王0%・平均9〜11ターン
-    1:{hp:1.3, atk:1.25, actions:1, phases:2, big:{from:1, every:3, rng:1, x:2.0, shape:'area'},  minions:0, rageAtk:0.10},   // 守り① ミノタス(迷路・Lv4〜6・3体・進化なし): 1回行動・目覚めてから大技
+    1:{hp:1.54, atk:1.76, actions:1, phases:2, big:{from:1, every:3, rng:1, x:2.0, shape:'area'},  minions:0, rageAtk:0.10},   // 守り① ミノタス(迷路・Lv4〜6・3体・進化なし): 1回行動・目覚めてから大技
     2:{hp:2.2, atk:0.85, actions:2, phases:2, big:{from:0, every:3, rng:1, x:2.0, shape:'area'},  minions:1, rageAtk:0.10},   // 守り② ルミナドール(アルカディア・Lv5〜8・3体・進化なし): 2回行動(1回は軽い)
-    3:{hp:5.0, atk:1.85, actions:2, phases:3, big:{from:0, every:3, rng:2, x:3.0, shape:'area'},  minions:1, rageAtk:0.12},   // 守り③ テンマライ(コリンタ・Lv7〜10・5体・進化あり): 序盤を耐えて進化で逆転
+    3:{hp:4.67, atk:1.62, actions:2, phases:3, big:{from:0, every:3, rng:2, x:3.0, shape:'area'},  minions:1, rageAtk:0.12},   // 守り③ テンマライ(コリンタ・Lv7〜10・5体・進化あり): 序盤を耐えて進化で逆転
     4:{hp:6.5, atk:1.75, actions:2, phases:3, big:{from:0, every:3, rng:2, x:3.0, shape:'area'},  minions:2, rageAtk:0.12},   // ボス トールガ(雲の山道・Lv9〜12)
     5:{hp:5.0, atk:1.60, actions:2, phases:3, big:{from:0, every:3, rng:4, x:3.0, shape:'cross'}, minions:2, rageAtk:0.15},   // 守り④ アトラード(デルフィナ・Lv11〜14): 大技が十字(幅3)で広い
-    6:{hp:6.0, atk:1.20, actions:2, phases:3, big:{from:0, every:2, rng:4, x:3.0, shape:'cross'}, minions:2, rageAtk:0.15},   // 王 ゴッドヘラク(競技場の下・Lv13〜16・融合あり): 移動3の近接・大技が2ターンおき・目覚めで攻撃+15%ずつ
+    6:{hp:6.0, atk:1.12, actions:2, phases:3, big:{from:0, every:2, rng:4, x:3.0, shape:'cross'}, minions:2, rageAtk:0.15},   // 王 ゴッドヘラク(競技場の下・Lv13〜16・融合あり): 移動3の近接・大技が2ターンおき・目覚めで攻撃+15%ずつ
   },
 };
 function ancUnit(){ return state?alive(1).find(u=>u.anc)||null:null; }
@@ -3764,7 +4122,7 @@ function ancientEscort(){ const A=BT.anc; if(!A) return; const n=+(A.T.escort||0
   const cfg=(BT.opts&&BT.opts.enemy&&BT.opts.enemy.ancient)||{}; const pool=(cfg.escortMids||cfg.minions||[]).map(Number).filter(m=>MID[m]); if(!pool.length) return;
   const cells=[]; for(const r of START_ROWS[1]) for(let c=0;c<N;c++) if(!unitAt(r,c)) cells.push([r,c]); cells.sort((p,q)=>(Math.abs(p[0]-b.r)+Math.abs(p[1]-b.c))-(Math.abs(q[0]-b.r)+Math.abs(q[1]-b.c)));
   const lv=Math.max(1,(b.lv||1)-ANCIENT.minionLvDown);
-  for(let k=0;k<n&&k<cells.length;k++){ const [r,c]=cells[k]; const mid=stageForm(pool[k%pool.length], BT.startStage, null); const nu=addUnit(1,mid,r,c); unitMul(nu, lvRank(lv), A.T.escortX||1, A.T.escortX||1); nu.lv=lv; nu.src=[]; nu.mid0=mid; nu.summoned=true; nu.hmp=0; nu.hmpMax=0; } }
+  for(let k=0;k<n&&k<cells.length;k++){ const [r,c]=cells[k]; const mid=stageForm(pool[k%pool.length], BT.startStage, null); const nu=addUnit(1,mid,r,c); unitMul(nu, lvRank(lv), A.T.escortX||1, A.T.escortX||1); nu.lv=lv; nu.src=[]; nu.mid0=mid; nu.summoned=true; nu.hmp=0; nu.hmpMax=0; nu.hg=0; } }
 // 2026-10-27 野生は群れの数まで(自分が出せる数=群れの数・盤の budget が上限)。人は今まで(budget×段)
 function baseBudget(){ const n=BT.kind==='wild'?Math.max(1,Math.min(BT.rules.budget, BT.enemyParty.length)):BT.rules.budget; return n*BT.startStage; }
 function ancientBudget(){ return Math.max(1, BT.party.reduce((s,p)=>s+((MID[playerStartMid(p.mid)]||{}).level||1),0)); }   // 全パーティがその段で出せる
@@ -3796,7 +4154,7 @@ function ancAwaken(b){ const A=BT.anc, T=A.T; A.awoken++; clearAllStatus(b); b.a
   // 子分: 古代のまわりの空いたマス(進化マスは避ける)に tier.minions 体
   let n=T.minions||0; if(n>0 && A.minions.length){ const cells=[]; for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){ if(!dr&&!dc) continue; const r=b.r+dr,c=b.c+dc; if(r<0||c<0||r>=N||c>=N||unitAt(r,c)||isEvoCell(r,c)) continue; cells.push([r,c]); }
     cells.sort((p,q)=>(p[0]-q[0]) || (Math.abs(p[1]-CC)-Math.abs(q[1]-CC)));   // 奥(自陣)側から
-    for(const [r,c] of cells){ if(n<=0) break; const mid=A.minions[A.mi++%A.minions.length]; const lv=Math.max(1,(b.lv||1)-ANCIENT.minionLvDown); const nu=addUnit(1,mid,r,c); unitMul(nu, lvRank(lv), ANCIENT.minionX, ANCIENT.minionX); nu.lv=lv; nu.src=[]; nu.mid0=mid; nu.summoned=true; nu.hmp=0; nu.hmpMax=0; n--;   // 子分は回復しない
+    for(const [r,c] of cells){ if(n<=0) break; const mid=A.minions[A.mi++%A.minions.length]; const lv=Math.max(1,(b.lv||1)-ANCIENT.minionLvDown); const nu=addUnit(1,mid,r,c); unitMul(nu, lvRank(lv), ANCIENT.minionX, ANCIENT.minionX); nu.lv=lv; nu.src=[]; nu.mid0=mid; nu.summoned=true; nu.hmp=0; nu.hmpMax=0; nu.hg=0; n--;   // 子分は回復しない
       if(!BT.headless){ fxPillar(r,c,0xff8a60); fxRing(r,c,0xff8a60,{max:1.6,dur:600}); } } }
   if(T.big && A.awoken>=T.big.from) A.cd=0;   // 目覚めたらすぐ大技をためられる
   if(!BT.headless){ syncUnits(); showBanner(`${mon(b).name}が 目覚めた！`); toast(`${mon(b).name}が目覚めた！ 攻撃が強くなった${T.minions&&A.minions.length?'・子分を呼んだ':''}`); fxPillar(b.r,b.c,0xff5a48); fxRing(b.r,b.c,0xff5a48,{max:4.0,dur:900,y:0.06}); fxFlash(b.r,b.c,0xffd0c0); camPunch(b.r,b.c,0.9,700); hitStop(120); SFX.play('boss'); } }
@@ -3997,12 +4355,14 @@ function setMonsters(list){
   buildFuseTables();
 }
 function init(o){
-  o=o||{}; for(const k of ['base','data','img','ci','models','zIndex']) if(o[k]!=null) CFG[k]=o[k];
+  o=o||{}; for(const k of ['base','data','stats','moves','img','ci','models','zIndex']) if(o[k]!=null) CFG[k]=o[k];
   icPreload();
-  if(o.monsters){ setMonsters(o.monsters); return (_loadP=Promise.resolve(true)); }
+  if(o.monsters){ setMonsters(o.monsters); if(o.stats&&o.moves) applyV2Data(o.stats,o.moves); return (_loadP=Promise.resolve(true)); }
   if(_loadP) return _loadP;
-  if(IS_NODE){ const fs=require('fs'), path=require('path'); setMonsters(JSON.parse(fs.readFileSync(path.join(CFG.base||__dirname, CFG.data),'utf8'))); return (_loadP=Promise.resolve(true)); }
-  _loadP=fetch(CFG.base+CFG.data).then(r=>{ if(!r.ok) throw new Error('monsters.json '+r.status); return r.json(); }).then(list=>{ setMonsters(list); return true; });
+  if(IS_NODE){ const fs=require('fs'), path=require('path'); const rd=f=>JSON.parse(fs.readFileSync(path.join(CFG.base||__dirname, f),'utf8')); setMonsters(rd(CFG.data));
+    try{ applyV2Data(rd(CFG.stats), rd(CFG.moves)); }catch(e){ V2DATA=false; } return (_loadP=Promise.resolve(true)); }
+  const gj=(f)=>fetch(CFG.base+f).then(r=>{ if(!r.ok) throw new Error(f+' '+r.status); return r.json(); });
+  _loadP=gj(CFG.data).then(list=>{ setMonsters(list); return Promise.all([gj(CFG.stats),gj(CFG.moves)]).then(([st,mv])=>applyV2Data(st,mv)).catch(e=>{ console.warn('技 v2 のデータが読めない',e); V2DATA=false; }); }).then(()=>true);   // 2026-10-27 技 v2
   return _loadP;
 }
 
@@ -4047,6 +4407,15 @@ const CSS=`
 #mbRoot .afft .up{color:#ffe680}
 #mbRoot .afft .dn{color:#9aa3b8}
 #mb-actions .mainrow{display:flex;gap:6px;width:100%;margin-top:2px}
+#mbRoot .tyb{display:inline-block;min-width:1.35em;padding:0 .18em;margin-right:.18em;border-radius:5px;font-size:11px;font-weight:900;line-height:1.35em;text-align:center;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.6);vertical-align:.08em}
+#mb-actions .mvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:4px;width:100%;margin-bottom:4px}
+#mbRoot button.bt.mvb{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:4px 6px;font-size:12px;min-height:42px;text-align:left;letter-spacing:-.02em}
+#mbRoot button.bt.mvb .mvn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+#mbRoot button.bt.mvb .mvs{font-size:10.5px;color:#c8d4f0;font-weight:700;white-space:nowrap}
+#mbRoot button.bt.mvb.wk{border-color:#ffd24a;box-shadow:0 0 0 1px rgba(255,210,74,.5),0 2px 6px rgba(0,0,0,.35)}
+#mbRoot button.bt.mvb.on{background:linear-gradient(180deg,#2f6fd0,#22468a);border-color:#8fb4ff}
+#mbRoot .tinfo{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;font-size:13px;font-weight:800}
+#mbRoot .tinfo .up{color:#ffe680}#mbRoot .tinfo .dn{color:#a8a2b8}#mbRoot .tinfo .ex{color:#9fe0ff;font-size:12px}
 #mb-actions .mainrow .bt{flex:1 1 0;padding:10px 8px;font-size:14px}
 #mb-actions .mainrow .bt.end{flex:1.6 1 0}
 #mb-menu{position:absolute;inset:0;z-index:44;display:none;background:rgba(4,6,14,.35)}
@@ -4239,7 +4608,7 @@ function startBattle(opts){
   opts=opts||{};
   return init(opts.init||{}).then(()=>new Promise((resolve)=>{
     const kind=KIND_DEFAULTS[opts.kind]?opts.kind:'trainer'; const KD=KIND_DEFAULTS[kind];
-    BT.kind=kind; BT.opts=opts; BT.onEnd=opts.onEnd||null; BT.resolve=resolve; BT.fusedNew=[]; BT.auto=false; BT._autoRun=false; BT.fxUntil=0;
+    BT.kind=kind; BT.opts=opts; BT.v2=(opts.moveSystem?opts.moveSystem!=="v1":!(IS_NODE&&process.env.MOVESYS==="v1")); setStatMode(V2ON()); BT.onEnd=opts.onEnd||null; BT.resolve=resolve; BT.fusedNew=[]; BT.auto=false; BT._autoRun=false; BT.fxUntil=0;
     try{ BT.fastPref=localStorage.getItem('mb_auto_fast')==='1'; }catch(e){ BT.fastPref=false; } BT.fast=false;
     setBoardSize(+opts.size||KD.size);
     const pl=opts.player||{}, en=opts.enemy||{};
@@ -4418,7 +4787,7 @@ function simulate(opts){
   const prevHeadless=BT.headless; let res=null;
   BT.headless=true;
   const kind=KIND_DEFAULTS[opts.kind]?opts.kind:'trainer'; const KD=KIND_DEFAULTS[kind];
-  BT.kind=kind; BT.opts=opts; BT.fusedNew=[]; BT.auto=false; setBoardSize(+opts.size||KD.size);
+  BT.kind=kind; BT.opts=opts; BT.v2=(opts.moveSystem?opts.moveSystem!=="v1":!(IS_NODE&&process.env.MOVESYS==="v1")); setStatMode(V2ON()); BT.fusedNew=[]; BT.auto=false; setBoardSize(+opts.size||KD.size);
   if(opts.rules){ BT.rules=Object.assign({},BT.rules,opts.rules); MAX_TURN=BT.rules.maxTurn; BT.dmgX=BT.rules.dmgX; }
   const pl=opts.player||{}, en=opts.enemy||{};
   BT.party=normParty(pl.party||pl); BT.enemyParty=normParty(en.party||en); applyStartStage(opts); ancientSetup(en);
@@ -4451,11 +4820,13 @@ const TIME_MODEL={perUnit:8, turnSwitch:2, cpuStart:1.0, cpuPerUnit:0.64, cutAtk
 function estSeconds(r){ const T=TIME_MODEL; return Math.round(T.setup + r.act[0]*T.perUnit + r.sideTurns[0]*T.turnSwitch + r.sideTurns[1]*T.cpuStart + r.act[1]*T.cpuPerUnit + r.atk[1]*T.cutAtk + (r.evo[0]+r.evo[1])*T.cutEvo + (r.fuse[0]+r.fuse[1])*T.cutFuse); }
 
 // ---- 外に出すもの ----
-const API={ init, startBattle, simulate, estSeconds, TIME_MODEL, SIZE_RULES, KIND_DEFAULTS, ANCIENT, STAGE_HUMAN, TUNE, STAGE_DMGX, WILD_STAGE, packCount, PLACES, THEME_LOOK, rankX, STACK_RANK, STACK_GEM, LV_MAX, lvRank, stageForm:(mid,stage,owned)=>stageForm(mid,stage,owned),
+const API={ init, startBattle, simulate, V2, FINAL_V2, TERR_GUARD, TERR_COVER, get MOVES2(){ return MV2; }, get v2Ready(){ return V2DATA; }, learnedIds:(mid,lv)=>learnedIds(mid,lv,false), estSeconds, TIME_MODEL, SIZE_RULES, KIND_DEFAULTS, ANCIENT, STAGE_HUMAN, TUNE, STAGE_DMGX, WILD_STAGE, packCount, PLACES, THEME_LOOK, rankX, STACK_RANK, STACK_GEM, LV_MAX, lvRank, stageForm:(mid,stage,owned)=>stageForm(mid,stage,owned),
   get MID(){ return MID; }, get MONSTERS(){ return MONSTERS; }, baseFormId:(m)=>baseFormId(m), lineOf:(m)=>lineUpIds(m),
   setAuto(v){ if(v===2||v==='fast'){ BT.fastPref=true; setAutoMode(2); } else if(!!v!==BT.auto) toggleAuto(); return BT.auto; },
   // 確認用(test.html・puppeteer)
-  _dbg:{ get state(){ return state; }, get BT(){ return BT; }, sprites, M3D, aiSide:(o)=>{ aiSide(o); return state.phase; }, endTurn:()=>endTurn(), killLeader(o){ const L=leaderOf(o); if(!L) return false; L.hp=0; killUnit(L); afterAction(); return state.phase; },
+  _dbg:{ get state(){ return state; }, sync(){ syncUnits(); updateUI(); }, clear(){ clearSel(); },
+    cellPx(r,c){ if(!renderer||!camera) return null; const w=cell2world(r,c); const v=new THREE.Vector3(w.x, cellH(r,c)+0.05, w.z).project(camera); const rc=renderer.domElement.getBoundingClientRect(); return [rc.left+(v.x+1)/2*rc.width, rc.top+(-v.y+1)/2*rc.height]; },
+    selInfo(){ return sel?{uid:sel.uid, mode:selMode, move:selMove&&selMove.id, name:mvName(selMove), range:selMove&&moveRange(sel,selMove), aim:selAim, targets:(selAtks||[]).map(e=>[e.r,e.c])}:null; }, get BT(){ return BT; }, sprites, M3D, aiSide:(o)=>{ aiSide(o); return state.phase; }, endTurn:()=>endTurn(), killLeader(o){ const L=leaderOf(o); if(!L) return false; L.hp=0; killUnit(L); afterAction(); return state.phase; },
     gauge(uid,v){ const u=state.units[uid]; if(u&&v!=null){ u.g=v; syncUnits(); updateUI(); } return u?u.g:null; }, put(uid,r,c){ const u=state.units[uid]; if(!u||unitAt(r,c)) return false; state.board[u.r][u.c]=null; u.r=r; u.c=c; state.board[r][c]=u.uid; syncUnits(); return true; },
     evolve(uid){ const u=state.units[uid]; return u?evolveUnit(u,true):false; }, fuse(a,b){ const A=state.units[a], B=state.units[b]; if(!A||!B) return null; A.evo=true; moveUnit(A,B.r,B.c,'pair'); const nu=unitAt(B.r,B.c); return nu?nu.mid:null; },
     fuse3(a,b,c){ const A=state.units[a], B=state.units[b], C=state.units[c]; if(!A||!B||!C) return null; const t3=tripleResult(A,B); if(!t3||t3.c.uid!==C.uid) return null; tryTriple(A,B,C,B.r,B.c); const nu=unitAt(B.r,B.c); return nu?nu.mid:null; },

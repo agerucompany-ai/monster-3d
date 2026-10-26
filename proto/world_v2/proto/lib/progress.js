@@ -93,8 +93,20 @@ P.init=function(o){ o=o||{}; BASE=o.base||scriptBase(); if(o.arc) CFG.arc=o.arc;
       const pg=SAVE[CFG.sub]; if(!pg.lines) pg.lines={}; if(!pg.quests) pg.quests={}; if(!pg.log) pg.log=[]; if(!pg.partyMax) pg.partyMax=CFG.partyMax; if(!pg.arc) pg.arc=CFG.arc;
       pg.roster=pg.roster.filter(c=>mon(c.mid)); pg.party=pg.party.filter(u=>pg.roster.some(c=>c.uid===u));
       if(!pg.party.length&&pg.roster.length) pg.party.push(pg.roster[0].uid);
-      legacySync(); emit('change',pg); return P; });
+      legacySync(); emit('change',pg); return loadMoves().then(()=>P); });
   return ready; };
+// ---------------------------------------------------------------- 技(2026-10-27 Phase B): stats_v2.json の覚える技・moves.json。battle.js が読んでいればそれを使う
+let LS={}, MV={}, STV={};
+function loadMoves(){ const MB=root.MonBattle;
+  if(MB && MB.v2Ready && MB.MOVES2){ MV=MB.MOVES2; for(const id in MB.MID){ const m=MB.MID[id]; if(m._v2){ LS[id]=m._v2; } } return Promise.resolve(); }
+  if(typeof fetch!=='function') return Promise.resolve();
+  return Promise.all([fetch(BASE+'data/stats_v2.json').then(r=>r.json()), fetch(BASE+'data/moves.json').then(r=>r.json())]).then(([st,mv])=>{ LS=st.creatures||{}; MV={}; const M=mv.moves||{}; for(const k in M) MV[k]=Object.assign({id:k},M[k]); }).catch(e=>console.warn('progress 技のデータ',e)); }
+// 戦う姿: その編の開始の段まで(持っている姿)
+function formFor(c){ let m=mon(c.mid), g=0; const st=P.startStage(); const own=new Set(P.ownedList()); while(m && m.evolves_to!=null && mon(m.evolves_to) && (mon(m.evolves_to).level||1)<=st && own.has(m.evolves_to) && g++<4) m=mon(m.evolves_to); return m?m.id:c.mid; }
+function learnAt(mid){ const L=LS[mid]||LS[String(mid)]; return L?(L.learnset||[]).filter(e=>MV[e.move]&&MV[e.move].enabled!==false):[]; }
+function movesAt(mid, lv){ const L=LS[mid]||LS[String(mid)]; return learnAt(mid).filter(e=>(L&&L.fixed)||(e.lv||1)<=lv).map(e=>MV[e.move]); }
+function newMovesBetween(mid, a, b){ const L=LS[mid]||LS[String(mid)]; if(!L||L.fixed) return []; return learnAt(mid).filter(e=>(e.lv||1)>a && (e.lv||1)<=b).map(e=>MV[e.move]); }
+P.movesOf=(c)=>{ const f=formFor(c); return movesAt(f, c.lv); }; P.formFor=formFor; P.newMovesBetween=newMovesBetween;
 P.ready=()=>ready||Promise.reject(new Error('Progress.init を先に'));
 P.attachSave=function(sv, fn){ SAVE=sv; onSave=fn||onSave; if(!SAVE[CFG.sub]) SAVE[CFG.sub]=migrate(SAVE); legacySync(); emit('change',prog()); };
 
@@ -169,7 +181,9 @@ P.applyResult=function(res, ctx){ const rows=[]; const pg=prog(); if(!pg) return
   const stage=(mid)=>stageOf(mid);
   const total=Math.round(ctx.enemy.reduce((s,e)=>s+CFG.expGain(e.lv||1, stage(e.mid), ctx.kind)*(e.pack?CFG.packExp:1),0))||CFG.expGain(1,1,ctx.kind);
   (res.party||[]).forEach((p,i)=>{ const ent=ctx.party[i]; const c=ent&&P.get(ent.uid); if(!c) return; const n=Math.max(1,Math.round(total*(p.out?1:CFG.benchExp))); const r=addExp(c,n); res.progress.exp.push(r);
-    rows.push(`${nameOf(c.mid)}　EXP +${n}`); if(r.after>r.before){ res.progress.lvup.push(r); rows.push(`<span class="lvup">${nameOf(c.mid)}　Lv${r.before} → Lv${r.after}</span>`); } });
+    rows.push(`${nameOf(c.mid)}　EXP +${n}`); if(r.after>r.before){ res.progress.lvup.push(r); rows.push(`<span class="lvup">${nameOf(c.mid)}　Lv${r.before} → Lv${r.after}</span>`);
+      const f=formFor(c); const nw=newMovesBetween(f, r.before, r.after); if(nw.length){ const L={uid:c.uid, mid:f, name:nameOf(f), moves:nw.map(x=>x.name)}; (res.progress.learn||(res.progress.learn=[])).push(L); rows.push(`<span class="lvup">新しい技を覚えた　${nameOf(f)}「${L.moves.join('」「')}」</span>`); } } });
+  if(res.progress.learn&&res.progress.learn.length) UI.learnNotice(res.progress.learn);
   if(res.rewards){ if(ctx.zeroday&&ctx.kind!=='wild'){ res.progress.gems=res.rewards.gems; if(res.rewards.gems) P.addGems(res.rewards.gems,'zeroday'); } else res.rewards.gems=0; }   // ジェムはゼロデイ(手下・幹部)を倒した時だけ(G2)
   if(res.caught&&res.caught.isNew){ const c=P.get(res.caught.uid); if(c) rows.push(`${nameOf(c.mid)}　Lv${c.lv}　${res.caught.inParty?'仲間':'牧場'}`); }
   P.save(); return rows; };
@@ -241,6 +255,19 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgLog{font-size:13px;font-weight:700;color:#c9d2ea;display:flex;flex-direction:column;gap:4px}
 .pgLog div{display:flex;justify-content:space-between;background:rgba(255,255,255,.06);border-radius:8px;padding:6px 10px}
 .pgLog .p{color:#8ff0b0}.pgLog .m{color:#ff9a8a}
+#pgLearn{position:absolute;left:0;right:0;margin:0 auto;top:calc(env(safe-area-inset-top,0px) + 70px);width:min(92vw,380px);box-sizing:border-box;background:rgba(12,18,44,.95);border:2px solid #ffd977;border-radius:16px;padding:10px 12px;display:none;pointer-events:auto;box-shadow:0 8px 24px rgba(0,0,0,.5);animation:pgPop .4s ease-out both}
+#pgLearn .t{font-size:16px;font-weight:900;color:#ffe9a8;letter-spacing:.08em;margin-bottom:6px;text-align:center}
+#pgLearn .r{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;padding:3px 0}
+#pgLearn .r img{width:40px;height:40px;object-fit:contain}
+#pgLearn .r span{color:#9fe0ff}
+.pgMv{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:8px 10px;margin:8px 0}
+.pgMvHd{display:flex;align-items:center;gap:6px;font-size:15px}.pgMvHd span{margin-left:auto;color:#ffd86b;font-weight:800}
+.pgSt{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:6px 0 2px;font-size:11px;color:#c9d2ea;text-align:center}
+.pgSt b{display:block;font-size:15px;color:#fff}
+.pgTy{display:inline-block;min-width:1.4em;padding:0 .2em;border-radius:5px;font-size:11px;font-weight:900;color:#fff;text-align:center;margin-right:3px;text-shadow:0 1px 1px rgba(0,0,0,.6)}
+.pgMvR{display:flex;align-items:center;gap:4px;font-size:13px;padding:4px 0;border-top:1px solid rgba(255,255,255,.07)}
+.pgMvR .lvx{min-width:2.6em;font-size:11px;color:#9aa7c4}.pgMvR .sp{margin-left:auto;font-size:11px;color:#c8d4f0;white-space:nowrap}
+.pgMvR.lock{opacity:.45}
 #pgToast{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);background:rgba(10,14,30,.92);border:1px solid rgba(255,217,119,.6);color:#ffe9a8;font-weight:800;font-size:15px;padding:10px 18px;border-radius:999px;display:none;pointer-events:none;white-space:nowrap}
 `;
 const REASON={zeroday:'ゼロデイ',cradle:'ゆりかご',dup:'ダブり',test:'テスト',start:'はじめ'};
@@ -254,6 +281,25 @@ UI.mount=function(o){ o=o||{}; if(R) return R; const st=document.createElement('
   R.querySelector('#pgClose').onclick=()=>UI.close();
   if(o.bar===false) R.querySelector('#pgBar').style.display='none';
   P.on('change',()=>{ UI.refresh(); }); UI.refresh(); return R; };
+const TYC={炎:'#e8503a',水:'#2f86c5',地:'#9c7a3c',風:'#4fa86a',雷:'#d6a915',闇:'#6a4a8c',氷:'#5cc8e0',光:'#f3d65a',竜:'#b15ad6',森:'#5cbf3a'};
+const CATL={heal:'回復',cure:'浄化',revive:'蘇生',buff:'強化',debuff:'弱体',move:'移動',ailment:'状態'};
+function tyb(t){ return `<span class="pgTy" style="background:${TYC[t]||'#666'}">${t}</span>`; }
+function rngS(mv){ if(mv.target==='map'||mv.target==='self'||mv.target==='fallen') return ''; const [a,b]=mv.range; const a2=(mv.target==='ally'||mv.target==='ally_all')?0:a; return a2===b?`${b}`:`${a2}-${b}`; }
+// 仲間の画面のカード: ステータス(Lv の倍率込み)と 覚えている技・次に覚える技
+UI.movesCard=function(c){ const d=el('div','pgMv'); if(!c) return d; const f=formFor(c); const L=LS[f]||LS[String(f)]; const x=statX(c.lv);
+  let h=`<div class="pgMvHd">${tyb(mon(f)?mon(f).type:'')}${mon(f)&&mon(f).type2?tyb(mon(f).type2):''}<b>${nameOf(f)}</b><span>Lv${c.lv}</span></div>`;
+  if(L) h+=`<div class="pgSt"><span>HP<b>${Math.round(L.hp*x)}</b></span><span>攻撃<b>${Math.round(L.atk*x)}</b></span><span>防御<b>${Math.round(L.def*x)}</b></span><span>素早さ<b>${Math.round(L.spd*x)}</b></span><span>移動<b>${L.mob}</b></span></div>`;
+  const all=learnAt(f); const got=all.filter(e=>(L&&L.fixed)||(e.lv||1)<=c.lv), next=all.filter(e=>!(L&&L.fixed)&&(e.lv||1)>c.lv).slice(0,3);
+  const row=(e,lock)=>{ const mv=MV[e.move]; return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${tyb(mv.type)}<b>${mv.name}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${(mv.category==='attack'||mv.category==='ailment')&&mv.power>0?'威'+mv.power:(CATL[mv.category]||'')}${rngS(mv)?'・'+rngS(mv):''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
+  h+=`<div class="pgSec"><span>技</span><span>${got.length}</span></div>`+got.map(e=>row(e,false)).join('')+next.map(e=>row(e,true)).join('');
+  d.innerHTML=h; return d; };
+// レベルアップで覚えた技のお知らせ(フィールドに戻ってから・タップで閉じる)
+UI.learnNotice=function(list){ if(typeof document==='undefined') return; if(!R) UI.mount({bar:false}); UI._learnQ=(UI._learnQ||[]).concat(list);
+  const show=()=>{ const br=document.getElementById('mbRoot'); if(br && br.style.display!=='none'){ setTimeout(show,300); return; }
+    let n=R.querySelector('#pgLearn'); if(!n){ n=el('div'); n.id='pgLearn'; R.appendChild(n); n.onclick=()=>{ n.style.display='none'; }; }
+    const q=UI._learnQ.splice(0); if(!q.length) return; n.innerHTML=`<div class="t">新しい技を覚えた</div>`+q.map(L=>`<div class="r"><img src="${IMG(L.mid)}" alt=""><b>${L.name}</b><span>${L.moves.map(m=>'「'+m+'」').join('')}</span></div>`).join('');
+    n.style.display='block'; clearTimeout(UI._lt); UI._lt=setTimeout(()=>{ n.style.display='none'; },5200); emit('learn',q); };
+  setTimeout(show,400); };
 UI.showBar=(v)=>{ if(R) R.querySelector('#pgBar').style.display=v===false?'none':'flex'; };
 UI.toast=function(t){ if(!R) return; const e=R.querySelector('#pgToast'); e.textContent=t; e.style.display='block'; clearTimeout(UI._tt); UI._tt=setTimeout(()=>e.style.display='none',1600); };
 UI.refresh=function(){ if(!R) return; R.querySelector('#pgBtGems').innerHTML=ICON('gem')+(+P.gems()||0); R.querySelector('#pgHeadGem').innerHTML=ICON('gem')+(+P.gems()||0); if(cur) UI.render(); };
@@ -266,6 +312,7 @@ UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const 
   if(cur==='party'){ T.textContent='仲間'; const party=P.party(), ranch=P.ranch(); const max=P.partyMax();
     B.appendChild(el('div','pgSec',`<span>つれていく</span><span>${party.length} / ${max}</span>`));
     const g1=el('div','pgGrid'); party.forEach((c,i)=>{ const d=card(c,{leader:i===0,on:pick===c.uid}); d.onclick=()=>{ if(pend){ P.swap(c.uid,pend); pend=null; pick=null; UI.toast('いれかえた'); UI.render(); return; } pick=pick===c.uid?null:c.uid; UI.render(); }; g1.appendChild(d); }); B.appendChild(g1);
+    if(pick) B.appendChild(UI.movesCard(P.get(pick)));
     if(pick&&party.some(c=>c.uid===pick)){ const a=el('div','pgAct'); const b1=el('button','pgBtn','リーダーにする'); b1.disabled=party[0].uid===pick; b1.onclick=()=>{ P.setLeader(pick); UI.render(); };
       const b2=el('button','pgBtn','牧場へ'); b2.disabled=party.length<=1; b2.onclick=()=>{ P.toRanch(pick); pick=null; UI.render(); }; a.appendChild(b1); a.appendChild(b2); B.appendChild(a); }
     B.appendChild(el('div','pgSec',`<span>牧場</span><span>${ranch.length}</span>`));
