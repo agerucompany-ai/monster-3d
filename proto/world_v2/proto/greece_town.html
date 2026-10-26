@@ -91,6 +91,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 #stTitle{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:flex-end;gap:14px;padding-bottom:calc(70px + env(safe-area-inset-bottom))}
 #stTitle h1{position:absolute;top:17%;left:0;right:0;margin:0;text-align:center;color:#fff;font-size:clamp(32px,9.5vw,58px);letter-spacing:.14em;text-shadow:0 3px 16px rgba(20,30,60,.6),0 0 3px rgba(20,30,60,.7)}
 #stTitle h1 small{display:block;font-size:.34em;letter-spacing:.3em;margin-top:8px;opacity:.9}
+#stTitle h1 img{display:block;width:88vw;max-width:560px;height:auto;margin:0 auto;filter:drop-shadow(0 4px 10px rgba(20,30,60,.55)) drop-shadow(0 0 2px rgba(20,30,60,.6))}   /* オーナーのロゴ(ui/logo.webp 1400×296・2026-10-26) */
 #stPick{position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);width:min(96vw,640px);display:none;flex-direction:column;align-items:center;gap:8px;z-index:2}
 #stPickCv{width:100%;aspect-ratio:3/1.3;display:block;border-radius:20px;background:radial-gradient(ellipse at 50% 72%,rgba(255,250,235,.96),rgba(236,224,200,.88));box-shadow:0 6px 18px rgba(20,20,30,.25)}
 #stPick .row{display:flex;width:100%;justify-content:space-around;gap:6px}
@@ -117,7 +118,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
   <img class="stP off" id="stR2" alt=""><img class="stP off" id="stL" alt=""><img class="stP off" id="stR" alt=""><div id="stPh"><img alt=""></div>
   <div id="stPick"><canvas id="stPickCv"></canvas><div class="row"><button data-m="1001">エンジュ</button><button data-m="1022">ビリトラ</button><button data-m="178">クマッパ</button></div><button class="stBtn go">この子にする</button></div>
   <div id="stBox"><b></b><p></p><i></i></div>
-  <div id="stTitle"><h1>テリオンモンスター<small>ギリシャ編</small></h1><button class="stBtn" id="btNew">はじめから</button><button class="stBtn sub" id="btCont">つづきから</button></div>
+  <div id="stTitle"><h1><img src="ui/logo.webp" alt="テリオンモンスター"></h1><button class="stBtn" id="btNew">はじめから</button><button class="stBtn sub" id="btCont">つづきから</button></div>
   <button id="stSkip">スキップ</button>
 </div>
 <script src="../../three.min.js"></script>
@@ -770,7 +771,7 @@ OB.bush=(o)=>{ const R=rng(((o.x*17+o.z*13)|0)+1), y=G(o.x,o.z)-0.08, n=2+((R()*
   leafCards(T(o.x,y,o.z),[0,s*0.55,0],[s*0.95,s*0.6,s*0.95],IS_MOBILE?10:14,0,0.55*s+0.2,['#7fa65a','#8fb466','#73984f'],R,0.3,0.8);
   if(o.flower||R()<0.35){ const fc=o.flower?pick(PAL.bougain,R):pick(['#fbf7ee','#f2c14e','#e77fb0','#c9a6ea'],R); for(let i=0;i<9;i++){ const a=R()*6.28, rr=R()*0.5*s; P_(sph(0.07,6,4),fc,T(o.x+Math.cos(a)*rr,y+s*(0.6+R()*0.5),o.z+Math.sin(a)*rr),{sway:0.3}); } }
   if(s>0.7) addCol({t:'c',x:o.x,z:o.z,r:0.4*s}); };
-OB.rock=(o)=>{ const R=rng(((o.x*23+o.z*19)|0)+5), y=G(o.x,o.z), s=0.4+R()*0.9; P_(blob(((o.x*3)|0),0.38,9,6),col3(pick(['#cdbfa6','#bfb39c','#d6c9b0','#b8ab94'],R)).getHex(),T(o.x,y+s*0.18,o.z,R()*6,s,s*0.6,s*(0.8+R()*0.4)),{vary:0.12,ao:y,aoH:0.4}); if(s>0.6) addCol({t:'c',x:o.x,z:o.z,r:s*0.75}); };
+OB.rock=(o)=>{ const R=rng(((o.x*23+o.z*19)|0)+5), y=G(o.x,o.z), s=(0.4+R()*0.9)*(o.s||1); P_(blob(((o.x*3)|0),0.38,9,6),col3(pick(o.cols||['#cdbfa6','#bfb39c','#d6c9b0','#b8ab94'],R)).getHex(),T(o.x,y+s*0.18,o.z,R()*6,s,s*0.6,s*(0.8+R()*0.4)),{vary:0.12,ao:y,aoH:0.4}); if(s>0.6) addCol({t:'c',x:o.x,z:o.z,r:s*0.75}); };
 OB.planter=(o)=>{ const y=G(o.x,o.z); P_(lathe('pl',[[0,0],[1.05,0],[1.15,0.5],[1.08,0.58],[0,0.58]],22),PAL.marble2,T(o.x,y,o.z),{ao:y}); OB.olive({x:o.x,z:o.z,s:0.75}); CUR.cols.pop(); addCol({t:'c',x:o.x,z:o.z,r:1.15});
   const R=rng(((o.x*3+o.z)|0)+40); for(let i=0;i<10;i++){ const a=i/10*6.28; P_(sph(0.08,6,4),pick(['#e2574c','#fbf7ee','#f08aa0'],R),T(o.x+Math.cos(a)*0.85,y+0.66,o.z+Math.sin(a)*0.85),{sway:0.2}); } };
 OB.bench=(o)=>{ const y=G(o.x,o.z), M=T(o.x,y,o.z,(o.rot||0)*DEG); for(const s of [-1,1]) P_(rbox(0.22,0.42,0.5,0.06,1),PAL.marble2,local(M,s*0.7,0.21,0),{ao:y}); for(let i=0;i<3;i++) P_(rbox(1.8,0.07,0.16,0.03,1),PAL.wood,local(M,0,0.46,-0.17+i*0.17)); P_(rbox(1.8,0.07,0.14,0.03,1),PAL.wood,local(M,0,0.75,-0.27,0,1,1,1,-0.2)); addCol({t:'b',x:o.x,z:o.z,hw:0.95,hd:0.32,rot:(o.rot||0)*DEG,top:y+0.8}); };
@@ -939,12 +940,12 @@ OB.skyboat=(o)=>{ const B=new Builder(); const save=CUR.B; CUR.B=B; const s=o.s|
   P_(rbox(2.64,0.3,7.0,0.14,1),0x3c8f9a,T(0,0.75,0)); CUR.B.add(rbox(2.2,0.12,6.4,0.05,1),MAT.glow,T(0,0.42,0),{col:0x9fe8ff,shadow:false}); for(const q of [-1,1]) P_(rbox(0.5,0.12,2.2,0.05,1),0x3c8f9a,T(q*1.5,1.3,1.2));
   CUR.B=save; const g=new THREE.Group(); B.build(g); g.scale.setScalar(s); g.position.set(o.x,(o.y!=null?o.y:0.6)*s,o.z); g.rotation.y=(o.rot||0)*DEG; CUR.extra.push(g); CUR.dyn.push({k:'hover',g,y:g.position.y}); addCol({t:'b',x:o.x,z:o.z,hw:1.4*s,hd:3.8*s,rot:(o.rot||0)*DEG,top:3}); };
 // 迷宮の壁(石の塊を並べる)。{t:'mazewall',pts,h,th}  長い壁は生成側で 12m ほどに切って置く(区画の読み込み単位に合わせる)
-OB.mazewall=(o)=>{ const R=rng(((o.pts[0][0]*7+o.pts[0][1]*13)|0)+97), h=o.h||3.0, th=o.th||1.2; const cols=['#6a665f','#737068','#5f5b55','#7b776f'];
+OB.mazewall=(o)=>{ const R=rng(((o.pts[0][0]*7+o.pts[0][1]*13)|0)+97), h=o.h||3.0, th=o.th||1.2; const cols=o.cols||['#6a665f','#737068','#5f5b55','#7b776f']; const band=o.band!=null?col3(o.band).getHex():0x4e4a45, cap=o.cap!=null?col3(o.cap).getHex():0x7a766e;   // cols/band/cap=エジプトの墓(砂色・2026-10-26)
   for(let k=0;k<o.pts.length-1;k++){ const [ax,az]=o.pts[k],[bx,bz]=o.pts[k+1], L=Math.hypot(bx-ax,bz-az), n=Math.max(1,Math.round(L/2.4)), ry=Math.atan2(-(bz-az),bx-ax), sl=L/n;
     for(let i=0;i<n;i++){ const t=(i+0.5)/n, x=lerp(ax,bx,t), z=lerp(az,bz,t), y=G(x,z); const c=col3(pick(cols,R)).getHex();
-      CUR.B.add(rbox(sl+0.04,h,th,0.1,1),MAT.stone,T(x,y+h/2-0.1,z,ry),{col:c,ao:y,vary:0.12,wob:0.03}); P_(rbox(sl+0.08,0.2,th+0.1,0.04,1),0x4e4a45,T(x,y+h*0.52,z,ry)); P_(rbox(sl+0.1,0.3,th+0.16,0.05,1),0x7a766e,T(x,y+h-0.08,z,ry));
+      CUR.B.add(rbox(sl+0.04,h,th,0.1,1),MAT.stone,T(x,y+h/2-0.1,z,ry),{col:c,ao:y,vary:0.12,wob:0.03}); P_(rbox(sl+0.08,0.2,th+0.1,0.04,1),band,T(x,y+h*0.52,z,ry)); P_(rbox(sl+0.1,0.3,th+0.16,0.05,1),cap,T(x,y+h-0.08,z,ry));
       addCol({t:'b',x,z,hw:sl/2+0.02,hd:th/2,rot:ry,top:y+h}); } }
-  if(!o.nopost) for(const [px,pz] of [o.pts[0],o.pts[o.pts.length-1]]){ const y=G(px,pz); CUR.B.add(rbox(th+0.3,h+0.3,th+0.3,0.08,1),MAT.stone,T(px,y+h/2,pz),{col:0x6f6b64,ao:y,vary:0.1}); } };
+  if(!o.nopost) for(const [px,pz] of [o.pts[0],o.pts[o.pts.length-1]]){ const y=G(px,pz); CUR.B.add(rbox(th+0.3,h+0.3,th+0.3,0.08,1),MAT.stone,T(px,y+h/2,pz),{col:o.cols?col3(o.cols[0]).getHex():0x6f6b64,ao:y,vary:0.1}); } };
 // 壁のたいまつ(光の玉+にじみ)。{t:'torch',x,z,col}
 OB.torch=(o)=>{ const y=G(o.x,o.z), c=o.col?col3(o.col).getHex():0xffb066; P_(rbox(0.16,0.5,0.16,0.03,1),0x4a4540,T(o.x,y+1.65,o.z)); P_(cyl(0.11,0.06,0.22,8),0x5a5048,T(o.x,y+2.0,o.z));
   CUR.B.add(sph(0.16,10,8),MAT.glow,T(o.x,y+2.18,o.z),{col:c,shadow:false}); CUR.B.add(sph(0.34,8,6),MAT.holo,T(o.x,y+2.18,o.z),{col:c,shadow:false}); FX.lamps.push([o.x,y+2.1,o.z]); };
@@ -1322,6 +1323,147 @@ OB.seadeck=(o)=>{ const w=o.w||20, d=o.d||16, h=o.h||2.4, M=T(o.x,h,o.z,0); P_(r
   for(let i=0;i<=Math.round(w/6);i++) for(let j=0;j<=Math.round(d/6);j++) P_(cyl(0.3,0.36,h+2.5,8),0xdfe3e7,local(M,-w/2+1+i*(w-2)/Math.round(w/6),-h/2-1,-d/2+1+j*(d-2)/Math.round(d/6)));
   CUR.B.add(rbox(w-1,0.06,0.08,0.02,1),MAT.glow,local(M,0,0.05,d/2-0.3),{col:0x8fe4ff,shadow:false}); CUR.B.add(rbox(w-1,0.06,0.08,0.02,1),MAT.glow,local(M,0,0.05,-d/2+0.3),{col:0x8fe4ff,shadow:false}); };
 
+// ---- エジプト編のマップの形(2026-10-26): 未来のカイロ・ギザの台地・ナイルデルタ・ルクソール(カルナック)・王家の谷・王の墓・アスワン・アブ・シンベル・白砂漠・紅海。軽い形(角丸の箱・円柱・4角すい)だけで作り、区画ごとに1メッシュにまとまる ----
+const EPAL={ sand:['#d9c39a','#cfb88e','#e2cda6','#c9ad82'], lime:0xefe6d2, lime2:0xe4d9c0, granite:0xa87c74, granite2:0x8f6a62, nemes:0x2f5f9e, white:0xf6f3ec, chalk:['#f4f1ea','#ece8df','#faf8f3','#e6e1d6'], palm:['#5f8f3e','#6f9d49','#4f7d34','#7aa552'], coral:['#f07a8a','#f4a261','#c77dff','#ffd166','#ff8fa3','#6ad0c8'] };
+function esand(R){ return col3(pick(EPAL.sand,R)).getHex(); }
+// 4角すい(ピラミッド)。b=底辺の半分。thetaStart=PI/4 で面が軸に向く
+function pyr(b,h){ return cyl(0,b*1.41421,h,4,1,false,Math.PI/4); }
+// ピラミッド(ギザ): 4角すい。cap=上の白い化粧石(カフラー王)・step=段ピラミッド(サッカラ)。{t:'pyramid',x,z,b(底辺の半分),h,cap,step,col}
+OB.pyramid=(o)=>{ const R=rng(((o.x*7+o.z*3)|0)+13), b=o.b||20, h=o.h||13, y=o.y!=null?o.y:footY(o.x,o.z,b*2,b*2,0)-0.6, M=T(o.x,y,o.z,0), c=o.col?col3(o.col).getHex():esand(R);
+  if(o.step){ const n=o.step, sh=h/n; for(let i=0;i<n;i++){ const k=1-i/(n+0.6); P_(rbox(b*2*k,sh+0.1,b*2*k,0.12,1),c,local(M,0,i*sh+sh/2,0),{ao:y,aoH:4,vary:0.05}); } }
+  else { P_(pyr(b,h),c,local(M,0,h/2,0),{ao:y,aoH:6,vary:0.04}); if(o.cap){ const k=o.cap; P_(pyr(b*k*1.01,h*k*1.01),EPAL.lime,local(M,0,h*(1-k)+h*k*1.01/2,0),{vary:0.02}); } }
+  addCol({t:'b',x:o.x,z:o.z,hw:b*0.97,hd:b*0.97,rot:0,top:y+h}); };
+// スフィンクス(ギザ・参道の小さなスフィンクス): 伏せたライオンの体・前足・ネメス頭巾の頭。正面は +z(rot で回す)。{t:'sphinx',x,z,rot,L,col}
+OB.sphinx=(o)=>{ const rot=(o.rot||0)*DEG, L=o.L||16, k=L/16, y=footY(o.x,o.z,L*0.4,L,rot), M=T(o.x,y,o.z,rot), R=rng(((o.x*3+o.z*5)|0)+21), c=o.col?col3(o.col).getHex():esand(R), c2=col3(c).multiplyScalar(0.9).getHex();
+  P_(rbox(5.2*k,0.5*k,L+1.6*k,0.08,1),EPAL.lime2,local(M,0,0.25*k,0),{ao:y});
+  P_(rbox(4.6*k,3.6*k,L*0.62,0.6*k,2),c,local(M,0,0.5*k+1.8*k,-L*0.12),{ao:y+0.5*k,aoH:2,vary:0.05});
+  for(const s of [-1,1]) P_(rbox(1.5*k,1.5*k,L*0.5,0.45*k,2),c,local(M,s*1.6*k,0.5*k+0.75*k,L*0.25),{ao:y+0.5*k,vary:0.05});
+  P_(rbox(3.4*k,2.2*k,3.2*k,0.5*k,2),c2,local(M,0,0.5*k+3.9*k,L*0.14),{vary:0.05});
+  P_(rbox(2.6*k,2.8*k,2.4*k,0.5*k,2),c2,local(M,0,0.5*k+5.8*k,L*0.18),{vary:0.04});
+  P_(cyl(1.2*k,2.4*k,3.2*k,4,1,false,Math.PI/4),c,local(M,0,0.5*k+5.9*k,L*0.14,0,1.5,1,0.75),{vary:0.04});
+  P_(rbox(1.2*k,0.5*k,0.5*k,0.08,1),EPAL.nemes,local(M,0,0.5*k+7.1*k,L*0.18+1.1*k)); P_(rbox(2.0*k,0.22*k,0.3*k,0.05,1),EPAL.nemes,local(M,0,0.5*k+6.9*k,L*0.18+1.15*k));
+  for(const s of [-1,1]) P_(sph(0.16*k,6,5),0x3a3430,local(M,s*0.5*k,0.5*k+6.1*k,L*0.18+1.2*k));
+  addCol({t:'b',x:o.x,z:o.z,hw:2.6*k,hd:L/2+0.8*k,rot,top:y+9*k}); };
+// オベリスク(4角の細い柱・金の先)。{t:'obelisk',x,z,h}
+OB.obelisk=(o)=>{ const y=G(o.x,o.z), h=o.h||9, M=T(o.x,y,o.z,0), c=o.col?col3(o.col).getHex():EPAL.granite;
+  P_(rbox(1.6,0.6,1.6,0.05,1),EPAL.lime2,local(M,0,0.3,0),{ao:y}); P_(cyl(0.7*1.414,1.0*1.414,h,4,1,false,Math.PI/4),c,local(M,0,0.6+h/2,0),{ao:y,aoH:3,vary:0.05}); P_(pyr(0.7,1.0),CPAL.gold,local(M,0,0.6+h+0.5,0));
+  CUR.B.add(rbox(0.06,h*0.8,0.06,0.01,1),MAT.glow,local(M,0,0.6+h/2,1.01),{col:0xffd36b,shadow:false}); addCol({t:'b',x:o.x,z:o.z,hw:1.0,hd:1.0,rot:0,top:y+h}); };
+// 神殿の塔門(パイロン): 2つの台形の塔と間のまぐさ・旗竿。門は中央(幅 gap)。正面は +z。{t:'tpylon',x,z,rot,w,h,d,gap}
+OB.tpylon=(o)=>{ const rot=(o.rot||0)*DEG, w=o.w||26, h=o.h||10, d=o.d||5, gap=o.gap||5, y=footY(o.x,o.z,w,d,rot), M=T(o.x,y,o.z,rot), R=rng(((o.x*5+o.z*7)|0)+31), c=esand(R), tw=(w-gap)/2;
+  for(const s of [-1,1]){ const cx=s*(gap/2+tw/2); P_(cyl(0.78*1.414,1.0*1.414,h,4,1,false,Math.PI/4),c,local(M,cx,h/2,0,0,tw/2,1,d/2),{ao:y,aoH:4,vary:0.05}); P_(rbox(tw*0.82,0.6,d*0.82,0.05,1),col3(c).multiplyScalar(0.9).getHex(),local(M,cx,h+0.25,0));
+    for(let i=0;i<2;i++){ const px=cx+(i-0.5)*tw*0.4; P_(cyl(0.1,0.12,h*1.2,6),0xd8d0c0,local(M,px,h*0.6,d/2+0.4)); P_(rbox(0.5,1.6,0.04,0.02,1),[0xe2574c,0x3f74b0][i],local(M,px+0.3,h*1.05,d/2+0.4),{sway:0.5}); }
+    CUR.B.add(rbox(tw*0.5,0.05,0.05,0.01,1),MAT.glow,local(M,cx,h*0.3,d/2+0.05),{col:0xffd36b,shadow:false});
+    _v.set(cx,0,0).applyMatrix4(M); addCol({t:'b',x:_v.x,z:_v.z,hw:tw/2*0.95,hd:d/2*0.95,rot,top:y+h}); }
+  P_(rbox(gap+1.2,1.4,d*0.9,0.06,1),c,local(M,0,h*0.78,0),{vary:0.05}); for(const s of [-1,1]) P_(rbox(0.3,h*0.7,0.3,0.03,1),col3(c).multiplyScalar(0.85).getHex(),local(M,s*(gap/2-0.15),h*0.36,d/2*0.9)); };
+// 大列柱室(カルナック): パピルスの柱の格子と上の梁(一部欠ける)。{t:'hypostyle',x,z,rot,nx,nz,sp,ch,cr,ruin}
+OB.hypostyle=(o)=>{ const rot=(o.rot||0)*DEG, nx=o.nx||7, nz=o.nz||4, sp=o.sp||4.2, ch=o.ch||9, cr=o.cr||0.9, W=(nx-1)*sp, L=(nz-1)*sp, y=footY(o.x,o.z,W*0.6,L*0.6,rot), M=T(o.x,y,o.z,rot), R=rng(((o.x*7+o.z*3)|0)+41), c=esand(R), c2=col3(c).multiplyScalar(0.88).getHex(), ruin=o.ruin||0.25;
+  P_(rbox(W+6,0.4,L+6,0.05,1),EPAL.lime2,local(M,0,0.2,0),{ao:y,vary:0.04});
+  const up=[]; for(let i=0;i<nx;i++){ up.push([]); for(let j=0;j<nz;j++){ const x=-W/2+i*sp, z=-L/2+j*sp; const full=R()>ruin*0.35; const h=full?ch:ch*(0.3+R()*0.4); up[i].push(full);
+    P_(cyl(cr*0.86,cr,h,10),c,local(M,x,0.4+h/2,z),{ao:y+0.4,aoH:3,vary:0.05}); P_(cyl(cr*0.8,cr*0.86,0.35,10),0x3f74b0,local(M,x,0.4+h*0.72,z)); P_(cyl(cr*0.8,cr*0.86,0.35,10),0xc9513f,local(M,x,0.4+h*0.5,z));
+    if(full){ P_(cyl(cr*1.7,cr*0.86,1.3,10),c2,local(M,x,0.4+h+0.6,z),{vary:0.05}); P_(rbox(cr*2.2,0.5,cr*2.2,0.05,1),c,local(M,x,0.4+h+1.5,z)); }
+    _v.set(x,0,z).applyMatrix4(M); addCol({t:'c',x:_v.x,z:_v.z,r:cr+0.15,top:y+h}); } }
+  for(let i=0;i<nx-1;i++) for(let j=0;j<nz;j++){ if(up[i][j]&&up[i+1][j]&&R()>ruin){ const x=-W/2+(i+0.5)*sp, z=-L/2+j*sp; P_(rbox(sp+0.2,1.0,cr*1.6,0.05,1),c,local(M,x,0.4+ch+2.25,z),{vary:0.05}); } }
+  for(let i=0;i<nx;i++) for(let j=0;j<nz-1;j++){ if(up[i][j]&&up[i][j+1]&&R()>ruin*1.4){ const x=-W/2+i*sp, z=-L/2+(j+0.5)*sp; P_(rbox(cr*1.6,0.9,sp+0.2,0.05,1),c2,local(M,x,0.4+ch+2.2,z),{vary:0.05}); } }
+  for(let i=1;i<nx;i++) CUR.B.add(rbox(0.05,0.05,L,0.01,1),MAT.glow,local(M,-W/2+(i-0.5)*sp,0.46,0),{col:0xffd36b,shadow:false}); };
+// 座った巨像(アブ・シンベル・メムノンの巨像): 玉座・脚・胴・頭と二重冠。正面は +z。{t:'colossus',x,z,rot,h,col}
+OB.colossus=(o)=>{ const rot=(o.rot||0)*DEG, h=o.h||12, k=h/12, y=o.y!=null?o.y:footY(o.x,o.z,4*k,6*k,rot), M=T(o.x,y,o.z,rot), R=rng(((o.x*11+o.z*3)|0)+51), c=o.col?col3(o.col).getHex():esand(R), c2=col3(c).multiplyScalar(0.92).getHex();
+  P_(rbox(4.4*k,1.0*k,6.0*k,0.1,1),EPAL.lime2,local(M,0,0.5*k,0),{ao:y,vary:0.04});
+  P_(rbox(3.8*k,4.2*k,3.0*k,0.2,1),c2,local(M,0,1.0*k+2.1*k,-1.2*k),{ao:y+k,aoH:2,vary:0.05});
+  for(const s of [-1,1]){ P_(rbox(1.3*k,1.2*k,3.6*k,0.3*k,2),c,local(M,s*1.1*k,1.0*k+3.7*k,0.6*k),{vary:0.04}); P_(rbox(1.3*k,2.6*k,1.3*k,0.3*k,2),c,local(M,s*1.1*k,1.0*k+1.3*k,2.0*k),{ao:y+k,vary:0.04}); }
+  P_(rbox(3.4*k,4.6*k,2.2*k,0.4*k,2),c,local(M,0,1.0*k+6.5*k,-1.0*k),{vary:0.04});
+  for(const s of [-1,1]) P_(rbox(0.9*k,0.9*k,3.0*k,0.3*k,2),c,local(M,s*1.5*k,1.0*k+4.7*k,0.2*k),{vary:0.04});
+  P_(rbox(2.0*k,2.2*k,2.0*k,0.5*k,2),c2,local(M,0,1.0*k+9.9*k,-1.0*k),{vary:0.04});
+  P_(cyl(0.9*k,1.9*k,2.4*k,4,1,false,Math.PI/4),c,local(M,0,1.0*k+10.0*k,-1.2*k,0,1.4,1,0.7),{vary:0.04});
+  P_(cyl(0.5*k,0.9*k,2.0*k,10),EPAL.white,local(M,0,1.0*k+11.9*k,-1.0*k),{vary:0.03}); P_(cyl(0.95*k,1.0*k,0.5*k,10),0xc9513f,local(M,0,1.0*k+11.2*k,-1.0*k));
+  addCol({t:'b',x:o.x,z:o.z,hw:2.3*k,hd:3.2*k,rot,top:y+h}); };
+// アブ・シンベルの大神殿: 崖(台形)・正面の斜めの壁・4体の座像・門。正面は +z。{t:'abusimbel',x,z,rot,w,h}
+OB.abusimbel=(o)=>{ const rot=(o.rot||0)*DEG, w=o.w||44, h=o.h||22, y=footY(o.x,o.z,w*0.6,10,rot), M=T(o.x,y,o.z,rot), R=rng(((o.x*3+o.z*7)|0)+61), c=esand(R);
+  P_(cyl(0.72*1.414,1.0*1.414,h,4,1,false,Math.PI/4),col3(c).multiplyScalar(0.95).getHex(),local(M,0,h/2-0.5,-14,0,w/2+10,1,18),{ao:y,aoH:8,vary:0.06});
+  P_(rbox(w,h*0.9,2.4,0.2,1),c,local(M,0,h*0.45-0.3,-1.2,0,1,1,1,-0.08),{ao:y,aoH:4,vary:0.05});
+  P_(rbox(w+2,1.4,3.0,0.1,1),col3(c).multiplyScalar(0.9).getHex(),local(M,0,h*0.9-0.6,-1.5)); for(let i=0;i<Math.round(w/2.2);i++) P_(sph(0.45,8,6),col3(c).multiplyScalar(0.85).getHex(),local(M,-w/2+1.1+i*2.2,h*0.9+0.4,0.1));
+  const n=o.n||4, cw=w/(n+0.4); for(let i=0;i<n;i++){ const x=-w/2+cw*0.7+i*cw; _v.set(x,0,2.6).applyMatrix4(M); OB.colossus({x:_v.x,z:_v.z,rot:o.rot||0,h:h*0.68,y:y,col:o.col}); }
+  P_(rbox(4.0,6.0,1.2,0.05,1),0x1a1812,local(M,0,3.0,0.6)); P_(rbox(5.2,0.8,1.4,0.05,1),c,local(M,0,6.6,0.7)); CUR.B.add(cyl(0.9,0.9,0.1,16),MAT.glow,local(M,0,8.2,0.9),{col:0xffd36b,shadow:false});
+  addCol({t:'b',x:o.x,z:o.z,hw:w/2+2,hd:4,rot,top:y+h}); _v.set(0,0,-14).applyMatrix4(M); addCol({t:'b',x:_v.x,z:_v.z,hw:w/2+10,hd:14,rot,top:y+h}); };
+// 段の神殿(ハトシェプスト女王葬祭殿): 3段のテラスと柱廊・中央のスロープ。正面は +z・崖は地形で。{t:'terraces',x,z,rot,w}
+OB.terraces=(o)=>{ const rot=(o.rot||0)*DEG, w=o.w||44, y=footY(o.x,o.z,w*0.5,10,rot), M=T(o.x,y,o.z,rot), c=EPAL.lime, c2=EPAL.lime2;
+  let yy=0; for(let t=0;t<3;t++){ const d=14-t*2, z=-t*11, th=3.6; P_(rbox(w-t*4,th,d,0.1,1),t%2?c2:c,local(M,0,yy+th/2,z-d/2+6),{ao:y+yy,aoH:2,vary:0.03});
+    const n=Math.round((w-t*4)/2.4); for(let i=0;i<n;i++){ const x=-(w-t*4)/2+1.2+i*(w-t*4-2.4)/(n-1); if(Math.abs(x)<2.6) continue; P_(rbox(0.9,3.2,0.9,0.06,1),c,local(M,x,yy+th+1.6,z+5.4),{ao:y+yy+th,vary:0.04}); }
+    P_(rbox(w-t*4+0.4,0.5,2.2,0.05,1),c2,local(M,0,yy+th+3.45,z+5.4)); CUR.B.add(rbox(w-t*4-1,0.05,0.05,0.01,1),MAT.glow,local(M,0,yy+th+0.05,z+6.1),{col:0xffd36b,shadow:false});
+    P_(rbox(4.4,0.4,12,0.05,1),c2,local(M,0,yy+th/2+1.6,z+6-5.5,0,1,1,1,-Math.atan2(th,12)));
+    _v.set(0,0,z).applyMatrix4(M); addCol({t:'b',x:_v.x,z:_v.z,hw:(w-t*4)/2,hd:d/2+1,rot,top:y+yy+th+4}); yy+=th; }
+  P_(rbox(10,4.0,8,0.1,1),c,local(M,0,yy+2,-28),{vary:0.03}); };
+// ミナレット(モスクの塔)。{t:'minaret',x,z,h}
+OB.minaret=(o)=>{ const y=G(o.x,o.z), h=o.h||18, M=T(o.x,y,o.z,0), c=o.col?col3(o.col).getHex():0xe9e2d2;
+  P_(rbox(2.4,h*0.3,2.4,0.1,1),c,local(M,0,h*0.15,0),{ao:y,aoH:2,vary:0.03}); P_(cyl(0.9,1.0,h*0.6,8),c,local(M,0,h*0.3+h*0.3,0),{vary:0.03});
+  for(const k of [0.52,0.78]){ P_(cyl(1.5,1.1,0.5,10),col3(c).multiplyScalar(0.9).getHex(),local(M,0,h*k,0)); for(let i=0;i<8;i++){ const a=i/8*6.283; P_(rbox(0.08,0.9,0.08,0.02,1),c,local(M,Math.cos(a)*1.4,h*k+0.6,Math.sin(a)*1.4)); } }
+  P_(cyl(0.6,0.7,h*0.12,8),c,local(M,0,h*0.9+h*0.06,0)); P_(cyl(0,0.8,2.2,8),0x3f8f7a,local(M,0,h*0.96+1.1,0)); CUR.B.add(sph(0.2,8,6),MAT.glow,local(M,0,h*0.96+2.4,0),{col:0xffd36b,shadow:false}); addCol({t:'c',x:o.x,z:o.z,r:1.4,top:y+h}); };
+// モスク(丸屋根とミナレット・ムハンマド・アリのモスクの風)。{t:'mosque',x,z,rot,w,d}
+OB.mosque=(o)=>{ const rot=(o.rot||0)*DEG, w=o.w||18, d=o.d||18, y0=footY(o.x,o.z,w,d,rot), M=T(o.x,y0,o.z,rot), c=0xe9e2d2, dome=0x8fa3a8;
+  P_(rbox(w+2,0.6,d+2,0.08,1),0xdcd5c5,local(M,0,0.3,0),{ao:y0}); P_(rbox(w,7,d,0.2,1),c,local(M,0,0.6+3.5,0),{ao:y0+0.6,aoH:2,vary:0.03});
+  P_(cyl(w*0.32,w*0.34,1.6,16),c,local(M,0,7.6+0.8,0)); P_(sph(w*0.34,18,10,0,Math.PI*2,0,Math.PI/2),dome,local(M,0,9.2,0),{vary:0.03}); P_(cyl(0.1,0.2,1.6,6),CPAL.gold,local(M,0,9.2+w*0.34+0.8,0));
+  for(const sx of [-1,1]) for(const sz of [-1,1]) P_(sph(w*0.14,12,8,0,Math.PI*2,0,Math.PI/2),dome,local(M,sx*w*0.3,7.6,sz*d*0.3),{vary:0.03});
+  for(let i=0;i<5;i++){ CUR.B.add(rbox(1.0,2.6,0.1,0.3,1),MAT.win,local(M,-w/2+2+i*(w-4)/4,2.4,d/2+0.02),{col:0x6a8aa8}); } P_(rbox(2.2,3.6,0.3,0.4,1),0x5a4a3a,local(M,0,1.9,d/2+0.1));
+  addCol({t:'b',x:o.x,z:o.z,hw:w/2+0.5,hd:d/2+0.5,rot,top:y0+12}); for(const s of [-1,1]){ _v.set(s*(w/2+2.5),0,d/2-1).applyMatrix4(M); OB.minaret({x:_v.x,z:_v.z,h:o.mh||22}); } };
+// カイロタワー(蓮の花の形の塔・ゲジーラ島)。{t:'cairotower',x,z,h}
+OB.cairotower=(o)=>{ const y=G(o.x,o.z), h=o.h||60, M=T(o.x,y,o.z,0), c=0xe3d8bf, c2=0xcdbf9d;
+  P_(cyl(5.0,5.6,1.4,16),0xdcd5c5,local(M,0,0.7,0),{ao:y}); P_(cyl(2.6,2.6,h*0.86,14),c,local(M,0,1.4+h*0.43,0),{ao:y,aoH:6,vary:0.03});
+  for(let i=1;i<10;i++){ const yy=1.4+i*h*0.086; P_(cyl(2.85,2.85,0.22,14),c2,local(M,0,yy,0)); }   // 格子の帯
+  for(let i=0;i<16;i++){ const a=i/16*6.283; P_(rbox(0.14,h*0.86,0.14,0.02,1),c2,local(M,Math.cos(a)*2.68,1.4+h*0.43,Math.sin(a)*2.68,-a)); for(const s of [-1,1]) P_(rbox(0.07,h*0.86,0.07,0.01,1),c2,local(M,Math.cos(a+s*0.1)*2.7,1.4+h*0.43,Math.sin(a+s*0.1)*2.7,-a,1,1,1,0,s*0.028)); }   // 縦の骨と斜めの格子
+  P_(cyl(5.8,2.8,4.6,14),c,local(M,0,1.4+h*0.86+2.3,0),{vary:0.03}); P_(cyl(6.0,6.0,0.5,16),c2,local(M,0,1.4+h*0.86+4.6,0)); CUR.B.add(cyl(6.1,6.1,0.4,16,1,true),MAT.glow,local(M,0,1.4+h*0.86+3.6,0),{col:0xffd36b,shadow:false});   // 蓮の花の展望台
+  P_(cyl(3.2,3.4,1.2,14),c,local(M,0,1.4+h*0.86+5.4,0)); P_(cyl(0.1,0.3,h*0.12,6),0xd0d4da,local(M,0,1.4+h*0.92+h*0.06,0));
+  addCol({t:'c',x:o.x,z:o.z,r:3.2,top:y+h}); };
+// カイロの古い街の家(ハーン・ハリーリ): 砂色の平らな屋根・アーチの戸口・木の格子窓(マシュラビーヤ)・しま模様の日よけ。{t:'ehouse',x,z,rot,w,d,h,tier,awn}
+OB.ehouse=(o)=>{ const R=rng(((o.x*13+o.z*7)|0)+81), rot=(o.rot||0)*DEG, w=o.w||6.5, d=o.d||5.5, h=o.h||3.4, tier=o.tier||1, y0=footY(o.x,o.z,w,d,rot), M=T(o.x,y0,o.z,rot), c=o.col?col3(o.col).getHex():pick([0xe6d6b4,0xdcc9a2,0xefe1c2,0xd6c39c],R), c2=col3(c).multiplyScalar(0.9).getHex(), H=h*tier;
+  P_(rbox(w+0.4,0.4,d+0.4,0.06,1),c2,local(M,0,0.2,0),{ao:y0}); P_(rbox(w+0.3,2.4,d+0.3,0.1,1),c2,local(M,0,-1.1,0),{ao:y0-1}); P_(rbox(w,H,d,0.1,1),c,local(M,0,0.4+H/2,0),{ao:y0+0.4,aoH:2,vary:0.04,wob:0.02});
+  P_(rbox(w+0.3,0.5,d+0.3,0.05,1),c2,local(M,0,0.4+H+0.2,0)); { const nb=Math.max(2,Math.round(w/1.4)); for(let i=0;i<nb;i++) P_(rbox(0.6,0.5,0.4,0.08,1),c2,local(M,-w/2+0.5+i*(w-1)/(nb-1),0.4+H+0.65,d/2-0.1)); }
+  P_(cyl(0.9,0.9,0.3,12,1,false,0,Math.PI),0x5a4a3a,local(M,0,0.4+1.6,d/2+0.02,0,1,1,1,Math.PI/2)); P_(rbox(1.8,1.6,0.14,0.03,1),0x5a4a3a,local(M,0,0.4+0.8,d/2+0.02));
+  for(let t=0;t<tier;t++) for(const s of [-1,1]){ const yy=0.4+t*h+h*0.55; P_(rbox(1.2,1.3,0.5,0.04,1),0x6e4a32,local(M,s*w*0.3,yy,d/2+0.2)); P_(rbox(1.0,1.1,0.1,0.02,1),0x2a221c,local(M,s*w*0.3,yy,d/2+0.46)); for(let i=0;i<4;i++){ P_(rbox(0.03,1.0,0.04,0.01,1),0xd9b98a,local(M,s*w*0.3-0.36+i*0.24,yy,d/2+0.48)); P_(rbox(1.0,0.03,0.04,0.01,1),0xd9b98a,local(M,s*w*0.3,yy-0.36+i*0.24,d/2+0.48)); } }
+  if(o.awn){ const ac=col3(o.awn).getHex(); for(let i=0;i<5;i++) P_(rbox(w*0.9/5,0.06,1.6,0.02,1),i%2?ac:0xf6f3ec,local(M,-w*0.45+w*0.9/10+i*w*0.9/5,0.4+2.35,d/2+0.9,0,1,1,1,0.18)); for(const s of [-1,1]) P_(rbox(0.06,2.3,0.06,0.01,1),0xd0c0a0,local(M,s*w*0.44,0.4+1.15,d/2+1.6)); }
+  CUR.B.add(sph(0.09,6,5),MAT.glow,local(M,1.2,0.4+2.2,d/2+0.3),{col:0xffd080,shadow:false}); FX.lamps.push([o.x,y0+2.6,o.z]);
+  addCol({t:'b',x:o.x,z:o.z,hw:w/2+0.2,hd:d/2+0.2,rot,top:y0+H+1}); _v.set(0,0,d/2+0.9).applyMatrix4(M); return {door:[_v.x,_v.z]}; };
+// ファルーカ(ナイルの白い三角帆の船)。水の上で揺れる。{t:'felucca',x,z,rot,s}
+OB.felucca=(o)=>{ const B=new Builder(); const save=CUR.B; CUR.B=B; const s=o.s||1;
+  P_(rbox(2.2,0.9,7.0,0.5,2),0xf6f2ea,T(0,0.5,0)); P_(rbox(2.24,0.22,6.2,0.1,1),0x3f74b0,T(0,0.82,0)); P_(rbox(1.6,0.08,5.6,0.05,1),PAL.wood,T(0,0.96,0));
+  P_(cyl(0.06,0.09,7.5,6),0x8a6a46,T(0.3,4.2,-0.6,0,1,1,1,0,-0.18)); P_(cyl(0.05,0.06,9.5,6),0x8a6a46,T(0.1,5.6,0.4,0,1,1,1,0.95,0));
+  CUR.B.add(prism(8.2,5.6,0.06),MAT.flag,T(0.2,3.0,0.6,Math.PI/2,1,1,1,0,0),{col:0xfbf9f2,sway:(x,y)=>clamp((y-1.5)/5,0,1)*0.4});
+  CUR.B=save; const g=new THREE.Group(); B.build(g); g.scale.setScalar(s); g.position.set(o.x,0,o.z); g.rotation.y=(o.rot||0)*DEG; CUR.extra.push(g); CUR.dyn.push({k:'boat',g,ph:o.x*0.3}); addCol({t:'b',x:o.x,z:o.z,hw:1.2*s,hd:3.6*s,rot:(o.rot||0)*DEG,top:2}); };
+// パピルスの茂み(ナイルの湿地)。{t:'papyrus',x,z,s}
+OB.papyrus=(o)=>{ const R=rng(((o.x*19+o.z*7)|0)+91), s=o.s||1, y=G(o.x,o.z)-0.05, M=T(o.x,y,o.z,R()*6.28,s), n=IS_MOBILE?5:7; _v.set(0,2.8,0).applyMatrix4(M); const nc=[_v.x,_v.y,_v.z,1.2];
+  for(let i=0;i<n;i++){ const a=R()*6.28, rr=R()*0.45, hh=2.2+R()*1.2, tx=(R()-0.5)*0.25, tz=(R()-0.5)*0.25; P_(cyl(0.03,0.05,hh,4),0x6f9a4a,MM(M,T(Math.cos(a)*rr,hh/2,Math.sin(a)*rr,0,1,1,1,tx,tz)),{ao:y,aoH:1.0});
+    P_(blob(i+((o.x)|0),0.3,7,5),col3(pick(['#9ccf7a','#b5d98a','#86b964'],R)).getHex(),MM(M,T(Math.cos(a)*rr+tz*hh,hh+0.1,Math.sin(a)*rr-tx*hh,R()*6,0.42,0.32,0.42)),{leaf:1,sway:0.5,nc}); }
+  addCol({t:'c',x:o.x,z:o.z,r:0.4*s}); };
+// ナツメヤシ(少し曲がった幹と放射する葉・実の房)。{t:'palm',x,z,s}
+OB.palm=(o)=>{ const R=rng(((o.x*23+o.z*11)|0)+101), s=o.s||1, y=G(o.x,o.z)-0.05, lean=(R()-0.5)*0.3, M=T(o.x,y,o.z,R()*6.28,s), H=6.5+R()*1.5;
+  for(let i=0;i<4;i++){ const t=i/4; P_(cyl(0.2-i*0.02,0.24-i*0.02,H/4+0.1,7),0x8a7055,MM(M,T(Math.sin(lean)*H*t*0.5,H*t+H/8,0,0,1,1,1,0,-lean*0.5)),{ao:y,aoH:1.2,vary:0.08}); for(let k=0;k<3;k++) P_(cyl(0.27-i*0.02,0.22-i*0.02,0.12,7),0x7a6248,MM(M,T(Math.sin(lean)*H*(t+k/12)*0.5,H*(t+k/12)+0.3,0))); }
+  const tx=Math.sin(lean)*H*0.5*0.75; _v.set(tx,H,0).applyMatrix4(M); const nc=[_v.x,_v.y,_v.z,1.6]; const nf=IS_MOBILE?8:10;
+  for(let i=0;i<nf;i++){ const a=i/nf*6.283+R()*0.3, tilt=0.35+R()*0.5; P_(rbox(0.32,0.05,3.2,0.04,1),col3(pick(EPAL.palm,R)).getHex(),MM(M,T(tx+Math.sin(a)*1.3,H+0.3-tilt*0.6,Math.cos(a)*1.3,a,1,1,1,tilt-0.9,0)),{leaf:1,sway:0.5,nc}); }
+  for(let i=0;i<3;i++){ const a=R()*6.283; P_(blob(i+2,0.25,7,5),0xd9a040,MM(M,T(tx+Math.sin(a)*0.5,H-0.6,Math.cos(a)*0.5,0,0.3,0.45,0.3)),{sway:0.3}); }
+  addCol({t:'c',x:o.x,z:o.z,r:0.3*s,top:y+H*s,tree:1,cr:1.4*s}); };
+// アカシア(ヌビアのサバンナの平たい木)。{t:'acacia',x,z,s}
+OB.acacia=(o)=>{ const R=rng(((o.x*5+o.z*17)|0)+111), s=o.s||1, y=G(o.x,o.z)-0.05, M=T(o.x,y,o.z,R()*6,s);
+  P_(cyl(0.12,0.24,3.2,7),0x6e5a48,MM(M,T(0,1.6,0,0,1,1,1,0.1,-0.1)),{ao:y,aoH:1}); for(let i=0;i<3;i++){ const a=i/3*6.28+R(); P_(cyl(0.04,0.08,1.8,5),0x6e5a48,MM(M,T(Math.cos(a)*0.6,3.4,Math.sin(a)*0.6,-a,1,1,1,0,Math.PI/2-0.5))); }
+  _v.set(0,4.2,0).applyMatrix4(M); const nc=[_v.x,_v.y,_v.z,2.2]; for(let i=0;i<5;i++){ const a=i/5*6.28+R(), rr=i?1.3+R()*0.4:0; P_(blob(i+4,0.2,9,6),col3(pick(['#6f8f52','#7c9a5a','#668548'],R)).getHex(),MM(M,T(Math.cos(a)*rr,4.2+R()*0.2,Math.sin(a)*rr,R()*6,1.3,0.32,1.3)),{leaf:1,sway:0.35,nc}); }
+  addCol({t:'c',x:o.x,z:o.z,r:0.3*s,top:y+4.5*s,tree:1,cr:2.4*s}); };
+// 白砂漠のキノコ岩(白い石灰の岩: 細い足と広い頭)。{t:'chalk',x,z,s}
+OB.chalk=(o)=>{ const R=rng(((o.x*7+o.z*13)|0)+121), s=(o.s||1)*(0.8+R()*0.6), y=G(o.x,o.z)-0.1, M=T(o.x,y,o.z,R()*6.28,s), c=col3(pick(EPAL.chalk,R)).getHex(), c2=col3(c).multiplyScalar(0.94).getHex(), hh=2.2+R()*1.6;
+  P_(blob(((o.x*3)|0),0.25,8,6),c2,MM(M,T(0,hh*0.45,0,0,0.9+R()*0.3,hh*0.5,0.8+R()*0.3)),{vary:0.05,ao:y,aoH:1.2});
+  P_(blob(((o.x*5+1)|0),0.3,9,6),c,MM(M,T((R()-0.5)*0.6,hh+0.4,(R()-0.5)*0.6,R()*6,2.2+R()*1.2,1.0+R()*0.5,1.8+R()*1.0)),{vary:0.05});
+  if(R()<0.4) P_(blob(((o.x*7+2)|0),0.3,8,5),c,MM(M,T(1.2,0.5,-0.6,R()*6,1.0,0.55,0.8)),{vary:0.05,ao:y});
+  addCol({t:'c',x:o.x,z:o.z,r:1.0*s,top:y+hh*s}); };
+// 太陽光の発電所(2100年: 傾いたパネルの列)。{t:'solarfarm',x,z,rot,nx,nz}
+OB.solarfarm=(o)=>{ const rot=(o.rot||0)*DEG, nx=o.nx||6, nz=o.nz||3, y=footY(o.x,o.z,nx*3.2,nz*4,rot), M=T(o.x,y,o.z,rot);
+  for(let j=0;j<nz;j++) for(let i=0;i<nx;i++){ const x=(i-(nx-1)/2)*3.2, z=(j-(nz-1)/2)*4.0; P_(rbox(0.1,1.2,0.1,0.02,1),0xd8dde3,local(M,x-1.2,0.6,z)); P_(rbox(0.1,0.6,0.1,0.02,1),0xd8dde3,local(M,x+1.2,0.3,z)); P_(rbox(3.0,0.08,2.2,0.02,1),0xeef0f2,local(M,x,1.0,z,0,1,1,1,0,-0.24)); CUR.B.add(new THREE.BoxGeometry(2.9,0.04,2.1),MAT.solar,local(M,x,1.06,z,0,1,1,1,0,-0.24),{}); }
+  CUR.B.add(rbox(nx*3.2-0.6,0.05,0.05,0.01,1),MAT.glow,local(M,0,0.05,nz*2.0+0.6),{col:0x8fe4ff,shadow:false}); addCol({t:'b',x:o.x,z:o.z,hw:nx*1.6,hd:nz*2.0,rot,top:y+1.5}); };
+// サンゴ(紅海の浅瀬: 色の塊と枝)。{t:'coral',x,z,s}
+OB.coral=(o)=>{ const R=rng(((o.x*11+o.z*7)|0)+131), s=(o.s||1)*(0.7+R()*0.6), y=o.y!=null?o.y:G(o.x,o.z), M=T(o.x,y,o.z,R()*6.28,s);
+  for(let i=0;i<3;i++){ const a=R()*6.28, rr=i?0.5:0, c=col3(pick(EPAL.coral,R)).getHex(), ss=0.5+R()*0.5; P_(blob(i+((o.x)|0),0.35,8,6),c,MM(M,T(Math.cos(a)*rr,ss*0.5,Math.sin(a)*rr,R()*6,ss,ss*0.8,ss)),{vary:0.08}); }
+  for(let i=0;i<4;i++){ const a=R()*6.28, c=col3(pick(EPAL.coral,R)).getHex(); P_(cyl(0.03,0.08,1.1+R()*0.6,5),c,MM(M,T(Math.cos(a)*0.5,0.8,Math.sin(a)*0.5,0,1,1,1,(R()-0.5)*0.7,(R()-0.5)*0.7))); }
+  if(s>0.9) addCol({t:'c',x:o.x,z:o.z,r:0.7*s}); };
+// 墓の壁の帯(色の四角を並べた浮き彫りの帯・光る)。{t:'relief',pts,h}
+OB.relief=(o)=>{ const R=rng(((o.pts[0][0]*7+o.pts[0][1]*3)|0)+141), [a,b]=o.pts, L=Math.hypot(b[0]-a[0],b[1]-a[1]), ry=Math.atan2(-(b[1]-a[1]),b[0]-a[0]), n=Math.max(2,Math.floor(L/0.8)), h=o.h||1.6;
+  for(let i=0;i<n;i++){ const t=(i+0.5)/n, x=lerp(a[0],b[0],t), z=lerp(a[1],b[1],t), y=G(x,z); CUR.B.add(rbox(0.55,0.55,0.06,0.03,1),MAT.glow,T(x,y+h,z,ry),{col:col3(pick(['#3f74b0','#c9513f','#d9a83c','#3f8f7a','#f2ece0'],R)).getHex(),shadow:false}); }
+  P_(rbox(L,0.08,0.08,0.02,1),CPAL.gold,T((a[0]+b[0])/2,G(a[0],a[1])+h+0.4,(a[1]+b[1])/2,ry)); P_(rbox(L,0.08,0.08,0.02,1),CPAL.gold,T((a[0]+b[0])/2,G(a[0],a[1])+h-0.4,(a[1]+b[1])/2,ry)); };
+
 // ---------------------------------------------------------------- 草(区画ごと)
 function buildGrass(c,parent){ if(D.noGrass) return null; const x0=c.x0, z0=c.z0, R=rng(c.i*7919+c.j*104729+11); const pos=[],nor=[],col=[],uv=[],sw=[],idx=[]; let vi=0; const gc=[0,0,0];
   const dens=(IS_MOBILE?0.24:0.38);
@@ -1678,7 +1820,9 @@ function enterPlace(n){ const f=SAVE?SAVE.flags:{};
   if(n==='旅人の宿'){ if(!f.tasos) storyField('tasos'); else toast('旅人の宿'); return; }
   if(n==='テリオン研究所'||n==='ムネモ研究所'){ if(window.Progress&&Progress.state()) Progress.ui.open('cradle'); else toast('テリオン研究所 オリーヴァ支所'); return; }   // 研究所の中だけ ゆりかご(ガチャ)
   if(n==='アーク研究所'){ if(window.Progress&&Progress.state()) Progress.ui.open('cradle'); else toast('アーク研究所'); return; }   // 中国編(2026-10-26): 巨大都市アークの研究所でもゆりかご
-  if(n==='道しるべ'){ toast(MAP&&MAP.startsWith('cn_')?'→ 竹海の村 → 西の高原 → 化石の谷 → 南の山 → 雲海の石柱 → 北の大河 → 東の島 → 古い都 → 雪の高原 → 東の海':'→ アルカディアの森 → 運河の町コリンタ → 雲の山道 → 山の村デルフィナ'); return; }
+  if(n==='ナイル研究所'){ if(window.Progress&&Progress.state()) Progress.ui.open('cradle'); else toast('ナイル研究所'); return; }   // エジプト編(2026-10-26): カイロの研究所でもゆりかご
+  if(n==='隠し研究所'){ toast('ゼロデイの隠し研究所'); return; }
+  if(n==='道しるべ'){ toast(MAP&&MAP.startsWith('eg_')?'→ ギザ → ナイルデルタ → ルクソール → 王家の谷 → 王の墓 → アスワン → アブ・シンベル → 白砂漠 → 紅海':(MAP&&MAP.startsWith('cn_')?'→ 竹海の村 → 西の高原 → 化石の谷 → 南の山 → 雲海の石柱 → 北の大河 → 東の島 → 古い都 → 雪の高原 → 東の海':'→ アルカディアの森 → 運河の町コリンタ → 雲の山道 → 山の村デルフィナ')); return; }
   if(n==='山の天文台'){ toast('山の天文台'); return; }
   if(n==='店'){ ITEMS.heal=Math.max(ITEMS.heal||0,3); toast('回復の水筒 ×'+ITEMS.heal); saveGame(); return; }
   if(n==='いこいの泉'){ toast('みんな元気になった'); return; } toast(n); }
@@ -1879,12 +2023,14 @@ function saveGame(){ if(!SAVE||NOSAVE) return; if(D&&MAP&&READY.scene) Object.as
 function flag(k){ if(SAVE&&!SAVE.flags[k]){ SAVE.flags[k]=1; onFlag(k); objUpdate(); } }
 // 旗が立った時の解禁とクエストのジェム(progress.js: 同じ id は1回だけ)。ミッション120・守り150・王300・雷のボス120・古印100・新しい土地40
 const QUEST_GEMS={mission:120,guard1:150,guard2:150,guard3:150,guard4:150,king:300,thunder:120,stavros:100,mihalis:100,sophia:100,bella:150,bridge:60,arcadia:40,corinth:40,cloudroad:40,delphi:40,stadium_under:40,
-  cn_bund:60,cn_bamboo:40,cn_plateau:40,cn_fossil:40,cn_karst:40,cn_pillars:40,cn_gorges:40,cn_thunder:40,cn_capital:40,cn_kunlun:40,cn_sea:40, cn_dojo:100,guard_w:150,cn_kagu:120,guard_s:150,dimi4:60,guard_n:150,cn_nue:120,cn_sajin:200,cn_lion:150,cn_champ:100,dimi5:60,cn_setsu:150,cn_ransom:150,cn_dragon:300};   // 中国編(2026-10-26): 新しい土地40・守り150・八つ首200・青龍300
+  cn_bund:60,cn_bamboo:40,cn_plateau:40,cn_fossil:40,cn_karst:40,cn_pillars:40,cn_gorges:40,cn_thunder:40,cn_capital:40,cn_kunlun:40,cn_sea:40, cn_dojo:100,guard_w:150,cn_kagu:120,guard_s:150,dimi4:60,guard_n:150,cn_nue:120,cn_sajin:200,cn_lion:150,cn_champ:100,dimi5:60,cn_setsu:150,cn_ransom:150,cn_dragon:300,
+  eg_cairo:60,eg_giza:40,eg_delta:40,eg_luxor:40,eg_valley:40,eg_tomb:40,eg_aswan:40,eg_abusimbel:40,eg_white:40,eg_redsea:40, eg_champ0:100,eg_sphinga:150,eg_doroka:150,eg_champ1:100,eg_osira:150,eg_anubid:150,eg_champ2:100,eg_ransom:150,eg_eleki:150,eg_raga:200,eg_ekuri:150,eg_levia:300};   // 中国編(2026-10-26): 新しい土地40・守り150・八つ首200・青龍300 / エジプト編(2026-10-26): 新しい土地40・古印100・古代テリオン150・ラーガ200・リヴァイア300
 function onFlag(k){ if(!(window.Progress&&Progress.state())) return;
   if(k==='guard2') Progress.unlockLate();                 // 守り②のあと: 連れて歩くのが5体に
   if(k==='corinth'&&SAVE.unlock) SAVE.unlock.evo=true;    // 運河の町コリンタ(第19話 エンジュ→エンレオ): 進化の解禁
   if(k==='guard4'&&SAVE.unlock) SAVE.unlock.fusion=true;  // 守り④のあと(第26話 初めての融合): 融合の解禁
   if(k==='cn_bund') Progress.setArc('china');            // 中国編(2026-10-26): 巨大都市アークに着いたら編を中国へ(ゆりかごの種類・野生の既定)
+  if(k==='eg_cairo') Progress.setArc('egypt');           // エジプト編(2026-10-26): 未来のカイロに着いたら編をエジプトへ
   if(QUEST_GEMS[k]) Progress.quest(k,QUEST_GEMS[k]); }
 // 手動セーブ(HUDの「セーブ」)・自動セーブ(野歩き中30秒ごと・画面を閉じる/隠す時)。読むのはタイトルの「つづきから」(contGame)
 const saveBtn=document.getElementById('btSave'); let AUTOSAVE_T=0;
@@ -1926,7 +2072,13 @@ function objText(){ const f=SAVE?SAVE.flags:{}; if(!f.arrived) return '';
   if(!f.guard_n) return '大河の岩の上で、北の守り・ヒョウガイアに会う'; if(!f.cn_thunder) return '大河の東の船着き場から、東の島へ'; if(!f.cn_nue) return '夜の竹の森で、ヌエガミをしずめる'; if(!f.cn_sajin) return '雷の社で、八つ首の竜サジンオロチを止める';
   if(!f.cn_capital) return '島の北の船着き場から、古い都へ'; if(!f.cn_lion) return '都の南門で、唐獅子ライエンオウに認められる'; if(!f.cn_champ) return '鐘楼の前のメイリンと勝負して、古印をもらう'; if(!f.cn_kunlun) return '都の北門から、雪の高原へ';
   if(!f.cn_setsu) return '氷河の奥で、雪の竜セツリュウをしずめる'; if(!f.cn_sea) return '空の船で都市へ戻り、外灘の船着き場から東の海へ'; if(!f.cn_ransom) return '海の上の台で、ランサムを止める'; if(!f.cn_dragon) return '青龍の眠る岩で、セイリュと青龍の前に立つ';
-  return '中国編クリア。次はエジプト編'; }
+  // 第3期 エジプト編(2026-10-26 regions/make_egypt_arc.py)
+  if(!f.eg_cairo) return '青龍の岩の北の桟橋から、空の船でカイロへ'; if(!f.eg_giza) return 'ナイルの橋を西へ渡り、ギザの台地へ'; if(!f.eg_sphinga) return 'スフィンクスの前で、スフィンガに会う';
+  if(!f.eg_delta) return 'カイロの船着き場から、ナイルデルタへ'; if(!f.eg_doroka) return '湿地の奥で、ドロカバをしずめる'; if(!f.eg_luxor) return 'カイロのリニアの駅から、ルクソールへ';
+  if(!f.eg_osira) return 'カルナック神殿の前庭で、オシラントに会う'; if(!f.eg_valley) return 'ナイルの渡し場から、王家の谷へ'; if(!f.eg_tomb) return '王家の谷の墓の入口から、王の墓の回廊へ'; if(!f.eg_anubid) return '玄室で、アヌビドに会う';
+  if(!f.eg_aswan) return '谷の空の船乗り場から、アスワンへ'; if(!f.eg_ransom) return 'ハイダムの上で、ランサムを止める'; if(!f.eg_eleki) return 'ダムの上で、エレキナギをしずめる'; if(!f.eg_abusimbel) return 'ナセル湖の船着き場から、アブ・シンベルへ';
+  if(!f.eg_raga) return '大神殿の前で、朝の光のラーガに会う'; if(!f.eg_white) return '空の船で、白砂漠へ'; if(!f.eg_ekuri) return '水晶の山で、日食のエクリオンをしずめる'; if(!f.eg_redsea) return '空の船で、紅海の珊瑚の岸へ'; if(!f.eg_levia) return 'サンゴの台で、リヴァイアに会う';
+  return 'エジプト編クリア。次は北欧編'; }
 function objUpdate(){ const t=objText(); objEl.textContent=t; objEl.style.display=t&&!STORY&&!TRANS?'block':'none'; }
 
 // ---------------------------------------------------------------- 会話(立ち絵つき)・イントロ
@@ -1952,7 +2104,9 @@ addEventListener('keydown',e=>{ if((e.code==='Space'||e.code==='Enter')&&ADV){ e
 function waitAdv(){ return new Promise(r=>{ ADV=r; }); }
 async function typeOut(el,t){ el.textContent=''; let skip=false; const prev=ADV; ADV=()=>{ skip=true; };
   for(let i=1;i<=t.length;i++){ if(skip){ el.textContent=t; break; } el.textContent=t.slice(0,i); await sleep(22); } ADV=null; }
-function stShow(mode,bg){ ST.el.style.display='block'; ST.el.classList.toggle('field',mode==='field'); if(bg) ST.bg.style.backgroundImage=`url(intro/bg_${bg}.webp)`;
+// 背景の絵: 'anime_…' はアニメの背景(intro/anime_*.webp・オーナー 2026-10-26)、それ以外は intro/bg_*.webp
+function bgUrl(b){ return 'intro/'+(String(b).startsWith('anime_')?b:'bg_'+b)+'.webp'; }
+function stShow(mode,bg){ ST.el.style.display='block'; ST.el.classList.toggle('field',mode==='field'); if(bg) ST.bg.style.backgroundImage=`url(${bgUrl(bg)})`;
   ST.el.classList.remove('trio'); for(const k of ['card','title','pick','ph']) ST[k].style.display='none'; ST.box.style.display='none'; for(const k of ['L','R','R2']){ ST[k].classList.add('off'); ST[k].dataset.w=''; } ST.skip.style.display='none'; }
 function stHide(){ ST.el.style.display='none'; ST.box.style.display='none'; ADV=null; }
 // lines: {w:'hero'|'genzo'|...|'partner'|null(ナレ), t, f:表情, if:()=>bool, fn:async()=>{}}
@@ -1977,16 +2131,16 @@ async function runScene(lines,opt){ opt=opt||{}; const field=!!opt.field; STORY=
     await typeOut(ST.tx,fillT(L.t)); await waitAdv(); }
   stHide(); STORY=false; if(!field){ PAUSED=!READY.scene||!!opt.keepPaused; LAST=performance.now(); } objUpdate(); saveGame(); }
 async function runCards(cards){ stShow('full'); PAUSED=true; ST.card.style.display='block'; ST.skip.style.display='block'; let skipAll=false; ST.skip.onclick=e=>{ e.stopPropagation(); skipAll=true; advance(); };
-  for(const c of cards){ if(skipAll||!c.t) continue; ST.bg.style.opacity=0; await sleep(250); ST.bg.style.backgroundImage=`url(intro/bg_${c.bg}.webp)`; ST.card.querySelectorAll('.mon2d').forEach(e=>e.remove());
+  for(const c of cards){ if(skipAll||!c.t) continue; ST.bg.style.opacity=0; await sleep(250); ST.bg.style.backgroundImage=`url(${bgUrl(c.bg)})`; ST.card.querySelectorAll('.mon2d').forEach(e=>e.remove());
     for(const m of c.mons||[]){ const im=document.createElement('img'); im.className='mon2d'; im.src='../battle/img/'+m[0]+'.webp'; im.style.left=m[1]+'%'; im.style.top=m[2]+'%'; im.style.width=`min(${m[3]||30}vw,${(m[3]||30)*6.3}px)`; im.style.animationDelay=(Math.random()*2)+'s'; if(m[4]) im.style.opacity=m[4]; ST.card.appendChild(im); }
     ST.bg.style.opacity=1; ST.cap.classList.remove('on'); ST.cap.textContent=c.t; await sleep(200); ST.cap.classList.add('on');
     await new Promise(r=>{ ADV=r; ST.card.onclick=()=>advance(); }); }
   ST.card.onclick=null; ST.card.querySelectorAll('.mon2d').forEach(e=>e.remove()); ST.card.style.display='none'; ST.skip.style.display='none'; }
 const INTRO=[   // イントロの字幕カード(台詞は空。t が空のカードは飛ばす)
-  {bg:'intro1_v3',t:''},
-  {bg:'intro3_v3',t:''},
-  {bg:'intro2_v3',t:''},
-  {bg:'airship_v3',t:''},
+  {bg:'anime_tokyo_bedroom_night',t:''},
+  {bg:'anime_tokyo_street',t:''},
+  {bg:'anime_tokyo_skyport',t:''},
+  {bg:'anime_aegean_dawn',t:''},   // アニメの背景(2026-10-26): 東京の寝室の夜 → 街 → 空の港 → 夜明けのエーゲ海(到着)
 ]
 // 相棒を選ぶ(3体の3D)
 let PK=null;
@@ -2132,6 +2286,41 @@ const SC={
  ransom_win:[ {todo:'story'}, {w:'ransom',t:''},{w:'dimi',t:''},{w:'lifa',t:''},{w:'hero',t:''} ],
  seiryu:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'セイリュウ',t:''},{w:'x',n:'セイリュ',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'partner',t:''} ],
  seiryu_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'セイリュウ',t:''},{w:'elly',f:'smile',t:''},{w:'hao',t:''},{w:'lifa',t:''},{w:'alek',t:''},{w:'dimi',t:''},{w:'hero',f:'smile',t:''},{w:null,t:''} ],
+ // ---- 第3期 エジプト編(2026-10-26 regions/make_egypt_arc.py)。台詞は空。絵は nadia/mira/joe/ransom/使い手 が未作成(名前だけ)
+ // 未来のカイロ: ナディア(案内役)。市場の使い手(古印)
+ nadia:[ {todo:'story'}, {w:'nadia',t:''},{w:'hero',f:'surprised',t:''},{w:'elly',t:''},{w:'nadia',t:''} ],
+ cairo_champ:[ {todo:'story'}, {w:'x',n:'カイロの使い手',t:''},{w:'hero',f:'serious',t:''},{w:'nadia',t:''} ],
+ cairo_champ_win:[ {todo:'story'}, {w:'x',n:'カイロの使い手',t:''},{w:'hero',f:'smile',t:''},{w:'elly',t:''} ],
+ // ギザ: スフィンクスの前のスフィンガ
+ sphinga:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'スフィンガ',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'nadia',t:''},{w:'partner',t:''} ],
+ sphinga_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'スフィンガ',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
+ // ナイルデルタ: 湿地の奥のドロカバ
+ doroka:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ドロカバ',t:''},{w:'hero',f:'surprised',t:''},{w:'alek',t:''},{w:'partner',t:''} ],
+ doroka_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'elly',t:''} ],
+ // ルクソール: 使い手(古印)・カルナックのオシラント
+ luxor_champ:[ {todo:'story'}, {w:'x',n:'ルクソールの使い手',t:''},{w:'hero',f:'serious',t:''},{w:'elly',t:''} ],
+ luxor_champ_win:[ {todo:'story'}, {w:'x',n:'ルクソールの使い手',t:''},{w:'hero',f:'smile',t:''},{w:'nadia',t:''} ],
+ osira:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'オシラント',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'partner',t:''} ],
+ osira_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'オシラント',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
+ // 王の墓: 玄室のアヌビド
+ anubid:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'アヌビド',t:''},{w:'hero',f:'surprised',t:''},{w:'nadia',f:'serious',t:''},{w:'partner',t:''} ],
+ anubid_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'アヌビド',t:''},{w:'hero',f:'smile',t:''},{w:'elly',t:''} ],
+ // アスワン: 使い手(古印)・ハイダムのランサム(街の電気と水を止める)・エレキナギ
+ aswan_champ:[ {todo:'story'}, {w:'x',n:'アスワンの使い手',t:''},{w:'hero',f:'serious',t:''},{w:'nadia',t:''} ],
+ aswan_champ_win:[ {todo:'story'}, {w:'x',n:'アスワンの使い手',t:''},{w:'hero',f:'smile',t:''},{w:'elly',t:''} ],
+ ransom2:[ {todo:'story'}, {w:'mira',t:''},{w:'joe',t:''},{w:'ransom',t:''},{w:'nadia',f:'serious',t:''},{w:'hero',f:'angry',t:''},{w:'partner',t:''} ],
+ ransom2_win:[ {todo:'story'}, {w:'ransom',t:''},{w:'nadia',t:''},{w:'hero',t:''},{w:'elly',t:''} ],
+ eleki:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'エレキナギ',t:''},{w:'hero',f:'surprised',t:''},{w:'elly',f:'serious',t:''},{w:'partner',t:''} ],
+ eleki_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'nadia',t:''} ],
+ // アブ・シンベル: 朝の光のラーガ
+ raga:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ラーガ',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'nadia',t:''},{w:'partner',t:''} ],
+ raga_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ラーガ',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
+ // 白砂漠: 隠し研究所(セイリュの生まれた所)・日食のエクリオン
+ ekuri:[ {todo:'story'}, {w:'dimi',t:''},{w:null,t:''},{w:'x',n:'エクリオン',t:''},{w:'hero',f:'surprised',t:''},{w:'elly',f:'serious',t:''},{w:'partner',t:''} ],
+ ekuri_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'dimi',t:''},{w:'x',n:'セイリュ',t:''} ],
+ // 紅海: サンゴの台のリヴァイア(エジプト編のラスト)→北欧編へ
+ levia:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'リヴァイア',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'nadia',t:''},{w:'partner',t:''} ],
+ levia_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'リヴァイア',t:''},{w:'elly',f:'smile',t:''},{w:'nadia',t:''},{w:'alek',t:''},{w:'dimi',t:''},{w:'hero',f:'smile',t:''},{w:null,t:''} ],
 };
 async function storyField(k){ if(!SC[k]) return; await runScene(SC[k],{field:true}); }
 function toast(t){ toastEl.textContent=t; toastEl.style.opacity=1; clearTimeout(toast.t); toast.t=setTimeout(()=>toastEl.style.opacity=0,1600); }
@@ -2147,18 +2336,20 @@ async function newGame(){ ST.title.style.display='none'; await runCards(INTRO);
   heroGo(g); fadeEl.classList.add('on'); await sleep(260);
   LOADP=loadMap('oliva_town','start').catch(e=>console.error(e));   // 会話のあいだに村を読んでおく
   await sleep(60); fadeEl.classList.remove('on');
-  await runScene(SC.tokyo,{bg:'tokyo_home',keepPaused:true}); SAVE.stage='airship'; saveGame();
-  await runScene(SC.skyport,{bg:'tokyo_port',keepPaused:true});
-  await runScene(SC.airship,{bg:'airship_v3',keepPaused:true});
+  await runScene(SC.tokyo,{bg:'anime_tokyo_bedroom_night',keepPaused:true}); SAVE.stage='airship'; saveGame();
+  await runScene(SC.skyport,{bg:'anime_tokyo_skyport',keepPaused:true});
+  await runScene(SC.airship,{bg:'anime_airship_cabin_night',keepPaused:true});
   await arriveTown(); }
 async function contGame(sv){ ST.title.style.display='none'; SAVE=sv; if(sv.g!=='m'){ sv.g='m'; sv.name=DEFN('m'); } SAVE.unlock=SAVE.unlock||{evo:false,fusion:false}; SAVE.owned=SAVE.owned||[]; PARTY=sv.party||PARTY; BOX=sv.box||BOX; ITEMS=sv.items||ITEMS; heroGo(sv.g); await progInit();   // 古い記録(party:[{mid,rank}]・box)は progress.js が最初の init で移行する
-  if(sv.stage!=='field'||!sv.map||!sv.partner){ stShow('full'); LOADP=loadMap('oliva_town','start'); if(sv.stage==='asuka'||sv.stage==='tokyo'){ await runScene(SC.tokyo,{bg:'tokyo_home',keepPaused:true}); SAVE.stage='airship'; saveGame(); await runScene(SC.skyport,{bg:'tokyo_port',keepPaused:true}); }
-    await runScene(SC.airship,{bg:'airship_v3',keepPaused:true}); await arriveTown(); return; }
+  if(sv.stage!=='field'||!sv.map||!sv.partner){ stShow('full'); LOADP=loadMap('oliva_town','start'); if(sv.stage==='asuka'||sv.stage==='tokyo'){ await runScene(SC.tokyo,{bg:'anime_tokyo_bedroom_night',keepPaused:true}); SAVE.stage='airship'; saveGame(); await runScene(SC.skyport,{bg:'anime_tokyo_skyport',keepPaused:true}); }
+    await runScene(SC.airship,{bg:'anime_airship_cabin_night',keepPaused:true}); await arriveTown(); return; }
   fadeEl.classList.add('on'); stHide(); await loadMap(sv.map,null,[sv.x,sv.z,sv.yaw]); followersSet(); if(sv.tod) setTime(sv.tod,true);
   await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); showArea(D.name); AREA=D.name; objUpdate(); }
 function toTitle(){ PAUSED=true; AUTO=null; STORY=false; TRANS=false; objEl.style.display='none'; fadeEl.classList.remove('on'); talkClose(); titleScreen(); }
-function titleScreen(){ for(const c of INTRO){ const im=new Image(); PIMG[c.bg]=im; im.src='intro/bg_'+c.bg+'.webp'; for(const m of c.mons||[]){ const j=new Image(); PIMG['m'+m[0]]=j; j.src='../battle/img/'+m[0]+'.webp'; } }
-  stShow('full','intro3_v3'); ST.bg.style.opacity=1; ST.title.style.display='flex'; const sv=loadSave(); const bc=$('btCont'); bc.disabled=!sv;
+function titleBg(){ return innerWidth<innerHeight?'anime_title_portrait':'anime_aegean_dawn'; }   // タイトルの背景: 縦はアニメの冒頭(9:16)・横は夜明けのエーゲ海
+addEventListener('resize',()=>{ if(ST.title.style.display==='flex') ST.bg.style.backgroundImage=`url(${bgUrl(titleBg())})`; });
+function titleScreen(){ for(const c of INTRO){ const im=new Image(); PIMG[c.bg]=im; im.src=bgUrl(c.bg); for(const m of c.mons||[]){ const j=new Image(); PIMG['m'+m[0]]=j; j.src='../battle/img/'+m[0]+'.webp'; } }
+  stShow('full',titleBg()); ST.bg.style.opacity=1; ST.title.style.display='flex'; const sv=loadSave(); const bc=$('btCont'); bc.disabled=!sv;
   $('btNew').onclick=()=>newGame().catch(e=>console.error(e)); bc.onclick=()=>{ if(sv) contGame(sv).catch(e=>console.error(e)); }; }
 
 // ---------------------------------------------------------------- 起動

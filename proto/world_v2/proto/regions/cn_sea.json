@@ -30,6 +30,11 @@
    0,
    56,
    3.14159
+  ],
+  "from_egypt": [
+   0,
+   -80,
+   0
   ]
  },
  "exits": [
@@ -50,9 +55,8 @@
     3,
     -88
    ],
-   "to": "egypt",
+   "to": "eg_cairo",
    "at": "from_china",
-   "todo": "エジプト編",
    "need": "cn_dragon",
    "lock": "青龍が、まだ眠っている"
   }
