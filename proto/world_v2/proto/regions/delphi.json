@@ -139,20 +139,19 @@
    "lineAfter": "",
    "party": [
     {
-     "mid": 167,
-     "lv": 15
+     "mid": 166,
+     "lv": 14,
+     "evo": true
     },
     {
-     "mid": 16,
-     "lv": 14
+     "mid": 276,
+     "lv": 15,
+     "fixed": true
     },
     {
      "mid": 1051,
-     "lv": 14
-    },
-    {
-     "mid": 166,
-     "lv": 14
+     "lv": 14,
+     "evo": true
     }
    ],
    "master": 1,
@@ -345,10 +344,7 @@
    "after": "atlard_win",
    "flag": "guard4",
    "lv": 18,
-   "ai": {
-    "hpX": 0.13,
-    "atkX": 0.2
-   }
+   "tier": 5
   }
  ],
  "drones": [],

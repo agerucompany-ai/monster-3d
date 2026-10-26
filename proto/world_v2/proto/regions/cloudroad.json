@@ -296,10 +296,7 @@
    "after": "thunder_win",
    "flag": "thunder",
    "lv": 16,
-   "ai": {
-    "hpX": 0.15,
-    "atkX": 0.25
-   }
+   "tier": 4
   }
  ],
  "drones": [],

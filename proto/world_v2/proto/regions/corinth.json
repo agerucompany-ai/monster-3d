@@ -177,20 +177,19 @@
    "lineAfter": "",
    "party": [
     {
-     "mid": 1037,
-     "lv": 12
-    },
-    {
-     "mid": 1040,
-     "lv": 11
-    },
-    {
      "mid": 1036,
-     "lv": 11
+     "lv": 11,
+     "evo": true
+    },
+    {
+     "mid": 1038,
+     "lv": 12,
+     "fixed": true
     },
     {
      "mid": 1053,
-     "lv": 11
+     "lv": 11,
+     "evo": true
     }
    ],
    "master": 1,
@@ -364,10 +363,7 @@
    "after": "tenmarai_win",
    "flag": "guard3",
    "lv": 14,
-   "ai": {
-    "hpX": 0.15,
-    "atkX": 0.22
-   }
+   "tier": 3
   }
  ],
  "drones": [],

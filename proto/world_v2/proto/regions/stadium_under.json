@@ -192,10 +192,7 @@
    "after": "godherak_win",
    "flag": "king",
    "lv": 24,
-   "ai": {
-    "hpX": 0.12,
-    "atkX": 0.2
-   }
+   "tier": 6
   }
  ],
  "drones": [],

@@ -15,7 +15,7 @@ const CFG={
   startLv:5,                                  // 相棒のはじめのレベル
   recruit:{1:0.50, 2:0.40, 3:0.30},           // 倒した時に仲間になる確率(段ごと)。その種類(系統)で初回のみ
   expNeed:(lv)=>Math.round(12+1.6*lv*lv),     // 次のレベルまでのEXP(Lv1→2=14・Lv5=52・Lv10=172・Lv50=4012・Lv98=15378)
-  expGain:(enemyLv,stage,kind)=>Math.round((10+4*enemyLv)*([1,1.5,2][stage-1]||1)*({wild:1,trainer:1.5,master:2.5}[kind]||1)),   // 倒した相手1体ぶん
+  expGain:(enemyLv,stage,kind)=>Math.round((10+4*enemyLv)*([1,1.5,2][stage-1]||1)*({wild:1,trainer:1.5,master:2.5,ancient:2.5}[kind]||1)),   // 倒した相手1体ぶん
   benchExp:0.5,                               // 盤に出なかったパーティの子はEXP半分
   cradlePrice:150,                            // ゆりかご1回のジェム
   dupGemsBack:75,                             // ダブりで相手がLv99の時だけジェムを返す(ふだんのダブりは「その子が1レベル上がる」)

@@ -391,10 +391,7 @@
    "after": "luminador_win",
    "flag": "guard2",
    "lv": 11,
-   "ai": {
-    "hpX": 0.15,
-    "atkX": 0.2
-   }
+   "tier": 2
   }
  ],
  "drones": [],

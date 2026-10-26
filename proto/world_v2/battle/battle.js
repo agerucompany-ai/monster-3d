@@ -592,6 +592,7 @@ function calcDamage(att, def, move){
   let red = defReduction(def);
   if(tb>0) red *= 0.3;                                                     // 弱点を突くと防御をほぼ貫通
   dmg *= (1 - red);
+  if(def.ancTired) dmg*=ANCIENT.breakX;                                    // 古代テリオン: 大技を放った直後の「隙」
   return Math.max(1, Math.round(dmg*0.62*(BT.dmgX||1)));   // 全体のダメージ倍率(決着までのターンを延ばす)
 }
 
@@ -642,7 +643,7 @@ function doAttack(att, def, move){
   if(hitFoes.length) addGauge(att, advType?GAUGE_HIT_WEAK:GAUGE_HIT);   // 与ダメで闘気
   cureBurnByFire(att, targets);                            // 炎の攻撃：対象＋隣接のやけどを治す
   // 森の吸収：敵に与えた総ダメージの一部を自己回復（攻撃力低めの代償に持続力）
-  if(dealt>0 && monTypes(m).includes('森') && state.units[att.uid] && att.hp>0){
+  if(dealt>0 && monTypes(m).includes('森') && !att.anc && state.units[att.uid] && att.hp>0){   // 古代テリオン(anc)は吸収しない
     const heal=Math.min((att.maxhp||mon(att).hp)-att.hp, Math.round(dealt*GRASS_DRAIN_FRAC*sustainX()));   // 小盤は sustainX で縮む
     if(heal>0){ att.hp+=heal; floatText(att.r,att.c,`+${heal}`,'#7ee08a'); }
   }
@@ -1032,11 +1033,12 @@ function startTurn(side){
   if(side===0 && !BT.headless){ const d=$id('ovDetail'); if(d) d.style.display='none'; }
   repairBoard();   // ターン開始ごとに盤を健全化(重なり/ゴースト/盤外を修復)
   state.cur=side;
-  for(const u of alive(side)){ u.moved=false; u.acted=false;
+  for(const u of alive(side)){ u.moved=false; u.acted=false; if(u.ancTired) u.ancTired=false;   // 古代テリオンの「隙」は自分の手番の始めまで
     if(u.dug>0){ u.dug--; if(u.dug<=0){ floatText(u.r,u.c,'⬆浮上','#e0c060'); } else { floatText(u.r,u.c,`潜行(残${u.dug})`,'#c9a24a'); } }
   }
   for(const u of alive(side).slice()){ applyStatusTick(u); }   // 状態異常の解決（撃破あり得る）
   springTick(side);   // 回復の泉
+  ancCheck();         // 古代テリオンの目覚め(毒などで体力ゲージが減った時)
   refreshEvoArea();
   syncUnits();
   if(checkWin()) return;
@@ -1057,6 +1059,7 @@ function endTurn(){
   }
 }
 function afterAction(){
+  ancCheck();   // 古代テリオン: 体力ゲージが1本減ったら目覚め
   refreshEvoArea(); syncUnits(); updateUI();
   if(ONLINE&&isHost()) netPush();
   checkWin();
@@ -1116,10 +1119,11 @@ function setEvoArea(on, appear){ on=!!on; const ch=(BT.evoOn!==on); BT.evoOn=on;
   if(appear && on){ const [r,c]=EVO_BASE[0]; fxPillar(r,c,0xfff0a0); fxRing(r,c,0xffe070,{max:3.4,dur:820}); fxFlash(r,c,0xfff6c0); showBanner('進化の環'); } }
 // 途中で進化できる子が出てきたら(蘇生・融合・変身など)、その時に盤の中央へ出す。一度出したら最後まで残す
 function refreshEvoArea(){ if(!state||BT.evoOn||state.phase!=='battle') return; if(evoNeededNow()) setEvoArea(true,true); }
-function aiSideStart(me){ for(const u of alive(me).slice()){ if(canEvolveHere(u) && aiCanEvo(u)) evolveUnit(u,false); } }
+function aiSideStart(me){ for(const u of alive(me).slice()){ if(u.anc){ u._ancN=0; if(BT.anc&&BT.anc.cd>0) BT.anc.cd--; } if(canEvolveHere(u) && aiCanEvo(u)) evolveUnit(u,false); } }
 function aiOrder(me){ const fl=leaderOf(1-me); const us=alive(me).slice();
   const d=u=>fl?Math.abs(u.r-fl.r)+Math.abs(u.c-fl.c):0;
   us.sort((a,b)=>((a.leader?1:0)-(b.leader?1:0)) || (d(a)-d(b)));   // リーダーは最後(味方の動きを見てから)
+  if(BT.anc){ const out=[]; for(const u of us){ out.push(u); if(u.anc) for(let k=1;k<(BT.anc.T.actions||1);k++) out.push(u); } return out; }   // 古代テリオンは1ターンに actions 回
   return us; }
 function aiTargetsFrom(u,r,c){
   if(r===u.r && c===u.c) return attackTargets(u);
@@ -1167,7 +1171,7 @@ function aiBestMove(u){
   // 2026-10-25: 1体だけの側(野生の1対1・最後の1体)は引きこもると時間切れ＝決着しないので、敵への引き寄せを強く・敵の射程を恐れる重みを弱くする
   // (旧: 引き寄せ12/マス・リーダーの脅威回避0.7〜1.1 → 川(地形-36)や相手の射程(-23前後)を越えられず、7x7で両軍が4行離れたまま一度も攻撃せず終わっていた)
   const lone = alive(me).length===1;
-  const pullW = lone ? 40 : 12;
+  const pullW = u.anc ? 30 : (lone ? 40 : 12);   // 古代テリオンは子分がいても前に出る
   let best=null, bs=-1e9; const cand=[];
   for(const [r,c] of cells){
     let sc=0;
@@ -1179,8 +1183,9 @@ function aiBestMove(u){
     if(mode==='fuse' && goal && man(r,c,goal.r,goal.c)===1) sc+=160;
     sc+=terrBonusM(mon(u), terrAt(r,c))*120;
     const th=threat(r,c);
-    sc-=th*(u.leader?(lone?(me===0?0.7:0.2):(hpR<0.6?1.1:0.7)):(hpR<0.35?0.35:0.08));   // 1体だけ: 自軍は相手の射程の外で待てる時は待つ(先手を取る)・敵(野生)は気にせず詰める
-    if(u.leader && mode!=='evo' && alive(me).length>1){ const back=START_ROWS[me][0]; sc-=Math.max(0, (me===0?(back-r):(r-back))-2)*70; }   // リーダーは前に出すぎない(進化に向かう時を除く)
+    sc-=th*(u.anc?0.15:(u.leader?(lone?(me===0?0.7:0.2):(hpR<0.6?1.1:0.7)):(hpR<0.35?0.35:0.08)));   // 1体だけ: 自軍は相手の射程の外で待てる時は待つ(先手を取る)・敵(野生)は気にせず詰める。古代テリオンは恐れない
+    if(u.leader && !u.anc && mode!=='evo' && alive(me).length>1){ const back=START_ROWS[me][0]; sc-=Math.max(0, (me===0?(back-r):(r-back))-2)*70; }   // リーダーは前に出すぎない(進化に向かう時を除く・古代テリオンは除く)
+    if(me===0 && BT.anc && BT.anc.charge && BT.anc.charge.set.has(r+','+c)){ const b=ancUnit(); if(b){ const d=ancBigDmg(b,u); sc-=(d/Math.max(1,u.maxhp))*1600*(u.leader?2.2:1.2)+(d>=u.hp?600:0); } }   // 古代テリオンの大技の赤いマスからにげる(かげなら半分)
     if(sc>bs){ bs=sc; best=[r,c]; }
     cand.push([sc,r,c]);
   }
@@ -1190,6 +1195,7 @@ function aiBestMove(u){
 function aiOneUnit(u){
   if(!state.units[u.uid] || state.phase==='end') return;
   const me=u.owner, foe=1-me;
+  if(u.anc){ ancientAct(u); return; }   // 古代テリオン(守り・王)・ボスの手番(ANCIENT)
   // ボス専用攻撃(ニドグラ/ラグナディオ/完全体)を最優先で試す
   if(BOSS_SPECIALS[u.mid]){ if(bossSpecialTurn(u)){ return; } }
   // 合体攻撃: トリオが揃い射程内に敵がいれば放つ
@@ -1314,7 +1320,8 @@ function addReticle(r,c,color){
   mk(new THREE.RingGeometry(0.08,0.13,20),0.9,0);
   const gl=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color,transparent:true,opacity:0.5,depthWrite:false,blending:THREE.AdditiveBlending})); gl.scale.set(1.5,1.5,1); gl.position.set(w.x,y+0.35,w.z); gl.userData.base=0.5; fxGroup.add(gl); hlMeshes.push(gl);
 }
-function updateHL(t){ if(!hlMeshes.length) return; const p=0.5+0.5*Math.sin(t*4.2);
+function updateHL(t){ if(ancMarks.length){ const q=0.5+0.5*Math.sin(t*6.0); for(const m of ancMarks) if(m.userData.base!=null) m.material.opacity=m.userData.base*(0.55+0.45*q); }   // 古代テリオンの大技の赤いマス(点滅)
+  if(!hlMeshes.length) return; const p=0.5+0.5*Math.sin(t*4.2);
   for(const m of hlMeshes){ const d=m.userData; if(d.base!=null) m.material.opacity=d.base*(0.78+0.22*p);
     if(d.spin){ if(d.orbit!=null){ const a=d.orbit+t*d.spin; m.position.x=d.bx+Math.cos(a)*d.rad; m.position.z=d.bz+Math.sin(a)*d.rad; m.rotation.z=-a; } else m.rotation.z=t*d.spin; } } }
 
@@ -3178,8 +3185,9 @@ function updateUI(){ if(BT.headless) return;
   // topbar
   const tb=$id('topbar');
   if(state.phase==='battle'||state.phase==='place'){
-    const lm=(o)=>{ const L=leaderOf(o); const p=L?Math.round(100*Math.max(0,L.hp)/L.maxhp):0;
-      return `<span class="meter ${o?'foe':''}"><i class="lmk"></i><span class="track"><i style="width:${p}%;background:${o===0?'#4f8bff':'#ff5a48'}"></i></span></span>`; };
+    const lm=(o)=>{ const L=leaderOf(o); let p=L?Math.round(100*Math.max(0,L.hp)/L.maxhp):0; let col=o===0?'#4f8bff':'#ff5a48', tail='';
+      if(o===1 && L && L.anc && BT.anc){ const n=BT.anc.T.phases, per=L.maxhp/n, ph=Math.max(1,Math.ceil(Math.max(0,L.hp)/per-1e-9)); p=Math.round(100*Math.max(0,L.hp-(ph-1)*per)/per); col=['#ff5a48','#ff9a30','#c050ff'][Math.min(2,n-ph)]; tail=`<b>×${ph}</b>`; }   // 古代テリオン: 体力ゲージ×本数
+      return `<span class="meter ${o?'foe':''}"><i class="lmk"></i><span class="track"><i style="width:${p}%;background:${col}"></i></span>${tail}</span>`; };
     const am=autoMode();
     const autoB = BT.autoButton!==false && state.phase==='battle' ? `<button class="tbb ${am?'on':''}" data-m="cycleAuto">${am===2?'オート×2':am?'オート':'手動'}</button>` : '';
     tb.innerHTML = (state.phase==='battle'
@@ -3451,7 +3459,7 @@ function beginBattle(){
   ensureLeaders(); BT.startedAt=(typeof performance!=='undefined'?performance.now():Date.now());
   setEvoArea(evoNeededNow(), false);
   if(!BT.headless) setTimeout(flashGoodTerrain, 900);
-  if(!BT.headless && BT.kind==='master') setTimeout(bossIntro, 150);   // FX2: 物語のボスの登場
+  if(!BT.headless && (BT.kind==='master'||BT.kind==='ancient')) setTimeout(bossIntro, 150);   // FX2: 物語のボス・古代テリオンの登場
   if(!BT.headless) setTimeout(ciHiPrefetch,0);
   startTurn(0);
 }
@@ -3474,7 +3482,84 @@ const KIND_DEFAULTS={
   wild:   {size:7,  ai:{evo:0, eg:0.5,  skill:0.7, hpX:0.85, atkX:0.85}},   // 2026-10-25: 野生は鍛えられていない=体力・攻撃0.85倍・手が少し雑(相性の悪い組でも勝率7割に乗せるため)
   trainer:{size:9,  ai:{evo:1, eg:0.65, skill:0.9}},
   master: {size:11, ai:{evo:1, eg:0.75, skill:1}},
+  ancient:{size:9,  ai:{evo:0, eg:0.5,  skill:1}},   // 2026-10-26: 古代テリオン(守り・王)・ボス。1体の3段目と全パーティで戦う(下の ANCIENT)
 };
+// ---- 古代テリオン(守り・王)・ボスの戦い kind:'ancient'(2026-10-26) ----
+// 9×9・全パーティが出せる(出せる段の合計=連れている子の段の合計)。相手は1体(enemy.party[0])で、体力・攻撃は「挑む側の段」に合わせて目覚める(封印):
+//   体力 = その子の体力 × stageRef.hp[挑む側の段]/stageRef.hp[3] × tier.hp、攻撃も同じ(tier.atk)。tier は enemy.ancient.tier(1=いちばん弱い守り①〜6=王)。
+//   1ターンに tier.actions 回うごく(2回目以降は移動なし・MPは無限)。体力ゲージは tier.phases 本。1本減るごとに「目覚め」= 状態異常が消える・攻撃+rageAtk・子分(enemy.ancient.minions から tier.minions 体・古代の lv-minionLvDown)・すぐ大技をためる。
+//   大技(tier.big): ためる(赤いマスを見せる・その行動は攻撃しない)→次の行動で赤いマスの上の子に 攻撃×x。遺跡/森(cover)のマスは半分(coverX)。放った直後は「隙」= 次の自分の手番まで受けるダメージ×breakX。
+//   shape: 'area'=自分のまわり cheby≤rng / 'cross'=自分の行と列(幅3)で rng まで。big.from = 何回目の目覚めから使えるか(0=最初から)。
+// 時間切れは人と同じ(残り体力の割合)。評価は sim/sim_ancient.js(6戦×相棒3系統)。
+const ANCIENT={
+  size:9, maxTurn:18, cover:['ruins','forest'], coverX:0.5, breakX:1.5, minionX:0.85, minionLvDown:3,
+  stageRef:{hp:{1:135,2:460,3:1350}, atk:{1:30,2:85,3:150}},   // 段ごとの体力・攻撃のめやす(表の平均)
+  tiers:{   // シム(sim_ancient.js 60・その土地のレベル帯のパーティ・相棒3系統・AI同士・各180戦・2026-10-26): 勝率 守り①89% ②75% ③73% ボス82% ④69% 王63%・時間切れ ①1.7% ②5% ③2% ボス3% ④2% 王0%・平均9〜11ターン
+    1:{hp:1.3, atk:1.25, actions:1, phases:2, big:{from:1, every:3, rng:1, x:2.0, shape:'area'},  minions:0, rageAtk:0.10},   // 守り① ミノタス(迷路・Lv4〜6・3体・進化なし): 1回行動・目覚めてから大技
+    2:{hp:2.2, atk:0.85, actions:2, phases:2, big:{from:0, every:3, rng:1, x:2.0, shape:'area'},  minions:1, rageAtk:0.10},   // 守り② ルミナドール(アルカディア・Lv5〜8・3体・進化なし): 2回行動(1回は軽い)
+    3:{hp:5.0, atk:1.85, actions:2, phases:3, big:{from:0, every:3, rng:2, x:3.0, shape:'area'},  minions:1, rageAtk:0.12},   // 守り③ テンマライ(コリンタ・Lv7〜10・5体・進化あり): 序盤を耐えて進化で逆転
+    4:{hp:6.5, atk:1.75, actions:2, phases:3, big:{from:0, every:3, rng:2, x:3.0, shape:'area'},  minions:2, rageAtk:0.12},   // ボス トールガ(雲の山道・Lv9〜12)
+    5:{hp:5.0, atk:1.60, actions:2, phases:3, big:{from:0, every:3, rng:4, x:3.0, shape:'cross'}, minions:2, rageAtk:0.15},   // 守り④ アトラード(デルフィナ・Lv11〜14): 大技が十字(幅3)で広い
+    6:{hp:6.0, atk:1.20, actions:2, phases:3, big:{from:0, every:2, rng:4, x:3.0, shape:'cross'}, minions:2, rageAtk:0.15},   // 王 ゴッドヘラク(競技場の下・Lv13〜16・融合あり): 移動3の近接・大技が2ターンおき・目覚めで攻撃+15%ずつ
+  },
+};
+function ancUnit(){ return state?alive(1).find(u=>u.anc)||null:null; }
+function ancientSetup(en){ BT.anc=null; if(BT.kind!=='ancient'||!BT.enemyParty.length) return;
+  const cfg=(en&&en.ancient&&typeof en.ancient==='object')?en.ancient:{}; const tier=Math.max(1,Math.min(6,Math.round(+(cfg.tier!=null?cfg.tier:(en&&en.tier!=null?en.tier:1))||1)));
+  const T=Object.assign({}, ANCIENT.tiers[tier]); if(cfg.tune) Object.assign(T, cfg.tune); if(T.big) T.big=Object.assign({}, ANCIENT.tiers[tier].big, (cfg.tune&&cfg.tune.big)||{});
+  const pst=Math.max(1, ...BT.party.map(p=>(MID[playerStartMid(p.mid)]||{}).level||1));   // 挑む側の段
+  BT.anc={tier, T, pst, minions:[...new Set((cfg.minions||[]).map(Number).filter(m=>MID[m]).map(m=>baseFormId(m)))], cd:0, charge:null, phase:T.phases, awoken:0, mi:0};
+  const L=BT.enemyParty.find(e=>e.leader)||BT.enemyParty[0]; L.boss=true; L.leader=true;
+  MAX_TURN=ANCIENT.maxTurn; BT.rules=Object.assign({}, BT.rules, {maxTurn:ANCIENT.maxTurn}); }
+function ancientBudget(){ return Math.max(1, BT.party.reduce((s,p)=>s+((MID[playerStartMid(p.mid)]||{}).level||1),0)); }   // 全パーティがその段で出せる
+function ancientApply(u){ const A=BT.anc, T=A.T, m=mon(u), R=ANCIENT.stageRef, s=A.pst;
+  const hx=rankX(u.rank)*(R.hp[s]/R.hp[3])*T.hp, ax=rankX(u.rank)*(R.atk[s]/R.atk[3])*T.atk;
+  u.hx=hx; u.atkX=ax; u.ancAtk0=ax; u.maxhp=u.hp=Math.max(1,Math.round(m.hp*hx)); u.isBoss=true; u.anc=true; u.leader=true; }
+function ancBigCells(u){ const B=BT.anc.T.big, out=[]; for(let r=0;r<N;r++) for(let c=0;c<N;c++){ if(r===u.r&&c===u.c) continue; const dr=Math.abs(r-u.r), dc=Math.abs(c-u.c);
+    const ok = B.shape==='cross' ? ((dr<=1||dc<=1) && Math.max(dr,dc)<=B.rng) : Math.max(dr,dc)<=B.rng; if(ok) out.push([r,c]); } return out; }
+function ancIsCover(r,c){ return ANCIENT.cover.includes(terrAt(r,c)); }
+function ancMarked(r,c){ const A=BT.anc; return !!(A&&A.charge&&A.charge.set.has(r+','+c)); }
+function ancBigDmg(b,t){ return calcDamage(b,t,{p:BT.anc.T.big.x})*(ancIsCover(t.r,t.c)?ANCIENT.coverX:1); }
+function ancCanCharge(u){ const A=BT.anc, T=A.T; if(!T.big||A.charge||A.cd>0||A.awoken<T.big.from) return false; return alive(0).some(e=>e.dug<=0 && cheby(e,u)<=T.big.rng); }
+function ancCharge(u){ const A=BT.anc; const cells=ancBigCells(u); A.charge={cells, set:new Set(cells.map(x=>x[0]+','+x[1])), turn:state.turn}; A.cd=A.T.big.every; u.acted=true;
+  if(state.stats){ state.stats.anc=state.stats.anc||{charge:0,big:0,hit:0,awaken:0}; state.stats.anc.charge++; }
+  if(BT.headless) return; ancDrawMarks(); showBanner(`${mon(u).name}が 力をためている`); toast(`${mon(u).name}が力をためている！ 赤いマスから はなれろ（遺跡・森のかげなら半分）`); floatText(u.r,u.c,'ためている…','#ff8a60'); fxRing(u.r,u.c,0xff5a48,{max:3.0,dur:900}); SFX.play('boss'); }
+function ancRelease(u){ const A=BT.anc, B=A.T.big; const hits=alive(0).filter(t=>t.dug<=0 && A.charge.set.has(t.r+','+t.c)); u.acted=true;
+  if(state.stats){ state.stats.anc=state.stats.anc||{charge:0,big:0,hit:0,awaken:0}; state.stats.anc.big++; state.stats.anc.hit+=hits.length; }
+  if(!BT.headless){ attackFx(u, hits.length?hits:A.charge.cells.slice(0,6).map(([r,c])=>({r,c})), hits[0]||{r:A.charge.cells[0][0],c:A.charge.cells[0][1]}, {n:'大技',range:B.rng,tier:3}); camPunch(u.r,u.c,1.0,700); hitStop(140); for(const [r,c] of A.charge.cells) if(Math.random()<0.35) fxTerrain(r,c,2); }
+  let msg=''; for(const t of hits){ if(!state.units[t.uid]) continue; const cov=ancIsCover(t.r,t.c); const dmg=Math.max(1,Math.round(calcDamage(u,t,{p:B.x})*(cov?ANCIENT.coverX:1))); t.hp-=dmg;
+    floatText(t.r,t.c,`-${dmg}`,'#ff5a5a','num'); if(cov) floatText(t.r,t.c,'かげで半分','#cfe0ff');
+    if(!msg) msg=`${mon(u).name}の大技！ ${mon(t).name} に ${dmg}${cov?'(かげで半分)':''}${hits.length>1?` 他${hits.length-1}体`:''}`;
+    if(t.hp<=0){ const wasLeader=!!t.leader; if(killUnit(t)) toast(`${wasLeader?'リーダーの ':''}${mon(t).name} を撃破！`); } else addGauge(t,(t.hp<=t.maxhp/2)?GAUGE_TAKEN_LOW:GAUGE_TAKEN); }
+  if(hits.length) addGauge(u, GAUGE_HIT);
+  A.charge=null; u.ancTired=true; if(!BT.headless){ ancClearMarks(); floatText(u.r,u.c,'隙！','#ffd24a'); }
+  toast(msg||`${mon(u).name}の大技は 当たらなかった！ いまが隙だ`);
+  afterAction(); }
+function ancAwaken(b){ const A=BT.anc, T=A.T; A.awoken++; clearAllStatus(b); b.atkX=(b.ancAtk0||b.atkX)*(1+T.rageAtk*A.awoken);
+  if(state.stats){ state.stats.anc=state.stats.anc||{charge:0,big:0,hit:0,awaken:0}; state.stats.anc.awaken++; }
+  // 子分: 古代のまわりの空いたマス(進化マスは避ける)に tier.minions 体
+  let n=T.minions||0; if(n>0 && A.minions.length){ const cells=[]; for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){ if(!dr&&!dc) continue; const r=b.r+dr,c=b.c+dc; if(r<0||c<0||r>=N||c>=N||unitAt(r,c)||isEvoCell(r,c)) continue; cells.push([r,c]); }
+    cells.sort((p,q)=>(p[0]-q[0]) || (Math.abs(p[1]-CC)-Math.abs(q[1]-CC)));   // 奥(自陣)側から
+    for(const [r,c] of cells){ if(n<=0) break; const mid=A.minions[A.mi++%A.minions.length]; const lv=Math.max(1,(b.lv||1)-ANCIENT.minionLvDown); const nu=addUnit(1,mid,r,c); unitMul(nu, lvRank(lv), ANCIENT.minionX, ANCIENT.minionX); nu.lv=lv; nu.src=[]; nu.mid0=mid; nu.summoned=true; nu.hmp=0; nu.hmpMax=0; n--;   // 子分は回復しない
+      if(!BT.headless){ fxPillar(r,c,0xff8a60); fxRing(r,c,0xff8a60,{max:1.6,dur:600}); } } }
+  if(T.big && A.awoken>=T.big.from) A.cd=0;   // 目覚めたらすぐ大技をためられる
+  if(!BT.headless){ syncUnits(); showBanner(`${mon(b).name}が 目覚めた！`); toast(`${mon(b).name}が目覚めた！ 攻撃が強くなった${T.minions&&A.minions.length?'・子分を呼んだ':''}`); fxPillar(b.r,b.c,0xff5a48); fxRing(b.r,b.c,0xff5a48,{max:4.0,dur:900,y:0.06}); fxFlash(b.r,b.c,0xffd0c0); camPunch(b.r,b.c,0.9,700); hitStop(120); SFX.play('boss'); } }
+function ancCheck(){ const A=BT.anc; if(!A||!state||state.phase!=='battle') return; const b=ancUnit(); if(!b) return;
+  const ph=Math.max(1, Math.ceil(b.hp/b.maxhp*A.T.phases-1e-9)); while(A.phase>ph){ A.phase--; ancAwaken(b); } }
+function ancientAct(u){ const A=BT.anc; if(!A) return aiStrike(u);
+  if((u._ancN||0)>0) u.acted=false;   // 2回目以降の行動(移動はしない)
+  u._ancN=(u._ancN||0)+1;
+  if(A.charge){ if(state.turn>A.charge.turn) ancRelease(u); else u.acted=true; return; }   // ためた次のターンに放つ(ためている間は何もしない)
+  if(canMove(u)){ const best=aiBestMove(u); if(best && (best[0]!==u.r||best[1]!==u.c)) moveUnit(u,best[0],best[1]); }
+  const u2=state.units[u.uid]; if(!u2||state.phase==='end') return;
+  if(ancCanCharge(u2)){ ancCharge(u2); return; }
+  aiStrike(u2); }
+// 大技の赤いマス(見せ方)。選択のハイライト(hlMeshes)とは別に持ち、放つまで消さない
+let ancMarks=[];
+function ancClearMarks(){ if(!fxGroup) return; for(const m of ancMarks) fxGroup.remove(m); ancMarks=[]; }
+function ancDrawMarks(){ ancClearMarks(); const A=BT.anc; if(!A||!A.charge||BT.headless||!fxGroup) return;
+  for(const [r,c] of A.charge.cells){ const cov=ancIsCover(r,c); const op=cov?0.42:0.62; const m=new THREE.Mesh(cellPatchGeo(r,c,0.94,0.045), new THREE.MeshBasicMaterial({map:hlTex(),color:cov?0xffa040:0xff3a2a,transparent:true,opacity:op,depthWrite:false})); m.userData.base=op; m.renderOrder=2; fxGroup.add(m); ancMarks.push(m); }
+  const b=ancUnit(); if(b){ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tagTex('⚠ 大技','weak'),transparent:true,depthTest:false,depthWrite:false})); sp.material.toneMapped=false; sp.scale.set(1.6,0.45,1); const w=cell2world(b.r,b.c); sp.position.set(w.x,cellH(b.r,b.c)+2.4,w.z); sp.renderOrder=45; sp.userData.base=1; fxGroup.add(sp); ancMarks.push(sp); } }
 const RANK_STEP=0.02;          // 成長ランク1つ=体力・攻撃+2%(ランク1=補正なし・ランク20=+38%)
 const STACK_RANK=2;            // 重ね1回=成長ランク+2
 const STACK_GEM=50;            // 上限で止まった分は1ランク=ジェム50
@@ -3863,7 +3948,7 @@ function spawnEnemy(){
   const lead=team.splice(li,1)[0]; if(lead) team.unshift(lead);
   const cc=CASTLE[1];
   const spots=castleArea(1).filter(([r,c])=>!unitAt(r,c)).sort((a,b)=>(Math.abs(a[0]-cc.r)+Math.abs(a[1]-cc.c)*0.9)-(Math.abs(b[0]-cc.r)+Math.abs(b[1]-cc.c)*0.9));
-  team.forEach((e,i)=>{ if(i>=spots.length) return; const [r,c]=spots[i]; const u=addUnit(1,e.mid,r,c); unitMul(u,e.rank,D.hpX,D.atkX); if(e.lv) u.lv=e.lv; u.src=[e.idx]; u.mid0=e.mid; if(i===0) u.leader=true; if(e.boss) u.isBoss=true; });
+  team.forEach((e,i)=>{ if(i>=spots.length) return; const [r,c]=spots[i]; const u=addUnit(1,e.mid,r,c); unitMul(u,e.rank,D.hpX,D.atkX); if(e.lv) u.lv=e.lv; u.src=[e.idx]; u.mid0=e.mid; if(i===0) u.leader=true; if(e.boss) u.isBoss=true; if(BT.anc && i===0) ancientApply(u); });   // 古代テリオンは ANCIENT の決まりで体力・攻撃を決める(ai.hpX/atkX は使わない)
   state.leaderSet=false;
 }
 
@@ -3876,14 +3961,14 @@ function startBattle(opts){
     try{ BT.fastPref=localStorage.getItem('mb_auto_fast')==='1'; }catch(e){ BT.fastPref=false; } BT.fast=false;
     setBoardSize(+opts.size||KD.size);
     const pl=opts.player||{}, en=opts.enemy||{};
-    BT.party=normParty(pl.party||pl); BT.enemyParty=normParty(en.party||en); applyStartStage(opts);
+    BT.party=normParty(pl.party||pl); BT.enemyParty=normParty(en.party||en); applyStartStage(opts); ancientSetup(en);
     if(!BT.party.length||!BT.enemyParty.length) throw new Error('startBattle: player/enemy の party が空');
     BT.items=Object.assign({heal:0}, pl.items||{}); STORY.items=BT.items; setOwned(pl, en);
     BT.fusionOn=!!opts.fusionUnlocked; BT.tripleOn=!!opts.tripleUnlocked; BT.tune=Object.assign({}, TUNE, opts.tune||{});
     BT.diff=Object.assign({}, KD.ai, en.ai||{}); BT.aiSkill=[ (pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1 ];
     BT.place=resolvePlace(opts.terrainTheme, opts.backdrop);
-    BT.budget=+opts.budget||BT.rules.budget*BT.startStage;   // 2段目/3段目から出す地方は出せる段の合計も×段(=出せる体の数は変えない)
-    BT.headless=IS_NODE||!!opts.headless;
+    BT.budget=+opts.budget||(BT.anc?ancientBudget():BT.rules.budget*BT.startStage);   // 2段目/3段目から出す地方は出せる段の合計も×段(=出せる体の数は変えない)。古代テリオン戦は全パーティ
+    BT.headless=IS_NODE||!!opts.headless; ancClearMarks();
     BT.autoButton = opts.autoButton!=null ? !!opts.autoButton : true;   // 2026-10-24: オートは上のバーに・全部の戦いで使える(autoButton:false で隠す)
     BT.showResult = opts.showResult!==false;
     applyPlace();
@@ -4006,7 +4091,7 @@ function catchResult(){
 function defaultReward(winner){
   const en=BT.opts.enemy||{}; if(winner!==0) return {gems:0, items:[]};
   if(en.reward) return {gems:Array.isArray(en.reward.gems)?Math.round(en.reward.gems[0]+Math.random()*(en.reward.gems[1]-en.reward.gems[0])):(+en.reward.gems||0), items:(en.reward.items||[]).slice()};
-  if(BT.kind==='wild') return {gems:0, items:[]};
+  if(BT.kind==='wild'||BT.kind==='ancient') return {gems:0, items:[]};   // 古代テリオン・ボスの報酬は旗(クエストのジェム)で。盤からは出さない
   const lv=BT.enemyParty.reduce((s,e)=>s+(MID[e.mid].level*e.rank),0);
   if(BT.kind==='trainer') return {gems:Math.max(80,Math.min(250,Math.round(60+lv*12))), items:[Math.random()<0.5?'heal':'snack']};   // ふつうの相手(trainer) 80〜250・回復の水筒かおやつの材料
   return {gems:600+90*(+en.order||0), items:['snack_'+(MID[BT.enemyParty[0].mid].type)]};                                         // master 600+(地方の順番×90)・その相手のタイプのおやつ
@@ -4019,7 +4104,7 @@ function buildResult(winner,msg){
   const res={ kind:BT.kind, size:BT.size, result, winner, how:s.endHow||'leader', msg, turns:s.turn, sec:Math.round((performance.now()-BT.startedAt)/1000),
     party, items:Object.assign({},BT.items), caught:null, rewards:defaultReward(winner), fusions:BT.fusedNew.slice(),
     stats:{evo:s.stats.evo.slice(), fuse:s.stats.fuse.slice(), atk:s.stats.atk.slice()}, place:BT.place.key, look:BT.look };
-  if(BT.kind==='wild' && winner===0) res.caught=catchResult();
+  if((BT.kind==='wild' || (BT.kind==='ancient' && BT.opts.enemy && BT.opts.enemy.catchable)) && winner===0) res.caught=catchResult();   // 古代テリオン戦は enemy.catchable:true の時だけ(野生のボス トールガ)
   if(res.caught && res.caught.gems) res.rewards.gems+=res.caught.gems;
   // 2026-10-26 進行(progress.js): decorate(res) で EXP・レベル・ジェムを呼ぶ側が確定し、結果画面に足す行(文字列の配列)を返す。res.rewards を書きかえてもよい(ゼロデイ以外はジェム0など)
   if(typeof BT.opts.decorate==='function' && result!=='quit'){ try{ const rows=BT.opts.decorate(res); if(Array.isArray(rows)) res.extraRows=rows; }catch(e){ console.error('decorate',e); } }
@@ -4051,11 +4136,11 @@ function simulate(opts){
   BT.kind=kind; BT.opts=opts; BT.fusedNew=[]; BT.auto=false; setBoardSize(+opts.size||KD.size);
   if(opts.rules){ BT.rules=Object.assign({},BT.rules,opts.rules); MAX_TURN=BT.rules.maxTurn; BT.dmgX=BT.rules.dmgX; }
   const pl=opts.player||{}, en=opts.enemy||{};
-  BT.party=normParty(pl.party||pl); BT.enemyParty=normParty(en.party||en); applyStartStage(opts);
+  BT.party=normParty(pl.party||pl); BT.enemyParty=normParty(en.party||en); applyStartStage(opts); ancientSetup(en);
   BT.items={heal:0}; STORY.items=BT.items; setOwned(pl, en);
   BT.fusionOn=!!opts.fusionUnlocked; BT.tripleOn=!!opts.tripleUnlocked; BT.tune=Object.assign({}, TUNE, opts.tune||{});
   BT.diff=Object.assign({}, KD.ai, en.ai||{}); BT.aiSkill=[(pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1];
-  BT.place=resolvePlace(opts.terrainTheme, opts.backdrop); BT.budget=+opts.budget||BT.rules.budget*BT.startStage;
+  BT.place=resolvePlace(opts.terrainTheme, opts.backdrop); BT.budget=+opts.budget||(BT.anc?ancientBudget():BT.rules.budget*BT.startStage);
   applyPlace(); state=newBattleState(); uidSeq=1;
   spawnEnemy(); preparePlaceList(); autoPlace(); state.phase='battle'; ensureLeaders(); setEvoArea(evoNeededNow(), false); state.turn=1; state.cur=0;
   const hp=o=>alive(o).reduce((s,u)=>s+Math.max(0,u.hp),0);
@@ -4081,7 +4166,7 @@ const TIME_MODEL={perUnit:8, turnSwitch:2, cpuStart:1.0, cpuPerUnit:0.64, cutAtk
 function estSeconds(r){ const T=TIME_MODEL; return Math.round(T.setup + r.act[0]*T.perUnit + r.sideTurns[0]*T.turnSwitch + r.sideTurns[1]*T.cpuStart + r.act[1]*T.cpuPerUnit + r.atk[1]*T.cutAtk + (r.evo[0]+r.evo[1])*T.cutEvo + (r.fuse[0]+r.fuse[1])*T.cutFuse); }
 
 // ---- 外に出すもの ----
-const API={ init, startBattle, simulate, estSeconds, TIME_MODEL, SIZE_RULES, KIND_DEFAULTS, PLACES, THEME_LOOK, rankX, STACK_RANK, STACK_GEM, LV_MAX, lvRank, stageForm:(mid,stage,owned)=>stageForm(mid,stage,owned),
+const API={ init, startBattle, simulate, estSeconds, TIME_MODEL, SIZE_RULES, KIND_DEFAULTS, ANCIENT, PLACES, THEME_LOOK, rankX, STACK_RANK, STACK_GEM, LV_MAX, lvRank, stageForm:(mid,stage,owned)=>stageForm(mid,stage,owned),
   get MID(){ return MID; }, get MONSTERS(){ return MONSTERS; }, baseFormId:(m)=>baseFormId(m), lineOf:(m)=>lineUpIds(m),
   setAuto(v){ if(v===2||v==='fast'){ BT.fastPref=true; setAutoMode(2); } else if(!!v!==BT.auto) toggleAuto(); return BT.auto; },
   // 確認用(test.html・puppeteer)

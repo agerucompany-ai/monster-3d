@@ -148,10 +148,7 @@
    "after": "minotas_win",
    "flag": "guard1",
    "lv": 8,
-   "ai": {
-    "hpX": 0.12,
-    "atkX": 0.2
-   }
+   "tier": 1
   }
  ],
  "drones": [],
