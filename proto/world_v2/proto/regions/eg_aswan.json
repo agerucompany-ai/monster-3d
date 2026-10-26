@@ -137,6 +137,12 @@
      "lv": 39,
      "stage": 2,
      "evo": true
+    },
+    {
+     "mid": 1012,
+     "lv": 39,
+     "stage": 2,
+     "evo": true
     }
    ],
    "master": 1,
@@ -175,6 +181,12 @@
     },
     {
      "mid": 1012,
+     "lv": 38,
+     "stage": 2,
+     "evo": true
+    },
+    {
+     "mid": 1043,
      "lv": 38,
      "stage": 2,
      "evo": true

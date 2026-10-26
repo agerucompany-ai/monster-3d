@@ -63,8 +63,8 @@
  ],
  "nature": true,
  "lv": [
-  46,
-  48
+  50,
+  52
  ],
  "startStage": 3,
  "grass": {
@@ -319,7 +319,7 @@
    "scene": "kraken",
    "after": "kraken_win",
    "flag": "nr_kraken",
-   "lv": 51,
+   "lv": 55,
    "tier": 5,
    "tune": {
     "hp": 1.0,

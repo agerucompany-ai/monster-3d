@@ -17,9 +17,11 @@ const CFG={
   expNeed:(lv)=>Math.round(12+1.6*lv*lv),     // 次のレベルまでのEXP(Lv1→2=14・Lv5=52・Lv10=172・Lv50=4012・Lv98=15378)
   expGain:(enemyLv,stage,kind)=>Math.round((10+4*enemyLv)*([1,1.5,2][stage-1]||1)*({wild:1,trainer:1.5,master:2.5,ancient:2.5}[kind]||1)),   // 倒した相手1体ぶん
   benchExp:0.5,                               // 盤に出なかったパーティの子はEXP半分
+  packExp:0.5,                                // 野生の群れのリーダー以外の子は1体ぶんの半分(2026-10-27・群れになってもEXPが倍々にならないように)
+  packLeadLv:2,                               // 群れのリーダー(触った子)は帯のレベル+2
   cradlePrice:150,                            // ゆりかご1回のジェム
   dupGemsBack:75,                             // ダブりで相手がLv99の時だけジェムを返す(ふだんのダブりは「その子が1レベル上がる」)
-  partyMax:3, partyMaxLate:5, followMax:3,    // 連れて歩く数(序盤3・後半5)・画面でついて歩くのは3
+  partyMax:3, partyMaxLate:5, partyMaxFinal:6, followMax:3,    // 連れて歩く数(序盤3・守り②のあと5・北欧編に入ったら6=2026-10-27 終盤のボス戦が6対6)・画面でついて歩くのは3
   arc:'greece',
 };
 // 編ごとの野生の系統(1段目のid)。テリオン_編ごとの表.md より。相棒3系統(1001/178/1022)はゆりかごに入れない・融合といにしえは入れない
@@ -32,7 +34,8 @@ const ARC_POOL={
 };
 const STARTERS=[1001,178,1022];
 // 地方(編)ごとの野生のレベル帯と開始の段(オーナー 10/26: 後半は2段目/3段目から)。マップごとの上書きは P.config.areas[キー]={lv:[a,b], startStage:n}
-const ARC_RULE={ greece:{lv:[2,4],startStage:1}, china:{lv:[18,24],startStage:2}, egypt:{lv:[30,38],startStage:2}, norse:{lv:[45,55],startStage:3} };
+// pack = 野生の群れの数(リーダー含む・2026-10-27 オーナー「敵が1体はおかしい」→「野生戦は絞る」: 2〜3体)。自分が盤に出せる数も同じ(battle.js が群れの数に合わせる)
+const ARC_RULE={ greece:{lv:[2,4],startStage:1,pack:2}, china:{lv:[18,24],startStage:2,pack:2}, egypt:{lv:[30,38],startStage:2,pack:2}, norse:{lv:[47,68],startStage:3,pack:3} };   // 北欧の帯は 2026-10-27 に後ろほど上げた(マップの D.lv が優先・コア 66〜68)
 const AREA_RULE={ oliva_hill:{lv:[2,4]}, oliva_maze:{lv:[4,6]}, arcadia:{lv:[5,8]}, athens:{lv:[7,10]}, crete:{lv:[9,12]}, egypt_late:{lv:[38,44],startStage:3} };
 P.config={cfg:CFG, areas:AREA_RULE, arcs:ARC_RULE, pools:ARC_POOL, starters:STARTERS};
 
@@ -127,11 +130,19 @@ P.buyGems=function(){ emit('buy',{}); return false; };   // 課金は置き場�
 
 // ---------------------------------------------------------------- 野生・地方の決まり
 P.arc=()=>prog()&&prog().arc||CFG.arc;
-P.setArc=(a)=>{ if(prog()&&ARC_POOL[a]){ prog().arc=a; P.save(); } };
-P.rule=function(area){ const arc=P.arc(); const r=Object.assign({}, ARC_RULE[arc]||ARC_RULE.greece); const a=area&&P.config.areas[area]; if(a){ if(a.lv) r.lv=a.lv; if(a.startStage) r.startStage=a.startStage; } return r; };
+P.setArc=(a)=>{ if(prog()&&ARC_POOL[a]){ prog().arc=a; if(a==='norse' && prog().partyMax<CFG.partyMaxFinal) P.setPartyMax(CFG.partyMaxFinal); P.save(); } };   // 北欧編に入ったら6体まで(2026-10-27)
+P.unlockFinal=()=>P.setPartyMax(CFG.partyMaxFinal);
+P.rule=function(area){ const arc=P.arc(); const r=Object.assign({}, ARC_RULE[arc]||ARC_RULE.greece); const a=area&&P.config.areas[area]; if(a){ if(a.lv) r.lv=a.lv; if(a.startStage) r.startStage=a.startStage; if(a.pack) r.pack=a.pack; } return r; };
 P.wildLv=function(area){ const [a,b]=P.rule(area).lv; return a+Math.floor(Math.random()*(b-a+1)); };
 P.wildEnemy=function(mid, area){ return {mid:+mid, lv:P.wildLv(area)}; };
 P.startStage=(area)=>P.rule(area).startStage||1;
+// 野生の群れ(2026-10-27): リーダー=触った子(帯+packLeadLv・leader)+そのマップの野生(pool)から n-1 体(帯のレベル)。n = 編の pack と「自分が盤に出せる数」の小さい方
+// 自分が盤に出せる数 = battle.js の packCount と同じ数え方(先頭から・その段の姿のLv合計が 3×段 まで)。battle.js の表は init 前で空のことがあるので自分の表(MON)で数える
+function fieldCount(party, st, owned){ const cap=3*st; let used=0, n=0; const own=owned?new Set(owned.map(Number)):null;
+  for(const p of (party||[])){ let m=mon(p.mid), g=0; while(m&&m.evolves_to!=null&&mon(m.evolves_to)&&(mon(m.evolves_to).level||1)<=st&&(!own||own.has(m.evolves_to))&&g++<4) m=mon(m.evolves_to); const lv=m?(m.level||1):1; if(n>0&&used+lv>cap) continue; used+=lv; n++; } return n; }
+P.packSize=function(area, party, owned){ const want=P.rule(area).pack||1; const st=P.startStage(area); return Math.max(1, Math.min(want, fieldCount(party, st, owned)||1)); };
+P.wildPack=function(lead, area, pool, n){ const L=Object.assign({}, lead, {leader:true}); L.lv=Math.min(LV_MAX,(+L.lv||P.wildLv(area))+CFG.packLeadLv); const out=[L];
+  const ids=(pool||[]).map(Number).filter(id=>mon(id)); for(let k=1;k<n&&ids.length;k++) out.push({mid:ids[Math.floor(Math.random()*ids.length)], lv:P.wildLv(area), pack:true}); return out; };
 
 // ---------------------------------------------------------------- バトル(battle.js の startBattle に渡す物を作り、結果を反映)
 // 倒して仲間(G1): その系統を初めて → 段ごとの確率で仲間に / すでに持っている系統 → 何も起きない(null)
@@ -144,6 +155,8 @@ P.prepare=function(opt, ctx){ opt=opt||{}; ctx=ctx||{}; const pl=opt.player||{};
   const party=P.battleParty(); if(!party.length) throw new Error('progress: パーティが空');
   opt.player=Object.assign({}, pl, {party, box:P.legacyBox(), owned:pl.owned||P.ownedList(), rankCap:20, items:pl.items||(SAVE&&SAVE.items)||{heal:0}});
   if(opt.startStage==null) opt.startStage=P.startStage(ctx.area);
+  if((opt.kind||'wild')==='wild' && opt.enemy && Array.isArray(opt.enemy.pack) && opt.enemy.party && opt.enemy.party.length===1){   // 野生の群れ(呼ぶ側が enemy.pack=そのマップの野生の種類 を渡した時)
+    const n=P.packSize(ctx.area, party, opt.player.owned); opt.enemy=Object.assign({}, opt.enemy, {party:P.wildPack(opt.enemy.party[0], ctx.area, opt.enemy.pack, n)}); delete opt.enemy.pack; }
   const zeroday=!!(ctx.zeroday||opt.zeroday||(opt.enemy&&opt.enemy.zeroday));
   const enemy=(opt.enemy&&opt.enemy.party)||[];
   const kind=opt.kind||'wild';
@@ -154,7 +167,7 @@ P.prepare=function(opt, ctx){ opt=opt||{}; ctx=ctx||{}; const pl=opt.player||{};
 P.applyResult=function(res, ctx){ const rows=[]; const pg=prog(); if(!pg) return rows; res.progress={exp:[], lvup:[], gems:0, recruit:res.caught||null};
   if(res.result!=='win'){ if(res.rewards) res.rewards.gems=0; P.save(); return rows; }
   const stage=(mid)=>stageOf(mid);
-  const total=ctx.enemy.reduce((s,e)=>s+CFG.expGain(e.lv||1, stage(e.mid), ctx.kind),0)||CFG.expGain(1,1,ctx.kind);
+  const total=Math.round(ctx.enemy.reduce((s,e)=>s+CFG.expGain(e.lv||1, stage(e.mid), ctx.kind)*(e.pack?CFG.packExp:1),0))||CFG.expGain(1,1,ctx.kind);
   (res.party||[]).forEach((p,i)=>{ const ent=ctx.party[i]; const c=ent&&P.get(ent.uid); if(!c) return; const n=Math.max(1,Math.round(total*(p.out?1:CFG.benchExp))); const r=addExp(c,n); res.progress.exp.push(r);
     rows.push(`${nameOf(c.mid)}　EXP +${n}`); if(r.after>r.before){ res.progress.lvup.push(r); rows.push(`<span class="lvup">${nameOf(c.mid)}　Lv${r.before} → Lv${r.after}</span>`); } });
   if(res.rewards){ if(ctx.zeroday&&ctx.kind!=='wild'){ res.progress.gems=res.rewards.gems; if(res.rewards.gems) P.addGems(res.rewards.gems,'zeroday'); } else res.rewards.gems=0; }   // ジェムはゼロデイ(手下・幹部)を倒した時だけ(G2)

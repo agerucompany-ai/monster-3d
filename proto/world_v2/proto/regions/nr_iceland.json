@@ -63,8 +63,8 @@
  ],
  "nature": true,
  "lv": [
-  47,
-  49
+  52,
+  54
  ],
  "startStage": 3,
  "grass": {
@@ -329,7 +329,7 @@
    "scene": "surtr",
    "after": "surtr_win",
    "flag": "nr_surtr",
-   "lv": 52,
+   "lv": 57,
    "tier": 5,
    "tune": {
     "hp": 1.35,

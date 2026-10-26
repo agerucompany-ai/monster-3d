@@ -63,8 +63,8 @@
  ],
  "nature": true,
  "lv": [
-  48,
-  50
+  54,
+  56
  ],
  "startStage": 3,
  "grass": {
@@ -164,25 +164,42 @@
    "party": [
     {
      "mid": 185,
-     "lv": 42,
+     "lv": 48,
      "stage": 2,
      "evo": true,
      "leader": true
     },
     {
      "mid": 290,
-     "lv": 52,
+     "lv": 58,
      "fixed": true
     },
     {
      "mid": 1010,
-     "lv": 51,
+     "lv": 57,
      "fixed": true
     },
     {
-     "mid": 1049,
-     "lv": 51,
+     "mid": 1050,
+     "lv": 57,
      "fixed": true
+    },
+    {
+     "mid": 1047,
+     "lv": 56,
+     "fixed": true
+    },
+    {
+     "mid": 1008,
+     "lv": 56,
+     "stage": 2,
+     "evo": true
+    },
+    {
+     "mid": 1051,
+     "lv": 56,
+     "stage": 2,
+     "evo": true
     }
    ],
    "master": 1,
@@ -387,7 +404,7 @@
    "scene": "odin",
    "after": "odin_win",
    "flag": "nr_odin",
-   "lv": 53,
+   "lv": 59,
    "tier": 5,
    "tune": {
     "hp": 1.35,
@@ -404,7 +421,7 @@
    "scene": "sleip",
    "after": "sleip_win",
    "flag": "nr_sleip",
-   "lv": 53,
+   "lv": 59,
    "tier": 5,
    "tune": {
     "hp": 1.8,

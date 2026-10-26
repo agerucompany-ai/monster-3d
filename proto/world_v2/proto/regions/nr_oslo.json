@@ -95,8 +95,8 @@
  ],
  "nature": true,
  "lv": [
-  45,
-  46
+  47,
+  48
  ],
  "startStage": 3,
  "grass": {
@@ -196,25 +196,37 @@
    "party": [
     {
      "mid": 199,
-     "lv": 38,
+     "lv": 40,
      "stage": 2,
      "evo": true,
      "leader": true
     },
     {
      "mid": 1018,
-     "lv": 49,
+     "lv": 51,
      "fixed": true
     },
     {
      "mid": 1052,
-     "lv": 48,
+     "lv": 50,
      "fixed": true
     },
     {
      "mid": 111,
-     "lv": 48,
+     "lv": 50,
      "fixed": true
+    },
+    {
+     "mid": 1051,
+     "lv": 49,
+     "stage": 2,
+     "evo": true
+    },
+    {
+     "mid": 1008,
+     "lv": 49,
+     "stage": 2,
+     "evo": true
     }
    ],
    "master": 1,

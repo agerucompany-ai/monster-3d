@@ -63,8 +63,8 @@
  ],
  "nature": true,
  "lv": [
-  50,
-  52
+  58,
+  60
  ],
  "startStage": 3,
  "grass": {
@@ -343,7 +343,7 @@
    "scene": "nidhogg",
    "after": "nidhogg_win",
    "flag": "nr_nidhogg",
-   "lv": 55,
+   "lv": 63,
    "tier": 6,
    "tune": {
     "hp": 1.2,
@@ -360,7 +360,7 @@
    "scene": "unicorn",
    "after": "unicorn_win",
    "flag": "nr_unicorn",
-   "lv": 55,
+   "lv": 63,
    "tier": 5,
    "tune": {
     "hp": 1.8,

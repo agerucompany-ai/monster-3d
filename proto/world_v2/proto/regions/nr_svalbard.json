@@ -63,8 +63,8 @@
  ],
  "nature": true,
  "lv": [
-  51,
-  53
+  60,
+  62
  ],
  "startStage": 3,
  "grass": {
@@ -126,24 +126,29 @@
    "party": [
     {
      "mid": 1049,
-     "lv": 39,
+     "lv": 48,
      "stage": 2,
      "evo": true,
      "leader": true
     },
     {
      "mid": 1050,
-     "lv": 61,
+     "lv": 70,
      "fixed": true
     },
     {
      "mid": 1052,
-     "lv": 60,
+     "lv": 69,
      "fixed": true
     },
     {
-     "mid": 199,
-     "lv": 60,
+     "mid": 290,
+     "lv": 69,
+     "fixed": true
+    },
+    {
+     "mid": 1047,
+     "lv": 67,
      "fixed": true
     }
    ],
@@ -378,7 +383,7 @@
    "scene": "mammoth",
    "after": "mammoth_win",
    "flag": "nr_mammoth",
-   "lv": 56,
+   "lv": 65,
    "tier": 5,
    "tune": {
     "hp": 1.35,
@@ -395,7 +400,7 @@
    "scene": "narwhal",
    "after": "narwhal_win",
    "flag": "nr_narwhal",
-   "lv": 56,
+   "lv": 65,
    "tier": 6,
    "tune": {
     "hp": 1.2,

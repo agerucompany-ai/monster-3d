@@ -63,8 +63,8 @@
  ],
  "nature": true,
  "lv": [
-  49,
-  51
+  56,
+  58
  ],
  "startStage": 3,
  "grass": {
@@ -314,7 +314,7 @@
    "scene": "aurora",
    "after": "aurora_win",
    "flag": "nr_aurora",
-   "lv": 54,
+   "lv": 61,
    "tier": 5,
    "tune": {
     "hp": 1.6,
@@ -331,7 +331,7 @@
    "scene": "fenrir",
    "after": "fenrir_win",
    "flag": "nr_fenrir",
-   "lv": 54,
+   "lv": 61,
    "tier": 6,
    "tune": {
     "hp": 0.9,

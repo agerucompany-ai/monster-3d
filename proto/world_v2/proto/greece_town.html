@@ -2093,10 +2093,12 @@ async function startEncounter(e){ ENC=e; AUTO=null; IN.active=false; IN.sx=IN.sy
   let enemy;
   if(e.m){ const o=e.m.o; enemy={ party:[(anc||boss)?{mid:o.id, lv:lvOf(o,Progress.wildLv(area)+6), fixed:true}:Progress.wildEnemy(o.id,area)], name:anc?'古代テリオン '+monName(o.id):(boss?monName(o.id):undefined) }; if(anc||boss){ enemy.ancient={tier:+o.tier||1, minions:[...new Set((D.wild||[]).filter(w=>!w.ancient&&!w.boss).map(w=>+w.id))]}; if(o.tune) enemy.ancient.tune=o.tune; enemy.catchable=!!(boss&&!anc); } }   // tune=中国編(2026-10-26)の tier の上書き(マップの wild[].tune)   // 古代テリオン・ボス=kind:'ancient'(battle.js の ANCIENT・tier はマップの wild[].tier・子分はそのマップの野生)。野生のボス(トールガ)だけ仲間の判定あり
   else { const o=e.n.o, bump=o.master?3:1; enemy={ name:o.n, zeroday:!!o.zeroday, party:(o.party||[{mid:1059},{mid:1037}]).map(x=>{ const c={mid:+x.mid, lv:lvOf(x,Progress.wildLv(area)+bump)}; if(x.fixed||x.stage!=null) c.fixed=true; if(x.evo) c.evo=true; if(x.leader) c.leader=true; return c; }) }; }   // evo=その子は戦いの中で進化できる(町いちばんの使い手)・leader=先頭でなくてもリーダー
-  const opt={ kind:e.m?((anc||boss)?'ancient':'wild'):(e.n.o.master?'master':'trainer'), size:e.m?((anc||boss)?9:7):(+e.n.o.size||(e.n.o.master?11:9)), terrainTheme:place, backdrop:place==='seaside'?'aegean':'olive', player:{items:ITEMS}, enemy };
+  if(e.m&&!(anc||boss)) enemy.pack=[...new Set((D.wild||[]).filter(w=>!w.ancient&&!w.boss).map(w=>+w.id))];   // 野生の群れ(2026-10-27): 触った子がリーダー+このマップの野生から。数は progress.js(編の pack と自分の出せる数)
+  const opt={ kind:e.m?((anc||boss)?'ancient':'wild'):(e.n.o.master?'master':'trainer'), size:e.m?((anc||boss)?(+e.m.o.size||9):7):(+e.n.o.size||(e.n.o.master?11:9)), terrainTheme:place, backdrop:place==='seaside'?'aegean':'olive', player:{items:ITEMS}, enemy };
   try{ Progress.prepare(opt,{area, zeroday:enemy.zeroday}); }catch(err){ console.warn('progress.prepare',err&&err.message); opt.player={party:PARTY,items:ITEMS,box:BOX,rankCap:10,owned:ownedList()}; }
   if(anc) opt.recruit=()=>null;   // 古代テリオン(守り・王)は仲間にならない。ボス(トールガ)は野生なので判定あり
-  if(e.m&&e.m.o.ai&&!(anc||boss)) opt.enemy.ai=Object.assign({},e.m.o.ai);   // 野生の個別の強さ(任意)。古代テリオン・ボスの強さは battle.js の ANCIENT(tier)で決まる(2026-10-26: マップ側の hpX/atkX はやめた)
+  if(e.m&&e.m.o.ai&&!(anc||boss)) opt.enemy.ai=Object.assign({},e.m.o.ai);
+  if(e.n&&e.n.o.ai) opt.enemy.ai=Object.assign({},e.n.o.ai);   // 2026-10-27 人の札の強さ(北欧編の終盤のボス: 体力・攻撃の倍率 hpX/atkX)   // 野生の個別の強さ(任意)。古代テリオン・ボスの強さは battle.js の ANCIENT(tier)で決まる(2026-10-26: マップ側の hpX/atkX はやめた)
   if(unlocks().fusion) opt.fusionUnlocked=true; if(unlocks().triple) opt.tripleUnlocked=true;   // 3体融合はラグナディオのあと(北欧編 2026-10-27)   // 融合は解禁のあとだけ渡す(守り④のあと)
   if(D.battle){ const bt=(D.battle.byArea&&D.battle.byArea[zoneAt(HERO.x,HERO.z)])||D.battle[place]||D.battle.default; if(bt) Object.assign(opt,bt); }   // マップごとの盤の見た目(遺跡・海辺など)。バランスは触らない
   Object.assign(opt,WORLD.battleOpt||{});

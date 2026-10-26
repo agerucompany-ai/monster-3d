@@ -63,8 +63,8 @@
  ],
  "nature": true,
  "lv": [
-  52,
-  54
+  63,
+  65
  ],
  "startStage": 3,
  "grass": {
@@ -105,31 +105,45 @@
    "lineAfter": "",
    "party": [
     {
-     "mid": 1012,
-     "lv": 46,
-     "stage": 2,
-     "evo": true,
+     "mid": 1013,
+     "lv": 72,
+     "fixed": true,
      "leader": true
     },
     {
-     "mid": 1013,
-     "lv": 55,
+     "mid": 1006,
+     "lv": 70,
      "fixed": true
     },
     {
-     "mid": 1006,
-     "lv": 54,
+     "mid": 2029,
+     "lv": 70,
+     "fixed": true
+    },
+    {
+     "mid": 2022,
+     "lv": 70,
+     "fixed": true
+    },
+    {
+     "mid": 1050,
+     "lv": 70,
      "fixed": true
     },
     {
      "mid": 1052,
-     "lv": 54,
+     "lv": 70,
      "fixed": true
     }
    ],
    "master": 1,
    "zeroday": 1,
-   "size": 9,
+   "size": 13,
+   "final": 1,
+   "ai": {
+    "leadHpX": 2.2,
+    "atkX": 1.15
+   },
    "scene": "ransom3",
    "after": "ransom3_win",
    "flagWin": "nr_ransom3",
@@ -147,31 +161,45 @@
    "lineAfter": "",
    "party": [
     {
-     "mid": 1049,
-     "lv": 40,
-     "stage": 2,
-     "evo": true,
+     "mid": 1050,
+     "lv": 72,
+     "fixed": true,
      "leader": true
     },
     {
-     "mid": 1050,
-     "lv": 62,
+     "mid": 290,
+     "lv": 70,
      "fixed": true
     },
     {
-     "mid": 290,
-     "lv": 61,
+     "mid": 2049,
+     "lv": 70,
+     "fixed": true
+    },
+    {
+     "mid": 2026,
+     "lv": 70,
+     "fixed": true
+    },
+    {
+     "mid": 2039,
+     "lv": 70,
      "fixed": true
     },
     {
      "mid": 1052,
-     "lv": 61,
+     "lv": 70,
      "fixed": true
     }
    ],
    "master": 1,
    "zeroday": 1,
-   "size": 9,
+   "size": 13,
+   "final": 1,
+   "ai": {
+    "leadHpX": 1.5,
+    "atkX": 0.85
+   },
    "scene": "bot",
    "after": "bot_win",
    "flagWin": "nr_bot",
@@ -345,7 +373,7 @@
    "scene": "hyoseki",
    "after": "hyoseki_win",
    "flag": "nr_hyoseki",
-   "lv": 57,
+   "lv": 68,
    "tier": 6,
    "tune": {
     "hp": 1.2,

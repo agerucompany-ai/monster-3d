@@ -63,8 +63,8 @@
  ],
  "nature": true,
  "lv": [
-  45,
-  47
+  48,
+  50
  ],
  "startStage": 3,
  "grass": {
@@ -341,7 +341,7 @@
    "scene": "mitsu",
    "after": "mitsu_win",
    "flag": "nr_mitsu",
-   "lv": 50,
+   "lv": 53,
    "tier": 4,
    "tune": {
     "hp": 1.35,
@@ -358,7 +358,7 @@
    "scene": "kubi",
    "after": "kubi_win",
    "flag": "nr_kubi",
-   "lv": 50,
+   "lv": 53,
    "tier": 4,
    "tune": {
     "hp": 1.35,
