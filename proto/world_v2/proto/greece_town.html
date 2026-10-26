@@ -104,7 +104,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 <canvas id="cv"></canvas>
 <div id="vig"></div>
 <div id="area"></div>
-<div id="tod"><button data-t="morning">朝</button><button data-t="noon" class="sel">昼</button><button data-t="evening">夕</button></div><button id="btSave">セーブ</button><div id="pgHud"><button id="btParty">仲間</button><button id="btGems" class="gem">💎 0</button></div>
+<div id="tod"><button data-t="morning">朝</button><button data-t="noon" class="sel">昼</button><button data-t="evening">夕</button></div><button id="btSave">セーブ</button><div id="pgHud"><button id="btParty">仲間</button><button id="btGems" class="gem">ジェム 0</button></div>
 <button id="enter"></button>
 <div id="stick"><div id="knob"></div></div>
 <div id="toast"></div>
@@ -951,6 +951,10 @@ OB.torch=(o)=>{ const y=G(o.x,o.z), c=o.col?col3(o.col).getHex():0xffb066; P_(rb
   CUR.B.add(sph(0.16,10,8),MAT.glow,T(o.x,y+2.18,o.z),{col:c,shadow:false}); CUR.B.add(sph(0.34,8,6),MAT.holo,T(o.x,y+2.18,o.z),{col:c,shadow:false}); FX.lamps.push([o.x,y+2.1,o.z]); };
 // 遺跡の入口(石の門と奥の闇)。rot=0 で南(カメラ側)に開く。{t:'mazegate',x,z,rot,w,h}
 OB.mazegate=(o)=>{ const y=G(o.x,o.z), rot=(o.rot||0)*DEG, M=T(o.x,y,o.z,rot), W=o.w||3.2, H=o.h||4.0;
+  if(o.style==='egypt'){ const cs=0xcdb48a, cd=0xb89c72;   // エジプトの墓の入口(2026-10-26): 砂岩の枠・まぐさ石・角とか破風はなし
+    for(const s of [-1,1]){ CUR.B.add(rbox(1.4,H,1.8,0.08,1),MAT.stone,local(M,s*(W/2+0.7),H/2,0),{col:cs,ao:y,vary:0.06,wob:0.02}); _v.set(s*(W/2+0.7),0,0).applyMatrix4(M); addCol({t:'b',x:_v.x,z:_v.z,hw:0.72,hd:0.92,rot,top:y+H}); CUR.B.add(rbox(0.1,H*0.7,0.1,0.02,1),MAT.glow,local(M,s*(W/2-0.12),H*0.45,-0.3),{col:0xffd36b,shadow:false}); }
+    P_(rbox(W+3.0,1.0,2.0,0.06,1),cd,local(M,0,H+0.5,0),{vary:0.05}); P_(rbox(W+3.4,0.3,2.2,0.04,1),cs,local(M,0,H+1.15,0.05));
+    P_(rbox(W+1.4,H+0.9,0.4,0.02,1),0x14110c,local(M,0,(H+0.9)/2,-0.7)); P_(rbox(W+3.2,H+1.3,0.6,0.05,1),cd,local(M,0,(H+1.3)/2,-1.1),{vary:0.06}); return; }
   for(const s of [-1,1]){ CUR.B.add(rbox(1.5,H,1.8,0.1,1),MAT.stone,local(M,s*(W/2+0.75),H/2,0),{col:0x9a948a,ao:y,vary:0.1,wob:0.03}); _v.set(s*(W/2+0.75),0,0).applyMatrix4(M); addCol({t:'b',x:_v.x,z:_v.z,hw:0.78,hd:0.92,rot,top:y+H}); CUR.B.add(rbox(0.1,H*0.7,0.1,0.02,1),MAT.glow,local(M,s*(W/2-0.12),H*0.45,-0.3),{col:0x7fd6ff,shadow:false}); }
   P_(rbox(W+3.2,0.9,2.0,0.08,1),0xa8a296,local(M,0,H+0.45,0),{vary:0.1}); P_(prism(W+3.6,1.0,2.1),0x9a948a,local(M,0,H+0.9,0));
   P_(rbox(W+1.5,H+0.9,0.4,0.02,1),0x14161c,local(M,0,(H+0.9)/2,-0.7)); P_(rbox(W+3.2,H+1.2,0.6,0.05,1),0x8f8a80,local(M,0,(H+1.2)/2,-1.1),{vary:0.1});
@@ -1374,7 +1378,7 @@ OB.colossus=(o)=>{ const rot=(o.rot||0)*DEG, h=o.h||12, k=h/12, y=o.y!=null?o.y:
   for(const s of [-1,1]) P_(rbox(0.9*k,0.9*k,3.0*k,0.3*k,2),c,local(M,s*1.5*k,1.0*k+4.7*k,0.2*k),{vary:0.04});
   P_(rbox(2.0*k,2.2*k,2.0*k,0.5*k,2),c2,local(M,0,1.0*k+9.9*k,-1.0*k),{vary:0.04});
   P_(cyl(0.9*k,1.9*k,2.4*k,4,1,false,Math.PI/4),c,local(M,0,1.0*k+10.0*k,-1.2*k,0,1.4,1,0.7),{vary:0.04});
-  P_(cyl(0.5*k,0.9*k,2.0*k,10),EPAL.white,local(M,0,1.0*k+11.9*k,-1.0*k),{vary:0.03}); P_(cyl(0.95*k,1.0*k,0.5*k,10),0xc9513f,local(M,0,1.0*k+11.2*k,-1.0*k));
+  P_(cyl(0.5*k,0.9*k,2.0*k,10),c,local(M,0,1.0*k+11.9*k,-1.0*k),{vary:0.03}); P_(cyl(0.95*k,1.0*k,0.5*k,10),c2,local(M,0,1.0*k+11.2*k,-1.0*k));   // 冠は彫った石の色(白と赤だと三角コーンに見えた 2026-10-26)
   addCol({t:'b',x:o.x,z:o.z,hw:2.3*k,hd:3.2*k,rot,top:y+h}); };
 // アブ・シンベルの大神殿: 崖(台形)・正面の斜めの壁・4体の座像・門。正面は +z。{t:'abusimbel',x,z,rot,w,h}
 OB.abusimbel=(o)=>{ const rot=(o.rot||0)*DEG, w=o.w||44, h=o.h||22, y=footY(o.x,o.z,w*0.6,10,rot), M=T(o.x,y,o.z,rot), R=rng(((o.x*3+o.z*7)|0)+61), c=esand(R);
@@ -1792,6 +1796,9 @@ const TOD={   // 光と色(post: 露出・にじみ・光の色・陰の色・�
   // 地下の迷宮(クレタ): 空は見えない。青白い薄明かり+たいまつの暖色。奥は暗く沈む(2026-10-25)
   cave:{top:'#0e1220',mid:'#141a2a',hor:'#1a2234',sunD:[0.25,0.9,0.35],sunC:'#a4b6dc',sunI:0.48,hS:'#7a8ab2',hG:'#2e2a28',hI:0.5,fog:'#13161f',cL:'#1a1e2c',cS:'#10131c',deep:'#1d3a52',shal:'#2b5a6a',foam:'#8aa0b0',glow:1.0,win:0.6,cloud:0.0,mot:'#ffc070',
     expo:0.92,bloom:0.36,bT:0.66,gain:[0.92,0.97,1.1],lift:[0.02,0.02,0.06],sat:1.0,vig:0.46,hazeK:0.66},
+  // 王の墓の回廊(エジプト・地下): 空は見えない。たいまつの暖かい光で砂岩が砂色に見える(cave の青白い光だと灰色の石に見えた 2026-10-26)
+  tomb:{top:'#1a120c',mid:'#22180f',hor:'#2a1e14',sunD:[0.25,0.9,0.35],sunC:'#ffd6a0',sunI:0.52,hS:'#c8a47a',hG:'#4a3424',hI:0.52,fog:'#1c140d',cL:'#2a1e14',cS:'#160f0a',deep:'#3a2a1a',shal:'#5a4430',foam:'#c0a080',glow:1.0,win:0.6,cloud:0.0,mot:'#ffc070',
+    expo:0.96,bloom:0.34,bT:0.68,gain:[1.08,0.99,0.86],lift:[0.03,0.02,0.01],sat:1.04,vig:0.44,hazeK:0.6},
   // 雷の嵐(雲の山道): 灰色の空・低い光・重い霞(2026-10-26)
   storm:{top:'#4a5670',mid:'#7b879c',hor:'#aab2bf',sunD:[0.3,0.7,0.5],sunC:'#cfd6e4',sunI:0.55,hS:'#9aa6ba',hG:'#5a5a58',hI:0.5,fog:'#8e98a8',cL:'#b8c0cc',cS:'#5c6676',deep:'#2e4a60',shal:'#5a7a88',foam:'#dde4ea',glow:0.8,win:0.4,cloud:0.5,mot:'#cfe0ff',
     expo:0.9,bloom:0.2,bT:0.8,gain:[0.95,0.98,1.06],lift:[0.02,0.02,0.05],sat:0.9,vig:0.34,hazeK:0.5} };
@@ -1915,7 +1922,7 @@ function frame(now){ requestAnimationFrame(frame); if(PAUSED){ LAST=now; return;
   HERO.speed+=(target-HERO.speed)*(1-Math.exp(-dt*9));
   if(HERO.speed>0.05&&mag>=0.12){ HERO.yaw+=angD(Math.atan2(wx,wz),HERO.yaw)*Math.min(1,dt*12); HERO.dir=[wx,wz]; }
   if(HERO.speed>0.05&&HERO.dir){ const ox=HERO.x, oz=HERO.z; moveHero(HERO.x+HERO.dir[0]*HERO.speed*dt,HERO.z+HERO.dir[1]*HERO.speed*dt); HERO.realSpeed=Math.hypot(HERO.x-ox,HERO.z-oz)/Math.max(dt,1e-4); } else HERO.realSpeed=0;
-  const gy=groundAt(HERO.x,HERO.z); HERO.y+=(gy-HERO.y)*(1-Math.exp(-dt*18)); HERO.root.position.set(HERO.x,HERO.y,HERO.z); HERO.root.rotation.y=HERO.yaw; U.uHero.value.set(HERO.x,HERO.y,HERO.z);
+  const gy=groundAt(HERO.x,HERO.z); HERO.y+=(gy-HERO.y)*(1-Math.exp(-dt*18)); HERO.root.position.set(HERO.x,HERO.y,HERO.z); HERO.root.rotation.y=HERO.yaw; U.uHero.value.set(HERO.x,CAM.fixed?999:HERO.y,HERO.z);   // 確認用の固定カメラでは主人公の前を透かさない
   if(HERO.hv){ const s=HERO.realSpeed, hv=HERO.hv, cn=hv.cur(); const busy=(cn==='Talk'||cn==='Cheer')&&s<0.3;
     if(!busy){ if(s<0.25) hv.play('Idle',0.25); else if(s<1.9) hv.play('Walk',0.18); else hv.play('Run',0.18); }
     hv.update(dt,Math.min(s,(hv.speed[hv.cur()]||1)*2.4)); }
@@ -1978,7 +1985,7 @@ async function loadMap(id,at,pos){ const t0=performance.now();
   PATHS={un:D.paths.unpaved,town:D.paths.townPaved,stone:D.paths.stone.map(p=>prepPoly(p.p,p.w)),dirt:D.paths.dirt.map(p=>prepPoly(p.p,p.w)),sc:D.paths.stoneCircles,sr:D.paths.stoneRects,sa:D.paths.sandRects||null,rockAll:D.terrain.rockAll||0};
   { const want=PATHS.sa?GTEX.pave:(D.snowSand!=null?GTEX.snow:GTEX.sand0); GTEX.sand=want; if(MAT.ground.userData.sh) MAT.ground.userData.sh.uniforms.tSa.value=want; const tn=D.terrain.tint||[1,1,1]; GTINT.set(tn[0],tn[1],tn[2]); }   // 舗装の区画があるマップは砂の代わりに板石。tint=地面の色味
   // 地下(迷宮)は暗い時間帯 tod:'cave' に固定して朝昼夕のボタンを隠す。外へ出たら元の時間帯へ
-  { const todEl=document.getElementById('tod'); if(D.tod){ if(!TODPREV) TODPREV=((TODN==='cave'||TODN==='storm')?'noon':TODN); setTime(D.tod,true); todEl.style.display='none'; } else { if(TODPREV||TODN==='cave'||TODN==='storm'){ setTime(TODPREV||'noon',true); TODPREV=null; } todEl.style.display=''; } if(PETALS) PETALS.visible=!D.tod; }
+  { const todEl=document.getElementById('tod'); if(D.tod){ if(!TODPREV) TODPREV=((TODN==='cave'||TODN==='tomb'||TODN==='storm')?'noon':TODN); setTime(D.tod,true); todEl.style.display='none'; } else { if(TODPREV||TODN==='cave'||TODN==='tomb'||TODN==='storm'){ setTime(TODPREV||'noon',true); TODPREV=null; } todEl.style.display=''; } if(PETALS) PETALS.visible=!D.tod; }
   TER=makeTerrain(D); initChunks(); buildWaters(); buildClouds(); if(!AIR) buildFar(); initActors();
   for(const n of NPCS) if(SAVE&&(SAVE.flags[npcKey(n)]||SAVE.flags['beat_'+n.o.n])){ n.beaten=true; if(n.o.lineAfter) n.o.line=n.o.lineAfter; }
   const p=pos||(D.arrive&&D.arrive[at])||D.spawn; HERO.x=p[0]; HERO.z=p[1]; HERO.yaw=p[2]; HERO.speed=0; HERO.dir=null; CAM.tx=HERO.x; CAM.tz=HERO.z;
@@ -2040,9 +2047,9 @@ function autosaveTick(dt){ const ok=canSave(); saveBtn.style.display=ok?'block':
 addEventListener('pagehide',()=>{ if(SAVE&&!NOSAVE&&READY.scene&&D&&MAP) saveGame(); });
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'&&SAVE&&!NOSAVE&&READY.scene&&D&&MAP) saveGame(); });
 // ---- 進行(progress.js・2026-10-26): 倒して仲間・Lv1〜99・EXP・ジェム・研究所のゆりかご(ガチャ)・パーティ3→5体と牧場。手順は proto/PROGRESS_INTEGRATION.md ----
-//   HUD: 右上「仲間」(街の中だけ 牧場と入れかえ)・「💎」(ジェムの記録)。ゆりかごは村の研究所の入口(enterPlace)から。開いている間はフィールドを止める
+//   HUD: 右上「仲間」(街の中だけ 牧場と入れかえ)・「ジェム」(ジェムの記録)。ゆりかごは村の研究所の入口(enterPlace)から。開いている間はフィールドを止める
 let PROG=null; const pgHud=document.getElementById('pgHud');
-function hudRefresh(){ if(!(window.Progress&&Progress.state())) return; document.getElementById('btGems').textContent='💎 '+Progress.gems(); }
+function hudRefresh(){ if(!(window.Progress&&Progress.state())) return; document.getElementById('btGems').textContent='ジェム '+Progress.gems(); }
 async function progInit(){ if(!window.Progress) return;
   if(!PROG){ PROG=Progress.init({save:SAVE,onSave:saveGame,base:'../battle/'}).then(()=>{ Progress.ui.mount({bar:false}); Progress.on('change',hudRefresh);
       Progress.on('ui',d=>{ if(d.open){ PAUSED=true; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; talkClose(); } else { PAUSED=false; LAST=performance.now(); followersSet(); } hudRefresh(); }); hudRefresh(); }); await PROG; }

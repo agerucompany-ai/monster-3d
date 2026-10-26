@@ -56,7 +56,7 @@ function uHasType(u, t){ return hasType(mon(u), t); }
 // 雷=マヒ / 氷=凍結 / 炎=やけど / 闇=毒 / 森=毒。攻撃ヒット時に確率で付与。
 const AILMENT_OF = {雷:'para', 氷:'freeze', 炎:'burn', 闇:'poison', 森:'poison'};
 const AIL_LABEL = {poison:'毒', burn:'やけど', freeze:'凍結', para:'マヒ'};
-const AIL_ICON  = {poison:'🟣', burn:'🔥', freeze:'❄', para:'⚡'};
+const AIL_ICON  = {poison:'毒', burn:'焼', freeze:'凍', para:'痺'};
 const AIL_TURNS = {poison:3, burn:3, freeze:3, para:3};   // あらゆる状態異常は3ターンで自然治癒
 const POISON_FRAC = 0.045;   // 毒：毎ターン最大HPの7%
 const BURN_FRAC   = 0.06;   // やけど：毎ターン最大HPの7%（炎タイプの攻撃で治る）
@@ -173,7 +173,7 @@ function springTick(side){
     const h=Math.min(u.maxhp-u.hp, Math.round(u.maxhp*HEAL_SPRING)); if(h<=0) continue;
     u.hp+=h; floatText(u.r,u.c,'+'+h,'#6ef0c8');
     const st=state.stats||(state.stats={evo:[0,0],fuse:[0,0]}); st.spr=st.spr||[0,0]; st.sprHp=st.sprHp||[0,0]; st.spr[side]++; st.sprHp[side]+=h;
-    if(side===0 && tutOnce('t_spring')) tutToast('💡回復の泉！ 敵陣の奥で毎ターン回復'); }
+    if(side===0 && tutOnce('t_spring')) tutToast('回復の泉！ 敵陣の奥で毎ターン回復'); }
 }
 const GAUGE_MAX = 100;
 const LEADER_HP_X = 2.0;           // ボス以外のリーダーの体力倍率
@@ -195,7 +195,7 @@ function addGauge(u, n){
   u.g=Math.min(GAUGE_MAX, before+v);
   const need=evoNeed(u);
   if(need!=null && before<need && u.g>=need && canEverEvolve(u.owner,u.mid,!!u.isBoss)){ floatText(u.r,u.c,'闘気MAX','#ffd24a');
-    if(u.owner===0 && tutOnce('t_gauge')) tutToast('💡闘気MAX！ 中央の進化エリアで⬆進化'); }
+    if(u.owner===0 && tutOnce('t_gauge')) tutToast('闘気MAX！ 中央の進化エリアで進化'); }
 }
 // リーダー: 自軍=先頭の1体(主人公の相棒) / 敵=ボス(いなければ最も体力の高い1体)
 function leaderOf(o){ return alive(o).find(u=>u.leader)||null; }
@@ -610,7 +610,7 @@ function doAttack(att, def, move){
   att.acted=true;                              // 攻撃したら行動終了
   spendAtkMP(att);                             // 攻撃MP-1（10回で切れる／ボスは無限）
   if(state.stats&&state.stats.atk) state.stats.atk[att.owner]++;
-  if(att.owner===0 && !noMP(att) && atkLeft(att)<=0 && tutOnce('t_mp')) tutToast(`💡攻撃MP切れ（攻撃${MP_ATK_MAX}回・回復${MP_HEAL_MAX}回まで）`);
+  if(att.owner===0 && !noMP(att) && atkLeft(att)<=0 && tutOnce('t_mp')) tutToast(`攻撃MP切れ（攻撃${MP_ATK_MAX}回・回復${MP_HEAL_MAX}回まで）`);
   attackFx(att, targets, def, move);           // 技ごとの攻撃エフェクト
   const advType = def && typeBonusM(m, mon(def))>0;                        // タイプ相性(弱点)発動?
   const weakHit = def && typePenaltyM(m, mon(def))<0;                      // 苦手相手(-20%)?
@@ -620,9 +620,9 @@ function doAttack(att, def, move){
     if(isAreaTerrain(att)){ qBump('terrainD'); statBump('terrain'); }
   }
   if(att.owner===0){
-    if(advType && tutOnce('t_adv')) tutToast('💡弱点！ +20%・守りを貫く');
-    else if(weakHit && tutOnce('t_weak')) tutToast('💡いまひとつ… -20%');
-    else if(advTerr && tutOnce('t_terr')) tutToast('💡得意な地形！ +30%');
+    if(advType && tutOnce('t_adv')) tutToast('弱点！ +20%・守りを貫く');
+    else if(weakHit && tutOnce('t_weak')) tutToast('いまひとつ… -20%');
+    else if(advTerr && tutOnce('t_terr')) tutToast('得意な地形！ +30%');
   }
   let kills=0, msg='', dealt=0; const hitFoes=[];
   for(const t of targets){
@@ -631,7 +631,7 @@ function doAttack(att, def, move){
     if(t.dug>0) continue;                          // 地中の相手には当たらない（無敵）
     let dmg=calcDamage(att,t,move); if(t.owner===att.owner) dmg=Math.max(1,Math.round(dmg*0.3)); t.hp-=dmg; if(t.owner!==att.owner){ dealt+=dmg; hitFoes.push(t); }
     floatText(t.r,t.c,`-${dmg}`, advType?'#ffd24a':(weakHit?'#aab4c0':(t.owner===0?'#ff7a5a':'#ffb0a0')), advType?'num weak':(weakHit?'num res':'num'));
-    if(!msg) msg=`${m.name}の「${move.n}」→ ${mon(t).name} に ${dmg}`+(advType?' ⚡弱点!':'')+(weakHit?' 🛡いまひとつ':'')+(advTerr?' 🌳地形+':'')+(targets.length>1?` 他${targets.length-1}体`:'');
+    if(!msg) msg=`${m.name}の「${move.n}」→ ${mon(t).name} に ${dmg}`+(advType?' 弱点!':'')+(weakHit?' いまひとつ':'')+(advTerr?' 地形+':'')+(targets.length>1?` 他${targets.length-1}体`:'');
     if(t.hp<=0){ const wasLeader=!!t.leader; const died=killUnit(t);
       if(died){ kills++;
         if(t.owner===1) state.killLv=(state.killLv||0)+mon(t).level;   // 敗北時の比例報酬用
@@ -692,7 +692,7 @@ function applySpecialHit(att, spec){
     else addGauge(t, (t.hp<=t.maxhp/2)?GAUGE_TAKEN_LOW:GAUGE_TAKEN);
   }
   if(targets.length) addGauge(att, GAUGE_HIT);
-  toast(`☠ ${mon(att).name}の「${spec.label}」！ ${spec.type?spec.type+'属性 ':''}${targets.length}体に大ダメージ`);
+  toast(`${mon(att).name}の「${spec.label}」！ ${spec.type?spec.type+'属性 ':''}${targets.length}体に大ダメージ`);
   return true;
 }
 // ボスの専用ターン(使えたらtrue)。CPU側で呼ぶ
@@ -752,8 +752,8 @@ function doCombo(u){
   if(!hit){ if(u.owner===0&&!ONLINE) toast(`合体攻撃「${cb.label}」は射程${cb.rng}に敵がいない`); return false; }
   for(const m of members) m.acted=true;                    // 3体そろって全員行動終了
   spendAtkMP(u);
-  if(u.owner===0) showBanner(`🔱 合体攻撃 ${cb.label}！`);
-  toast(`🔱 合体攻撃「${cb.label}」！ ${members.map(m=>mon(m).name).join('＋')} 射程${cb.rng}/威力${dmg}`);
+  if(u.owner===0) showBanner(`合体攻撃 ${cb.label}！`);
+  toast(`合体攻撃「${cb.label}」！ ${members.map(m=>mon(m).name).join('＋')} 射程${cb.rng}/威力${dmg}`);
   afterAction();
   return true;
 }
@@ -764,7 +764,7 @@ function killUnit(u){
     state._ragPerfect=true; const nm=MID[267];
     u.mid=267; u.maxhp=u.hp=Math.round(nm.hp*3); u.atkX=1.5; u.isBoss=true; u.moved=false; u.acted=false;   // 真・ラグナディオ=終盤の巨大な壁(本体×3HP)
     if(sprites[u.uid]){ sprites[u.uid].mat.map=loadTex(267); sprites[u.uid].mat.needsUpdate=true; sprites[u.uid].curmid=267; }
-    syncUnits(); showBanner('☠ 真・ラグナディオ、顕現！');
+    syncUnits(); showBanner('真・ラグナディオ、顕現！');
     toast('ニドグラを喰らい——真・ラグナディオが顕現！ 敵味方すべてを虚無へ還す！');
     return false;
   }
@@ -795,7 +795,7 @@ function inflictStatus(att, t){
       t[ail] = Math.max(t[ail]||0, AIL_TURNS[ail]);
       floatText(t.r, t.c, AIL_ICON[ail]+AIL_LABEL[ail], '#e0b0ff');
       statusFx(t.r, t.c, ail);
-      if(tutOnce('t_ail')) tutToast('💡状態異常（3ターンで治る・進化でも治る）');
+      if(tutOnce('t_ail')) tutToast('状態異常（3ターンで治る・進化でも治る）');
     }
   }
 }
@@ -834,7 +834,7 @@ function doHeal(u){   // 全体回復: 射程内の味方全員をHP+400(固定)
   let total=0, n=0;
   for(const a of healScope(u)){ if(a.hp>=a.maxhp) continue; const before=a.hp; a.hp=Math.min(a.maxhp,a.hp+healAll(a)); const got=a.hp-before; if(got>0){ total+=got; n++; healFx(a.r,a.c); floatText(a.r,a.c,`+${got}`,'#7be0a0'); } }
   u.acted=true;
-  toast(`${mon(u).name}の全体回復 ✦味方${n}体を回復（計+${total}）`);
+  toast(`${mon(u).name}の全体回復 味方${n}体を回復（計+${total}）`);
   afterAction();
 }
 function doHealOne(u){   // 単体回復: 最も傷ついた味方1体をHP+600(固定)
@@ -854,7 +854,7 @@ function doDig(u){
   if(!canAtkMP(u)){ toast('攻撃MPが切れた'); return; }
   spendAtkMP(u);                               // 潜行は攻撃MP枠を消費
   u.dug=DIG_TURNS;
-  healFx(u.r,u.c); floatText(u.r,u.c,'🕳潜行！','#c9a24a');
+  healFx(u.r,u.c); floatText(u.r,u.c,'潜行！','#c9a24a');
   toast(`${mon(u).name}が地中へ潜行！ ${DIG_TURNS}ターン無敵で移動（攻撃・海/溶岩越え不可）`);
   syncUnits(); updateUI();
   if(ONLINE&&isHost()) netPush();
@@ -872,7 +872,7 @@ function doRevive(u){
   const fl=fallen.shift(); const mid=fl.mid; const baseId=baseFormId(mid);   // Lv1の姿で復活
   u.g=gaugeOf(u)-REVIVE_GAUGE; spendHealMP(u);       // 蘇生は闘気50＋回復MP枠
   const nu = addUnit(u.owner,baseId,cell[0],cell[1]); unitMul(nu, fl.rank, u.owner===1&&BT.diff?BT.diff.hpX:1, u.owner===1&&BT.diff?BT.diff.atkX:1); nu.src=fl.src.slice(); nu.mid0=baseId;
-  u.acted=true; healFx(cell[0],cell[1]); floatText(cell[0],cell[1],'✨蘇生','#ffe6a0');
+  u.acted=true; healFx(cell[0],cell[1]); floatText(cell[0],cell[1],'蘇生','#ffe6a0');
   toast(`${mon(u).name}の蘇生魔法 → ${MID[baseId].name}(Lv1)が自陣に復活！`);
   afterAction();
 }
@@ -882,7 +882,7 @@ function doCure(u){
   const cands=healTargets(u).filter(hasAnyStatus);
   const t = cands[0] || u;
   clearAllStatus(t); spendHealMP(u);           // 浄化は回復MP枠
-  u.acted=true; healFx(t.r,t.c); floatText(t.r,t.c,'✨浄化','#bfffe0');
+  u.acted=true; healFx(t.r,t.c); floatText(t.r,t.c,'浄化','#bfffe0');
   toast(`${mon(u).name}の浄化 → ${mon(t).name} の状態異常を回復`);
   afterAction();
 }
@@ -901,15 +901,15 @@ function moveUnit(u, r, c, pref){   // pref: 'triple'|'pair'|undefined(=プレ�
     if(structGroup) buildStructures();
     if(u.owner===0 && !ONLINE){   // プレイヤー: 回復薬を1つ拾う(その場では回復せず、コマンドで好きな時に使える)
       STORY.items.heal=(STORY.items.heal||0)+1;
-      healFx(r,c); floatText(r,c,'🧪+1', '#7ee08a');
-      toast(`🧪回復薬を拾った！（所持×${STORY.items.heal}・味方を選んでコマンドで使用）`); updateUI();
+      healFx(r,c); floatText(r,c,'+1', '#7ee08a');
+      toast(`回復薬を拾った！（所持×${STORY.items.heal}・味方を選んでコマンドで使用）`); updateUI();
     } else {   // CPU/オンラインはアイテムを持てないので従来通り即回復
       const heal=Math.round(u.maxhp*healFrac()), before=u.hp; u.hp=Math.min(u.maxhp, u.hp+heal); const got=u.hp-before;
       healFx(r,c); floatText(r,c,`+${got}`, '#5fe070');
-      toast(u.owner===0?`💚回復！ HP+${got}`:'CPUが回復');
+      toast(u.owner===0?`回復！ HP+${got}`:'CPUが回復');
     }
   }
-  if(u.owner===0 && !ONLINE && canEvolveHere(u) && tutOnce('t_evoarea')) tutToast('💡⬆進化できる');
+  if(u.owner===0 && !ONLINE && canEvolveHere(u) && tutOnce('t_evoarea')) tutToast('進化できる');
   afterAction();
 }
 function tryFusion(a, b, r, c){
@@ -1034,7 +1034,7 @@ function startTurn(side){
   repairBoard();   // ターン開始ごとに盤を健全化(重なり/ゴースト/盤外を修復)
   state.cur=side;
   for(const u of alive(side)){ u.moved=false; u.acted=false; if(u.ancTired) u.ancTired=false;   // 古代テリオンの「隙」は自分の手番の始めまで
-    if(u.dug>0){ u.dug--; if(u.dug<=0){ floatText(u.r,u.c,'⬆浮上','#e0c060'); } else { floatText(u.r,u.c,`潜行(残${u.dug})`,'#c9a24a'); } }
+    if(u.dug>0){ u.dug--; if(u.dug<=0){ floatText(u.r,u.c,'浮上','#e0c060'); } else { floatText(u.r,u.c,`潜行(残${u.dug})`,'#c9a24a'); } }
   }
   for(const u of alive(side).slice()){ applyStatusTick(u); }   // 状態異常の解決（撃破あり得る）
   springTick(side);   // 回復の泉
@@ -1879,7 +1879,7 @@ function drawBar(x,u,m){
     x.fillStyle='rgba(255,255,255,.10)'; roundRect(x,7,66,242,9,4); x.fill();
     if(gr>0){ x.fillStyle=ready?'#ffe066':(evoNeed(u)==null?'#9a8a60':'#e89a3a'); roundRect(x,7,66,242*gr,9,4); x.fill(); }
     if(ready){ x.strokeStyle='#fff3b0'; x.lineWidth=2; roundRect(x,6,65,244,11,5); x.stroke(); } }
-  const st=[]; if(u.poison>0)st.push('🟣'); if(u.burn>0)st.push('🔥'); if(u.freeze>0)st.push('❄'); if(u.para>0)st.push('⚡'); if(u.dug>0)st.push('🕳');
+  const st=[]; if(u.poison>0)st.push('毒'); if(u.burn>0)st.push('焼'); if(u.freeze>0)st.push('凍'); if(u.para>0)st.push('痺'); if(u.dug>0)st.push('潜');
   if(st.length){ x.font='20px sans-serif'; x.textAlign='right'; x.fillText(st.join(''),250,21); }
 }
 function animUnit(uid, kind, o){ const s=sprites[uid]; if(!s) return; s.anim=Object.assign({kind,t0:performance.now(),dur:kind==='lunge'?420:kind==='hit'?460:kind==='cast'?380:520,dx:0,dz:0},o||{}); if(kind==='hit') s.detailUntil=performance.now()+1800; }
@@ -2848,7 +2848,7 @@ function drawLabel(x,u,m){
   x.lineWidth=3; x.strokeStyle = ally?'#5b9bff':'#ff6a5a'; x.stroke();
   x.textAlign='center'; x.textBaseline='middle';
   x.font='bold 25px sans-serif'; x.fillStyle='#fff';
-  x.fillText(`${ally?'🔵':'🔴'} ${m.name}`,128,18);
+  x.fillText(`${m.name}`,128,18);
   x.font='15px sans-serif'; x.fillStyle='#ffe089';
   x.fillText(`${m.type2?m.type+'/'+m.type2:m.type}・${DAN[m.level]}・${rkStr(u)}`,128,38);
   // HPバー（大きめ・数値も大きく）
@@ -2857,21 +2857,21 @@ function drawLabel(x,u,m){
   x.fillStyle = ratio>0.5?'#4fc46a':(ratio>0.25?'#e0b040':'#e05040');
   roundRect(x,hx,hy,w*ratio,30,7); x.fill();
   x.fillStyle='#fff'; x.font='bold 21px sans-serif'; x.fillText(`HP ${Math.max(0,u.hp)} / ${u.maxhp}`,128,68);
-  // MPバー（攻撃⚔と回復✚の残り回数。ボスは無限なので非表示）
+  // MPバー（攻撃と回復の残り回数。ボスは無限なので非表示）
   let stY=98;
   if(!noMP(u)){ const my=85, ah=13;
     const amp=atkLeft(u), amm=atkMax(u), hmp=healLeft(u), hmm=healMax(u);
     // 攻撃MP（左・青）
     x.fillStyle='#0d0d16'; roundRect(x,8,my,150,ah,5); x.fill();
     x.fillStyle = amp>=1?'#4f8bff':'#7a3030'; roundRect(x,8,my,150*Math.max(0,amp/amm),ah,5); x.fill();
-    x.fillStyle='#eaf0ff'; x.font='bold 12px sans-serif'; x.fillText(`⚔${amp}/${amm}`,83,92);
+    x.fillStyle='#eaf0ff'; x.font='bold 12px sans-serif'; x.fillText(`攻${amp}/${amm}`,83,92);
     // 回復MP（右・緑）
     x.fillStyle='#0d1610'; roundRect(x,166,my,82,ah,5); x.fill();
     x.fillStyle = hmp>=1?'#3fbf6a':'#5a3030'; roundRect(x,166,my,82*Math.max(0,hmp/hmm),ah,5); x.fill();
-    x.fillStyle='#eafff0'; x.font='bold 12px sans-serif'; x.fillText(`✚${hmp}/${hmm}`,207,92);
+    x.fillStyle='#eafff0'; x.font='bold 12px sans-serif'; x.fillText(`回${hmp}/${hmm}`,207,92);
     stY=104; }
   // 状態異常アイコン
-  const st=[]; if(u.poison>0)st.push('🟣毒'); if(u.burn>0)st.push('🔥焼'); if(u.freeze>0)st.push('❄凍'); if(u.para>0)st.push('⚡痺');
+  const st=[]; if(u.poison>0)st.push('毒'); if(u.burn>0)st.push('焼'); if(u.freeze>0)st.push('凍'); if(u.para>0)st.push('痺');
   if(st.length){ x.font='bold 15px sans-serif'; x.fillStyle='#e8c8ff'; x.fillText(st.join(' '),128,stY); }
 }
 function roundRect(x,a,b,w,h,r){ x.beginPath(); x.moveTo(a+r,b); x.arcTo(a+w,b,a+w,b+h,r); x.arcTo(a+w,b+h,a,b+h,r); x.arcTo(a,b+h,a,b,r); x.arcTo(a,b,a+w,b,r); x.closePath(); }
@@ -3201,9 +3201,9 @@ function updateUI(){ if(BT.headless) return;
   // チュートリアル: 進化・融合の「今できるぞ」を初回だけ知らせる
   if(CAMP.on && state.phase==='battle' && state.cur===0){
     if(Object.values(state.units).some(u=>u.owner===0&&gaugeReady(u)&&STORY.owned.includes(mon(u).evolves_to)) && tutOnce('t_evoready'))
-      setTimeout(()=>toast('💡闘気MAX！ 中央の進化エリアで⬆進化'),200);
+      setTimeout(()=>toast('闘気MAX！ 中央の進化エリアで進化'),200);
     if(sel && selMoves && selMoves.fuse && selMoves.fuse.length && tutOnce('t_fuseready'))
-      setTimeout(()=>toast('💡融合できる！ 紫のマスへ'),200);
+      setTimeout(()=>toast('融合できる！ 紫のマスへ'),200);
   }
   // 行動パネル
   const sd=$id('sel'); const ac=$id('actions');
@@ -3213,20 +3213,20 @@ function updateUI(){ if(BT.headless) return;
   function appendFuseBtns(){ if(!sel||!selMoves||!selMoves.fuse) return; const seen={};
     for(const [fr,fc] of selMoves.fuse){ const partner=unitAt(fr,fc); if(!partner)continue;
       const fid=fusionResult(sel,partner); if(fid==null||seen[fid])continue; seen[fid]=1;
-      ac.appendChild(mkbt(`🔮 融合→${MID[fid].name}（${mon(partner).name}と）`,'fuse', !sel.acted, ()=>{ pushUndo(); moveUnit(sel,fr,fc,'pair'); reselectAfter(); })); }
+      ac.appendChild(mkbt(`融合→${MID[fid].name}（${mon(partner).name}と）`,'fuse', !sel.acted, ()=>{ pushUndo(); moveUnit(sel,fr,fc,'pair'); reselectAfter(); })); }
     for(const [fr,fc] of selMoves.fuse){ const partner=unitAt(fr,fc); if(!partner)continue;   // 3体融合(v3): 相手に隣接する3体目も一緒に
       const t3=tripleResult(sel,partner); if(!t3||seen['t'+t3.id])continue; seen['t'+t3.id]=1;
-      ac.appendChild(mkbt(`🔱 3体融合→${MID[t3.id].name}（${mon(partner).name}・${mon(t3.c).name}と）`,'fuse', !sel.acted, ()=>{ pushUndo(); moveUnit(sel,fr,fc,'triple'); reselectAfter(); })); } }
+      ac.appendChild(mkbt(`3体融合→${MID[t3.id].name}（${mon(partner).name}・${mon(t3.c).name}と）`,'fuse', !sel.acted, ()=>{ pushUndo(); moveUnit(sel,fr,fc,'triple'); reselectAfter(); })); } }
   if(sel){
     const m=mon(sel);
     const R=effRange(sel), note=traitNote(sel);
     const mpStr = noMP(sel) ? '<span style="color:#ffcf6b">MP∞</span>'
-      : `<span style="color:${atkLeft(sel)>=1?'#8fb4ff':'#e06060'}">⚔MP ${atkLeft(sel)}/${atkMax(sel)}</span>`
-        +` <span style="color:${healLeft(sel)>=1?'#7be0a0':'#e06060'}">✚MP ${healLeft(sel)}/${healMax(sel)}</span>`;
+      : `<span style="color:${atkLeft(sel)>=1?'#8fb4ff':'#e06060'}">攻撃MP ${atkLeft(sel)}/${atkMax(sel)}</span>`
+        +` <span style="color:${healLeft(sel)>=1?'#7be0a0':'#e06060'}">回復MP ${healLeft(sel)}/${healMax(sel)}</span>`;
     const gN=evoNeed(sel); const gStr=`<span style="color:${gaugeReady(sel)?'#ffe066':'#e8a050'}">闘気 ${gaugeOf(sel)}${gN!=null?'/'+gN:''}</span>`;
     sd.innerHTML = `<img src="${IMG[sel.mid]}"><div><b style="color:#ffd86b">${sel.leader?'<i class="lmk"></i>':''}${m.name}</b>${terrChip(sel)} <span class="muted">${m.type}・${DAN[m.level]}・${rkStr(sel)}</span> ${mpStr} ${gStr}<br>`
       +`<span class="muted">HP ${sel.hp}/${sel.maxhp}・ATK ${m.atk}・防御-${Math.round(defReduction(sel)*100)}%・移動 ${effMove(sel)}・射程 ${R}${R>m.atk_range?'↑':''}</span>`
-      +(note?`<br><span style="color:#7be0a0;font-size:11px">⚡${note}</span>`:'')+`</div>`;
+      +(note?`<br><span style="color:#7be0a0;font-size:11px">${note}</span>`:'')+`</div>`;
     if(selMode==='attack'){
       // 技選択 → 敵をタップ
       const movesRow=document.createElement('div'); movesRow.style.cssText='width:100%;display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:4px';
@@ -3234,34 +3234,34 @@ function updateUI(){ if(BT.headless) return;
       movesFor(sel).forEach(mo=>{
         const on=selMove&&selMove.n===mo.n; const dmg=Math.round(m.atk*mo.p*rangePower(m));
         const b=document.createElement('button'); b.className='bt '+(on?'go':''); b.style.cssText='padding:7px 11px;font-size:13px';
-        const kind = mo.multi ? (isAreaTerrain(sel)?'🗺マップ(味方巻込)':'📡範囲(敵全体)') : '🎯単体';
+        const kind = mo.multi ? (isAreaTerrain(sel)?'マップ(味方巻込)':'範囲(敵全体)') : '単体';
         b.innerHTML=`${mo.n}<span style="opacity:.7;font-size:10px"> 威${dmg}・射程${mo.range}・${kind}</span>`;
         b.onclick=()=>{ selMove=mo; selAtks=attackTargets(sel, mo.range); drawSelHL(); updateUI(); }; movesRow.appendChild(b);
       });
       ac.appendChild(movesRow);
       appendFuseBtns();   // 攻撃モードでも隣接融合を出す(進化直後の融合)
-      if(canMove(sel)) ac.appendChild(mkbt('🚶 移動にもどる','',true,()=>setMode('move')));
-      ac.appendChild(mkbt('✖ 解除','',true,clearSel));
+      if(canMove(sel)) ac.appendChild(mkbt('移動にもどる','',true,()=>setMode('move')));
+      ac.appendChild(mkbt('解除','',true,clearSel));
     } else {
       // 既定＝移動モード：選択した時点で赤マスが出る→タップで即移動（攻撃/進化はボタン）
       const atkOk = canAttack(sel) && (selAtks.length || (castleAdjacent(sel)&&canAttack(sel)));
       const outMP = !noMP(sel) && !sel.acted && !canAtkMP(sel);   // 攻撃MP切れ
-      ac.appendChild(mkbt(`⚔️ 攻撃${sel.acted?'(済)':(outMP?'(MP切れ)':(noMP(sel)?'':`(残${atkLeft(sel)})`))}`,'go', !!atkOk, ()=>setMode('attack')));
+      ac.appendChild(mkbt(`攻撃${sel.acted?'(済)':(outMP?'(MP切れ)':(noMP(sel)?'':`(残${atkLeft(sel)})`))}`,'go', !!atkOk, ()=>setMode('attack')));
       // 合体攻撃: 対象トリオが近くに揃っていれば発動可
       { const cr=comboFor(sel);
         if(cr){ const cb=cr.cb; const okC=canAtkMP(sel);
           const base=comboBaseAtk(cr.members);
-          ac.appendChild(mkbt(`🔱 合体攻撃「${cb.label}」(射程${cb.rng}・威力${base+COMBO_BONUS_MIN}〜${base+COMBO_BONUS_MAX})${okC?'':'(MP切れ)'}`,'fuse', !!okC, ()=>{ pushUndo(); doCombo(sel); reselectAfter(); })); } }
+          ac.appendChild(mkbt(`合体攻撃「${cb.label}」(射程${cb.rng}・威力${base+COMBO_BONUS_MIN}〜${base+COMBO_BONUS_MAX})${okC?'':'(MP切れ)'}`,'fuse', !!okC, ()=>{ pushUndo(); doCombo(sel); reselectAfter(); })); } }
       // アイテム（オンライン以外は表示。盤上で拾った回復薬も使える）
       if(!ONLINE && BT.kind!=='wild'){   // 2026-10-25 オーナー: 野生戦は回復なし
         if((STORY.items.heal||0)>0 && sel.hp<sel.maxhp)
-          ac.appendChild(mkbt(`🧪回復の水筒×${STORY.items.heal}（${Math.round(healFrac()*100)}%）`,'evo', !sel.acted, ()=>{ pushUndo();
+          ac.appendChild(mkbt(`回復の水筒×${STORY.items.heal}（${Math.round(healFrac()*100)}%）`,'evo', !sel.acted, ()=>{ pushUndo();
             const h2=Math.min(sel.maxhp-sel.hp, Math.round(sel.maxhp*healFrac())); sel.hp+=h2; STORY.items.heal--; BT.usedItems=(BT.usedItems||0)+1;
-            floatText(sel.r,sel.c,'+'+h2,'#7ee08a'); sel.acted=true; toast(`🧪回復の水筒 HP+${h2}`); syncUnits(); updateUI(); }));
+            floatText(sel.r,sel.c,'+'+h2,'#7ee08a'); sel.acted=true; toast(`回復の水筒 HP+${h2}`); syncUnits(); updateUI(); }));
         if((STORY.items.full||0)>0 && sel.hp<sel.maxhp)
-          ac.appendChild(mkbt(`✨霊薬×${STORY.items.full}`,'evo', !sel.acted, ()=>{ pushUndo();
+          ac.appendChild(mkbt(`霊薬×${STORY.items.full}`,'evo', !sel.acted, ()=>{ pushUndo();
             const h2=sel.maxhp-sel.hp; sel.hp=sel.maxhp; STORY.items.full--; saveStory();
-            floatText(sel.r,sel.c,'+'+h2,'#bfffe0'); sel.acted=true; toast(`✨霊薬エリク！ 全回復`); syncUnits(); updateUI(); }));
+            floatText(sel.r,sel.c,'+'+h2,'#bfffe0'); sel.acted=true; toast(`霊薬エリク！ 全回復`); syncUnits(); updateUI(); }));
       }
       // 光タイプ：回復・浄化（攻撃の代わりに味方/自分を癒やす）
       if(uHasType(sel,'光') && BT.kind!=='wild'){
@@ -3271,19 +3271,19 @@ function updateUI(){ if(BT.headless) return;
         const woundOk = canAct && healMP && healScope(sel).some(a=>a.hp<a.maxhp);
         const cureOk  = canAct && healMP && healTargets(sel).some(hasAnyStatus);
         const healN = noMP(sel)?'∞':healLeft(sel);
-        ac.appendChild(mkbt(`💚 全体回復(+${Math.round(LIGHT_HEAL_ALL_R*sustainX()*100)}%)${healMP?`〔残${healN}〕`:'(MP切れ)'}`,'evo', !!woundOk, ()=>{ pushUndo(); doHeal(sel); reselectAfter(); }));
-        ac.appendChild(mkbt(`💗 単体回復(+${Math.round(LIGHT_HEAL_ONE_R*sustainX()*100)}%)${healMP?`〔残${healN}〕`:'(MP切れ)'}`,'evo', !!woundOk, ()=>{ pushUndo(); doHealOne(sel); reselectAfter(); }));
-        ac.appendChild(mkbt('✨ 浄化','evo', !!cureOk, ()=>{ pushUndo(); doCure(sel); reselectAfter(); }));
+        ac.appendChild(mkbt(`全体回復(+${Math.round(LIGHT_HEAL_ALL_R*sustainX()*100)}%)${healMP?`〔残${healN}〕`:'(MP切れ)'}`,'evo', !!woundOk, ()=>{ pushUndo(); doHeal(sel); reselectAfter(); }));
+        ac.appendChild(mkbt(`単体回復(+${Math.round(LIGHT_HEAL_ONE_R*sustainX()*100)}%)${healMP?`〔残${healN}〕`:'(MP切れ)'}`,'evo', !!woundOk, ()=>{ pushUndo(); doHealOne(sel); reselectAfter(); }));
+        ac.appendChild(mkbt('浄化','evo', !!cureOk, ()=>{ pushUndo(); doCure(sel); reselectAfter(); }));
         if(m.level===3){
           const fallenN=(state.fallen&&state.fallen[0]&&state.fallen[0].length)||0;
           const revOk = canAct && canHealMP(sel) && fallenN>0 && gaugeOf(sel)>=REVIVE_GAUGE && !!freeCastleCell(0);
-          ac.appendChild(mkbt(`🌟 蘇生 闘気${REVIVE_GAUGE}${fallenN?`(${fallenN}体)`:'(なし)'}`,'evo', !!revOk, ()=>{ pushUndo(); doRevive(sel); reselectAfter(); }));
+          ac.appendChild(mkbt(`蘇生 闘気${REVIVE_GAUGE}${fallenN?`(${fallenN}体)`:'(なし)'}`,'evo', !!revOk, ()=>{ pushUndo(); doRevive(sel); reselectAfter(); }));
         }
       }
       // 地タイプ：潜行（2ターン地中で無敵移動）
       if(uHasType(sel,'地') && sel.dug<=0){
         const digOk = canAttack(sel) && !sel.moved;
-        ac.appendChild(mkbt(`⛏ 潜行(${DIG_TURNS}T無敵)`,'evo', !!digOk, ()=>{ pushUndo(); doDig(sel); reselectAfter(); }));
+        ac.appendChild(mkbt(`潜行(${DIG_TURNS}T無敵)`,'evo', !!digOk, ()=>{ pushUndo(); doDig(sel); reselectAfter(); }));
       }
       if(m.evolves_to!=null){
         const nm=MID[m.evolves_to];
@@ -3292,20 +3292,20 @@ function updateUI(){ if(BT.headless) return;
         else if(sel.acted){ ok=false; why='(行動済)'; }
         else if(!gaugeReady(sel)){ ok=false; why=`(闘気${gaugeOf(sel)}/${evoNeed(sel)})`; }
         else if(!isEvoCell(sel.r,sel.c)){ ok=false; why='(進化エリアへ)'; }
-        ac.appendChild(mkbt(`⬆ 進化→${nm.name}${why}`,'evo', ok, ()=>setMode('evolve')));
+        ac.appendChild(mkbt(`進化→${nm.name}${why}`,'evo', ok, ()=>setMode('evolve')));
       }
       appendFuseBtns();
-      ac.appendChild(mkbt('✖ 解除','',true,clearSel));
+      ac.appendChild(mkbt('解除','',true,clearSel));
     }
   } else {
-    sd.innerHTML='<span class="muted">🔵 動かす子をタップ</span>';
+    sd.innerHTML='<span class="muted">動かす子をタップ</span>';
   }
   // 下段：待った・降参・ターン終了
   if(!ONLINE && (STORY.items.ki||0)>0 && sel && sel.owner===0)
-    ac.appendChild(mkbt(`💠闘気の水晶×${STORY.items.ki}（+50）`,'evo', state.cur===0 && !sel.acted && gaugeOf(sel)<GAUGE_MAX, ()=>{ pushUndo();
+    ac.appendChild(mkbt(`闘気の水晶×${STORY.items.ki}（+50）`,'evo', state.cur===0 && !sel.acted && gaugeOf(sel)<GAUGE_MAX, ()=>{ pushUndo();
       STORY.items.ki--; saveStory(); sel.g=Math.min(GAUGE_MAX,gaugeOf(sel)+50); floatText(sel.r,sel.c,'闘気+50','#ffd24a'); syncUnits(); updateUI(); }));
   { const row=document.createElement('div'); row.className='mainrow';
-    if(!ONLINE) row.appendChild(mkbt('↶ 待った','', state.cur===0 && !BT.auto && undoStack.length>0, doUndo));
+    if(!ONLINE) row.appendChild(mkbt('待った','', state.cur===0 && !BT.auto && undoStack.length>0, doUndo));
     row.appendChild(mkbt('ターン終了','warn end', state.cur===0 && !BT.auto, endTurn));
     ac.appendChild(row); }
   // detail (相手等)
@@ -3323,8 +3323,8 @@ function showMonsterDetail(id, u){
   const m=MID[id]; const box=$id('detailBox');
   let unitRow='';
   if(u){
-    const st=[]; if(u.poison)st.push('🟣毒'); if(u.burn)st.push('🔥やけど'); if(u.freeze)st.push('❄凍結'); if(u.para)st.push('⚡マヒ');
-    unitRow=`<div class="row" style="background:#241a2a;border-radius:6px;padding:2px 6px"><span>${u.owner===0?'🔵味方':'🔴敵'}${u.isBoss?' ボス':''} 現在HP</span><b>${u.hp}/${u.maxhp}${st.length?'　'+st.join(' '):''}</b></div>`;
+    const st=[]; if(u.poison)st.push('毒'); if(u.burn)st.push('やけど'); if(u.freeze)st.push('凍結'); if(u.para)st.push('マヒ');
+    unitRow=`<div class="row" style="background:#241a2a;border-radius:6px;padding:2px 6px"><span>${u.owner===0?'味方':'敵'}${u.isBoss?' ボス':''} 現在HP</span><b>${u.hp}/${u.maxhp}${st.length?'　'+st.join(' '):''}</b></div>`;
   }
   const rb=rangeBase(m); const rng = rb>=2?`2マス(遠隔・威力-22%)`:'隣接1マス';
   const arr=MOVES[m.type]||[];
@@ -3559,7 +3559,7 @@ let ancMarks=[];
 function ancClearMarks(){ if(!fxGroup) return; for(const m of ancMarks) fxGroup.remove(m); ancMarks=[]; }
 function ancDrawMarks(){ ancClearMarks(); const A=BT.anc; if(!A||!A.charge||BT.headless||!fxGroup) return;
   for(const [r,c] of A.charge.cells){ const cov=ancIsCover(r,c); const op=cov?0.42:0.62; const m=new THREE.Mesh(cellPatchGeo(r,c,0.94,0.045), new THREE.MeshBasicMaterial({map:hlTex(),color:cov?0xffa040:0xff3a2a,transparent:true,opacity:op,depthWrite:false})); m.userData.base=op; m.renderOrder=2; fxGroup.add(m); ancMarks.push(m); }
-  const b=ancUnit(); if(b){ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tagTex('⚠ 大技','weak'),transparent:true,depthTest:false,depthWrite:false})); sp.material.toneMapped=false; sp.scale.set(1.6,0.45,1); const w=cell2world(b.r,b.c); sp.position.set(w.x,cellH(b.r,b.c)+2.4,w.z); sp.renderOrder=45; sp.userData.base=1; fxGroup.add(sp); ancMarks.push(sp); } }
+  const b=ancUnit(); if(b){ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tagTex('大技','weak'),transparent:true,depthTest:false,depthWrite:false})); sp.material.toneMapped=false; sp.scale.set(1.6,0.45,1); const w=cell2world(b.r,b.c); sp.position.set(w.x,cellH(b.r,b.c)+2.4,w.z); sp.renderOrder=45; sp.userData.base=1; fxGroup.add(sp); ancMarks.push(sp); } }
 const RANK_STEP=0.02;          // 成長ランク1つ=体力・攻撃+2%(ランク1=補正なし・ランク20=+38%)
 const STACK_RANK=2;            // 重ね1回=成長ランク+2
 const STACK_GEM=50;            // 上限で止まった分は1ランク=ジェム50
