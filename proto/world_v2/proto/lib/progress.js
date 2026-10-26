@@ -38,6 +38,7 @@ P.config={cfg:CFG, areas:AREA_RULE, arcs:ARC_RULE, pools:ARC_POOL, starters:STAR
 
 // ---------------------------------------------------------------- モンスターの表(名前・段・進化先)
 let MON={}, BASE='', IMG=(mid)=>BASE+'img/'+mid+'.webp';
+const ICON=(n)=>`<img class="ui-ic" src="${BASE||scriptBase()}img/ui/${n}.webp" alt="">`;   // 自前のUIアイコン(battle/img/ui・2026-10-27 絵文字の代わり)
 function scriptBase(){ try{ const s=document.currentScript&&document.currentScript.src; if(s) return s.replace(/lib\/progress\.js.*$/,'')+'../battle/'; }catch(e){} return '../battle/'; }
 function mon(mid){ return MON[+mid]||null; }
 function baseOf(mid){ let m=mon(mid), g=0; while(m&&m.evolves_from!=null&&g++<6) m=mon(m.evolves_from); return m?m.id:+mid; }
@@ -179,6 +180,7 @@ P.cradle={
 // ---------------------------------------------------------------- UI(子ども向け・ラベルとボタンと数字だけ)
 const UI={}; P.ui=UI; let R=null, cur=null, pick=null, pend=null;
 const CSS=`
+img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;margin:0 .15em 0 0;object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35));pointer-events:none}
 #pgRoot{position:fixed;inset:0;z-index:8000;pointer-events:none;font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","BIZ UDPGothic","Yu Gothic UI","Meiryo",sans-serif;color:#f4f6ff;-webkit-user-select:none;user-select:none}
 #pgRoot *{box-sizing:border-box}
 #pgBar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:8px;display:flex;gap:6px;pointer-events:auto}
@@ -232,7 +234,7 @@ const REASON={zeroday:'ゼロデイ',cradle:'ゆりかご',dup:'ダブり',test:
 function reasonJP(r){ if(!r) return ''; if(/^quest:/.test(r)) return 'クエスト'; return REASON[r]||r; }
 function el(tag,cls,html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
 UI.mount=function(o){ o=o||{}; if(R) return R; const st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);
-  R=el('div'); R.id='pgRoot'; R.innerHTML=`<div id="pgBar"><button id="pgBtParty">仲間</button><button id="pgBtCradle">ゆりかご</button><button id="pgBtGems" class="gem">ジェム 0</button></div>
+  R=el('div'); R.id='pgRoot'; R.innerHTML=`<div id="pgBar"><button id="pgBtParty">仲間</button><button id="pgBtCradle">ゆりかご</button><button id="pgBtGems" class="gem">${ICON('gem')}0</button></div>
   <div id="pgPanel"><div id="pgHead"><h2 id="pgTitle"></h2><span class="gem" id="pgHeadGem"></span><button id="pgClose">×</button></div><div id="pgBody"></div></div><div id="pgToast"></div>`;
   document.body.appendChild(R);
   R.querySelector('#pgBtParty').onclick=()=>UI.open('party'); R.querySelector('#pgBtCradle').onclick=()=>UI.open('cradle'); R.querySelector('#pgBtGems').onclick=()=>UI.open('gems');
@@ -241,7 +243,7 @@ UI.mount=function(o){ o=o||{}; if(R) return R; const st=document.createElement('
   P.on('change',()=>{ UI.refresh(); }); UI.refresh(); return R; };
 UI.showBar=(v)=>{ if(R) R.querySelector('#pgBar').style.display=v===false?'none':'flex'; };
 UI.toast=function(t){ if(!R) return; const e=R.querySelector('#pgToast'); e.textContent=t; e.style.display='block'; clearTimeout(UI._tt); UI._tt=setTimeout(()=>e.style.display='none',1600); };
-UI.refresh=function(){ if(!R) return; R.querySelector('#pgBtGems').textContent='ジェム '+P.gems(); R.querySelector('#pgHeadGem').textContent='ジェム '+P.gems(); if(cur) UI.render(); };
+UI.refresh=function(){ if(!R) return; R.querySelector('#pgBtGems').innerHTML=ICON('gem')+(+P.gems()||0); R.querySelector('#pgHeadGem').innerHTML=ICON('gem')+(+P.gems()||0); if(cur) UI.render(); };
 UI.open=function(k){ if(!R) UI.mount(); cur=k; pick=null; pend=null; UI._hatch=null; R.querySelector('#pgPanel').classList.add('on'); R.querySelector('#pgBar').style.visibility='hidden'; UI.render(); emit('ui',{open:k}); };
 UI.close=function(){ if(!R) return; cur=null; R.querySelector('#pgPanel').classList.remove('on'); R.querySelector('#pgBar').style.visibility=''; emit('ui',{open:null}); };
 UI.isOpen=()=>!!cur;
@@ -260,8 +262,8 @@ UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const 
   }
   else if(cur==='cradle'){ T.textContent='研究所のゆりかご'; const pool=P.cradle.pool(); const price=P.cradle.price();
     const h=el('div'); h.id='pgHatch'; B.appendChild(h);
-    if(UI._hatch){ const r=UI._hatch; h.classList.add('on'); h.innerHTML=`<img src="${IMG(r.mid)}" alt=""><div class="nm">${r.name}</div>`+(r.dup?(r.gemsBack?`<span class="tag dup">ダブり　ジェム +${r.gemsBack}</span>`:`<span class="tag dup">ダブり　${nameOf(r.targetMid)} Lv${r.before} → Lv${r.after}</span>`):`<span class="tag">生まれた！　Lv${r.lv}　${r.inParty?'仲間':'牧場'}</span>`); }
-    const a=el('div','pgAct'); const b=el('button','pgBtn main',`生まれる　ジェム${price}`); b.disabled=!P.cradle.canPull(); b.id='pgPull';
+    if(UI._hatch){ const r=UI._hatch; h.classList.add('on'); h.innerHTML=`<img src="${IMG(r.mid)}" alt=""><div class="nm">${r.name}</div>`+(r.dup?(r.gemsBack?`<span class="tag dup">ダブり　${ICON('gem')}+${r.gemsBack}</span>`:`<span class="tag dup">ダブり　${nameOf(r.targetMid)} Lv${r.before} → Lv${r.after}</span>`):`<span class="tag">生まれた！　Lv${r.lv}　${r.inParty?'仲間':'牧場'}</span>`); }
+    const a=el('div','pgAct'); const b=el('button','pgBtn main',`生まれる　${ICON('gem')}${price}`); b.disabled=!P.cradle.canPull(); b.id='pgPull';
     b.onclick=()=>{ const r=P.cradle.pull(); if(!r.ok){ UI.toast(r.why==='gems'?'ジェムがたりない':'—'); return; } UI._hatch=r; UI.render(); };   // 生まれた子は _hatch に持ち、render で描く(save の change で描き直されても消えない)
     a.appendChild(b); B.appendChild(a);
     B.appendChild(el('div','pgSec',`<span>でる子と確率</span><span>${pool.length}しゅるい</span>`));
