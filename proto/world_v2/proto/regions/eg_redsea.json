@@ -30,6 +30,11 @@
    -50,
    35,
    1.5708
+  ],
+  "from_norse": [
+   0,
+   -84,
+   0
   ]
  },
  "exits": [
@@ -50,9 +55,8 @@
     3,
     -88
    ],
-   "to": "norse",
+   "to": "nr_oslo",
    "at": "from_egypt",
-   "todo": "北欧編",
    "need": "eg_levia",
    "lock": "リヴァイアが、まだ眠っている"
   }

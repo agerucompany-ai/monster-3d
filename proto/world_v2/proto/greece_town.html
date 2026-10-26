@@ -423,12 +423,12 @@ const GTEX={}; (function(){ const L=new THREE.TextureLoader(); for(const k of ['
   for(let i=0;i<1800;i++){ const px=r()*N, py=r()*N; x.fillStyle=r()<0.6?'rgba(255,255,255,.5)':'rgba(190,206,222,.28)'; x.fillRect(px,py,1+r()*1.5,1+r()*1.5); }
   const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.anisotropy=IS_MOBILE?2:8; t.encoding=THREE.LinearEncoding; GTEX.snow=t; })();
 const WHITE1=(()=>{ const t=new THREE.DataTexture(new Uint8Array([255,255,255,255]),1,1,THREE.RGBAFormat); t.needsUpdate=true; return t; })();
-const GTINT=new THREE.Vector3(1,1,1);   // 地面の色味(マップごと: terrain.tint。迷宮は暗い石の床)
+const GTINT=new THREE.Vector3(1,1,1), GROCK=new THREE.Vector4(1,1,1,0);   // GROCK=岩の地面の色(北欧編 2026-10-27: terrain.rockTint=[r,g,b,強さ]。灰色の花崗岩など)   // 地面の色味(マップごと: terrain.tint。迷宮は暗い石の床)
 function groundMat(ao,rect){ const m=new THREE.MeshLambertMaterial({vertexColors:true}); const UA={value:ao||WHITE1}, UR={value:rect||new THREE.Vector4(0,0,1,1)};
-  m.onBeforeCompile=sh=>{ m.userData.sh=sh; Object.assign(sh.uniforms,{tCob:{value:GTEX.cobble},tGr:{value:GTEX.grass},tDi:{value:GTEX.dirt},tSa:{value:GTEX.sand},tRo:{value:GTEX.rock},uNoi:{value:TEX.noise},uAO:UA,uAOR:UR,uT:U.uT,uCloud:U.uCloud,uTint:{value:GTINT}});
+  m.onBeforeCompile=sh=>{ m.userData.sh=sh; Object.assign(sh.uniforms,{tCob:{value:GTEX.cobble},tGr:{value:GTEX.grass},tDi:{value:GTEX.dirt},tSa:{value:GTEX.sand},tRo:{value:GTEX.rock},uNoi:{value:TEX.noise},uAO:UA,uAOR:UR,uT:U.uT,uCloud:U.uCloud,uTint:{value:GTINT},uRockT:{value:GROCK}});
     sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nattribute vec2 aMix; attribute vec2 aMix2; varying vec4 vMix; varying vec3 vWp;')
       .replace('#include <begin_vertex>','#include <begin_vertex>\nvMix=vec4(aMix,aMix2); vWp=(modelMatrix*vec4(transformed,1.0)).xyz;');
-    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform sampler2D tCob,tGr,tDi,tSa,tRo,uNoi,uAO; uniform vec4 uAOR; uniform float uT,uCloud; uniform vec3 uTint; varying vec4 vMix; varying vec3 vWp;')
+    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform sampler2D tCob,tGr,tDi,tSa,tRo,uNoi,uAO; uniform vec4 uAOR; uniform float uT,uCloud; uniform vec3 uTint; uniform vec4 uRockT; varying vec4 vMix; varying vec3 vWp;')
       .replace('#include <color_fragment>',`{ vec2 p=vWp.xz; float n1=texture2D(uNoi,p*0.023).r, n2=texture2D(uNoi,p*0.13).g, n0=texture2D(uNoi,p*0.0071+0.3).b;
         // 繰り返しを崩す: 2つの縮尺を混ぜる
         vec3 gr=mix(texture2D(tGr,p*0.31).rgb,texture2D(tGr,p*0.113+0.37).rgb,0.35+0.3*n1); gr*=vColor/vec3(0.616,0.706,0.388); gr*=0.9+0.2*n0;
@@ -440,7 +440,7 @@ function groundMat(ao,rect){ const m=new THREE.MeshLambertMaterial({vertexColors
           co=mix(co,co*vec3(0.80,0.74,0.66),ring*0.85); co=mix(co,co*vec3(0.93,0.9,0.86),sec*0.7); co=mix(co,co*vec3(0.62,0.7,0.82),ring2*0.6); }
         vec3 di=mix(texture2D(tDi,p*0.27).rgb,texture2D(tDi,p*0.11+0.5).rgb,0.3); di=mix(di,vec3(dot(di,vec3(0.33))),0.35)*vec3(1.02,0.95,0.86);
         vec3 sa=texture2D(tSa,p*0.22).rgb; sa=mix(sa,vec3(dot(sa,vec3(0.33))),0.45)*vec3(1.08,1.03,0.92);
-        vec3 ro=texture2D(tRo,p*0.19).rgb;
+        vec3 ro=texture2D(tRo,p*0.19).rgb; ro=mix(ro,vec3(dot(ro,vec3(0.333)))*uRockT.rgb,uRockT.w);
         // 高さで混ぜる(境目は石の目地や草の房から入れ替わる)
         { float hc0=dot(co,vec3(0.333)); float moss=smoothstep(0.55,0.78,texture2D(uNoi,p*0.045+0.71).r)*(1.0-smoothstep(0.62,0.74,hc0)); co=mix(co,gr*0.82,moss*0.75); }   // 目地の苔
         float hG=dot(gr,vec3(0.4))+n2*0.25, hC=dot(co,vec3(0.45)), hD=dot(di,vec3(0.3))+n2*0.3, hS=0.45+n2*0.2, hR=dot(ro,vec3(0.4));
@@ -1469,6 +1469,219 @@ OB.relief=(o)=>{ const R=rng(((o.pts[0][0]*7+o.pts[0][1]*3)|0)+141), [a,b]=o.pts
   for(let i=0;i<n;i++){ const t=(i+0.5)/n, x=lerp(a[0],b[0],t), z=lerp(a[1],b[1],t), y=G(x,z); CUR.B.add(rbox(0.55,0.55,0.06,0.03,1),MAT.glow,T(x,y+h,z,ry),{col:col3(pick(['#3f74b0','#c9513f','#d9a83c','#3f8f7a','#f2ece0'],R)).getHex(),shadow:false}); }
   P_(rbox(L,0.08,0.08,0.02,1),CPAL.gold,T((a[0]+b[0])/2,G(a[0],a[1])+h+0.4,(a[1]+b[1])/2,ry)); P_(rbox(L,0.08,0.08,0.02,1),CPAL.gold,T((a[0]+b[0])/2,G(a[0],a[1])+h-0.4,(a[1]+b[1])/2,ry)); };
 
+// ---- 北欧編のマップの形(2026-10-27 regions/make_norse_arc.py): 未来のオスロ(色の岸の家並み・白い斜めの屋根の劇場・市庁舎・ジャンプ台)・フィヨルド(滝・説教壇の岩)・ロフォーテン(赤い漁師小屋・とがった山・渦潮)・アイスランド(間欠泉・地熱の発電所・青い温泉・玄武岩の柱)・ウプサラ(木の教会・石の教会・ルーン石・大聖堂)・ラップランド(氷のホテル・リフト)・世界樹・スヴァールバル(種の貯蔵庫・白い球のアンテナ・色の家・海の氷)・氷の研究所(アークの中心)。軽い形だけで作り、区画ごとに1メッシュにまとまる ----
+const NPAL={ wharf:['#b5463a','#d9a441','#e8c65a','#f2eee6','#c26a3d','#9c3b30','#e9dcb8'], house:['#c8463a','#3f74b0','#e2b84a','#4a9a6a','#e07a4a','#f2eee6','#7a5aa8'], rock:['#6f7378','#7c8085','#62666b','#868a8f'], basalt:['#2f3134','#3a3c40','#2a2c2f','#45474b'], spruce:['#2f5a3c','#376644','#2a5236','#3e6e4a'], ice:0xcfe8f6, ice2:0xe6f3fb, snow:0xf4f7fa, tar:0x4a2f22, tar2:0x3a2519, slate:0x3c4148, brick:0x9c5a45, copper:0x6f9f8a };
+function wedge(L,H,th){ return cached(`wg${L},${H},${th}`,()=>{ const s=new THREE.Shape(); s.moveTo(0,0); s.lineTo(L,0); s.lineTo(L,H); s.closePath(); const g=new THREE.ExtrudeGeometry(s,{depth:th,bevelEnabled:false}); g.translate(0,0,-th/2); return g; }); }
+// 2点を結ぶ棒の行列(単位の円柱 cyl(1,1,1,n) を a→b に伸ばす・太さ s)
+function segMat(ax,ay,az,bx,by,bz,s){ const d=new THREE.Vector3(bx-ax,by-ay,bz-az), L=d.length()||1e-4; const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize()); return new THREE.Matrix4().compose(new THREE.Vector3((ax+bx)/2,(ay+by)/2,(az+bz)/2),q,new THREE.Vector3(s,L,s)); }
+// 色の岸の家並み(ベルゲンのブリッゲン風・2100年): 切妻を海(+z)に向けた木の家が並ぶ。屋根は太陽光のガラス。{t:'bryggen',x,z,rot,n,w,d,h}
+OB.bryggen=(o)=>{ const rot=(o.rot||0)*DEG, n=o.n||6, w=o.w||4.4, d=o.d||9, y0=footY(o.x,o.z,n*w,d,rot), M=T(o.x,y0,o.z,rot);
+  P_(rbox(n*w+0.6,2.6,d+0.6,0.08,1),0xd8d2c6,local(M,0,-1.2,0),{ao:y0-1});
+  for(let i=0;i<n;i++){ const x=(i-(n-1)/2)*w, h=(o.h||6.4)+((i*37)%3)*0.5, gh=w*0.62, c=col3(NPAL.wharf[(i*3+((o.x|0)&3))%NPAL.wharf.length]).getHex(), ang=Math.atan2(gh,w/2);
+    P_(rbox(w-0.12,h,d,0.06,1),c,local(M,x,h/2,0),{ao:y0,vary:0.04}); P_(prism(w-0.12,gh,d),c,local(M,x,h,0),{vary:0.04});
+    for(const s of [-1,1]){ P_(rbox(w*0.58,0.12,d+0.5,0.04,1),NPAL.slate,local(M,x+s*w*0.24,h+gh*0.5+0.04,0,0,1,1,1,0,-s*ang)); CUR.B.add(new THREE.BoxGeometry(w*0.5,0.04,d*0.8),MAT.solar,local(M,x+s*w*0.24,h+gh*0.5+0.12,0,0,1,1,1,0,-s*ang),{}); }
+    for(const s of [-1,1]) P_(rbox(0.14,h,0.14,0.03,1),0xf6f2ea,local(M,x+s*(w/2-0.1),h/2,d/2+0.02)); P_(rbox(w-0.1,0.12,0.16,0.03,1),0xf6f2ea,local(M,x,h,d/2+0.04));
+    CUR.B.add(rbox(w*0.7,2.2,0.1,0.05,1),MAT.win,local(M,x,1.3,d/2+0.03),{col:0x7fb6d8}); CUR.B.add(rbox(w*0.66,0.06,0.06,0.02,1),MAT.glow,local(M,x,2.55,d/2+0.12),{col:0xffd36b,shadow:false});
+    for(let f=0;f<2;f++) for(const s of [-1,1]){ P_(rbox(0.78,0.98,0.05,0.02,1),0xf6f2ea,local(M,x+s*w*0.22,3.6+f*1.5,d/2+0.01)); CUR.B.add(rbox(0.62,0.82,0.08,0.03,1),MAT.win,local(M,x+s*w*0.22,3.6+f*1.5,d/2+0.04),{col:0x5a86b0}); }
+    P_(rbox(0.9,1.1,0.08,0.03,1),0xf6f2ea,local(M,x,h+gh*0.32,d/2+0.03)); CUR.B.add(rbox(0.7,0.9,0.06,0.02,1),MAT.win,local(M,x,h+gh*0.32,d/2+0.07),{col:0x5a86b0}); }
+  addCol({t:'b',x:o.x,z:o.z,hw:n*w/2+0.1,hd:d/2+0.1,rot,top:y0+9}); _v.set(0,0,d/2+1.0).applyMatrix4(M); return {door:[_v.x,_v.z]}; };
+// 白い斜めの屋根の劇場(オスロのオペラハウス風): 海から斜めに上がる白い屋根(歩ける: 地形の ramp と同じ矩形)・ガラスの横壁・奥の舞台塔。z=低い縁(南)。{t:'opera',x,z,w,L,rise,top,y}
+OB.opera=(o)=>{ const w=o.w||28, L=o.L||22, rise=o.rise||8, tp=o.top||8, y=o.y!=null?o.y:G(o.x,o.z), M=T(o.x,y,o.z,0), a=Math.atan2(rise,L), sl=Math.hypot(L,rise);
+  P_(rbox(w,0.4,sl,0.06,1),0xf7f6f2,local(M,0,rise/2-0.17,-L/2,0,1,1,1,a),{vary:0.02}); P_(rbox(w,0.4,tp,0.06,1),0xf7f6f2,local(M,0,rise-0.17,-L-tp/2),{vary:0.02});
+  for(const s of [-1,1]){ P_(wedge(L,rise,1.3),0x9db9cc,local(M,s*(w/2+0.55),0,0,Math.PI/2),{vary:0.02}); P_(rbox(1.3,rise,tp,0.04,1),0xeceae4,local(M,s*(w/2+0.55),rise/2,-L-tp/2)); }
+  for(let i=1;i<6;i++) P_(rbox(w-0.6,0.05,0.12,0.02,1),0xdcdad4,local(M,0,rise*i/6+0.05,-L*i/6,0,1,1,1,a),{shadow:false});
+  const tw=w*0.42, th=rise+11, tz=-L-tp-5; P_(rbox(tw,th,10,0.1,1),0xe8ecef,local(M,w*0.1,th/2,tz),{vary:0.02}); CUR.B.add(rbox(tw+0.06,th*0.5,10.06,0.06,1),MAT.win,local(M,w*0.1,th*0.62,tz),{col:0x9cc4dc});
+  P_(rbox(w-tw-2,rise+3,9,0.1,1),0xeef0f2,local(M,w*0.1-tw/2-(w-tw-2)/2-0.5,(rise+3)/2,tz+0.5),{vary:0.02}); CUR.B.add(rbox(w-tw-2.1,1.4,9.06,0.05,1),MAT.win,local(M,w*0.1-tw/2-(w-tw-2)/2-0.5,rise+1.6,tz+0.5),{col:0x9cc4dc});
+  CUR.B.add(rbox(w-1,0.06,0.1,0.02,1),MAT.glow,local(M,0,0.3,0.25),{col:0x8fe4ff,shadow:false});
+  _v.set(0,0,tz).applyMatrix4(M); addCol({t:'b',x:_v.x,z:_v.z,hw:w/2,hd:5.2,rot:0,top:y+th}); for(const q of [-1,1]) addCol({t:'b',x:o.x+q*(w/2+0.55),z:o.z-(L+tp+4)/2,hw:0.65,hd:(L+tp-4)/2,rot:0,top:y+rise}); };
+// スキーのジャンプ台(オスロのホルメンコーレン風): 丘の上の白い塔から南へ下りる助走路。{t:'skijump',x,z(踏み切り),h,L,ang,rot}
+OB.skijump=(o)=>{ const y=G(o.x,o.z), L=o.L||46, a=(o.ang||34)*DEG, ht=o.h||5, rot=(o.rot||0)*DEG, M=T(o.x,y,o.z,rot), ch=L*Math.sin(a), cz=L*Math.cos(a);
+  P_(rbox(3.4,0.9,L,0.1,1),0xf3f4f2,local(M,0,ht+ch/2,-cz/2,0,1,1,1,a),{vary:0.02}); CUR.B.add(rbox(2.4,0.06,L-1,0.02,1),MAT.glow,local(M,0,ht+ch/2+0.48,-cz/2,0,1,1,1,a),{col:0xbfe8ff,shadow:false});
+  for(const s of [-1,1]) P_(rbox(0.12,0.9,L,0.03,1),0xc9d0d8,local(M,s*1.75,ht+ch/2+0.6,-cz/2,0,1,1,1,a));
+  for(let i=0;i<=5;i++){ const t=i/5, zz=-cz*t, hh=ht+ch*t-0.4; for(const s of [-1,1]) P_(rbox(0.5,hh+4,0.5,0.05,1),0xdfe3e7,local(M,s*1.2,(hh-4)/2,zz)); }
+  const tH=ht+ch+6; P_(rbox(5,tH+4,5,0.2,1),0xeef0f2,local(M,0,(tH-4)/2,-cz-2.0),{vary:0.02}); CUR.B.add(rbox(5.06,2.4,5.06,0.1,1),MAT.win,local(M,0,tH-2,-cz-2.0),{col:0x7fb6d8}); CUR.B.add(sph(0.3,8,6),MAT.glow,local(M,0,tH+0.6,-cz-2),{col:0xff7a60,shadow:false});
+  _v.set(0,0,-cz-2).applyMatrix4(M); addCol({t:'b',x:_v.x,z:_v.z,hw:2.7,hd:2.7,rot,top:y+tH}); };
+// 市庁舎(オスロ市庁舎風): れんが色の2本の塔と真ん中の棟・東の塔に時計。{t:'radhus',x,z,rot}
+OB.radhus=(o)=>{ const rot=(o.rot||0)*DEG, y=footY(o.x,o.z,30,16,rot), M=T(o.x,y,o.z,rot), b=NPAL.brick, b2=col3(b).multiplyScalar(0.86).getHex();
+  P_(rbox(30,1.0,18,0.06,1),0xd8d2c6,local(M,0,0.5,0),{ao:y}); P_(rbox(26,14,14,0.1,1),b,local(M,0,7.5,0),{ao:y,vary:0.04});
+  for(let i=0;i<7;i++) CUR.B.add(rbox(1.4,9,0.1,0.03,1),MAT.win,local(M,-10.5+i*3.5,7.5,7.04),{col:0x5a7a96});
+  for(const [sx,h] of [[-8,34],[8,30]]){ P_(rbox(9,h,9,0.1,1),b,local(M,sx,h/2,-1),{ao:y,vary:0.04}); for(let k=0;k<3;k++) CUR.B.add(rbox(0.7,h-8,0.1,0.02,1),MAT.win,local(M,sx-2.6+k*2.6,h/2+1,3.54),{col:0x5a7a96}); P_(rbox(9.6,0.8,9.6,0.06,1),b2,local(M,sx,h+0.4,-1)); P_(rbox(6,1.6,6,0.1,1),NPAL.copper,local(M,sx,h+1.6,-1)); }
+  P_(cyl(1.6,1.6,0.2,20),0xf2e6c0,local(M,8,25,3.62,0,1,1,1,Math.PI/2)); P_(cyl(1.3,1.3,0.24,20),0xc9a04a,local(M,8,25,3.66,0,1,1,1,Math.PI/2));
+  CUR.B.add(rbox(4,4.5,0.12,0.05,1),MAT.win,local(M,0,2.6,7.05),{col:0x7fb6d8}); P_(rbox(6,0.3,2.4,0.05,1),0xe9e4da,local(M,0,5.0,8.0));
+  addCol({t:'b',x:o.x,z:o.z,hw:13.2,hd:7.2,rot,top:y+34}); _v.set(0,0,9).applyMatrix4(M); return {door:[_v.x,_v.z]}; };
+// 木の教会(ノルウェーのボルグン・スターヴ教会風): 黒い木の急な切妻の屋根が段々に重なり、棟の端に竜の頭の飾り・上に細い塔。正面は +z。{t:'stave',x,z,rot,s}
+OB.stave=(o)=>{ const s=o.s||1, rot=(o.rot||0)*DEG, y=footY(o.x,o.z,10*s,12*s,rot)-0.1, M=T(o.x,y,o.z,rot,s), t1=NPAL.tar, t2=NPAL.tar2;
+  const gable=(w,h,d,yy,zz,ry)=>{ P_(prism(w,h,d),t2,local(M,0,yy,zz||0,ry||0)); };
+  const dragon=(yy,zz,q)=>{ P_(cyl(0.06,0.14,1.4,6),t2,local(M,0,yy+0.5,zz,0,1,1,1,q*0.75)); P_(sph(0.18,6,5),t2,local(M,0,yy+1.0,zz+q*0.55)); };
+  P_(rbox(10,0.6,12,0.06,1),0x8d8a84,local(M,0,0.3,0),{ao:y});
+  P_(rbox(8.6,2.2,10.6,0.06,1),t1,local(M,0,1.7,0),{ao:y,vary:0.05}); P_(cyl(0.72*1.414,1.414,1.2,4,1,false,Math.PI/4),t2,local(M,0,3.4,0,0,5.0,1,6.0));   // 回廊と低い屋根
+  P_(rbox(6.0,4.4,8.0,0.06,1),t1,local(M,0,5.2,0),{vary:0.05}); gable(6.8,4.2,8.6,7.4,0); gable(6.8,4.2,4.6,7.4,0,Math.PI/2);   // 身廊: 急な切妻(十字)
+  P_(rbox(3.4,2.4,3.4,0.05,1),t1,local(M,0,12.4,0),{vary:0.05}); gable(3.8,2.8,3.8,13.6,0); gable(3.8,2.8,3.8,13.6,0,Math.PI/2);   // 2段目
+  P_(rbox(1.6,1.8,1.6,0.04,1),t1,local(M,0,17.2,0)); P_(pyr(1.0,5.2),t2,local(M,0,20.7,0));   // 細い塔
+  for(const q of [-1,1]){ dragon(10.4,q*4.3,q); dragon(15.2,q*1.9,q); }
+  for(const q of [-1,1]){ P_(rbox(0.5,0.5,6.4,0.04,1),t1,local(M,q*3.0,3.0,0)); }
+  P_(rbox(1.5,2.2,0.2,0.04,1),0x2a1a12,local(M,0,1.6,5.35)); P_(cyl(0.75,0.75,0.2,12,1,false,-Math.PI/2,Math.PI),0x2a1a12,local(M,0,2.7,5.35,0,1,1,1,Math.PI/2));
+  for(const q of [-1,1]) CUR.B.add(rbox(0.5,0.9,0.06,0.02,1),MAT.glow,local(M,q*1.8,5.8,4.03),{col:0xffd9a0,shadow:false});
+  addCol({t:'b',x:o.x,z:o.z,hw:5*s,hd:6*s,rot,top:y+22*s}); _v.set(0,0,7.5).applyMatrix4(M); return {door:[_v.x,_v.z]}; };
+// 石の教会(ガムラ・ウプサラの教会風): 白い石の身廊・急な屋根・四角い塔。{t:'stonechurch',x,z,rot}
+OB.stonechurch=(o)=>{ const rot=(o.rot||0)*DEG, y=footY(o.x,o.z,10,22,rot), M=T(o.x,y,o.z,rot), st=0xe9e6df, st2=0xd6d2ca;
+  P_(rbox(9,7,18,0.08,1),st,local(M,0,3.5,-2),{ao:y,vary:0.04}); P_(prism(9.6,5,18.6),NPAL.slate,local(M,0,7,-2));
+  P_(rbox(7,14,7,0.08,1),st2,local(M,0,7,9.5),{ao:y,vary:0.04}); P_(pyr(3.9,7),NPAL.slate,local(M,0,17.5,9.5));
+  for(let i=0;i<4;i++) CUR.B.add(rbox(0.1,2.0,0.9,0.05,1),MAT.win,local(M,4.52,3.8,-9+i*4),{col:0x6a8aa8}); CUR.B.add(rbox(1.0,1.6,0.1,0.05,1),MAT.win,local(M,0,11,13.04),{col:0x6a8aa8});
+  P_(rbox(1.6,2.6,0.2,0.04,1),0x5a4436,local(M,0,1.3,13.06)); CUR.B.add(sph(0.1,8,6),MAT.glow,local(M,1.2,2.6,13.2),{col:0xfff2d0});
+  addCol({t:'b',x:o.x,z:o.z,hw:4.7,hd:11.5,rot,top:y+20}); _v.set(0,0,14.6).applyMatrix4(M); return {door:[_v.x,_v.z]}; };
+// 大聖堂(ウプサラ大聖堂風・遠景): れんが色の身廊と2本の高い塔・緑の銅の尖塔。{t:'cathedral',x,z,rot,h}
+OB.cathedral=(o)=>{ const rot=(o.rot||0)*DEG, h=o.h||40, y=footY(o.x,o.z,20,40,rot), M=T(o.x,y,o.z,rot), b=0xa8584a, b2=0x96503f;
+  P_(rbox(14,18,40,0.1,1),b,local(M,0,9,-8),{ao:y,vary:0.04}); P_(prism(14.6,9,40.6),NPAL.copper,local(M,0,18,-8)); P_(rbox(26,14,10,0.1,1),b2,local(M,0,7,-12),{vary:0.04});
+  for(const s of [-1,1]){ P_(rbox(7,h*0.62,7,0.1,1),b,local(M,s*5,h*0.31,14),{ao:y,vary:0.04}); P_(pyr(3.8,h*0.42),NPAL.copper,local(M,s*5,h*0.62+h*0.21,14)); for(let k=0;k<3;k++) CUR.B.add(rbox(0.8,3,0.1,0.03,1),MAT.win,local(M,s*5,h*0.2+k*h*0.13,17.54),{col:0x5a6a7a}); }
+  CUR.B.add(cyl(2.2,2.2,0.2,18),MAT.win,local(M,0,12,12.12,0,1,1,1,Math.PI/2),{col:0x7f9fc0}); addCol({t:'b',x:o.x,z:o.z,hw:9,hd:22,rot,top:y+h}); };
+// ルーン石(赤いへびの帯の文字の石)。{t:'runestone',x,z,rot,s}
+OB.runestone=(o)=>{ const R=rng(((o.x*3+o.z*7)|0)+211), y=G(o.x,o.z), s=(o.s||1)*(0.85+R()*0.3), M=T(o.x,y,o.z,(o.rot||0)*DEG+(R()-0.5)*0.4,s);
+  P_(rbox(1.3,2.5,0.45,0.2,1),col3(pick(['#8e8a84','#9a958e','#85817b'],R)).getHex(),local(M,0,1.15,0,0,1,1,1,(R()-0.5)*0.08),{vary:0.08,ao:y});
+  P_(cached('runeT',()=>new THREE.TorusGeometry(0.42,0.045,5,18)),0xb5392e,local(M,0,1.35,0.24,0,1,1.7,1)); P_(rbox(0.06,1.0,0.03,0.01,1),0xb5392e,local(M,0,1.3,0.24));
+  addCol({t:'c',x:o.x,z:o.z,r:0.6*s}); };
+// 赤い漁師小屋(ロフォーテンのロルブー・2100年): 水ぎわの柱に立つ赤い家・白い縁・屋根は太陽光。{t:'rorbu',x,z,rot,w,d,h,y,col}
+OB.rorbu=(o)=>{ const rot=(o.rot||0)*DEG, w=o.w||5, d=o.d||7, h=o.h||3.6, y=o.y!=null?o.y:footY(o.x,o.z,w,d,rot), M=T(o.x,y,o.z,rot), c=o.col?col3(o.col).getHex():0xa8362f, gh=w*0.45, ang=Math.atan2(gh,w/2);
+  for(const sx of [-1,1]) for(const sz of [-1,0,1]) P_(cyl(0.16,0.18,6,7),0x6a5a4c,local(M,sx*(w/2-0.4),-2.9,sz*(d/2-0.5)));
+  P_(rbox(w+1.0,0.3,d+2.4,0.04,1),0xe9e4da,local(M,0,0.0,0.7));
+  P_(rbox(w,h,d,0.06,1),c,local(M,0,h/2+0.15,0),{vary:0.04,ao:y}); P_(prism(w,gh,d),c,local(M,0,h+0.15,0));
+  for(const s of [-1,1]){ P_(rbox(w*0.6,0.12,d+0.4,0.04,1),NPAL.slate,local(M,s*w*0.26,h+0.15+gh*0.5+0.04,0,0,1,1,1,0,-s*ang)); CUR.B.add(new THREE.BoxGeometry(w*0.5,0.04,d*0.8),MAT.solar,local(M,s*w*0.26,h+0.15+gh*0.5+0.12,0,0,1,1,1,0,-s*ang),{}); }
+  for(const s of [-1,1]) P_(rbox(0.14,h,0.14,0.03,1),0xf6f2ea,local(M,s*(w/2-0.06),h/2+0.15,d/2+0.02));
+  P_(rbox(1.0,2.0,0.08,0.03,1),0xf6f2ea,local(M,-w*0.2,1.15,d/2+0.03)); CUR.B.add(rbox(0.8,1.8,0.06,0.03,1),MAT.win,local(M,-w*0.2,1.15,d/2+0.07),{col:0x6f9fc4});
+  P_(rbox(0.9,0.9,0.05,0.02,1),0xf6f2ea,local(M,w*0.22,1.9,d/2+0.02)); CUR.B.add(rbox(0.72,0.72,0.06,0.02,1),MAT.win,local(M,w*0.22,1.9,d/2+0.06),{col:0x5a86b0});
+  P_(rbox(0.8,0.8,0.05,0.02,1),0xf6f2ea,local(M,0,h+0.15+gh*0.35,d/2+0.02)); CUR.B.add(sph(0.08,8,6),MAT.glow,local(M,w*0.4,2.6,d/2+0.12),{col:0xfff2d0});
+  addCol({t:'b',x:o.x,z:o.z,hw:w/2+0.1,hd:d/2+0.1,rot,top:y+h+gh}); _v.set(0,0,d/2+1.4).applyMatrix4(M); return {door:[_v.x,_v.z]}; };
+// とがった山(フィヨルド・ロフォーテン・スヴァールバル・海の岩の柱): ぎざぎざの岩の円すい・上に雪。{t:'fjell',x,z,r,h,snow,cols,col,seed,sx,y,nocol}
+OB.fjell=(o)=>{ const R=rng(((o.x*13+o.z*7)|0)+(o.seed||0)+221), r=o.r||14, h=o.h||40, y=(o.y!=null?o.y:G(o.x,o.z))-1.5, k=(((o.seed||0)+((o.x+o.z)|0))%4+4)%4, M=T(o.x,y,o.z,R()*6.28);
+  const g=cached('fjell'+k,()=>{ const cg=new THREE.ConeGeometry(1,1,9,5), P=cg.attributes.position; for(let i=0;i<P.count;i++){ const x=P.getX(i), yy=P.getY(i)+0.5, z=P.getZ(i); if(yy>0.99){ P.setX(i,0.06*(k-1.5)); P.setY(i,1.0); continue; } const n=1+0.3*(vnoise(x*2.6+k*3.1+yy*4,z*2.6-yy*3)-0.5)*2; P.setX(i,x*n); P.setZ(i,z*n); P.setY(i,Math.max(0,yy+0.07*(vnoise(x*5+k,z*5)-0.5))); } cg.computeVertexNormals(); return cg; });
+  const c=col3(o.col||pick(o.cols||NPAL.rock,R)).getHex(), sx=o.sx||1;
+  P_(g,c,MM(M,T(0,0,0,0,r*sx,h,r)),{vary:0.1,ao:y,aoH:6});
+  const sn=o.snow!=null?o.snow:0.35; if(sn>0) P_(g,NPAL.snow,MM(M,T(0,h*(1-sn),0,0,r*sx*sn*1.07,h*sn*1.01,r*sn*1.07)),{vary:0.03});
+  if(!o.nocol) addCol({t:'c',x:o.x,z:o.z,r:r*Math.min(1,sx)*0.85,top:y+h}); };
+// 滝(ゲイランゲルの七姉妹の滝): 崖の面に沿う白い水の帯としぶき。{t:'waterfall',x,z0(上),z1(下),w}
+OB.waterfall=(o)=>{ const x=o.x, y0=G(x,o.z0), y1=Math.max(0,G(x,o.z1)), dz=o.z1-o.z0, dy=y0-y1, L=Math.hypot(dz,dy), a=Math.atan2(dy,dz), w=o.w||2.2, zc=(o.z0+o.z1)/2, yc=(y0+y1)/2+(o.off!=null?o.off:0.8);
+  P_(rbox(w,0.3,L,0.1,1),0xeef7fb,T(x,yc,zc,0,1,1,1,a),{shadow:false,vary:0.05}); CUR.B.add(rbox(w*0.45,0.34,L,0.1,1),MAT.glow,T(x,yc+0.06,zc,0,1,1,1,a),{col:0xffffff,shadow:false});
+  CUR.B.add(sph(w*1.4,10,6),MAT.holo,T(x,y1+0.9,o.z1,0,1,0.6,1),{col:0xdff4ff,shadow:false}); P_(cyl(w*1.2,w*1.5,0.2,12),0xf4fbff,T(x,y1+0.08,o.z1+0.8),{shadow:false}); };
+// 水の管(水力の発電所の管・崖を下りる銀の管)。{t:'penstock',x,z0,z1}
+OB.penstock=(o)=>{ const x=o.x, y0=G(x,o.z0)+0.8, y1=G(x,o.z1)+0.8; for(const s of [-1,1]) P_(cyl(1,1,1,8),0xc9d0d8,segMat(x+s*0.9,y0,o.z0,x+s*0.9,y1,o.z1,0.42),{vary:0.02});
+  const n=6; for(let i=0;i<=n;i++){ const t=i/n, z=lerp(o.z0,o.z1,t), yy=lerp(y0,y1,t); P_(rbox(2.8,0.4,0.5,0.05,1),0x9aa2ab,T(x,yy-0.6,z)); } };
+// 間欠泉(アイスランドのストロックル風): 青い湯だまりと白い縁・ときどき吹き上がる湯の柱(dyn geyser)。{t:'geyser',x,z,h}
+OB.geyser=(o)=>{ const y=G(o.x,o.z), h=o.h||14; P_(cyl(3.2,3.6,0.3,20),0xe9e3d4,T(o.x,y+0.05,o.z),{ao:y}); CUR.B.add(cyl(2.2,2.2,0.12,20),MAT.win,T(o.x,y+0.22,o.z),{col:0x5ec8d8});
+  CUR.B.add(sph(1.6,10,6),MAT.holo,T(o.x,y+0.8,o.z,0,1,0.5,1),{col:0x3a4448,shadow:false});
+  const B=new Builder(); const save=CUR.B; CUR.B=B; P_(cyl(0.7,1.3,h,10),0xf6fbff,T(0,h/2,0),{shadow:false}); P_(sph(2.0,10,7),0xffffff,T(0,h,0,0,1,0.8,1),{shadow:false}); B.add(cyl(1.0,1.8,h*0.8,10),MAT.holo,T(0,h*0.45,0),{col:0xdff4ff,shadow:false});
+  CUR.B=save; const g=new THREE.Group(); B.build(g); g.position.set(o.x,y+0.2,o.z); CUR.extra.push(g); CUR.dyn.push({k:'geyser',g,ph:(o.x*0.37+o.z*0.11)}); addCol({t:'c',x:o.x,z:o.z,r:3.0}); };
+// 玄武岩の柱(レイニスフィヤラの黒い浜の崖): 六角の柱が階段のように並ぶ(手前が低く奥が高い)。{t:'basalt',x,z,rot,w,d,h}
+OB.basalt=(o)=>{ const R=rng(((o.x*5+o.z*9)|0)+231), rot=(o.rot||0)*DEG, w=o.w||14, d=o.d||6, H=o.h||12, y=(o.y!=null?o.y:footY(o.x,o.z,w,d,rot))-0.4, M=T(o.x,y,o.z,rot), r=0.62, sx=r*1.73, sz=r*1.5;
+  const nx=Math.round(w/sx), nz=Math.round(d/sz); for(let j=0;j<nz;j++) for(let i=0;i<nx;i++){ const x=-w/2+(i+0.5+(j%2)*0.5)*sx, z=d/2-(j+0.5)*sz, t=(j+0.6)/nz, hh=Math.max(0.5,H*(0.12+0.88*t)*(0.8+R()*0.3)*(0.75+0.25*Math.sin(i*0.7+j)));
+    P_(cyl(r,r,hh,6),col3(pick(NPAL.basalt,R)).getHex(),local(M,x,hh/2,z,Math.PI/6),{vary:0.08,ao:y,aoH:2}); }
+  addCol({t:'b',x:o.x,z:o.z,hw:w/2,hd:d/2,rot,top:y+H}); };
+// 黒い砂(玄武岩の砂浜): 平らな所に暗い砂の板を敷く。{t:'sandpatch',x0,x1,z0,z1,col,h}
+OB.sandpatch=(o)=>{ const c=col3(o.col||'#2e2d2c').getHex(), n=Math.max(1,Math.round((o.x1-o.x0)/12)), sw=(o.x1-o.x0)/n; for(let i=0;i<n;i++){ const x=o.x0+(i+0.5)*sw, z=(o.z0+o.z1)/2; const y=o.h!=null?o.h:G(x,z); P_(rbox(sw+0.2,0.1,o.z1-o.z0,0.04,1),c,T(x,y+0.03,z),{vary:0.05,shadow:false}); } };
+// 青い温泉(ブルーラグーン風): 乳白の青い湯と黒い溶岩の縁・湯気。{t:'lagoon',x,z,r,sx}
+OB.lagoon=(o)=>{ const R=rng(((o.x+o.z*3)|0)+241), y=G(o.x,o.z), r=o.r||10, sx=o.sx||1.4;
+  CUR.B.add(cyl(r,r,0.1,28),MAT.win,T(o.x,y+0.12,o.z,0,sx,1,1),{col:0x8fd8e2}); P_(cyl(r*0.7,r*0.7,0.06,24),0xbfeaf0,T(o.x,y+0.15,o.z,0,sx,1,1),{shadow:false});
+  const n=Math.round(r*2.4); for(let i=0;i<n;i++){ const a=i/n*6.283, s=0.9+R()*0.9; P_(blob(i,0.35,8,6),col3(pick(NPAL.basalt,R)).getHex(),T(o.x+Math.cos(a)*r*sx*1.04,y+s*0.2,o.z+Math.sin(a)*r*1.04,R()*6,s,s*0.55,s)); }
+  for(let i=0;i<4;i++){ const a=R()*6.28, rr=R()*r*0.6; CUR.B.add(sph(2.0,8,6),MAT.holo,T(o.x+Math.cos(a)*rr*sx,y+1.0,o.z+Math.sin(a)*rr,0,1.3,0.45,1.3),{col:0x3a4448,shadow:false}); }
+  for(const q of [-1,0,1]) addCol({t:'c',x:o.x+q*r*(sx-1),z:o.z,r:r*0.95}); };
+// 地熱の発電所(ヘトリスヘイジ風・2100年): 白い棟・湯気の塔。{t:'geoplant',x,z,rot,name}
+OB.geoplant=(o)=>{ const rot=(o.rot||0)*DEG, y=footY(o.x,o.z,24,12,rot), M=T(o.x,y,o.z,rot); const r=OB.fbld(Object.assign({w:18,d:10,n:2,fh:3.6,sign:1,acc:'#3c8f9a'},o,{t:'fbld'}));
+  for(let i=0;i<3;i++){ const x=-6+i*6; P_(cyl(1.3,1.6,12,14),0xeef0f2,local(M,x,6,-9),{ao:y,vary:0.02}); CUR.B.add(rbox(2.9,0.3,2.9,0.1,1),MAT.glow,local(M,x,9.5,-9),{col:0x8fe4ff,shadow:false}); for(let k=0;k<3;k++) CUR.B.add(sph(2.0+k*0.6,8,6),MAT.holo,local(M,x+k*0.6,13.5+k*1.8,-9-k*0.4,0,1,0.7,1),{col:0x8a969c,shadow:false}); }
+  _v.set(0,0,-9).applyMatrix4(M); addCol({t:'b',x:_v.x,z:_v.z,hw:9.5,hd:1.8,rot,top:y+12}); return r; };
+// 銀の湯の管(地熱の発電所から): 低い台の上を走る管。{t:'pipeline',pts}
+OB.pipeline=(o)=>{ for(let k=0;k<o.pts.length-1;k++){ const [ax,az]=o.pts[k],[bx,bz]=o.pts[k+1], L=Math.hypot(bx-ax,bz-az), n=Math.max(1,Math.round(L/6));
+    for(let i=0;i<n;i++){ const x0=lerp(ax,bx,i/n), z0=lerp(az,bz,i/n), x1=lerp(ax,bx,(i+1)/n), z1=lerp(az,bz,(i+1)/n), y0=G(x0,z0)+1.3, y1=G(x1,z1)+1.3;
+      P_(cyl(1,1,1,8),0xc9d0d8,segMat(x0,y0,z0,x1,y1,z1,0.32),{vary:0.02}); P_(rbox(0.9,1.3,0.2,0.04,1),0x9aa2ab,T(x0,y0-0.65,z0,Math.atan2(-(bz-az),bx-ax))); } } };
+// 氷のホテル(ユッカスヤルヴィのアイスホテル風): 雪のアーチの棟が並び、正面は氷の板と青い光。{t:'icehotel',x,z,rot,n,L}
+OB.icehotel=(o)=>{ const rot=(o.rot||0)*DEG, n=o.n||3, L=o.L||16, y=footY(o.x,o.z,n*8,L,rot), M=T(o.x,y,o.z,rot);
+  for(let i=0;i<n;i++){ const x=(i-(n-1)/2)*7.4, r=3.4; P_(cyl(r,r,L,16,1,false,-Math.PI/2,Math.PI),NPAL.snow,local(M,x,0.2,0,0,1,1.05,1,Math.PI/2),{vary:0.03,ao:y});
+    CUR.B.add(cyl(r*0.9,r*0.9,0.4,16,1,false,-Math.PI/2,Math.PI),MAT.win,local(M,x,0.2,L/2+0.05,0,1,1.05,1,Math.PI/2),{col:0xbfe4f6}); CUR.B.add(rbox(1.6,2.4,0.1,0.05,1),MAT.glow,local(M,x,1.2,L/2+0.3),{col:0x8fd6ff,shadow:false}); }
+  for(const q of [-1,1]){ CUR.B.add(rbox(1.0,3.4,1.0,0.1,1),MAT.win,local(M,q*(n*3.7+1),1.7,L/2+1.5),{col:0xcfe8f6}); CUR.B.add(sph(0.3,8,6),MAT.glow,local(M,q*(n*3.7+1),3.6,L/2+1.5),{col:0x9fe8ff,shadow:false}); }
+  addCol({t:'b',x:o.x,z:o.z,hw:n*3.7,hd:L/2,rot,top:y+4}); _v.set(0,0,L/2+1.5).applyMatrix4(M); return {door:[_v.x,_v.z]}; };
+// 氷の板(凍った湖の上)。{t:'icesheet',x0,x1,z0,z1,h}
+OB.icesheet=(o)=>{ const nx=Math.max(1,Math.round((o.x1-o.x0)/16)), nz=Math.max(1,Math.round((o.z1-o.z0)/16)), sw=(o.x1-o.x0)/nx, sd=(o.z1-o.z0)/nz; for(let i=0;i<nx;i++) for(let j=0;j<nz;j++){ const x=o.x0+(i+0.5)*sw, z=o.z0+(j+0.5)*sd; CUR.B.add(rbox(sw+0.1,0.08,sd+0.1,0.03,1),MAT.win,T(x,(o.h!=null?o.h:G(x,z))+0.03,z),{col:(i+j)%2?0xd6ecf8:0xcfe6f4,shadow:false}); } };
+// リフト(アビスコのオーロラの見はらし台へ): 柱と腕・ケーブル・いす。{t:'chairlift',pts}
+OB.chairlift=(o)=>{ const P=o.pts.map(([x,z])=>[x,z,G(x,z)+7]); for(let k=0;k<P.length;k++){ const [x,z,y]=P[k], a=P[Math.min(k+1,P.length-1)], b=P[Math.max(0,k-1)], ry=Math.atan2(-(a[1]-b[1]),a[0]-b[0]);
+    P_(cyl(0.22,0.32,7,8),0xdfe3e7,T(x,y-3.5,z),{ao:y-7}); P_(rbox(0.3,0.3,3.4,0.05,1),0xdfe3e7,T(x,y,z,ry)); }
+  for(let k=0;k<P.length-1;k++){ const a=P[k], b=P[k+1], L=Math.hypot(b[0]-a[0],b[1]-a[1]); P_(cyl(1,1,1,5),0x4a4f58,segMat(a[0],a[2]+0.1,a[1],b[0],b[2]+0.1,b[1],0.05));
+    const n=Math.max(1,Math.floor(L/9)); for(let i=1;i<=n;i++){ const t=i/(n+1), x=lerp(a[0],b[0],t), z=lerp(a[1],b[1],t), y=lerp(a[2],b[2],t); P_(rbox(0.06,1.4,0.06,0.02,1),0x4a4f58,T(x,y-0.6,z)); P_(rbox(1.1,0.2,0.6,0.05,1),0x3f74b0,T(x,y-1.35,z)); } } };
+// 世界樹(ユグドラシル): 太い幹・地面をはう大きな根(アーチ)・高い枝と大きな葉の冠・幹を流れる光の筋。南(+z)の根もとにうろ。{t:'yggdrasil',x,z,s}
+OB.yggdrasil=(o)=>{ const R=rng(251), s=o.s||1, y=G(o.x,o.z)-0.3, M=T(o.x,y,o.z,0,s), bark=0x6b5544, bark2=0x5a4636;
+  P_(lathe('ygg',[[0,0],[9,0],[7.2,1.5],[5.6,4],[4.8,10],[4.4,20],[4.0,30],[3.2,36],[0,37]],14),bark,M,{vary:0.06,ao:y,aoH:6});
+  for(const a of [0.15,0.85,2.35,2.95,3.6,4.25,4.9,5.6]){ const L=15+R()*5, ax=Math.cos(a)*5, az=Math.sin(a)*5, bx=Math.cos(a)*L, bz=Math.sin(a)*L, mx=Math.cos(a)*L*0.55, mz=Math.sin(a)*L*0.55, mh=4.6+R()*2;
+    P_(cyl(1,1,1,7),bark2,MM(M,segMat(ax,3.0,az,mx,mh,mz,1.5)),{vary:0.06}); P_(cyl(1,1,1,7),bark2,MM(M,segMat(mx,mh,mz,bx,-0.8,bz,1.15)),{vary:0.06}); P_(sph(1.5,8,6),bark2,MM(M,T(mx,mh,mz)));
+    CUR.B.add(cyl(1,1,1,5),MAT.glow,MM(M,segMat(ax,3.4,az,mx,mh+1.45,mz,0.12)),{col:0x9fe8c0,shadow:false}); _v.set(bx,0,bz).applyMatrix4(M); addCol({t:'c',x:_v.x,z:_v.z,r:1.3*s}); }
+  for(let i=0;i<6;i++){ const a=i/6*6.283+0.5, L=13+R()*5, h0=24+R()*6, bx=Math.cos(a)*L, bz=Math.sin(a)*L, bh=h0+6+R()*4; P_(cyl(1,1,1,7),bark,MM(M,segMat(0,h0,0,bx,bh,bz,1.3)),{vary:0.05});
+    P_(blob(i,0.25,12,8),col3(pick(['#4f8a4a','#5c9a52','#467e42','#6aa65c'],R)).getHex(),MM(M,T(bx,bh+2,bz,R()*6,8+R()*3,4.5+R()*1.5,8+R()*3)),{leaf:1,sway:0.12}); }
+  P_(blob(7,0.25,14,9),0x5c9a52,MM(M,T(0,42,0,0,14,7,14)),{leaf:1,sway:0.1});
+  leafCards(M,[0,40,0],[20,8,20],IS_MOBILE?60:90,1,3.2,['#6aa65c','#7cb86a','#5c9a52'],R,0.2,0.6);
+  for(let i=0;i<5;i++){ const a=i/5*6.283+0.3; CUR.B.add(cyl(1,1,1,5),MAT.glow,MM(M,segMat(Math.cos(a)*5.45,6,Math.sin(a)*5.45,Math.cos(a)*4.35,24,Math.sin(a)*4.35,0.14)),{col:0x9fe8c0,shadow:false}); }
+  P_(rbox(3.2,4.4,1.4,0.3,1),0x1a1410,MM(M,T(0,2.4,6.3))); CUR.B.add(rbox(2.2,0.08,0.1,0.02,1),MAT.glow,MM(M,T(0,4.7,7.05)),{col:0x9fe8c0,shadow:false});
+  addCol({t:'c',x:o.x,z:o.z,r:8.2*s,top:y+40*s}); };
+// 種の貯蔵庫(スヴァールバル世界種子貯蔵庫風): 山の斜面から突き出たコンクリートの細長い入口・上の光の作品。正面は +z(奥は山の中)。{t:'seedvault',x,z,rot}
+OB.seedvault=(o)=>{ const rot=(o.rot||0)*DEG, y=G(o.x,o.z), M=T(o.x,y,o.z,rot), c=0xb9bcbf, c2=0xa6a9ad;
+  P_(rbox(5.4,8.2,26,0.1,1),c,local(M,0,3.6,-12),{vary:0.04,ao:y}); P_(rbox(5.8,0.4,1.0,0.05,1),c2,local(M,0,7.9,1.0));
+  P_(rbox(2.2,3.0,0.2,0.04,1),0x3a3f45,local(M,0,1.5,1.02)); CUR.B.add(rbox(2.0,0.06,0.06,0.02,1),MAT.glow,local(M,0,3.1,1.12),{col:0x8fe4ff,shadow:false});
+  const R=rng(261); for(let j=0;j<6;j++) for(let i=0;i<4;i++) CUR.B.add(rbox(0.9,0.55,0.08,0.02,1),MAT.glow,local(M,-1.5+i*1.0,4.0+j*0.62,1.06),{col:col3(pick(['#5fe0d0','#7ff0ff','#3fb8c8','#9ff6e8','#2f9fb0'],R)).getHex(),shadow:false});
+  _v.set(0,0,-6).applyMatrix4(M); addCol({t:'b',x:_v.x,z:_v.z,hw:2.9,hd:7.2,rot,top:y+8}); };
+// 白い球のアンテナ(スヴァールバルの衛星の局 SvalSat 風)。{t:'radome',x,z,r}
+OB.radome=(o)=>{ const y=G(o.x,o.z), r=o.r||4; P_(cyl(r*0.6,r*0.7,2.2,12),0xe6e8ea,T(o.x,y+1.1,o.z),{ao:y}); P_(sph(r,16,12),0xf6f7f8,T(o.x,y+2.2+r*0.75,o.z),{vary:0.02}); CUR.B.add(rbox(r*0.9,0.06,0.06,0.02,1),MAT.glow,T(o.x,y+1.6,o.z+r*0.66),{col:0x8fe4ff,shadow:false}); addCol({t:'c',x:o.x,z:o.z,r:r*0.8,top:y+2.2+r*1.8}); };
+// 北欧の色の家(ロングイェールビーン・レイキャビクの色の家・2100年): 切妻(棟は東西)・永久凍土の柱の上・太陽光の屋根。{t:'nhouse',x,z,rot,w,d,h,col,stilt}
+OB.nhouse=(o)=>{ const rot=(o.rot||0)*DEG, w=o.w||8, d=o.d||6, h=o.h||4.2, R=rng(((o.x*11+o.z*3)|0)+271), st=o.stilt!=null?o.stilt:0.8, y=footY(o.x,o.z,w,d,rot), M=T(o.x,y,o.z,rot), c=o.col?col3(o.col).getHex():col3(pick(NPAL.house,R)).getHex(), gh=d*0.38, ang=Math.atan2(gh,d/2);
+  if(st>0) for(const sx of [-1,0,1]) for(const sz of [-1,1]) P_(cyl(0.13,0.15,st+1,6),0x6a6f76,local(M,sx*(w/2-0.4),(st-1)/2,sz*(d/2-0.4)));
+  P_(rbox(w,h,d,0.06,1),c,local(M,0,st+h/2,0),{vary:0.04,ao:y}); P_(prism(d,gh,w),c,local(M,0,st+h,0,Math.PI/2));
+  for(const s of [-1,1]) P_(rbox(w+0.4,0.12,d*0.58,0.04,1),NPAL.slate,local(M,0,st+h+gh*0.5+0.04,s*d*0.25,0,1,1,1,s*ang));
+  CUR.B.add(new THREE.BoxGeometry(w*0.85,0.04,d*0.45),MAT.solar,local(M,0,st+h+gh*0.5+0.12,d*0.25,0,1,1,1,ang),{});
+  for(let i=0;i<3;i++){ const x=-w*0.32+i*w*0.32; if(i===1){ P_(rbox(1.0,2.0,0.08,0.03,1),0xf6f2ea,local(M,x,st+1.0,d/2+0.03)); CUR.B.add(rbox(0.8,1.8,0.06,0.02,1),MAT.win,local(M,x,st+1.0,d/2+0.07),{col:0x6f9fc4}); } else { P_(rbox(1.1,1.1,0.05,0.02,1),0xf6f2ea,local(M,x,st+h*0.55,d/2+0.02)); CUR.B.add(rbox(0.9,0.9,0.06,0.02,1),MAT.win,local(M,x,st+h*0.55,d/2+0.06),{col:0x5a86b0}); } }
+  if(st>0.3){ P_(rbox(2.2,0.15,1.4,0.03,1),0xd8d2c6,local(M,0,st,d/2+0.7)); for(let k=0;k<3;k++) P_(rbox(1.4,0.15,0.4,0.03,1),0xd8d2c6,local(M,0,st*(k+0.5)/3,d/2+1.4+(2-k)*0.35)); }
+  CUR.B.add(sph(0.08,8,6),MAT.glow,local(M,0.9,st+2.4,d/2+0.12),{col:0xfff2d0});
+  addCol({t:'b',x:o.x,z:o.z,hw:w/2+0.1,hd:d/2+0.1,rot,top:y+st+h+gh}); _v.set(0,0,d/2+2.2).applyMatrix4(M); return {door:[_v.x,_v.z]}; };
+// 北の森のトウヒ(細い円すいの段・雪をのせる)。{t:'spruce',x,z,s,snow}
+OB.spruce=(o)=>{ const R=rng(((o.x*17+o.z*5)|0)+301), s=(o.s||1)*(0.85+R()*0.3), y=G(o.x,o.z)-0.05, M=T(o.x,y,o.z,R()*6.28,s), c=col3(pick(NPAL.spruce,R)).getHex(), sn=o.snow!=null?o.snow:!!D.snow;
+  P_(cyl(0.14,0.2,1.6,6),0x5a4636,MM(M,T(0,0.8,0)),{ao:y});
+  for(let i=0;i<4;i++){ const r=1.9-i*0.42, h=2.4-i*0.3, yy=1.1+i*1.45; P_(cyl(0,r,h,7),c,MM(M,T(0,yy+h/2,0,i*0.5)),{leaf:1,sway:0.12,vary:0.06}); if(sn) P_(cyl(0,r*0.78,h*0.55,7),NPAL.snow,MM(M,T(0,yy+h*0.72,0,i*0.5+0.2)),{sway:0.12}); }
+  addCol({t:'c',x:o.x,z:o.z,r:0.35*s,top:y+7*s,tree:1,cr:1.6*s}); };
+// 海の氷のかけら(浮く白い板)。{t:'floe',x,z,s}
+OB.floe=(o)=>{ const R=rng(((o.x*7+o.z*5)|0)+281), s=(o.s||1)*(0.7+R()*0.6); P_(blob(((o.x*3)|0),0.2,9,5),NPAL.snow,T(o.x,0.05,o.z,R()*6,2.4*s,0.35*s,1.8*s),{vary:0.04,shadow:false}); CUR.B.add(blob(((o.x*3)|0)+1,0.2,9,5),MAT.win,T(o.x,-0.04,o.z,R()*6,2.6*s,0.3*s,2.0*s),{col:0xbfe0f2,shadow:false}); };
+// 氷河の壁(青白い氷の崖・割れ目の青・上に雪)。{t:'glacier',pts,h,th}
+OB.glacier=(o)=>{ const R=rng(((o.pts[0][0]*3+o.pts[0][1]*7)|0)+291), H=o.h||14, th=o.th||6; for(let k=0;k<o.pts.length-1;k++){ const [ax,az]=o.pts[k],[bx,bz]=o.pts[k+1], L=Math.hypot(bx-ax,bz-az), n=Math.max(1,Math.round(L/4.5)), ry=Math.atan2(-(bz-az),bx-ax), sl=L/n, nx=Math.sin(ry)*(th/2+0.05), nz=Math.cos(ry)*(th/2+0.05);
+  for(let i=0;i<n;i++){ const t=(i+0.5)/n, x=lerp(ax,bx,t), z=lerp(az,bz,t), y=G(x,z)-0.5, hh=H*(0.75+R()*0.45);
+    P_(rbox(sl+0.4,hh,th,0.5,1),R()<0.5?NPAL.ice:0xdcecf6,T(x,y+hh/2,z,ry+(R()-0.5)*0.1),{vary:0.06,ao:y}); P_(rbox(sl+0.6,1.2,th+0.6,0.5,1),NPAL.snow,T(x,y+hh+0.3,z,ry),{vary:0.03});
+    if(R()<0.5) CUR.B.add(rbox(0.6,hh*0.7,0.2,0.1,1),MAT.win,T(x+nx,y+hh*0.4,z+nz,ry),{col:0x6fb8e0}); addCol({t:'b',x,z,hw:sl/2+0.2,hd:th/2,rot:ry,top:y+hh}); } } };
+// 氷の研究所(アークの中心の建物・データセンター): 氷河に半分うまった白い大きな棟・青く光るガラスの帯・冷やすひれ・アークの輪の印。{t:'arkdc',x,z,rot,w,h,d,name}
+OB.arkdc=(o)=>{ const rot=(o.rot||0)*DEG, w=o.w||60, h=o.h||22, d=o.d||26, y=footY(o.x,o.z,w,d,rot), M=T(o.x,y,o.z,rot);
+  P_(rbox(w,h,d,1.2,2),0xeef2f5,local(M,0,h/2,0),{vary:0.02,ao:y}); for(let k=0;k<3;k++) CUR.B.add(rbox(w+0.1,1.0,d+0.1,0.3,1),MAT.win,local(M,0,4+k*5.5,0),{col:0x6fb8e0}); CUR.B.add(rbox(w+0.2,0.12,0.12,0.03,1),MAT.glow,local(M,0,2.6,d/2+0.1),{col:0x7ff0ff,shadow:false});
+  for(let i=0;i<14;i++) P_(rbox(0.3,h*0.6,4,0.05,1),0xd6dee6,local(M,-w/2+2+i*(w-4)/13,h+h*0.3-1,-d*0.15));
+  P_(cached('arkRing',()=>new THREE.TorusGeometry(5,0.5,8,40)),0xe8eef3,local(M,0,h*0.62,d/2+0.4)); CUR.B.add(cached('arkRing2',()=>new THREE.TorusGeometry(5,0.22,6,40)),MAT.glow,local(M,0,h*0.62,d/2+0.95),{col:0x7ff0ff,shadow:false}); CUR.B.add(sph(1.6,12,8),MAT.glow,local(M,0,h*0.62,d/2+0.6),{col:0xcff8ff,shadow:false});
+  P_(rbox(12,8,3,0.4,1),0xf6f8fa,local(M,0,4,d/2+1.4)); P_(rbox(6.4,6,0.4,0.1,1),0x1c2a38,local(M,0,3,d/2+2.9)); CUR.B.add(rbox(6.0,0.12,0.12,0.03,1),MAT.glow,local(M,0,6.1,d/2+3.15),{col:0x7ff0ff,shadow:false}); for(const q of [-1,1]) CUR.B.add(rbox(0.14,5.6,0.12,0.03,1),MAT.glow,local(M,q*3.3,3,d/2+3.15),{col:0x7ff0ff,shadow:false});
+  addCol({t:'b',x:o.x,z:o.z,hw:w/2,hd:d/2+3,rot,top:y+h}); _v.set(0,0,d/2+4.4).applyMatrix4(M); return {door:[_v.x,_v.z]}; };
+// サーバーの列(アークの中心の部屋): 黒い棚と光の点の帯。{t:'racks',x,z,rot,L,n,gap}
+OB.racks=(o)=>{ const rot=(o.rot||0)*DEG, L=o.L||12, n=o.n||3, gap=o.gap||3.2, y=G(o.x,o.z), M=T(o.x,y,o.z,rot);
+  for(let i=0;i<n;i++){ const z=(i-(n-1)/2)*gap; P_(rbox(L,2.6,1.1,0.08,1),0x2b3440,local(M,0,1.3,z),{vary:0.03,ao:y}); P_(rbox(L+0.2,0.2,1.3,0.04,1),0xdfe6ee,local(M,0,2.7,z));
+    for(const f of [-1,1]) for(let k=0;k<3;k++) CUR.B.add(rbox(L-0.6,0.05,0.04,0.01,1),MAT.glow,local(M,0,0.7+k*0.65,z+f*0.57),{col:[0x7ff0ff,0x9fe8b0,0x7fb6ff][(i+k)%3],shadow:false});
+    _v.set(0,0,z).applyMatrix4(M); addCol({t:'b',x:_v.x,z:_v.z,hw:L/2,hd:0.6,rot,top:y+2.8}); } };
+// アークの中心(氷の研究所の奥): 白い台・光の柱・回る3つの輪(dyn spin)。{t:'arkcore',x,z,r}
+OB.arkcore=(o)=>{ const y=G(o.x,o.z), r=o.r||6;
+  for(let i=0;i<3;i++) P_(cyl(r-i*1.1,r-i*1.1+0.2,0.35,32),[0xe6edf3,0xeef3f7,0xf6f9fb][i],T(o.x,y+0.17+i*0.35,o.z),{vary:0.02});
+  CUR.B.add(cyl(r-2.6,r-2.6,0.08,32,1,true),MAT.glow,T(o.x,y+1.12,o.z),{col:0x7ff0ff,shadow:false});
+  CUR.B.add(cyl(0.9,0.9,30,16,1,true),MAT.holo,T(o.x,y+16,o.z),{col:0x8fe8ff,shadow:false}); CUR.B.add(cyl(0.35,0.35,30,10),MAT.glow,T(o.x,y+16,o.z),{col:0xcff8ff,shadow:false});
+  const B=new Builder(); for(let i=0;i<3;i++){ const rr=+(r*0.9-i*1.2).toFixed(2); B.add(cached('arkT'+rr,()=>new THREE.TorusGeometry(rr,0.18,6,40)),MAT.glow,T(0,6+i*3.2,0,0,1,1,1,Math.PI/2+(i-1)*0.35),{col:[0x7ff0ff,0x9fd8ff,0xb0ffe8][i],shadow:false}); }
+  const g=new THREE.Group(); B.build(g); g.position.set(o.x,y,o.z); CUR.extra.push(g); CUR.dyn.push({k:'spin',g,sp:1}); addCol({t:'c',x:o.x,z:o.z,r:r+0.1}); };
+// 渦潮(ロフォーテンのモスケンの大渦): 海の上の白い渦の輪(dyn spin)。{t:'maelstrom',x,z,r}
+OB.maelstrom=(o)=>{ const r=o.r||12, B=new Builder(); B.add(cyl(r*0.25,r*0.25,0.05,20),MAT.win,T(0,-0.1,0),{col:0x1c3a52,shadow:false});
+  for(let i=0;i<5;i++){ const rr=+(r*(0.3+i*0.17)).toFixed(2); B.add(cached('mT'+rr,()=>new THREE.TorusGeometry(rr,0.3+i*0.05,4,40,Math.PI*1.4)),MAT.holo,T(0,0.06,0,i*1.1,1,1,1,Math.PI/2),{col:i%2?0xffffff:0x9fe8f0,shadow:false}); }
+  const g=new THREE.Group(); B.build(g); g.position.set(o.x,0.05,o.z); CUR.extra.push(g); CUR.dyn.push({k:'spin',g,sp:-1.6}); };
+// オーロラ(マップの D.aurora: 北の空にかかる光のカーテン)。buildClouds から作る
+let AURORA=null;
+function buildAurora(){ if(AURORA){ scene.remove(AURORA); AURORA.traverse(o=>{ if(o.geometry) o.geometry.dispose(); }); AURORA=null; } const A=D&&D.aurora; if(!A) return;
+  const mat=new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false}); AURORA=new THREE.Group(); const R=rng(311);
+  for(const c of A){ const [cx,cz,L,H,y0,ry,hue]=c; const N=40, pos=[], col=[], idx=[]; const ph=R()*6, k=hue==='violet'?[0.55,0.35,0.95]:[0.35,1.0,0.65];
+    for(let i=0;i<=N;i++){ const t=i/N, x=-L/2+L*t, z=Math.sin(t*7+ph)*L*0.05+Math.sin(t*2.3+ph*2)*L*0.08, h=H*(0.75+0.25*Math.sin(t*9+ph)), fade=Math.sin(t*Math.PI);
+      pos.push(x,0,z, x,h*0.35,z, x,h,z); col.push(k[0]*0.55*fade,k[1]*0.9*fade,k[2]*0.7*fade, k[0]*0.75*fade,k[1]*0.75*fade,k[2]*0.8*fade, 0.35*fade*0.25,0.12*fade*0.25,0.5*fade*0.25);
+      if(i<N){ const a=i*3; idx.push(a,a+3,a+1, a+1,a+3,a+4, a+1,a+4,a+2, a+2,a+4,a+5); } }
+    const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); g.setAttribute('color',new THREE.Float32BufferAttribute(col,3)); g.setIndex(idx);
+    const m=new THREE.Mesh(g,mat); m.position.set(cx,y0,cz); m.rotation.y=(ry||0)*DEG; m.frustumCulled=false; m.renderOrder=-5; AURORA.add(m); }
+  scene.add(AURORA); }
+
 // ---------------------------------------------------------------- 草(区画ごと)
 function buildGrass(c,parent){ if(D.noGrass) return null; const x0=c.x0, z0=c.z0, R=rng(c.i*7919+c.j*104729+11); const pos=[],nor=[],col=[],uv=[],sw=[],idx=[]; let vi=0; const gc=[0,0,0];
   const dens=(IS_MOBILE?0.24:0.38);
@@ -1531,7 +1744,7 @@ function initChunks(){ const b=D.bounds; CS=D.chunk; OX=D.origin?D.origin[0]:0; 
       if(s.coast!=null?TER.coastD(x,z)<s.coast:TER.coastD(x,z)<6) continue;
       if(s.avoid&&s.avoid.some(a=>Math.hypot(x-a[0],z-a[1])<a[2])) continue;
       const sz=s.s?lerp(s.s[0],s.s[1],R()):1; const rr=isM?Math.max(F0.w,F0.d)*sz*(F0.kind==='tree'?0.22:0.42):0.6; if(!occFree(x,z,rr)) continue;
-      const o=isM?{t:'m',k,x,z,rot:s.rot!=null?s.rot+(R()-0.5)*(s.rj||0):R()*360,s:sz}:{t:s.t,x,z}; if(!isM&&s.s) o.s=sz; if(s.flower) o.flower=1;
+      const o=isM?{t:'m',k,x,z,rot:s.rot!=null?s.rot+(R()-0.5)*(s.rj||0):R()*360,s:sz}:{t:s.t,x,z}; if(!isM&&s.s) o.s=sz; if(s.flower) o.flower=1; if(s.cols) o.cols=s.cols; if(s.snow!=null) o.snow=s.snow;
       if(isM){ const F=mFoot(o); occMark(x,z,F.w/2*(F.kind==='tree'?0.4:0.85),F.d/2*(F.kind==='tree'?0.4:0.85),(o.rot||0)*DEG,0); if(F.kind!=='flora') FP.push({x,z,hw:F.w/2*0.7,hd:F.d/2*0.7,rot:(o.rot||0)*DEG,k:F.kind==='tree'?0.3:0.35,r:F.kind==='tree'?Math.max(0.8,F.w*0.25):0.45,k0:k}); }
       put(o); } }
   // 入口
@@ -1581,7 +1794,7 @@ function buildFar(){ const B=new Builder(); CUR={B,cols:[],dyn:[],extra:[]}; con
 let AIR=null;
 // 雲の海(雲の山道): 谷を白い平たい雲でうずめる。マップごとに作り直す。D.clouds=[[x,z,r,y]…]
 let CLOUDG=null;
-function buildClouds(){ if(CLOUDG){ scene.remove(CLOUDG); CLOUDG.traverse(o=>{ if(o.geometry&&!o.geometry._cached) o.geometry.dispose(); }); CLOUDG=null; } if(!D.clouds||!D.clouds.length) return;
+function buildClouds(){ if(typeof buildAurora==='function') buildAurora(); if(CLOUDG){ scene.remove(CLOUDG); CLOUDG.traverse(o=>{ if(o.geometry&&!o.geometry._cached) o.geometry.dispose(); }); CLOUDG=null; } if(!D.clouds||!D.clouds.length) return;
   const B=new Builder(); CUR={B,cols:[],dyn:[],extra:[]}; const R=rng(7);
   for(const c of D.clouds){ const [x,z,r,y]=c; P_(blob(((x*3+z)|0),0.22,16,8),0xf4f7fb,T(x,y-r*0.1,z,R()*6,r,r*0.22,r*0.8),{shadow:false}); P_(blob(((x+z*5)|0)+3,0.25,12,7),0xffffff,T(x+r*0.3,y+r*0.02,z-r*0.2,R()*6,r*0.6,r*0.16,r*0.5),{shadow:false}); P_(blob(((x*5-z)|0)+6,0.25,12,7),0xfafcff,T(x-r*0.35,y+r*0.01,z+r*0.25,R()*6,r*0.5,r*0.14,r*0.45),{shadow:false}); }
   CUR=null; CLOUDG=new THREE.Group(); B.build(CLOUDG); CLOUDG.traverse(o=>{ if(o.isMesh){ o.castShadow=false; o.receiveShadow=false; } }); scene.add(CLOUDG); }
@@ -1802,7 +2015,16 @@ const TOD={   // 光と色(post: 露出・にじみ・光の色・陰の色・�
     expo:0.96,bloom:0.34,bT:0.68,gain:[1.08,0.99,0.86],lift:[0.03,0.02,0.01],sat:1.04,vig:0.44,hazeK:0.6},
   // 雷の嵐(雲の山道): 灰色の空・低い光・重い霞(2026-10-26)
   storm:{top:'#4a5670',mid:'#7b879c',hor:'#aab2bf',sunD:[0.3,0.7,0.5],sunC:'#cfd6e4',sunI:0.55,hS:'#9aa6ba',hG:'#5a5a58',hI:0.5,fog:'#8e98a8',cL:'#b8c0cc',cS:'#5c6676',deep:'#2e4a60',shal:'#5a7a88',foam:'#dde4ea',glow:0.8,win:0.4,cloud:0.5,mot:'#cfe0ff',
-    expo:0.9,bloom:0.2,bT:0.8,gain:[0.95,0.98,1.06],lift:[0.02,0.02,0.05],sat:0.9,vig:0.34,hazeK:0.5} };
+    expo:0.9,bloom:0.2,bT:0.8,gain:[0.95,0.98,1.06],lift:[0.02,0.02,0.05],sat:0.9,vig:0.34,hazeK:0.5},
+  // 北欧編(2026-10-27): オーロラの夜(ラップランド・氷の研究所)。暗くしすぎない青い夜・雪は青白く光る
+  aurora:{top:'#0e2244',mid:'#1d4a66',hor:'#4f9c94',sunD:[0.25,0.62,-0.72],sunC:'#cfe6ff',sunI:0.6,hS:'#9cbce0',hG:'#3e4a5e',hI:0.62,fog:'#24465a',cL:'#5a7a9a',cS:'#1c2c44',deep:'#163a52',shal:'#2f6a78',foam:'#cfe8f4',glow:1.0,win:0.75,cloud:0.03,mot:'#a8ffd8',
+    expo:1.12,bloom:0.36,bT:0.68,gain:[0.94,1.02,1.08],lift:[0.03,0.05,0.08],sat:1.06,vig:0.32,hazeK:0.36},
+  // 北極の昼(スヴァールバル): 低い太陽・青白い空
+  polar:{top:'#6f9fd0',mid:'#b9d2ea',hor:'#eaf3f9',sunD:[0.5,0.34,0.8],sunC:'#fff0dc',sunI:0.82,hS:'#d0e0f2',hG:'#a8b4c2',hI:0.5,fog:'#dfeaf2',cL:'#ffffff',cS:'#c4d4e6',deep:'#2f6f96',shal:'#7cc2d0',foam:'#ffffff',glow:0.2,win:0.1,cloud:0.1,mot:'#ffffff',
+    expo:0.84,bloom:0.18,bT:0.84,gain:[0.99,1.0,1.03],lift:[0.01,0.02,0.05],sat:1.05,vig:0.24,hazeK:0.3},
+  // アークの中心(氷の研究所の中): 空は見えない。白と青の明るい光(怖くしない)
+  arklab:{top:'#10223a',mid:'#173050',hor:'#22466a',sunD:[0.25,0.9,0.35],sunC:'#e6f6ff',sunI:0.66,hS:'#b4d2ee',hG:'#44566a',hI:0.62,fog:'#132a40',cL:'#20385a',cS:'#10203a',deep:'#1d3a52',shal:'#2b5a6a',foam:'#c0e0f0',glow:1.0,win:0.7,cloud:0.0,mot:'#9fe8ff',
+    expo:0.9,bloom:0.26,bT:0.74,gain:[0.95,1.0,1.07],lift:[0.02,0.03,0.05],sat:1.02,vig:0.36,hazeK:0.45} };
 let TODC=null, TODT=null, TODK=0, TODN='noon', TODP=null, TODPREV=null;
 function todVals(p){ return {expo:p.expo,bloom:p.bloom,bT:p.bT,sat:p.sat,vig:p.vig,hazeK:p.hazeK,gain:new THREE.Vector3(...p.gain),lift:new THREE.Vector3(...p.lift),top:col3(p.top),mid:col3(p.mid),hor:col3(p.hor),sunD:new THREE.Vector3(...p.sunD).normalize(),sunC:col3(p.sunC),sunI:p.sunI,hS:col3(p.hS),hG:col3(p.hG),hI:p.hI,fog:col3(p.fog),cL:col3(p.cL),cS:col3(p.cS),deep:col3(p.deep),shal:col3(p.shal),foam:col3(p.foam),glow:p.glow,win:p.win,cloud:p.cloud,mot:col3(p.mot)}; }
 function setTime(n,instant){ if(!TOD[n]) return; TODN=n; const tv=todVals(TOD[n]); TODP=TOD[n]; if(instant||!TODC){ TODC=tv; TODT=null; applyTod(TODC); } else { TODT={from:TODC,to:tv,k:0}; }
@@ -1828,6 +2050,7 @@ function enterPlace(n){ const f=SAVE?SAVE.flags:{};
   if(n==='旅人の宿'){ if(!f.tasos) storyField('tasos'); else toast('旅人の宿'); return; }
   if(n==='テリオン研究所'||n==='ムネモ研究所'){ if(window.Progress&&Progress.state()) Progress.ui.open('cradle'); else toast('テリオン研究所 オリーヴァ支所'); return; }   // 研究所の中だけ ゆりかご(ガチャ)
   if(n==='アーク研究所'){ if(window.Progress&&Progress.state()) Progress.ui.open('cradle'); else toast('アーク研究所'); return; }   // 中国編(2026-10-26): 巨大都市アークの研究所でもゆりかご
+  if(n==='オスロ研究所'){ if(window.Progress&&Progress.state()) Progress.ui.open('cradle'); else toast('オスロ研究所'); return; }   // 北欧編(2026-10-27): オスロの研究所でもゆりかご
   if(n==='ナイル研究所'){ if(window.Progress&&Progress.state()) Progress.ui.open('cradle'); else toast('ナイル研究所'); return; }   // エジプト編(2026-10-26): カイロの研究所でもゆりかご
   if(n==='隠し研究所'){ toast('ゼロデイの隠し研究所'); return; }
   if(n==='道しるべ'){ toast(MAP&&MAP.startsWith('eg_')?'→ ギザ → ナイルデルタ → ルクソール → 王家の谷 → 王の墓 → アスワン → アブ・シンベル → 白砂漠 → 紅海':(MAP&&MAP.startsWith('cn_')?'→ 竹海の村 → 西の高原 → 化石の谷 → 南の山 → 雲海の石柱 → 北の大河 → 東の島 → 古い都 → 雪の高原 → 東の海':'→ アルカディアの森 → 運河の町コリンタ → 雲の山道 → 山の村デルフィナ')); return; }
@@ -1870,11 +2093,11 @@ async function startEncounter(e){ ENC=e; AUTO=null; IN.active=false; IN.sx=IN.sy
   let enemy;
   if(e.m){ const o=e.m.o; enemy={ party:[(anc||boss)?{mid:o.id, lv:lvOf(o,Progress.wildLv(area)+6), fixed:true}:Progress.wildEnemy(o.id,area)], name:anc?'古代テリオン '+monName(o.id):(boss?monName(o.id):undefined) }; if(anc||boss){ enemy.ancient={tier:+o.tier||1, minions:[...new Set((D.wild||[]).filter(w=>!w.ancient&&!w.boss).map(w=>+w.id))]}; if(o.tune) enemy.ancient.tune=o.tune; enemy.catchable=!!(boss&&!anc); } }   // tune=中国編(2026-10-26)の tier の上書き(マップの wild[].tune)   // 古代テリオン・ボス=kind:'ancient'(battle.js の ANCIENT・tier はマップの wild[].tier・子分はそのマップの野生)。野生のボス(トールガ)だけ仲間の判定あり
   else { const o=e.n.o, bump=o.master?3:1; enemy={ name:o.n, zeroday:!!o.zeroday, party:(o.party||[{mid:1059},{mid:1037}]).map(x=>{ const c={mid:+x.mid, lv:lvOf(x,Progress.wildLv(area)+bump)}; if(x.fixed||x.stage!=null) c.fixed=true; if(x.evo) c.evo=true; if(x.leader) c.leader=true; return c; }) }; }   // evo=その子は戦いの中で進化できる(町いちばんの使い手)・leader=先頭でなくてもリーダー
-  const opt={ kind:e.m?((anc||boss)?'ancient':'wild'):(e.n.o.master?'master':'trainer'), size:e.m?((anc||boss)?9:7):(e.n.o.master?11:9), terrainTheme:place, backdrop:place==='seaside'?'aegean':'olive', player:{items:ITEMS}, enemy };
+  const opt={ kind:e.m?((anc||boss)?'ancient':'wild'):(e.n.o.master?'master':'trainer'), size:e.m?((anc||boss)?9:7):(+e.n.o.size||(e.n.o.master?11:9)), terrainTheme:place, backdrop:place==='seaside'?'aegean':'olive', player:{items:ITEMS}, enemy };
   try{ Progress.prepare(opt,{area, zeroday:enemy.zeroday}); }catch(err){ console.warn('progress.prepare',err&&err.message); opt.player={party:PARTY,items:ITEMS,box:BOX,rankCap:10,owned:ownedList()}; }
   if(anc) opt.recruit=()=>null;   // 古代テリオン(守り・王)は仲間にならない。ボス(トールガ)は野生なので判定あり
   if(e.m&&e.m.o.ai&&!(anc||boss)) opt.enemy.ai=Object.assign({},e.m.o.ai);   // 野生の個別の強さ(任意)。古代テリオン・ボスの強さは battle.js の ANCIENT(tier)で決まる(2026-10-26: マップ側の hpX/atkX はやめた)
-  if(unlocks().fusion) opt.fusionUnlocked=true;   // 融合は解禁のあとだけ渡す(守り④のあと)
+  if(unlocks().fusion) opt.fusionUnlocked=true; if(unlocks().triple) opt.tripleUnlocked=true;   // 3体融合はラグナディオのあと(北欧編 2026-10-27)   // 融合は解禁のあとだけ渡す(守り④のあと)
   if(D.battle){ const bt=(D.battle.byArea&&D.battle.byArea[zoneAt(HERO.x,HERO.z)])||D.battle[place]||D.battle.default; if(bt) Object.assign(opt,bt); }   // マップごとの盤の見た目(遺跡・海辺など)。バランスは触らない
   Object.assign(opt,WORLD.battleOpt||{});
   let res=null; try{ res=await startBattle(opt); }catch(err){ console.error('battle',err); }
@@ -1945,7 +2168,7 @@ function frame(now){ requestAnimationFrame(frame); if(PAUSED){ LAST=now; return;
   const _t2=performance.now(); for(const m of MONS) monUpdate(m,dt,now); partnerUpdate(dt); const _t3=performance.now();
   for(const dr of DRONES){ const d=dr.d, t=now/1000*d.sp+dr.ph; let x,z,yaw; if(d.c){ x=d.c[0]+Math.cos(t*6.28)*d.r; z=d.c[1]+Math.sin(t*6.28)*d.r; yaw=-t*6.28; } else { const k=0.5-0.5*Math.cos(t*6.28); x=lerp(d.line[0][0],d.line[1][0],k); z=lerp(d.line[0][1],d.line[1][1],k); yaw=Math.atan2(d.line[1][0]-d.line[0][0],d.line[1][1]-d.line[0][1]); }
     const gy2=G(x,z); dr.g.position.set(x,gy2+Math.min(d.y,4.2)+Math.sin(now*0.003+dr.ph)*0.15,z); dr.g.rotation.set(Math.sin(now*0.002)*0.06,yaw,0); if(Math.hypot(x-HERO.x,z-HERO.z)<40) blobAt(x,gy2,z,0.7); }
-  for(const c of CHUNKS.values()){ if(c.state!==2) continue; for(const o of c.dyn){ if(o.k==='boat'){ o.g.position.y=Math.sin(now*0.0012+o.ph)*0.06; o.g.rotation.z=Math.sin(now*0.0009+o.ph)*0.04; } else if(o.k==='sail') o.g.rotation.z=-now*0.0004; else if(o.k==='hover') o.g.position.y=o.y+Math.sin(now*0.0015)*0.08; } }
+  for(const c of CHUNKS.values()){ if(c.state!==2) continue; for(const o of c.dyn){ if(o.k==='boat'){ o.g.position.y=Math.sin(now*0.0012+o.ph)*0.06; o.g.rotation.z=Math.sin(now*0.0009+o.ph)*0.04; } else if(o.k==='sail') o.g.rotation.z=-now*0.0004; else if(o.k==='hover') o.g.position.y=o.y+Math.sin(now*0.0015)*0.08; else if(o.k==='geyser'){ const k=Math.max(0,Math.sin(now*0.0011+o.ph)); o.g.scale.y=0.05+Math.pow(k,8); o.g.visible=o.g.scale.y>0.07; } else if(o.k==='spin') o.g.rotation.y=now*0.0005*(o.sp||1); } }   // geyser/spin=北欧編(2026-10-27)
   if(AIR){ const t=now*0.000004; AIR.position.set(-260+((t*1000)%1)*520,62,-190); AIR.rotation.y=0; }
   for(let i=blobI;i<BLOBN;i++){ _bm.makeScale(0,0,0); blobs.setMatrixAt(i,_bm); } blobs.instanceMatrix.needsUpdate=true;
   // 粒の中心
@@ -1984,9 +2207,9 @@ async function loadMap(id,at,pos){ const t0=performance.now();
   clearMap(); D=nd; MAP=id; CFG.loadR=D.loadR||52; CFG.unloadR=D.unloadR||76;
   if(D.lv&&window.Progress) Progress.config.areas[id]=Object.assign({},Progress.config.areas[id]||{},{lv:D.lv},D.startStage?{startStage:D.startStage}:{});   // 野生のレベル帯はマップの lv(progress.js の config.areas)   // 読み込み半径はマップごと(アテネは見晴らしで遠くの神殿まで組み立てる)
   PATHS={un:D.paths.unpaved,town:D.paths.townPaved,stone:D.paths.stone.map(p=>prepPoly(p.p,p.w)),dirt:D.paths.dirt.map(p=>prepPoly(p.p,p.w)),sc:D.paths.stoneCircles,sr:D.paths.stoneRects,sa:D.paths.sandRects||null,rockAll:D.terrain.rockAll||0};
-  { const want=PATHS.sa?GTEX.pave:(D.snowSand!=null?GTEX.snow:GTEX.sand0); GTEX.sand=want; if(MAT.ground.userData.sh) MAT.ground.userData.sh.uniforms.tSa.value=want; const tn=D.terrain.tint||[1,1,1]; GTINT.set(tn[0],tn[1],tn[2]); }   // 舗装の区画があるマップは砂の代わりに板石。tint=地面の色味
+  { const want=PATHS.sa?GTEX.pave:(D.snowSand!=null?GTEX.snow:GTEX.sand0); GTEX.sand=want; if(MAT.ground.userData.sh) MAT.ground.userData.sh.uniforms.tSa.value=want; const tn=D.terrain.tint||[1,1,1]; GTINT.set(tn[0],tn[1],tn[2]); const rt=D.terrain.rockTint; if(rt) GROCK.set(rt[0],rt[1],rt[2],rt[3]!=null?rt[3]:1); else GROCK.set(1,1,1,0); }   // 舗装の区画があるマップは砂の代わりに板石。tint=地面の色味
   // 地下(迷宮)は暗い時間帯 tod:'cave' に固定して朝昼夕のボタンを隠す。外へ出たら元の時間帯へ
-  { const todEl=document.getElementById('tod'); if(D.tod){ if(!TODPREV) TODPREV=((TODN==='cave'||TODN==='tomb'||TODN==='storm')?'noon':TODN); setTime(D.tod,true); todEl.style.display='none'; } else { if(TODPREV||TODN==='cave'||TODN==='tomb'||TODN==='storm'){ setTime(TODPREV||'noon',true); TODPREV=null; } todEl.style.display=''; } if(PETALS) PETALS.visible=!D.tod; }
+  { const todEl=document.getElementById('tod'); if(D.tod){ if(!TODPREV) TODPREV=(!['morning','noon','evening'].includes(TODN)?'noon':TODN); setTime(D.tod,true); todEl.style.display='none'; } else { if(TODPREV||!['morning','noon','evening'].includes(TODN)){ setTime(TODPREV||'noon',true); TODPREV=null; } todEl.style.display=''; } if(PETALS) PETALS.visible=!D.tod; }
   TER=makeTerrain(D); initChunks(); buildWaters(); buildClouds(); if(!AIR) buildFar(); initActors();
   for(const n of NPCS) if(SAVE&&(SAVE.flags[npcKey(n)]||SAVE.flags['beat_'+n.o.n])){ n.beaten=true; if(n.o.lineAfter) n.o.line=n.o.lineAfter; }
   const p=pos||(D.arrive&&D.arrive[at])||D.spawn; HERO.x=p[0]; HERO.z=p[1]; HERO.yaw=p[2]; HERO.speed=0; HERO.dir=null; CAM.tx=HERO.x; CAM.tz=HERO.z;
@@ -2032,13 +2255,16 @@ function flag(k){ if(SAVE&&!SAVE.flags[k]){ SAVE.flags[k]=1; onFlag(k); objUpdat
 // 旗が立った時の解禁とクエストのジェム(progress.js: 同じ id は1回だけ)。ミッション120・守り150・王300・雷のボス120・古印100・新しい土地40
 const QUEST_GEMS={mission:120,guard1:150,guard2:150,guard3:150,guard4:150,king:300,thunder:120,stavros:100,mihalis:100,sophia:100,bella:150,bridge:60,arcadia:40,corinth:40,cloudroad:40,delphi:40,stadium_under:40,
   cn_bund:60,cn_bamboo:40,cn_plateau:40,cn_fossil:40,cn_karst:40,cn_pillars:40,cn_gorges:40,cn_thunder:40,cn_capital:40,cn_kunlun:40,cn_sea:40, cn_dojo:100,guard_w:150,cn_kagu:120,guard_s:150,dimi4:60,guard_n:150,cn_nue:120,cn_sajin:200,cn_lion:150,cn_champ:100,dimi5:60,cn_setsu:150,cn_ransom:150,cn_dragon:300,
-  eg_cairo:60,eg_giza:40,eg_delta:40,eg_luxor:40,eg_valley:40,eg_tomb:40,eg_aswan:40,eg_abusimbel:40,eg_white:40,eg_redsea:40, eg_champ0:100,eg_sphinga:150,eg_doroka:150,eg_champ1:100,eg_osira:150,eg_anubid:150,eg_champ2:100,eg_ransom:150,eg_eleki:150,eg_raga:200,eg_ekuri:150,eg_levia:300};   // 中国編(2026-10-26): 新しい土地40・守り150・八つ首200・青龍300 / エジプト編(2026-10-26): 新しい土地40・古印100・古代テリオン150・ラーガ200・リヴァイア300
+  eg_cairo:60,eg_giza:40,eg_delta:40,eg_luxor:40,eg_valley:40,eg_tomb:40,eg_aswan:40,eg_abusimbel:40,eg_white:40,eg_redsea:40, eg_champ0:100,eg_sphinga:150,eg_doroka:150,eg_champ1:100,eg_osira:150,eg_anubid:150,eg_champ2:100,eg_ransom:150,eg_eleki:150,eg_raga:200,eg_ekuri:150,eg_levia:300,
+  nr_oslo:60,nr_fjord:40,nr_lofoten:40,nr_iceland:40,nr_uppsala:40,nr_lapland:40,nr_ygg:40,nr_svalbard:40,nr_glacier:40,nr_core:40, nr_champ0:100,nr_champ1:100,nr_champ2:100,nr_mitsu:150,nr_kubi:120,nr_kraken:150,nr_surtr:150,nr_odin:150,nr_sleip:150,nr_aurora:150,nr_fenrir:150,nr_nidhogg:200,nr_unicorn:120,nr_mammoth:120,nr_narwhal:150,nr_hyoseki:150,nr_ransom3:150,nr_bot:200,nr_bella3:200,nr_adrian:300,nr_ragna:500};   // 北欧編(2026-10-27): 新しい土地40・古印100・古代テリオン150・幹部200・アドリアン300・ラグナディオ500   // 中国編(2026-10-26): 新しい土地40・守り150・八つ首200・青龍300 / エジプト編(2026-10-26): 新しい土地40・古印100・古代テリオン150・ラーガ200・リヴァイア300
 function onFlag(k){ if(!(window.Progress&&Progress.state())) return;
   if(k==='guard2') Progress.unlockLate();                 // 守り②のあと: 連れて歩くのが5体に
   if(k==='corinth'&&SAVE.unlock) SAVE.unlock.evo=true;    // 運河の町コリンタ(第19話 エンジュ→エンレオ): 進化の解禁
   if(k==='guard4'&&SAVE.unlock) SAVE.unlock.fusion=true;  // 守り④のあと(第26話 初めての融合): 融合の解禁
   if(k==='cn_bund') Progress.setArc('china');            // 中国編(2026-10-26): 巨大都市アークに着いたら編を中国へ(ゆりかごの種類・野生の既定)
-  if(k==='eg_cairo') Progress.setArc('egypt');           // エジプト編(2026-10-26): 未来のカイロに着いたら編をエジプトへ
+  if(k==='eg_cairo') Progress.setArc('egypt');
+  if(k==='nr_oslo') Progress.setArc('norse');            // 北欧編(2026-10-27): 未来のオスロに着いたら編を北欧へ
+  if(k==='nr_ragna'){ if(SAVE.unlock) SAVE.unlock.triple=true; flag('game_clear'); }   // ラグナディオのあと: 3体融合の解禁・ゲームクリアの旗(エンディングは未作成)           // エジプト編(2026-10-26): 未来のカイロに着いたら編をエジプトへ
   if(QUEST_GEMS[k]) Progress.quest(k,QUEST_GEMS[k]); }
 // 手動セーブ(HUDの「セーブ」)・自動セーブ(野歩き中30秒ごと・画面を閉じる/隠す時)。読むのはタイトルの「つづきから」(contGame)
 const saveBtn=document.getElementById('btSave'); let AUTOSAVE_T=0;
@@ -2061,7 +2287,7 @@ const MONN={1001:'エンジュ',1022:'ビリトラ',178:'クマッパ'};   // v3
 let MNAME={}, MEVO={}, MMODEL={}; fetch('../battle/data/monsters.json').then(r=>r.json()).then(a=>{ for(const m of a){ MNAME[m.id]=m.name; MEVO[m.id]=m.evolves_to; MMODEL[m.id]=m.model3d!==false; } }).catch(()=>{});
 // 持っている種類(owned): 仲間にした子は、その系統(次の段・その次の段)を全部持っている扱い(game_design 9-2)。バトルでの進化の判定に渡す
 // 解禁(SAVE.unlock): 序盤は進化も融合も未解禁(相性と地形の時期)。進化の解禁後は、仲間の系統(進化先)も持っている扱い。融合は物語の後半で解禁
-function unlocks(){ const u=(SAVE&&SAVE.unlock)||{}; return {evo:!!u.evo,fusion:!!u.fusion}; }
+function unlocks(){ const u=(SAVE&&SAVE.unlock)||{}; return {evo:!!u.evo,fusion:!!u.fusion,triple:!!u.triple}; }
 function ownedList(){ const o=new Set(); const evo=unlocks().evo; const add=id=>{ let k=+id, g=0; while(k!=null&&!o.has(k)&&g++<5){ o.add(k); if(!evo) break; k=MEVO[k]; } }; for(const id in BOX) add(id); for(const q of PARTY) add(q.mid); for(const id of (SAVE&&SAVE.owned)||[]) add(id); return [...o]; }
 function monName(id){ return MNAME[id]||MONN[id]||'この子'; }
 function objText(){ const f=SAVE?SAVE.flags:{}; if(!f.arrived) return '';
@@ -2086,7 +2312,15 @@ function objText(){ const f=SAVE?SAVE.flags:{}; if(!f.arrived) return '';
   if(!f.eg_osira) return 'カルナック神殿の前庭で、オシラントに会う'; if(!f.eg_valley) return 'ナイルの渡し場から、王家の谷へ'; if(!f.eg_tomb) return '王家の谷の墓の入口から、王の墓の回廊へ'; if(!f.eg_anubid) return '玄室で、アヌビドに会う';
   if(!f.eg_aswan) return '谷の空の船乗り場から、アスワンへ'; if(!f.eg_ransom) return 'ハイダムの上で、ランサムを止める'; if(!f.eg_eleki) return 'ダムの上で、エレキナギをしずめる'; if(!f.eg_abusimbel) return 'ナセル湖の船着き場から、アブ・シンベルへ';
   if(!f.eg_raga) return '大神殿の前で、朝の光のラーガに会う'; if(!f.eg_white) return '空の船で、白砂漠へ'; if(!f.eg_ekuri) return '水晶の山で、日食のエクリオンをしずめる'; if(!f.eg_redsea) return '空の船で、紅海の珊瑚の岸へ'; if(!f.eg_levia) return 'サンゴの台で、リヴァイアに会う';
-  return 'エジプト編クリア。次は北欧編'; }
+  // 第4期 北欧編(2026-10-27 regions/make_norse_arc.py)
+  if(!f.nr_oslo) return '紅海の北の桟橋から、空の船で北欧へ'; if(!f.nr_fjord) return '港の船着き場から、フィヨルドへ'; if(!f.nr_mitsu) return '説教壇の岩の上で、ミツガルムに会う';
+  if(!f.nr_lofoten) return 'フィヨルドの奥の船着き場から、ロフォーテン諸島へ'; if(!f.nr_kraken) return '渦潮の台で、クラークをしずめる'; if(!f.nr_iceland) return '島の空の船乗り場から、火の島アイスランドへ'; if(!f.nr_surtr) return '黒い砂の浜の柱の崖で、スルヴァをしずめる';
+  if(!f.nr_uppsala) return '空の船でオスロへ戻り、リニアでウプサラへ'; if(!f.nr_odin) return '王の塚の上で、オーディガルに会う'; if(!f.nr_sleip) return '木の教会の前で、スレイプニアに会う';
+  if(!f.nr_lapland) return '北のリニアで、ラップランドへ'; if(!f.nr_aurora) return 'オーロラの見はらし台で、オーロフに会う'; if(!f.nr_fenrir) return '凍った湖の島で、フェンガロをしずめる';
+  if(!f.nr_ygg) return 'ラップランドの門を北へぬけ、世界樹の森へ'; if(!f.nr_nidhogg) return '世界樹の根もとで、ニドグラをしずめる'; if(!f.nr_svalbard) return '森の空の船乗り場から、スヴァールバルへ';
+  if(!f.nr_narwhal) return '海の氷の先で、イッカクオウに会う'; if(!f.nr_glacier) return '海の氷をわたり、氷の研究所へ'; if(!f.nr_hyoseki) return '氷河の門で、ヒョウセキオウに会う'; if(!f.nr_ransom3) return '研究所の前の広場で、ランサムを止める'; if(!f.nr_bot) return '研究所の入口で、ボットを止める';
+  if(!f.nr_core) return '研究所の門から、アークの中心へ'; if(!f.nr_bella3) return 'サーバーの部屋で、ベラドンナを止める'; if(!f.nr_adrian) return 'アークの中心の前で、アドリアンと向き合う'; if(!f.nr_ragna) return 'アークの中心で、ラグナディオの前に立つ';
+  return 'ゲームクリア。空の船で東京へ(エンディングは未作成)'; }
 function objUpdate(){ const t=objText(); objEl.textContent=t; objEl.style.display=t&&!STORY&&!TRANS?'block':'none'; }
 
 // ---------------------------------------------------------------- 会話(立ち絵つき)・イントロ
@@ -2098,6 +2332,7 @@ const FACES={hero_m:E7,hero_f:E7,genichi:['normal'],misaki:['normal','smile'],ha
   elly:['normal','smile','surprised','sad','serious'],alek:['normal'],dimi:['normal','smile','surprised','serious'],elena:['normal','smile','serious'],tasos:['normal','smile','surprised'],petra:['normal','smile','surprised'],stavros:['normal','smile','serious']};
 // 立ち絵の鍵: elly=エリー(anime/chars/elly)・alek=アレク(anime/chars/alek)・dimi=レン(絵は dimi のまま)・stavros=ヤニス(絵は仮)。patch/log/x は絵なし(名前だけ)
 const WHO={genichi:'じいちゃん',misaki:'母',hana:'ハナ',ryo:'父',elly:'エリー',alek:'アレク',dimi:'レン',elena:'エレナ博士',tasos:'タソス',petra:'ペトラ',stavros:'ヤニス',patch:'パッチ',log:'ログ',mihalis:'ミハリス',sophia:'ソフィア',bella:'ベラドンナ',yusuf:'ユスフ',hao:'ハオ',lifa:'リーファ',ransom:'ランサム',shifu:'師範',x:''};   // 中国編(2026-10-26): ハオ・リーファ・ランサム・師範は絵なし(名前だけ)
+Object.assign(WHO,{nadia:'ナディア',mira:'ミラ',joe:'ジョー',liv:'リヴ',bot:'ボット',yuki:'ユキ',haru:'ハル',adrian:'アドリアン'});   // 北欧編(2026-10-27): 絵なし(名前だけ)
 const DEFN=g=>'ヤマト';   // 主人公はヤマトだけ(女の子版 hero_f は使わない)
 function fillT(t){ const g=SAVE?SAVE.g:'m'; return t.replace(/\{hero\}/g,SAVE?SAVE.name:DEFN(g)).replace(/\{partner\}/g,MONN[SAVE&&SAVE.partner]||'相棒').replace(/\{sib\}/g,g==='f'?'ねえね':'にいに'); }
 // 立ち絵の向き(絵ごと)。index.json を読むまでは全員右向きとして扱う
@@ -2329,6 +2564,60 @@ const SC={
  // 紅海: サンゴの台のリヴァイア(エジプト編のラスト)→北欧編へ
  levia:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'リヴァイア',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'nadia',t:''},{w:'partner',t:''} ],
  levia_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'リヴァイア',t:''},{w:'elly',f:'smile',t:''},{w:'nadia',t:''},{w:'alek',t:''},{w:'dimi',t:''},{w:'hero',f:'smile',t:''},{w:null,t:''} ],
+ // ---- 第4期 北欧編(2026-10-27 regions/make_norse_arc.py)。台詞は空(物語はあとで貼る) ----
+ // 未来のオスロ: リヴ(案内役)・使い手(古印)
+ liv:[ {todo:'story'}, {w:'liv',t:''},{w:'hero',f:'surprised',t:''},{w:'elly',t:''},{w:'liv',t:''} ],
+ oslo_champ:[ {todo:'story'}, {w:'x',n:'オスロの使い手',t:''},{w:'hero',f:'serious',t:''},{w:'liv',t:''} ],
+ oslo_champ_win:[ {todo:'story'}, {w:'x',n:'オスロの使い手',t:''},{w:'hero',f:'smile',t:''},{w:'elly',t:''} ],
+ // フィヨルド: 説教壇の岩のミツガルム・フィヨルドの島のクビナガオウ
+ mitsu:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ミツガルム',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'liv',t:''},{w:'partner',t:''} ],
+ mitsu_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ミツガルム',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
+ kubi:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'クビナガオウ',t:''},{w:'hero',f:'surprised',t:''},{w:'alek',t:''},{w:'partner',t:''} ],
+ kubi_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'liv',t:''} ],
+ // ロフォーテン: 渦潮のクラーク
+ kraken:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'クラーク',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'partner',t:''} ],
+ kraken_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'クラーク',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
+ // アイスランド: 黒い砂の浜のスルヴァ
+ surtr:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'スルヴァ',t:''},{w:'hero',f:'surprised',t:''},{w:'elly',f:'serious',t:''},{w:'partner',t:''} ],
+ surtr_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'スルヴァ',t:''},{w:'hero',f:'smile',t:''},{w:'liv',t:''} ],
+ // ウプサラ: 王の塚のオーディガル・木の教会のスレイプニア・使い手(古印)
+ odin:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'オーディガル',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'partner',t:''} ],
+ odin_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'オーディガル',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
+ sleip:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'スレイプニア',t:''},{w:'hero',f:'surprised',t:''},{w:'liv',t:''},{w:'partner',t:''} ],
+ sleip_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'elly',t:''} ],
+ uppsala_champ:[ {todo:'story'}, {w:'x',n:'ウプサラの使い手',t:''},{w:'hero',f:'serious',t:''},{w:'liv',t:''} ],
+ uppsala_champ_win:[ {todo:'story'}, {w:'x',n:'ウプサラの使い手',t:''},{w:'hero',f:'smile',t:''},{w:'elly',t:''} ],
+ // ラップランド: オーロラのオーロフ・凍った湖のフェンガロ
+ aurora:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'オーロフ',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'liv',t:''},{w:'partner',t:''} ],
+ aurora_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'オーロフ',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
+ fenrir:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'フェンガロ',t:''},{w:'hero',f:'surprised',t:''},{w:'dimi',t:''},{w:'partner',t:''} ],
+ fenrir_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'dimi',t:''} ],
+ // 世界樹の森: 根もとのニドグラ・泉のクリスユニ
+ nidhogg:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ニドグラ',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'partner',t:''} ],
+ nidhogg_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ニドグラ',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
+ unicorn:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'クリスユニ',t:''},{w:'hero',f:'surprised',t:''},{w:'liv',t:''},{w:'partner',t:''} ],
+ unicorn_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'liv',t:''} ],
+ // スヴァールバル: 種の貯蔵庫のゲンシマンモ・海の氷のイッカクオウ・使い手(古印)
+ mammoth:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ゲンシマンモ',t:''},{w:'hero',f:'surprised',t:''},{w:'elly',t:''},{w:'partner',t:''} ],
+ mammoth_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'elly',t:''} ],
+ narwhal:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'イッカクオウ',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'liv',t:''},{w:'partner',t:''} ],
+ narwhal_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'イッカクオウ',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
+ sval_champ:[ {todo:'story'}, {w:'x',n:'スヴァールバルの使い手',t:''},{w:'hero',f:'serious',t:''},{w:'liv',t:''} ],
+ sval_champ_win:[ {todo:'story'}, {w:'x',n:'スヴァールバルの使い手',t:''},{w:'hero',f:'smile',t:''},{w:'elly',t:''} ],
+ // 氷の研究所: 氷河の門のヒョウセキオウ・幹部ランサム・幹部ボット(ユキ＆ハル)
+ hyoseki:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ヒョウセキオウ',t:''},{w:'hero',f:'surprised',t:''},{w:'elly',f:'serious',t:''},{w:'partner',t:''} ],
+ hyoseki_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'liv',t:''} ],
+ ransom3:[ {todo:'story'}, {w:'ransom',t:''},{w:'hero',f:'angry',t:''},{w:'nadia',t:''},{w:'partner',t:''} ],
+ ransom3_win:[ {todo:'story'}, {w:'ransom',t:''},{w:'hero',t:''},{w:'elly',t:''} ],
+ bot:[ {todo:'story'}, {w:'yuki',t:''},{w:'haru',t:''},{w:'bot',t:''},{w:'liv',f:'serious',t:''},{w:'hero',f:'angry',t:''},{w:'partner',t:''} ],
+ bot_win:[ {todo:'story'}, {w:'bot',t:''},{w:'yuki',t:''},{w:'haru',t:''},{w:'hero',t:''},{w:'liv',t:''} ],
+ // アークの中心: 幹部ベラドンナ・ボス アドリアン・ラグナディオ(最後の戦い)
+ bella3:[ {todo:'story'}, {w:'bella',t:''},{w:'hero',f:'angry',t:''},{w:'elly',f:'serious',t:''},{w:'partner',t:''} ],
+ bella3_win:[ {todo:'story'}, {w:'bella',t:''},{w:'hero',t:''},{w:'alek',t:''} ],
+ adrian:[ {todo:'story'}, {w:'adrian',t:''},{w:'hero',f:'serious',t:''},{w:'dimi',f:'serious',t:''},{w:'adrian',t:''},{w:'elly',f:'serious',t:''},{w:'partner',t:''} ],
+ adrian_win:[ {todo:'story'}, {w:'adrian',t:''},{w:'hero',t:''},{w:null,t:''},{w:'x',n:'ラグナディオ',t:''},{w:'elly',f:'surprised',t:''} ],
+ ragna:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ラグナディオ',t:''},{w:'adrian',t:''},{w:'hero',f:'serious',t:''},{w:'elly',f:'serious',t:''},{w:'alek',t:''},{w:'dimi',t:''},{w:'liv',t:''},{w:'partner',t:''} ],
+ ragna_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ラグナディオ',t:''},{w:'adrian',t:''},{w:'hero',f:'smile',t:''},{w:'elly',f:'smile',t:''},{w:'alek',t:''},{w:'dimi',t:''},{w:'liv',t:''},{w:'nadia',t:''},{w:null,t:''} ],
 };
 async function storyField(k){ if(!SC[k]) return; await runScene(SC[k],{field:true}); }
 function toast(t){ toastEl.textContent=t; toastEl.style.opacity=1; clearTimeout(toast.t); toast.t=setTimeout(()=>toastEl.style.opacity=0,1600); }
