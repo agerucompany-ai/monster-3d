@@ -22,6 +22,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 #pgHud{position:fixed;top:calc(92px + env(safe-area-inset-top));right:12px;display:none;flex-direction:column;gap:6px;z-index:4}
 #pgHud button{padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--cream);color:var(--ink);font:inherit;font-weight:800;font-size:13px;box-shadow:0 2px 8px rgba(80,60,30,.12);cursor:pointer}
 #pgHud button.gem{color:#1f6b3a}
+#pgHud button.gem img.ui-ic{width:1.4em;height:1.4em;vertical-align:-.38em;margin-right:.2em}
 #enter{position:fixed;left:50%;bottom:calc(34px + env(safe-area-inset-bottom));transform:translateX(-50%) scale(.92);padding:11px 26px;border-radius:999px;border:2px solid #fff;
   background:var(--ink);color:#fff;font:inherit;font-weight:800;font-size:16px;letter-spacing:.1em;box-shadow:0 4px 14px rgba(30,40,80,.28);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
 #enter.on{opacity:1;pointer-events:auto;transform:translateX(-50%) scale(1)}
@@ -104,7 +105,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 <canvas id="cv"></canvas>
 <div id="vig"></div>
 <div id="area"></div>
-<div id="tod"><button data-t="morning">朝</button><button data-t="noon" class="sel">昼</button><button data-t="evening">夕</button></div><button id="btSave">セーブ</button><div id="pgHud"><button id="btParty">仲間</button><button id="btGems" class="gem">ジェム 0</button></div>
+<div id="tod"><button data-t="morning">朝</button><button data-t="noon" class="sel">昼</button><button data-t="evening">夕</button></div><button id="btSave">セーブ</button><div id="pgHud"><button id="btParty">仲間</button><button id="btGems" class="gem"><img class="ui-ic" src="../battle/img/ui/gem.webp" alt="">0</button></div>
 <button id="enter"></button>
 <div id="stick"><div id="knob"></div></div>
 <div id="toast"></div>
@@ -2049,7 +2050,7 @@ document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==
 // ---- 進行(progress.js・2026-10-26): 倒して仲間・Lv1〜99・EXP・ジェム・研究所のゆりかご(ガチャ)・パーティ3→5体と牧場。手順は proto/PROGRESS_INTEGRATION.md ----
 //   HUD: 右上「仲間」(街の中だけ 牧場と入れかえ)・「ジェム」(ジェムの記録)。ゆりかごは村の研究所の入口(enterPlace)から。開いている間はフィールドを止める
 let PROG=null; const pgHud=document.getElementById('pgHud');
-function hudRefresh(){ if(!(window.Progress&&Progress.state())) return; document.getElementById('btGems').textContent='ジェム '+Progress.gems(); }
+function hudRefresh(){ if(!(window.Progress&&Progress.state())) return; document.getElementById('btGems').innerHTML='<img class="ui-ic" src="../battle/img/ui/gem.webp" alt="">'+(+Progress.gems()||0); }
 async function progInit(){ if(!window.Progress) return;
   if(!PROG){ PROG=Progress.init({save:SAVE,onSave:saveGame,base:'../battle/'}).then(()=>{ Progress.ui.mount({bar:false}); Progress.on('change',hudRefresh);
       Progress.on('ui',d=>{ if(d.open){ PAUSED=true; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; talkClose(); } else { PAUSED=false; LAST=performance.now(); followersSet(); } hudRefresh(); }); hudRefresh(); }); await PROG; }

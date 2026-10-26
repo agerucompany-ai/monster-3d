@@ -116,9 +116,11 @@
    "lineAfter": "",
    "party": [
     {
-     "mid": 1042,
+     "mid": 1043,
      "lv": 39,
-     "evo": true
+     "stage": 2,
+     "evo": true,
+     "leader": true
     },
     {
      "mid": 1044,
@@ -126,8 +128,14 @@
      "fixed": true
     },
     {
-     "mid": 1011,
+     "mid": 1013,
      "lv": 39,
+     "fixed": true
+    },
+    {
+     "mid": 1005,
+     "lv": 39,
+     "stage": 2,
      "evo": true
     }
    ],
@@ -149,18 +157,26 @@
    "lineAfter": "",
    "party": [
     {
+     "mid": 1005,
+     "lv": 39,
+     "stage": 2,
+     "evo": true,
+     "leader": true
+    },
+    {
+     "mid": 1006,
+     "lv": 39,
+     "fixed": true
+    },
+    {
      "mid": 1013,
      "lv": 39,
      "fixed": true
     },
     {
-     "mid": 1006,
+     "mid": 1012,
      "lv": 38,
-     "fixed": true
-    },
-    {
-     "mid": 1036,
-     "lv": 37,
+     "stage": 2,
      "evo": true
     }
    ],

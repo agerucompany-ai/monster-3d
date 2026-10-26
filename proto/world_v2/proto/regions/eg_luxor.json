@@ -111,8 +111,10 @@
    "party": [
     {
      "mid": 1011,
-     "lv": 36,
-     "evo": true
+     "lv": 37,
+     "stage": 1,
+     "evo": true,
+     "leader": true
     },
     {
      "mid": 1013,
@@ -120,8 +122,14 @@
      "fixed": true
     },
     {
-     "mid": 1036,
-     "lv": 36,
+     "mid": 1006,
+     "lv": 37,
+     "fixed": true
+    },
+    {
+     "mid": 1012,
+     "lv": 37,
+     "stage": 2,
      "evo": true
     }
    ],
@@ -379,8 +387,8 @@
    "lv": 36,
    "tier": 4,
    "tune": {
-    "hp": 3.6,
-    "atk": 2.0
+    "hp": 2.6,
+    "atk": 2.6
    }
   }
  ],

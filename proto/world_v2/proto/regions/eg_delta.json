@@ -264,9 +264,9 @@
    "lv": 35,
    "tier": 3,
    "tune": {
-    "hp": 2.2,
-    "atk": 1.7,
-    "minions": 1
+    "hp": 1.9,
+    "atk": 1.6,
+    "minions": 0
    }
   }
  ],
