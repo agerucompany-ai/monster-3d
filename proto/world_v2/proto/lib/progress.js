@@ -104,7 +104,14 @@ function loadMoves(){ const MB=root.MonBattle;
 // 戦う姿: その編の開始の段まで(持っている姿)
 function formFor(c){ let m=mon(c.mid), g=0; const st=P.startStage(); const own=new Set(P.ownedList()); while(m && m.evolves_to!=null && mon(m.evolves_to) && (mon(m.evolves_to).level||1)<=st && own.has(m.evolves_to) && g++<4) m=mon(m.evolves_to); return m?m.id:c.mid; }
 function learnAt(mid){ const L=LS[mid]||LS[String(mid)]; return L?(L.learnset||[]).filter(e=>MV[e.move]&&MV[e.move].enabled!==false):[]; }
-function movesAt(mid, lv){ const L=LS[mid]||LS[String(mid)]; return learnAt(mid).filter(e=>(L&&L.fixed)||(e.lv||1)<=lv).map(e=>MV[e.move]); }
+function movesAt(mid, lv){ const L=LS[mid]||LS[String(mid)]; return dropDom(learnAt(mid).filter(e=>(L&&L.fixed)||(e.lv||1)<=lv).map(e=>MV[e.move])); }
+// 下位互換の技は出さない(battle.js の dropDominated と同じ決まり・回数は最大で見る)
+function domB(B,A){ if(B===A||B.category!==A.category||B.target!==A.target||B.type!==A.type) return false; if(A.target==='map'||!(A.category==='attack'||A.category==='ailment'||A.category==='debuff')) return false;
+  if(!(B.range[0]<=A.range[0]&&B.range[1]>=A.range[1])) return false; if(A.p!==false&&B.p===false) return false; const H=m=>(m.effect&&m.effect.hits)||1;
+  if(B.power*H(B)<A.power*H(A)||(B.hit||100)<(A.hit||100)) return false; const ea=A.effect||{}, eb=B.effect||{}; const ch=e=>e.chance==='stage'?0.3:(+e.chance||0);
+  if(ea.ail&&(eb.ail!==ea.ail||ch(eb)<ch(ea))) return false; if((ea.drain||0)>(eb.drain||0)||(ea.pierce||0)>(eb.pierce||0)) return false;
+  if(!(A.mp>0)&&(B.mp>0)) return false; return true; }
+function dropDom(list){ return list.filter((A,i)=>!list.some((B,j)=>domB(B,A)&&!(domB(A,B)&&j>i))); }
 function newMovesBetween(mid, a, b){ const L=LS[mid]||LS[String(mid)]; if(!L||L.fixed) return []; return learnAt(mid).filter(e=>(e.lv||1)>a && (e.lv||1)<=b).map(e=>MV[e.move]); }
 P.movesOf=(c)=>{ const f=formFor(c); return movesAt(f, c.lv); }; P.formFor=formFor; P.newMovesBetween=newMovesBetween;
 P.ready=()=>ready||Promise.reject(new Error('Progress.init を先に'));
@@ -289,7 +296,8 @@ function rngS(mv){ if(mv.target==='map'||mv.target==='self'||mv.target==='fallen
 UI.movesCard=function(c){ const d=el('div','pgMv'); if(!c) return d; const f=formFor(c); const L=LS[f]||LS[String(f)]; const x=statX(c.lv);
   let h=`<div class="pgMvHd">${tyb(mon(f)?mon(f).type:'')}${mon(f)&&mon(f).type2?tyb(mon(f).type2):''}<b>${nameOf(f)}</b><span>Lv${c.lv}</span></div>`;
   if(L) h+=`<div class="pgSt"><span>HP<b>${Math.round(L.hp*x)}</b></span><span>攻撃<b>${Math.round(L.atk*x)}</b></span><span>防御<b>${Math.round(L.def*x)}</b></span><span>素早さ<b>${Math.round(L.spd*x)}</b></span><span>移動<b>${L.mob}</b></span></div>`;
-  const all=learnAt(f); const got=all.filter(e=>(L&&L.fixed)||(e.lv||1)<=c.lv), next=all.filter(e=>!(L&&L.fixed)&&(e.lv||1)>c.lv).slice(0,3);
+  const all=learnAt(f); const keep=new Set(dropDom(all.map(e=>MV[e.move])).map(m=>m.id)); const gotIds=new Set(movesAt(f,c.lv).map(m=>m.id));
+  const got=all.filter(e=>gotIds.has(e.move)), next=all.filter(e=>!(L&&L.fixed)&&(e.lv||1)>c.lv&&keep.has(e.move)).slice(0,3);   // 下位互換の技は出さない
   const row=(e,lock)=>{ const mv=MV[e.move]; return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${tyb(mv.type)}<b>${mv.name}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${(mv.category==='attack'||mv.category==='ailment')&&mv.power>0?'威'+mv.power:(CATL[mv.category]||'')}${rngS(mv)?'・'+rngS(mv):''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
   h+=`<div class="pgSec"><span>技</span><span>${got.length}</span></div>`+got.map(e=>row(e,false)).join('')+next.map(e=>row(e,true)).join('');
   d.innerHTML=h; return d; };

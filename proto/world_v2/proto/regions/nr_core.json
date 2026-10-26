@@ -128,8 +128,8 @@
    "final": 1,
    "ai": {
     "winAll": true,
-    "hpX": 0.52,
-    "atkX": 0.53,
+    "hpX": 0.57,
+    "atkX": 0.63,
     "rage": 0.5
    },
    "scene": "bella3",

@@ -89,12 +89,27 @@ function procChance(level){ return 0.30 + 0.08*Math.max(0,(level-1)); }  // Lv1:
 const TERR = ['plain','forest','wasteland','sea','water','ruins'];
 const TERR_JP = {plain:'平原',forest:'森',wasteland:'荒地',sea:'海',water:'水辺',ruins:'遺跡',lava:'溶岩',snow:'雪原',gloom:'瘴気',cloud:'島雲',seacloud:'海雲'};
 const TERR_HEX = {plain:0x83c258, forest:0x2c6a3a, wasteland:0xc39a57, sea:0x265f9e, water:0x4f9fb0, ruins:0xcfc4a8, lava:0x3a1206, snow:0xdde8f2, gloom:0x4a2e5e};
-const TERR_BONUS = {forest:['炎','風','森'], wasteland:['地','闇'], sea:['水','雷','氷'], water:['水','森'], ruins:['地','光'], plain:[], lava:['炎','竜'], snow:['氷','光'], gloom:['闇','地']};
-const TERR_WEAK  = {forest:['水','地'], wasteland:['水','森'], sea:['炎','地'], water:['炎','雷'], ruins:['森','風'], plain:[], lava:['氷','森','水'], snow:['炎','森'], gloom:['光','風']};   // 不得意(-30%)
-const TERR_X = 0.30;
-// 2026-10-27 オーナー「地形の効果や相性を重視したい」: 守る側の地形(技 v2)。遺跡=柱のかげで受けるダメージ−15%・荒地(岩場)=−10%・森=木のかげで よける+8%(マップの技は よけられない)
-const TERR_GUARD = {ruins:0.15, wasteland:0.10};
-const TERR_COVER = {forest:0.08};   // 地形の得意/不得意の強さ   // 森=森/氷=海・雪原/竜=溶岩でも+20%
+// 2026-10-27 オーナー「地形はタイプごとの持ち味に」: タイプごとに 得意な地形(そこから攻撃 +30%・とくちょう1つ)と 苦手な地形(−30%)。どの地方の盤にもある地形(平原・森・荒地・水辺・海・遺跡)を必ず1つ入れた
+//   up=得意(攻撃+TERR_X) / dn=苦手(攻撃−TERR_X) / fx=とくちょう(その地形に立っている時だけ): evade=よけ+ / guard=受けるダメージ− / mob=移動+ / range=その地形で射程+1(技のタイプ) / heal=回復の技×
+const TYPE_TERR = {
+  炎:{up:['forest','lava'],     dn:['water','sea'], fx:{range:['forest']},           tx:'森で 射程+1・燃え広がる'},
+  水:{up:['water','sea'],       dn:['wasteland'],   fx:{mob:['water','sea'], range:['sea']}, tx:'水の上で 移動+1・海で 射程+1'},
+  森:{up:['forest','water'],    dn:['wasteland'],   fx:{evade:['forest'], range:['forest']}, tx:'森で よけやすい・射程+1'},
+  雷:{up:['sea','ruins'],       dn:['forest'],      fx:{range:['ruins']},            tx:'海で 通電・遺跡で 射程+1'},
+  風:{up:['plain'],             dn:['ruins'],       fx:{mob:['plain']},              tx:'平原で 移動+1'},
+  地:{up:['wasteland','ruins'], dn:['sea'],         fx:{guard:['wasteland','ruins']}, tx:'荒地・遺跡で 受けるダメージ−20%'},
+  氷:{up:['snow','sea'],        dn:['lava'],        fx:{range:['sea']},              tx:'海で 射程+1'},
+  光:{up:['ruins','snow'],      dn:['gloom'],       fx:{heal:['ruins']},             tx:'遺跡で 回復の技+50%'},
+  闇:{up:['gloom','ruins'],     dn:['plain'],       fx:{evade:['ruins','gloom'], range:['gloom']}, tx:'遺跡・瘴気で よけやすい'},
+  竜:{up:['wasteland','lava'],  dn:['snow'],        fx:{},                           tx:'荒地・溶岩で 攻撃+30%'},
+};
+const TERR_FX = {evade:0.10, guard:0.20, mob:1, heal:1.5};
+const TERR_BONUS = {}, TERR_WEAK = {};
+for(const t of ['plain','forest','wasteland','sea','water','ruins','lava','snow','gloom']){ TERR_BONUS[t]=[]; TERR_WEAK[t]=[]; }
+for(const ty in TYPE_TERR){ for(const t of TYPE_TERR[ty].up) TERR_BONUS[t].push(ty); for(const t of TYPE_TERR[ty].dn) TERR_WEAK[t].push(ty); }
+const TERR_X = 0.30;   // 地形の得意/不得意の強さ
+// その子(2タイプならどちらか)がこの地形でとくちょうを持つか
+function terrFx(m, terr, k){ for(const ty of monTypes(m)){ const f=TYPE_TERR[ty]&&TYPE_TERR[ty].fx[k]; if(f && f.includes(terr)) return true; } return false; }
 let mapType='normal';   // 'normal' | 'volcano'
 let campTheme=null;     // ストーリー章のマップテーマ（nullなら通常生成）
 // ==== [template 611-783] 技・MP・リーダー・闘気・融合 ====
@@ -174,7 +189,24 @@ function ancGateOk(id, lv){ const mv=MV2[id]; if(!mv) return false; const k=mv.r
 function learnedIds(mid, lv, anc){ const m=MID[+mid]; const L=m&&m._v2; if(!L) return [];
   if(anc && L.ancient_set) return L.ancient_set.filter(id=>MV2[id] && MV2[id].enabled!==false && ancGateOk(id,lv));
   const out=[]; for(const e of L.learnset){ if(!MV2[e.move] || MV2[e.move].enabled===false || out.includes(e.move)) continue; if((L.fixed && !anc) || (L.fixed && anc && ancGateOk(e.move,lv)) || (!L.fixed && (e.lv||1)<=lv)) out.push(e.move); } return out; }
-function movesV2(u){ return learnedIds(u.mid, lvOf(u), !!u.anc).map(id=>MV2[id]).filter(mv=>!(mv.noWild && BT.kind==='wild')); }
+function movesV2(u){ return dropDominated(learnedIds(u.mid, lvOf(u), !!u.anc).map(id=>MV2[id]).filter(mv=>!(mv.noWild && BT.kind==='wild')), u); }
+// 2026-10-27 オーナー「下位互換の技は使わないし出さないように」: 同じ種類・同じタイプ・同じ当たり方で、射程が広いか同じ・移動後も同じかそれ以上・威力(×回数の当て)が同じかそれ以上・命中が同じかそれ以上・
+//   おまけ(状態異常・吸収・つらぬき・2回)をなくさない 上の技があれば、下の技は出さない。回数は ∞ の技を回数のある技で消さない(回数のある技どうしは、上の技が残っている間だけ下の技を消す=上を使い切ったら下が出てくる)
+function ailCh(mv, lvl){ const e=mv.effect||{}; if(!e.ail) return 0; return e.chance==='stage'?procChance(lvl||1):(+e.chance||0); }
+function dominates(B, A, u){ if(B===A || B.category!==A.category || B.target!==A.target || B.type!==A.type) return false;
+  if(A.target==='map' || !isOffense(A)) return false;   // マップ・支えの技は消さない
+  if(!(B.range[0]<=A.range[0] && B.range[1]>=A.range[1])) return false;
+  if(A.p!==false && B.p===false) return false;
+  const ea=A.effect||{}, eb=B.effect||{}; const H=(m)=>(m.effect&&m.effect.hits)||1;
+  if(B.power*H(B) < A.power*H(A) || (B.hit||100) < (A.hit||100)) return false;
+  const lvl=u?mon(u).level:1;
+  if(ea.ail && (eb.ail!==ea.ail || ailCh(B,lvl)<ailCh(A,lvl))) return false;
+  if((ea.drain||0)>(eb.drain||0) || (ea.pierce||0)>(eb.pierce||0) || (ea.knock||0)>(eb.knock||0)) return false;
+  const la=u?usesLeft(u,A):usesMax(A), lb=u?usesLeft(u,B):usesMax(B);
+  if(la===Infinity && lb!==Infinity) return false;   // ∞ の技は消さない
+  if(lb<1) return false;
+  return true; }
+function dropDominated(list, u){ return list.filter((A,i)=>!list.some((B,j)=>dominates(B,A,u) && !(dominates(A,B,u) && j>i))); }
 const OFFENSE={attack:1, ailment:1, debuff:1};
 function isOffense(mv){ return !!mv && !!OFFENSE[mv.category]; }
 function usesLeft(u, mv){ let n = mv.mp>0 ? ((u.mp&&u.mp[mv.id]!=null)?u.mp[mv.id]:mv.mp) : Infinity; if(mv.group==='heal') n=Math.min(n, u.hg!=null?u.hg:V2.HEAL_GROUP); return n; }
@@ -188,7 +220,7 @@ function statMod(u, k){ let v=0; const b=u.buf&&u.buf[k], d=u.dbf&&u.dbf[k]; if(
 function isHidden(u){ return !!(u.buf && bufOn(u.buf.hide)); }
 function setBuf(u, key, e, foe){ const t=(e.turns||1); const o={x:e.x, add:e.add, until:(state.ht||0)+2*t+1}; if(foe){ (u.dbf||(u.dbf={}))[e.stat]=o; } else { (u.buf||(u.buf={}))[e.stat]=o; } }
 // ---- 射程: [min, max + 地形の+1]。凍結/マヒは max=1。地形の+1 は技のタイプ(水・氷=海 / 炎・森=森 / 闇=瘴気) ----
-function terrRangeUp(u, ty){ if((ty==='水'||ty==='氷') && nearTerrain(u,'sea')) return 1; if((ty==='炎'||ty==='森') && nearTerrain(u,'forest')) return 1; if(ty==='闇' && nearTerrain(u,'gloom')) return 1; return 0; }
+function terrRangeUp(u, ty){ const f=TYPE_TERR[ty]&&TYPE_TERR[ty].fx.range; if(!f) return 0; for(const t of f) if(nearTerrain(u,t)) return 1; return 0; }   // 技のタイプの地形に隣接/上で射程+1
 function moveRange(u, mv){ let a=mv.range[0], b=mv.range[1]; if(isOffense(mv) && mv.target!=='map') b+=terrRangeUp(u, mv.type); if(isOffense(mv) && (u.freeze>0||u.para>0)) b=Math.min(b,1); return [a,b]; }
 // 地形の範囲(雷×海の通電・炎×森の延焼・闇×瘴気)は技のタイプで(攻撃の技だけ)
 function isAreaTerrainMv(u, mv){ if(!mv || mv.category!=='attack' || mv.target==='map') return false; const t=mv.type;
@@ -222,7 +254,7 @@ function typePenaltyT(at, dm){ return monTypes(dm).some(d=>(WEAK[at]||[]).includ
 const STAGE_SPD={1:1, 2:1.6, 3:2.2};   // 素早さの段の倍率(stats_v2 と同じ)。古代テリオンは挑む側の段に合わせて目覚める(体力・攻撃の stageRef と同じ考え)
 function spdOf(u){ const m=mon(u); let v=(m.spd||20)*rankX(u.rank||1); if(u.anc && BT.anc) v*=(STAGE_SPD[BT.anc.pst]||2.2)/2.2; return Math.max(1,v); }
 function spdE(att, def){ const a=spdOf(att), d=spdOf(def); return (d-a)/(d+a); }
-function hitChance(att, def, mv, area){ if(!mv || mv.target==='map') return 1; const E=V2.EVADE; let ev=Math.max(E.min, Math.min(E.max, E.base+E.k*spdE(att,def)))+(TERR_COVER[state.terrain[def.r][def.c]]||0); if(area) ev*=E.areaX;
+function hitChance(att, def, mv, area){ if(!mv || mv.target==='map') return 1; const E=V2.EVADE; let ev=Math.max(E.min, Math.min(E.max, E.base+E.k*spdE(att,def)))+(terrFx(mon(def), state.terrain[def.r][def.c], 'evade')?TERR_FX.evade:0); if(area) ev*=E.areaX;   // 森(森)・闇(遺跡・瘴気)はよけやすい
   return Math.max(V2.minHit, Math.min(1,((mv.hit!=null?mv.hit:100)/100)*(1-ev))); }
 function critChance(att, def, mv){ if(!mv) return 0; return Math.max(0, ((mv.crit||0)+V2.CRIT.base)/100*Math.max(0.5, Math.min(1.5, 1-spdE(att,def)))); }
 // ダメージ(STATS_MOVES_SPEC.md 2章)。mv が {p:x}(古代の大技など・威力のない物)なら 威力=100×x・相性は攻撃する子のタイプ
@@ -239,7 +271,7 @@ function calcDamageV2(att, def, mv, o){
   const red=Math.min(0.62, D/(D+100*sxA));
   let dmg = A*(power/100)*(1+tb+pen+trb)*(1-red);
   if(o&&o.crit) dmg*=V2.CRIT.x;
-  if(!legacy) dmg*=1-(TERR_GUARD[state.terrain[def.r][def.c]]||0);   // 守る側の地形(遺跡・荒地)
+  if(!legacy && terrFx(md, state.terrain[def.r][def.c], 'guard')) dmg*=1-TERR_FX.guard;   // 地: 荒地・遺跡で受けるダメージ−20%
   if(def.ancTired) dmg*=ANCIENT.breakX;
   if(att.anc && !legacy) dmg*=V2.ancX;
   const rg=(att.owner===1&&BT.diff&&BT.diff.rage)?1+BT.diff.rage*((state.koN&&state.koN[1])||0):1;
@@ -572,7 +604,8 @@ function effMove(u){ const m=mon(u);
   if(u.freeze>0 || u.para>0) return 1;   // 凍結/マヒ：移動可能マスが最小(1)
   // 風は機動力タイプ＝移動3マス固定。他タイプは基本move。水は海上で+1（複属性は両方の適性）
   let v = hasType(m,'風') ? 3 : Math.max(1, m.move);
-  if(hasType(m,'水') && (state.terrain[u.r][u.c]==='sea'||state.terrain[u.r][u.c]==='water')) v+=1;   // 水辺(浅い川)でも+1
+  if(V2ON()){ if(terrFx(m, state.terrain[u.r][u.c], 'mob')) v+=TERR_FX.mob; }   // 技 v2: 水=水の上・風=平原で移動+1
+  else if(hasType(m,'水') && (state.terrain[u.r][u.c]==='sea'||state.terrain[u.r][u.c]==='water')) v+=1;   // 水辺(浅い川)でも+1
   let cap=4;
   if(INSECT.has(u.mid) && state.terrain[u.r][u.c]==='forest'){ v+=1; cap=5; }   // 昆虫は森で移動+1
   if(V2ON()) v=Math.max(1, v+Math.round(statMod(u,'mob')));   // 技 v2: 移動の強化・弱体
@@ -877,7 +910,8 @@ function doSupport(u, mv, tgt, cell){
   if(!supportReady(u,mv)){ if(u.owner===0) toast('その技は使えない'); return false; }
   const e=mv.effect||{}; const nm=mon(u).name; let msg='';
   if(mv.category==='heal' && e.heal){ const cs=supportTargets(u,mv); const list = mv.target==='ally_all' ? cs : [ (tgt&&cs.includes(tgt))?tgt:cs.slice().sort((a,b)=>(a.hp/a.maxhp)-(b.hp/b.maxhp))[0] ];
-    let tot=0; for(const a of list){ if(!a) continue; const h=Math.min(a.maxhp-a.hp, Math.min(e.cap||9999, Math.round(a.maxhp*e.heal*sustainX()))); if(h>0){ a.hp+=h; tot+=h; healFx(a.r,a.c); floatText(a.r,a.c,`+${h}`,'#7be0a0'); } }
+    const hx=terrFx(mon(u), state.terrain[u.r][u.c], 'heal')?TERR_FX.heal:1;   // 光: 遺跡で回復の技+50%
+    let tot=0; for(const a of list){ if(!a) continue; const h=Math.min(a.maxhp-a.hp, Math.min((e.cap||9999)*hx, Math.round(a.maxhp*e.heal*sustainX()*hx))); if(h>0){ a.hp+=h; tot+=h; healFx(a.r,a.c); floatText(a.r,a.c,`+${h}`,'#7be0a0'); } }
     msg=`${nm}の「${mvName(mv)}」 ${IC('heal')}+${tot}`; }
   else if(mv.category==='heal' && e.regen){ u.regen={x:e.regen.x, n:e.regen.turns}; healFx(u.r,u.c); msg=`${nm}の「${mvName(mv)}」`; }
   else if(mv.category==='cure'){ const L=e.cure||[]; const c=supportTargets(u,mv); const t=(tgt&&c.includes(tgt))?tgt:c[0]; for(const k of L) t[k]=0; healFx(t.r,t.c); floatText(t.r,t.c,IC('cure')+'浄化','#bfffe0'); msg=`${nm}の「${mvName(mv)}」→ ${mon(t).name}`; }
@@ -1600,11 +1634,11 @@ function clearHL(){ for(const m of hlMeshes) fxGroup.remove(m); hlMeshes=[]; }
 const _tagTex={};
 function tagTex(text,kind){ const k=text+'|'+kind; if(_tagTex[k]) return _tagTex[k]; const cv=document.createElement('canvas'); cv.width=256; cv.height=72; const x=cv.getContext('2d');
   const draw=()=>{ x.clearRect(0,0,256,72);
-  let fs=40; x.font='900 40px sans-serif'; while(fs>22 && icMeasure(x,text,fs*1.1)+34>248){ fs-=2; x.font=`900 ${fs}px sans-serif`; } const w=Math.min(250,icMeasure(x,text,fs*1.1)+34); x.fillStyle=kind==='weak'?'rgba(120,60,0,.92)':'rgba(30,34,48,.88)'; roundRect(x,(256-w)/2,6,w,58,14); x.fill();
+  let fs=40; x.font='900 40px sans-serif'; while(fs>18 && icMeasure(x,text,fs*1.1)+30>250){ fs-=2; x.font=`900 ${fs}px sans-serif`; } const w=Math.min(250,icMeasure(x,text,fs*1.1)+34); x.fillStyle=kind==='weak'?'rgba(120,60,0,.92)':'rgba(30,34,48,.88)'; roundRect(x,(256-w)/2,6,w,58,14); x.fill();
   x.lineWidth=4; x.strokeStyle=kind==='weak'?'#ffd24a':'#8a94aa'; roundRect(x,(256-w)/2,6,w,58,14); x.stroke();
   x.fillStyle=kind==='weak'?'#ffe680':'#c8cfdc'; x.textAlign='center'; x.textBaseline='middle'; return icText(x,text,128,37,fs*1.1,'center'); };
   const ok=draw(); const tex=_tagTex[k]=new THREE.CanvasTexture(cv);
-  if(!ok){ const f=()=>{ if(!draw()) _icWait.push(f); tex.needsUpdate=true; }; _icWait.push(f); }   // アイコンが読めたら描き直す
+  if(!ok){ const f=()=>{ if(!draw()) _icWait.push(f); tex.needsUpdate=true; }; _icWait.push(f); let n=0; const rt=()=>{ if(draw()){ tex.needsUpdate=true; return; } if(++n<10) setTimeout(rt,300); }; setTimeout(rt,300); }   // アイコンが読めたら描き直す(読み終わりの知らせを取りこぼした時も 0.3秒おきに)
   return tex; }
 function addTag(r,c,text,kind,h){ const m=new THREE.SpriteMaterial({map:tagTex(text,kind),transparent:true,depthTest:false,depthWrite:false}); m.toneMapped=false; const sp=new THREE.Sprite(m);
   sp.scale.set(1.6,0.45,1); sp.position.copy(cell2world(r,c)); sp.position.y=cellH(r,c)+(h||1.95); sp.position.set(sp.position.x,sp.position.y,sp.position.z); const w=cell2world(r,c); sp.position.x=w.x; sp.position.z=w.z; sp.renderOrder=45; fxGroup.add(sp); hlMeshes.push(sp); }
@@ -1612,8 +1646,8 @@ function affinityOf(a,d){ const ma=mon(a), md=mon(d); return typeBonusM(ma,md)>0
 // 技 v2(2026-10-27 オーナー「相性と地形を重視」): 当てる前に、相手の頭の上に 弱点/いまひとつ/地形+ のアイコンと だいたいのダメージ
 function previewTag(u, e, mv){ const ally=e.owner===u.owner; let d=0; if(mv.power>0){ d=calcDamage(u,e,mv)*((mv.effect&&mv.effect.hits)||1); if(ally) d*=(mv.ff||V2.FF); }
   const adv=!ally && typeBonusT(mv.type,mon(e))>0, res=!ally && typePenaltyT(mv.type,mon(e))<0, tup=terrBonusM(mon(u),state.terrain[u.r][u.c])>0, tdn=terrBonusM(mon(u),state.terrain[u.r][u.c])<0;
-  const gd=!ally && (TERR_GUARD[state.terrain[e.r][e.c]]||TERR_COVER[state.terrain[e.r][e.c]]);
-  let t=(adv?IC('weak')+'弱点':res?IC('resist')+'いまひとつ':'')+(tup?IC('terrain'):'')+(gd?'かげ':''); if(d>0) t+=(t?' ':'')+'-'+Math.round(d); if(!t) return null;
+  const et=state.terrain[e.r][e.c]; const gd=!ally && terrFx(mon(e),et,'guard'), ev=!ally && mv.target!=='map' && terrFx(mon(e),et,'evade');
+  let t=(adv?IC('weak')+'弱点':res?IC('resist')+'いまひとつ':'')+(tup?IC('terrain'):'')+(tdn?'地形−':'')+(gd?'守り':'')+(ev?'かげ':''); if(d>0) t+=(t?' ':'')+'-'+Math.round(d); if(!t) return null;
   return {text:t, kind:adv?'weak':(res||ally||tdn)?'res':'', kill:!ally && d>=e.hp}; }
 function addAffTags(list, mv){ if(!sel) return;
   if(V2ON() && mv){ for(const e of list){ if(!e||e.mid==null) continue; const p=previewTag(sel,e,mv); if(!p) continue; const sp=sprites[e.uid]; const h=(sp&&sp.m3d?sp.m3d.h:(sp?sp.sc:1.4))+0.55; addTag(e.r,e.c,p.text+(p.kill?' KO':''),p.kind,h); } return; }
@@ -3893,10 +3927,14 @@ function moveMenuV2(){ const box=document.createElement('div'); box.className='m
     box.appendChild(b); }
   return box; }
 // 地形の札(何もない所をタップした時): その地形で得意なタイプ +30%・苦手 −30%・守り(遺跡・荒地)・かげ(森)・移動
-function tileInfoHTML(r,c){ const t=state.terrain[r][c]; const up=TERR_BONUS[t]||[], dn=TERR_WEAK[t]||[]; const g=TERR_GUARD[t], cv=TERR_COVER[t];
-  const ex=[]; if(g) ex.push(`受けるダメージ −${Math.round(g*100)}%`); if(cv) ex.push(`よける +${Math.round(cv*100)}%`); if(t==='forest') ex.push('蟲 移動+1'); if(t==='sea'||t==='water') ex.push(`${typeBadge('水')}移動+1`);
-  if(t==='sea') ex.push(`${typeBadge('雷')}通電・${typeBadge('水')}${typeBadge('氷')}射程+1`); if(t==='forest') ex.push(`${typeBadge('炎')}延焼・${typeBadge('炎')}${typeBadge('森')}射程+1`); if(t==='gloom') ex.push(`${typeBadge('闇')}射程+1`);
-  return `<div class="tinfo"><b>${icTag('terrain')}${TERR_JP[t]||t}</b>`+(up.length?`<span class="up">+${Math.round(TERR_X*100)}% ${up.map(typeBadge).join('')}</span>`:'')+(dn.length?`<span class="dn">−${Math.round(TERR_X*100)}% ${dn.map(typeBadge).join('')}</span>`:'')+(ex.length?`<span class="ex">${ex.join('・')}</span>`:'')+`</div>`; }
+// 地形の札(何もない所をタップ): ここが得意なタイプ(+30%・とくちょう)と 苦手なタイプ(−30%)
+function terrTraitHere(ty, t){ const T=TYPE_TERR[ty], fx=T.fx, o=[]; if((fx.evade||[]).includes(t)) o.push('よけ+'+Math.round(TERR_FX.evade*100)+'%'); if((fx.guard||[]).includes(t)) o.push('受ける−'+Math.round(TERR_FX.guard*100)+'%');
+  if((fx.mob||[]).includes(t)) o.push('移動+1'); if((fx.range||[]).includes(t)) o.push('射程+1'); if((fx.heal||[]).includes(t)) o.push('回復+'+Math.round((TERR_FX.heal-1)*100)+'%');
+  if(ty==='雷'&&t==='sea') o.push('通電'); if(ty==='炎'&&t==='forest') o.push('燃え広がる'); if(ty==='闇'&&t==='gloom') o.push('範囲'); return o; }
+function tileInfoHTML(r,c){ const t=state.terrain[r][c]; const up=TERR_BONUS[t]||[], dn=TERR_WEAK[t]||[];
+  const ups=up.map(ty=>{ const tr=terrTraitHere(ty,t); return `<span class="up">${typeBadge(ty)}+${Math.round(TERR_X*100)}%${tr.length?' '+tr.join('・'):''}</span>`; }).join('');
+  const ins = t==='forest' ? `<span class="ex">蟲 +${Math.round(TERR_X*100)}%・移動+1</span>` : '';
+  return `<div class="tinfo"><b>${icTag('terrain')}${TERR_JP[t]||t}</b>${ups}${dn.length?`<span class="dn">${dn.map(typeBadge).join('')}−${Math.round(TERR_X*100)}%</span>`:''}${ins}</div>`; }
 function terrChip(u){ const tr=state.terrain[u.r][u.c], tb=terrBonusM(mon(u),tr); if(!tb) return ''; return ` <span class="tchipT ${tb>0?'up':'dn'}">${TERR_JP[tr]||tr} ${tb>0?'+':'−'}${Math.round(Math.abs(tb)*100)}%</span>`; }
 function mkbt(label,cls,enabled,fn){ const b=document.createElement('button'); b.className='bt '+(cls||''); setIc(b,label); b.disabled=!enabled; b.onclick=fn; return b; }
 
@@ -3907,7 +3945,8 @@ function evoChain(id){ const names=[]; let cur=id; const seen={};
 }
 function detailV2(id, u, unitRow, recipeHtml, fuseHtml, chain, isFusion){ const m=MID[id], L=m._v2||{}; const lv=u?lvOf(u):99; const sx=u?rankX(u.rank||1):1;
   const own = u ? new Set(movesV2(u).map(x=>x.id)) : null;
-  const rows=(L.learnset||[]).filter(e=>MV2[e.move]&&MV2[e.move].enabled!==false).map(e=>{ const mv=MV2[e.move]; const got = own ? own.has(mv.id) : true; const left=u&&got?usesLeft(u,mv):usesMax(mv);
+  const allLs=(L.learnset||[]).filter(e=>MV2[e.move]&&MV2[e.move].enabled!==false); const keep=new Set(dropDominated(allLs.map(e=>MV2[e.move]), null).map(x=>x.id));   // 下位互換の技は出さない
+  const rows=allLs.filter(e=>keep.has(e.move)).map(e=>{ const mv=MV2[e.move]; const got = own ? own.has(mv.id) : true; const left=u&&got?usesLeft(u,mv):usesMax(mv);
     const lab = L.fixed ? '' : (e.evo ? '進化' : `Lv${e.lv}`);
     return `<div class="mvi ${got?'':'lock'}"><span class="muted" style="display:inline-block;min-width:3.2em">${lab}</span>${typeBadge(mv.type)}<b>${escH(mvName(mv))}</b> <span class="muted">${mv.target==='map'?icTag('map'):(mv.target==='area'?icTag('area'):'')}${isOffense(mv)&&mv.power>0?'威'+mv.power:(CAT_LB[mv.category]||'')}${rangeStr(mv)?'・射程'+rangeStr(mv):''}・${left===Infinity?'∞':(u&&got?left+'/'+usesMax(mv):usesMax(mv)+'回')}${mv.p===false?'・移動前':''}</span></div>`; }).join('');
   return `<div class="hd"><img src="${IMG[id]}"><div><h3>${m.name}${m.archetype?` <span style="font-size:12px;color:#9be1ff;font-weight:700">${m.archetype}</span>`:''}</h3>`
@@ -3919,6 +3958,7 @@ function detailV2(id, u, unitRow, recipeHtml, fuseHtml, chain, isFusion){ const 
     +`<div class="row"><span>防御</span><b>${Math.round((m.def||0)*sx)}</b></div>`
     +`<div class="row"><span>素早さ</span><b>${Math.round((m.spd||0)*sx)}</b></div>`
     +`<div class="row"><span>移動</span><b>${m.move}</b></div>`
+    +`<div class="sec">${icTag('terrain')}地形</div>`+monTypes(m).map(ty=>{ const T=TYPE_TERR[ty]; return `<div class="mvi">${typeBadge(ty)}<span class="up" style="color:#ffe680">+${Math.round(TERR_X*100)}% ${T.up.map(x=>TERR_JP[x]).join('・')}</span>　<span style="color:#a8a2b8">−${Math.round(TERR_X*100)}% ${T.dn.map(x=>TERR_JP[x]).join('・')}</span><br><span class="muted">${T.tx}</span></div>`; }).join('')
     +`<div class="sec">技</div>${rows}`
     +(isFusion ? `<div class="sec">入手方法</div><div class="chain">融合でだけ生まれる子</div>` : `<div class="sec">進化ライン</div><div class="chain">${chain.join(' → ')||'進化なし'}</div>`)
     +recipeHtml+fuseHtml
@@ -4101,11 +4141,11 @@ const ANCIENT={
   size:9, maxTurn:18, maxTurn13:24, atkMP13:20, cover:['ruins','forest'], coverX:0.5, breakX:1.5, minionX:0.85, minionLvDown:3,
   stageRef:{hp:{1:135,2:460,3:1350}, atk:{1:30,2:85,3:150}},   // 段ごとの体力・攻撃のめやす(表の平均)
   tiers:{   // シム(sim_ancient.js 60・その土地のレベル帯のパーティ・相棒3系統・AI同士・各180戦・2026-10-26): 勝率 守り①89% ②75% ③73% ボス82% ④69% 王63%・時間切れ ①1.7% ②5% ③2% ボス3% ④2% 王0%・平均9〜11ターン
-    1:{hp:1.54, atk:1.76, actions:1, phases:2, big:{from:1, every:3, rng:1, x:2.0, shape:'area'},  minions:0, rageAtk:0.10},   // 守り① ミノタス(迷路・Lv4〜6・3体・進化なし): 1回行動・目覚めてから大技
-    2:{hp:2.2, atk:0.85, actions:2, phases:2, big:{from:0, every:3, rng:1, x:2.0, shape:'area'},  minions:1, rageAtk:0.10},   // 守り② ルミナドール(アルカディア・Lv5〜8・3体・進化なし): 2回行動(1回は軽い)
+    1:{hp:1.6, atk:1.92, actions:1, phases:2, big:{from:1, every:3, rng:1, x:2.0, shape:'area'},  minions:0, rageAtk:0.10},   // 守り① ミノタス(迷路・Lv4〜6・3体・進化なし): 1回行動・目覚めてから大技
+    2:{hp:2.25, atk:0.92, actions:2, phases:2, big:{from:0, every:3, rng:1, x:2.0, shape:'area'},  minions:1, rageAtk:0.10},   // 守り② ルミナドール(アルカディア・Lv5〜8・3体・進化なし): 2回行動(1回は軽い)
     3:{hp:4.67, atk:1.62, actions:2, phases:3, big:{from:0, every:3, rng:2, x:3.0, shape:'area'},  minions:1, rageAtk:0.12},   // 守り③ テンマライ(コリンタ・Lv7〜10・5体・進化あり): 序盤を耐えて進化で逆転
     4:{hp:6.5, atk:1.75, actions:2, phases:3, big:{from:0, every:3, rng:2, x:3.0, shape:'area'},  minions:2, rageAtk:0.12},   // ボス トールガ(雲の山道・Lv9〜12)
-    5:{hp:5.0, atk:1.60, actions:2, phases:3, big:{from:0, every:3, rng:4, x:3.0, shape:'cross'}, minions:2, rageAtk:0.15},   // 守り④ アトラード(デルフィナ・Lv11〜14): 大技が十字(幅3)で広い
+    5:{hp:5.47, atk:1.91, actions:2, phases:3, big:{from:0, every:3, rng:4, x:3.0, shape:'cross'}, minions:2, rageAtk:0.15},   // 守り④ アトラード(デルフィナ・Lv11〜14): 大技が十字(幅3)で広い
     6:{hp:6.0, atk:1.12, actions:2, phases:3, big:{from:0, every:2, rng:4, x:3.0, shape:'cross'}, minions:2, rageAtk:0.15},   // 王 ゴッドヘラク(競技場の下・Lv13〜16・融合あり): 移動3の近接・大技が2ターンおき・目覚めで攻撃+15%ずつ
   },
 };
@@ -4820,11 +4860,11 @@ const TIME_MODEL={perUnit:8, turnSwitch:2, cpuStart:1.0, cpuPerUnit:0.64, cutAtk
 function estSeconds(r){ const T=TIME_MODEL; return Math.round(T.setup + r.act[0]*T.perUnit + r.sideTurns[0]*T.turnSwitch + r.sideTurns[1]*T.cpuStart + r.act[1]*T.cpuPerUnit + r.atk[1]*T.cutAtk + (r.evo[0]+r.evo[1])*T.cutEvo + (r.fuse[0]+r.fuse[1])*T.cutFuse); }
 
 // ---- 外に出すもの ----
-const API={ init, startBattle, simulate, V2, FINAL_V2, TERR_GUARD, TERR_COVER, get MOVES2(){ return MV2; }, get v2Ready(){ return V2DATA; }, learnedIds:(mid,lv)=>learnedIds(mid,lv,false), estSeconds, TIME_MODEL, SIZE_RULES, KIND_DEFAULTS, ANCIENT, STAGE_HUMAN, TUNE, STAGE_DMGX, WILD_STAGE, packCount, PLACES, THEME_LOOK, rankX, STACK_RANK, STACK_GEM, LV_MAX, lvRank, stageForm:(mid,stage,owned)=>stageForm(mid,stage,owned),
+const API={ init, startBattle, simulate, V2, FINAL_V2, TYPE_TERR, TERR_FX, TERR_BONUS, TERR_WEAK, dropDominated:(ids)=>dropDominated(ids.map(id=>MV2[id]).filter(Boolean),null).map(m=>m.id), get MOVES2(){ return MV2; }, get v2Ready(){ return V2DATA; }, learnedIds:(mid,lv)=>learnedIds(mid,lv,false), estSeconds, TIME_MODEL, SIZE_RULES, KIND_DEFAULTS, ANCIENT, STAGE_HUMAN, TUNE, STAGE_DMGX, WILD_STAGE, packCount, PLACES, THEME_LOOK, rankX, STACK_RANK, STACK_GEM, LV_MAX, lvRank, stageForm:(mid,stage,owned)=>stageForm(mid,stage,owned),
   get MID(){ return MID; }, get MONSTERS(){ return MONSTERS; }, baseFormId:(m)=>baseFormId(m), lineOf:(m)=>lineUpIds(m),
   setAuto(v){ if(v===2||v==='fast'){ BT.fastPref=true; setAutoMode(2); } else if(!!v!==BT.auto) toggleAuto(); return BT.auto; },
   // 確認用(test.html・puppeteer)
-  _dbg:{ get state(){ return state; }, sync(){ syncUnits(); updateUI(); }, clear(){ clearSel(); },
+  _dbg:{ get state(){ return state; }, sync(){ syncUnits(); updateUI(); }, clear(){ clearSel(); }, tagURL(t,k){ const tx=tagTex(t,k); return tx.image.toDataURL(); },
     cellPx(r,c){ if(!renderer||!camera) return null; const w=cell2world(r,c); const v=new THREE.Vector3(w.x, cellH(r,c)+0.05, w.z).project(camera); const rc=renderer.domElement.getBoundingClientRect(); return [rc.left+(v.x+1)/2*rc.width, rc.top+(-v.y+1)/2*rc.height]; },
     selInfo(){ return sel?{uid:sel.uid, mode:selMode, move:selMove&&selMove.id, name:mvName(selMove), range:selMove&&moveRange(sel,selMove), aim:selAim, targets:(selAtks||[]).map(e=>[e.r,e.c])}:null; }, get BT(){ return BT; }, sprites, M3D, aiSide:(o)=>{ aiSide(o); return state.phase; }, endTurn:()=>endTurn(), killLeader(o){ const L=leaderOf(o); if(!L) return false; L.hp=0; killUnit(L); afterAction(); return state.phase; },
     gauge(uid,v){ const u=state.units[uid]; if(u&&v!=null){ u.g=v; syncUnits(); updateUI(); } return u?u.g:null; }, put(uid,r,c){ const u=state.units[uid]; if(!u||unitAt(r,c)) return false; state.board[u.r][u.c]=null; u.r=r; u.c=c; state.board[r][c]=u.uid; syncUnits(); return true; },
