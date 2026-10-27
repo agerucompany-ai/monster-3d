@@ -19,7 +19,7 @@ function $id(k){ return IS_NODE?null:document.getElementById('mb-'+k); }
 // ---- UIアイコン(2026-10-27): 絵文字の代わりの自前アイコン img/ui/{name}.webp ----
 //   文字列の中では IC('gem') = 目印(\u0001gem\u0002)。HTMLは icHTML/setIc で <img class="ui-ic"> に、キャンバスは icText で drawImage する
 const UI_ICONS=['ally','enemy','area','single','map','atk','heal','burn','poison','freeze','para','dig','cancel','undo','move','combo','cure','revive','elixir','potion','kicrystal','evolve','fuse','fuse3','gem','hint','warn','weak','resist','terrain','leader',
-  'clutch','cover','s_insect','s_greek','s_egypt','s_norse','s_china','s_dragon','s_sea','s_yokai','s_night','s_earth'];   // 2026-10-28 戦術v3: 背水・かげ・シリーズ
+  'clutch','cover','flag','s_insect','s_greek','s_egypt','s_norse','s_china','s_dragon','s_sea','s_yokai','s_night','s_earth'];   // 2026-10-28 戦術v3: 背水・かげ・シリーズ
 function IC(n){ return '\u0001'+n+'\u0002'; }
 function icSrc(n){ return CFG.base+CFG.img+'ui/'+n+'.webp'; }
 function LMK(){ return `<i class="lmk" style="background-image:url(${icSrc('leader')})"></i>`; }
@@ -218,7 +218,7 @@ function usesLeft(u, mv){ let n = mv.mp>0 ? ((u.mp&&u.mp[mv.id]!=null)?u.mp[mv.i
 function usesMax(mv){ return mv.mp>0 ? mv.mp : Infinity; }
 function spendMove(u, mv){ if(state&&state.stats){ const mu=state.stats.mvUse||(state.stats.mvUse={}); const k=(u.anc?'A':u.owner)+':'+mv.id; mu[k]=(mu[k]||0)+1; } if(mv.mp>0){ if(!u.mp) u.mp={}; u.mp[mv.id]=Math.max(0, usesLeft(u,mv)-1); } if(mv.group==='heal') u.hg=Math.max(0,(u.hg!=null?u.hg:V2.HEAL_GROUP)-1); }
 // その技を今使えるか(回数・移動後・行動済み・潜行)。moved を渡すと「その位置まで動いた後なら」で見る(AI)
-function moveUsable(u, mv, moved){ if(!mv || u.acted || u.dug>0) return false; if(usesLeft(u,mv)<1) return false; if(isOffense(mv) && firstNoAtk(u)) return false; /* 戦術v3: 先手の1ターン目(TACT.first.mode='noatk') */ const mvd=(moved!=null)?moved:u.moved; if(mv.p===false && mvd) return false; return true; }
+function moveUsable(u, mv, moved){ if(!mv || u.acted || u.dug>0) return false; if(usesLeft(u,mv)<1) return false; if(isOffense(mv) && firstNoAtk(u)) return false; /* 戦術v3: 先手の1ターン目(TACT.first.mode='noatk') */ const mvd=(moved!=null)?moved:u.moved; if(mv.p===false && mvd && !(T3() && hasType(mon(u),'風'))) return false;   /* 戦術v3: 風は移動前だけの技も動いてから使える */ return true; }
 // ---- 強化・弱体(u.buf / u.dbf)。until = state.ht(半ターンの数)で切れる ----
 function bufOn(b){ return !!b && state && (state.ht||0) < b.until; }
 function statMod(u, k){ let v=0; const b=u.buf&&u.buf[k], d=u.dbf&&u.dbf[k]; if(bufOn(b)) v+=(b.x!=null?b.x:(b.add||0)); if(bufOn(d)) v+=(d.x!=null?d.x:(d.add||0)); return v; }
@@ -259,7 +259,7 @@ function typePenaltyT(at, dm){ return monTypes(dm).some(d=>(WEAK[at]||[]).includ
 const STAGE_SPD={1:1, 2:1.6, 3:2.2};   // 素早さの段の倍率(stats_v2 と同じ)。古代テリオンは挑む側の段に合わせて目覚める(体力・攻撃の stageRef と同じ考え)
 function spdOf(u){ const m=mon(u); let v=(m.spd||20)*rankX(u.rank||1); if(u.anc && BT.anc) v*=(STAGE_SPD[BT.anc.pst]||2.2)/2.2; return Math.max(1,v); }
 function spdE(att, def){ const a=spdOf(att), d=spdOf(def); return (d-a)/(d+a); }
-function hitChance(att, def, mv, area){ if(!mv || mv.target==='map') return 1; const E=V2.EVADE; let ev=Math.max(E.min, Math.min(E.max, E.base+E.k*spdE(att,def)))+(terrFx(mon(def), state.terrain[def.r][def.c], 'evade')?TERR_FX.evade:0); if(area) ev*=E.areaX;   // 森(森)・闇(遺跡・瘴気)はよけやすい
+function hitChance(att, def, mv, area){ if(!mv || mv.target==='map') return 1; const E=V2.EVADE; let ev=Math.max(E.min, Math.min(E.max, E.base+E.k*spdE(att,def)))+(terrFx(mon(def), state.terrain[def.r][def.c], 'evade')?TERR_FX.evade:0)+((T3()&&def.blur&&(state.ht||0)<def.blur)?TACT.charge.windEvade:0); if(area) ev*=E.areaX;   // 森(森)・闇(遺跡・瘴気)はよけやすい
   return Math.max(V2.minHit, Math.min(1,((mv.hit!=null?mv.hit:100)/100)*(1-ev))); }
 function critChance(att, def, mv){ if(!mv) return 0; return Math.max(0, ((mv.crit||0)+V2.CRIT.base)/100*Math.max(0.5, Math.min(1.5, 1-spdE(att,def)))); }
 // ダメージ(STATS_MOVES_SPEC.md 2章)。mv が {p:x}(古代の大技など・威力のない物)なら 威力=100×x・相性は攻撃する子のタイプ
@@ -277,7 +277,8 @@ function calcDamageV2(att, def, mv, o){
   let dmg = A*(power/100)*(1+tb+pen+trb)*(1-red);
   if(o&&o.crit) dmg*=V2.CRIT.x;
   if(!legacy && terrFx(md, state.terrain[def.r][def.c], 'guard')) dmg*=1-TERR_FX.guard;   // 地: 荒地・遺跡で受けるダメージ−20%
-  if(!legacy && coverOn(att, def, mv)) dmg*=1-TACT.cover.x;   // 戦術v3: 森・遺跡のかげ(2マス以上はなれた所から −15%)
+  if(!legacy && coverOn(att, def, mv)) dmg*=1-TACT.cover.x;
+  if(!legacy && att.owner!=null) dmg*=1+chargeX(att, mv);   // 戦術v3: 突進   // 戦術v3: 森・遺跡のかげ(2マス以上はなれた所から −15%)
   if(def.ancTired) dmg*=ANCIENT.breakX;
   if(att.anc && !legacy) dmg*=V2.ancX;
   const rg=(att.owner===1&&BT.diff&&BT.diff.rage)?1+BT.diff.rage*((state.koN&&state.koN[1])||0):1;
@@ -620,7 +621,7 @@ function addUnit(owner, mid, r, c){
 }
 function unitAt(r,c){ if(r<0||c<0||r>=N||c>=N)return null; const id=state.board[r][c]; return id?state.units[id]:null; }
 function mon(u){ return MID[u.mid]; }
-function effMove(u){ const m=mon(u);
+function effMove(u){ const m=mon(u); if(u.away>0 && u.acted) return u.away;   // 戦術v3: ヒット＆アウェイ
   if(u.freeze>0 || u.para>0) return 1;   // 凍結/マヒ：移動可能マスが最小(1)
   // 風は機動力タイプ＝移動3マス固定。他タイプは基本move。水は海上で+1（複属性は両方の適性）
   let v = hasType(m,'風') ? 3 : Math.max(1, m.move);
@@ -766,7 +767,7 @@ function canAttack(u){
   if(!V2ON() && !canAtkMP(u)) return false;        // 攻撃MP切れ（ボスは無限）。技 v2 は技ごとの回数(moveUsable)
   return true;
 }
-function canMove(u){ return !u.moved && !u.acted; }  // 攻撃/進化/融合後は移動できない
+function canMove(u){ return (!u.moved && !u.acted) || (u.away>0 && u.acted); }  // 攻撃/進化/融合後は移動できない(戦術v3: 風は攻撃のあと away マスまで下がれる)
 function castleAdjacent(u){ return false; }   // 城は廃止
 
 function typeBonus(at,dt){ return (STRONG[at]||[]).includes(dt)?0.2:0; }
@@ -901,6 +902,7 @@ function doAttackV2(att, def, mv){
   if(mv.type==='炎') cureBurnByFire(att, targets);
   const dr=(mv.effect&&mv.effect.drain)||0;
   if(dealt>0 && dr>0 && !att.anc && state.units[att.uid] && att.hp>0){ const heal=Math.min(att.maxhp-att.hp, Math.round(dealt*dr*sustainX())); if(heal>0){ att.hp+=heal; floatText(att.r,att.c,`+${heal}`,'#7ee08a'); } }
+  awayArm(att);   // 戦術v3: 風は攻撃のあと下がれる
   if(first) toast(`${m.name}の「${mvName(mv)}」→ ${mon(first.t).name} に ${first.r.dmg}`+(first.r.adv?' '+IC('weak')+'弱点!':'')+(first.r.res?' '+IC('resist')+'いまひとつ':'')+(advTerr?' '+IC('terrain')+'地形+':'')+(targets.length>1?` 他${targets.length-1}体`:''));
   else toast(`${m.name}の「${mvName(mv)}」は よけられた`);
   afterAction(); }
@@ -916,6 +918,7 @@ function doMapAttack(att, mv, aim){
   if(n) addGauge(att, GAUGE_HIT);
   if(mv.type==='炎') cureBurnByFire(att, targets);
   const dr=(mv.effect&&mv.effect.drain)||0; if(dealt>0 && dr>0 && !att.anc && state.units[att.uid]){ const heal=Math.min(att.maxhp-att.hp, Math.round(dealt*dr*sustainX())); if(heal>0){ att.hp+=heal; floatText(att.r,att.c,`+${heal}`,'#7ee08a'); } }
+  awayArm(att);
   toast(`${IC('map')}${mon(att).name}の「${mvName(mv)}」！ 敵${n}体${targets.length>n?`・味方${targets.length-n}体`:''}`);
   afterAction(); }
 // 支えの技(回復・浄化・蘇生・潜行。データには強化・移動も)。必ず効く
@@ -1211,6 +1214,8 @@ function moveUnit(u, r, c, pref){   // pref: 'triple'|'pair'|undefined(=プレ�
     }
   }
   if(u.owner===0 && !ONLINE && canEvolveHere(u) && tutOnce('t_evoarea')) tutToast(IC('hint')+IC('evolve')+'進化できる');
+  if(u.away>0 && u.acted){ u.away=0; }   // 下がったら終わり
+  if(T3()){ flagClaim(u); if(hasType(mon(u),'風') && chargeSteps(u)>=TACT.charge.min) u.blur=(state.ht||0)+2; }   // 戦術v3: 旗・風は動くとよけやすい
   afterAction();
 }
 // 2026-10-27 オーナー「弱点をつかれても融合で弱点を消せるのがいいところ」: 融合体のタイプは融合の表(MID[融合体].type/types)のまま。
@@ -1365,6 +1370,7 @@ function startTurn(side){
   }
   for(const u of alive(side).slice()){ applyStatusTick(u); }   // 状態異常の解決（撃破あり得る）
   springTick(side);   // 回復の泉
+  if(T3()){ for(const u of alive(side)){ u.sr=u.r; u.sc=u.c; u.away=0; } flagTick(side); }   // 戦術v3: 突進の起点・旗の闘気
   if(T3()){ const tot=Object.values(state.units).reduce((a,x)=>a+Math.max(0,x.hp),0)+Object.keys(state.units).length*1e6; state.idle=(state._idleHp===tot)?(state.idle||0)+1:0; state._idleHp=tot; }   // 戦術v3: 体力が動かない手番の数
   if(V2ON()) for(const u of alive(side)) if(isEvoCell(u.r,u.c) && !(u.dug>0)) addGauge(u, CENTER.tick);   // 中央のマスにいると闘気+
   ancCheck();         // 古代テリオンの目覚め(毒などで体力ゲージが減った時)
@@ -1552,7 +1558,7 @@ function aiBestMove(u){
     if(V2ON() && isEvoCell(r,c)) sc+=(mode==='fuse'?400:25);   // 中央をとりあう
     if(mode==='fuse' && goal && man(r,c,goal.r,goal.c)===1) sc+=160;
     sc+=terrBonusM(mon(u), terrAt(r,c))*120;
-    if(T3()){ if(TACT.cover.terr.includes(terrAt(r,c))) sc+=TACT.ai.cover*(u.leader?2:1); sc+=aiFormationScore(u,r,c); }   // 戦術v3: かげ・合体の陣形
+    if(T3()){ if(TACT.cover.terr.includes(terrAt(r,c))) sc+=TACT.ai.cover*(u.leader?2:1); sc+=aiFormationScore(u,r,c); sc+=aiFlagScore(u,r,c); }   // 戦術v3: かげ・合体の陣形
     const th=threat(r,c)*(idle?Math.max(0.25,1-idle*0.25):1);
     const push = u.leader && !u.anc && shPush(me);   // 人の3段目: 押している/長引いたらリーダーも前へ(STAGE_HUMAN.push)
     sc-=th*(u.anc?0.15:(u.leader?(lone?(me===0?0.7:0.2):(push?(hpR<0.35?0.6:0.25):(hpR<0.6?1.1:0.7))):(hpR<0.35?0.35:0.08)));   // 1体だけ: 自軍は相手の射程の外で待てる時は待つ(先手を取る)・敵(野生)は気にせず詰める。古代テリオンは恐れない
@@ -1585,13 +1591,14 @@ function aiOneUnit(u){
     if(wounded.length && canHealMP(u)){ doHeal(u); return; }
     if(afflicted.length && canHealMP(u)){ doCure(u); return; }
   }
-  if(!canMove(u)){ aiStrike(u); return; }
+  if(!canMove(u)){ aiStrike(u); if(T3()) aiAway(u); return; }
   const best=aiBestMove(u);
   if(best && (best[0]!==u.r || best[1]!==u.c)){ moveUnit(u,best[0],best[1]); }
   const u2=state.units[u.uid]; if(!u2 || state.phase==='end') return;
   if(canEvolveHere(u2) && aiCanEvo(u2)) evolveUnit(u2,false); else if(canAwaken(u2)) doAwaken(u2);
   if(T3()){ const cp=aiComboPlan(u2); if(cp){ doComboV3(u2, cp.c, cp.t); return; } }   // 戦術v3: 動いた後に仲間がそろえば合体
   aiStrike(u2);
+  if(T3()) aiAway(u2);   // 戦術v3: 風のヒット＆アウェイ
 }
 
 // ==== [template 3695-3800] 3D描画の基盤 ====
@@ -1688,7 +1695,7 @@ function affinityOf(a,d){ const ma=mon(a), md=mon(d); return typeBonusM(ma,md)>0
 function previewTag(u, e, mv){ const ally=e.owner===u.owner; let d=0; if(mv.power>0){ d=calcDamage(u,e,mv)*((mv.effect&&mv.effect.hits)||1); if(ally) d*=(mv.ff||V2.FF); }
   const adv=!ally && typeBonusT(mv.type,mon(e))>0, res=!ally && typePenaltyT(mv.type,mon(e))<0, tup=terrBonusM(mon(u),state.terrain[u.r][u.c])>0, tdn=terrBonusM(mon(u),state.terrain[u.r][u.c])<0;
   const et=state.terrain[e.r][e.c]; const gd=!ally && terrFx(mon(e),et,'guard'), ev=!ally && mv.target!=='map' && (terrFx(mon(e),et,'evade') || coverOn(u,e,mv));   // 戦術v3: かげ(森・遺跡・2マス以上)
-  let t=(adv?IC('weak')+'弱点':res?IC('resist')+'いまひとつ':'')+(tup?IC('terrain'):'')+(tdn?'地形−':'')+(gd?'守り':'')+(ev?'かげ':''); if(d>0) t+=(t?' ':'')+'-'+Math.round(d); if(!t) return null;
+  let t=(adv?IC('weak')+'弱点':res?IC('resist')+'いまひとつ':'')+(tup?IC('terrain'):'')+(tdn?'地形−':'')+(gd?'守り':'')+(ev?'かげ':'')+((!ally&&chargeX(u,mv)>0)?IC('move')+'+'+Math.round(chargeX(u,mv)*100)+'%':''); if(d>0) t+=(t?' ':'')+'-'+Math.round(d);   /* 戦術v3: 突進 */ if(!t) return null;
   return {text:t, kind:adv?'weak':(res||ally||tdn)?'res':'', kill:!ally && d>=e.hp}; }
 function addAffTags(list, mv){ if(!sel) return;
   if(V2ON() && mv){ for(const e of list){ if(!e||e.mid==null) continue; const p=previewTag(sel,e,mv); if(!p) continue; const sp=sprites[e.uid]; const h=(sp&&sp.m3d?sp.m3d.h:(sp?sp.sc:1.4))+0.55; addTag(e.r,e.c,p.text+(p.kill?' KO':''),p.kind,h); } return; }
@@ -3390,6 +3397,7 @@ function buildStructures(){
   _altar=null;
   // 城と旗は廃止(2026-10-20)。盤中央に進化エリア(祭壇)
   buildAltar(); buildSprings();   // 中央=進化エリア / 両陣の奥=回復の泉
+  if(T3()) buildFlags();   // 戦術v3: 旗
   // 回復アイテム（緑の十字）
   for(const it of (state.items||[])){
     const w=cell2world(it.r,it.c), h=cellH(it.r,it.c);
@@ -3821,7 +3829,7 @@ function updateUI(){ if(BT.headless) return;
   if(state.phase==='battle'||state.phase==='place'){
     const lm=(o)=>{ const L=leaderOf(o); let p=L?Math.round(100*Math.max(0,L.hp)/L.maxhp):0; let col=o===0?'#4f8bff':'#ff5a48', tail='';
       if(o===1 && L && L.anc && BT.anc){ const n=BT.anc.T.phases, per=L.maxhp/n, ph=Math.max(1,Math.ceil(Math.max(0,L.hp)/per-1e-9)); p=Math.round(100*Math.max(0,L.hp-(ph-1)*per)/per); col=['#ff5a48','#ff9a30','#c050ff'][Math.min(2,n-ph)]; tail=`<b>×${ph}</b>`; }   // 古代テリオン: 体力ゲージ×本数
-      return `<span class="meter ${o?'foe':''}">${LMK()}<span class="track"><i style="width:${p}%;background:${col}"></i></span>${tail}${state.phase==='battle'&&behindOf(o)?icTag('clutch'):''}</span>`; };   // 戦術v3: 背水のアイコン
+      return `<span class="meter ${o?'foe':''}">${LMK()}<span class="track"><i style="width:${p}%;background:${col}"></i></span>${tail}${state.phase==='battle'&&T3()&&flagCount(o)?`<b style="display:inline-flex;align-items:center">${icTag('flag')}${flagCount(o)}</b>`:''}${state.phase==='battle'&&behindOf(o)?icTag('clutch'):''}</span>`; };   // 戦術v3: 旗の数・背水   // 戦術v3: 背水のアイコン
     const am=autoMode();
     const autoB = BT.autoButton!==false && state.phase==='battle' ? `<button class="tbb ${am?'on':''}" data-m="cycleAuto">${am===2?'オート×2':am?'オート':'手動'}</button>` : '';
     tb.innerHTML = (state.phase==='battle'
@@ -4195,7 +4203,9 @@ const TACT={ on:true,
   bal:{},                                                 // タイプごとの {atk, def} の倍率(バランスのつまみ・例 {"竜":{"def":0.9}})
   ai:{formation:10, cover:8, healLeader:0.75},
   final:{left:8, step:0.35},
-  pve:{wild:{hp:1,atk:1}, trainer:{hp:1,atk:1}, master:{hp:0.97,atk:0.97}, ancient:{hp:0.95,atk:0.96}},   // 2026-10-28 シム(sim_champ*・sim_ancient*)で決めた   // 相手(敵)の体力・攻撃のつまみ(後手の闘気で敵が少し強くなった分を戻す・シムで決める)
+  flag:{on:true, gauge:8, ai:170, pull:7, fastX:1.8, second:{1:'center', 2:'center', 3:'flanks'}, openTurn:1, skip:['ancient']},   // 古代テリオン(ボス)の戦いは旗なし   // second='center'|'flanks'=後手が最初から持つ旗 / openTurn=このターンから取れる   // 旗(2026-10-28 オーナー「風の売りは機動力・中間地点にいかに早く到達して進化ポイントを上げるか」): 真ん中の行の3本(中央・左右)。乗ると自分の旗・相手が乗ると取られる・手番の始めに旗1本につき味方全員 闘気+gauge
+  charge:{min:2, per:0.08, cap:0.3, windPer:0.1, windCap:0.4, windEvade:0.12, away:2},   // away=風は攻撃のあと このマス数まで動ける(ヒット＆アウェイ)   // windEvade=風が2マス以上動いた手番は 次の自分の手番まで よけ+   // 突進: この手番に min マス以上動いてから攻撃 = 動いたマス×per(上限 cap・風は windPer/windCap)・かげをむし
+  pve:{wild:{hp:1,atk:1}, trainer:{hp:1,atk:1}, master:{hp:0.92,atk:0.93}, ancient:{hp:0.95,atk:0.96}},   // 2026-10-28 シム(sim_champ*・sim_ancient*)で決めた   // 相手(敵)の体力・攻撃のつまみ(後手の闘気で敵が少し強くなった分を戻す・シムで決める)
   placeW:{terr:300, cov:12, covL:40, cen:1.5, cenL:3, back:30, front:30} };   // 配置の点(地形・かげ・中央からの列の数)
 function _deepAssign(a,b){ for(const k in b){ if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==='object') _deepAssign(a[k],b[k]); else a[k]=b[k]; } return a; }
 try{ if(IS_NODE && process.env.TACT) _deepAssign(TACT, JSON.parse(process.env.TACT)); }catch(e){ console.error('TACT', e); }
@@ -4259,12 +4269,14 @@ function themeMix(name){ const t=genTheme(name); if(!t) return null; const f={};
 // ---- 歩数・かげ ----
 function moveCost(u, r, c){ if(!T3()) return 1; const t=state.terrain[r][c]; const k=TACT.cost[t]; if(!k) return 1; const m=mon(u);
   if(t==='sea' && (hasType(m,'水')||hasType(m,'氷')||hasType(m,'風'))) return 1; if(t==='lava' && hasType(m,'炎')) return 1; return k; }
-function coverOn(att, def, mv){ if(!T3() || !def || def.r==null || (mv&&(mv._combo||mv.target==='map'))) return false; return TACT.cover.terr.includes(state.terrain[def.r][def.c]) && cheby(att,def)>=TACT.cover.minDist; }
+function coverOn(att, def, mv){ if(!T3() || !def || def.r==null || (mv&&(mv._combo||mv.target==='map'))) return false; if(att && att.owner!=null && chargeX(att,mv)>0) return false; /* 突進はかげをむし */ return TACT.cover.terr.includes(state.terrain[def.r][def.c]) && cheby(att,def)>=TACT.cover.minDist; }
 function balX(m, k){ let x=1; for(const ty of monTypes(m)){ const b=TACT.bal[ty]; if(b && b[k]!=null) x*=b[k]; } return x; }
 // ---- 先手と後手(先手=自分=side0 の1ターン目) ----
 function firstNoAtk(u){ const F=TACT.first; return T3() && F.mode==='noatk' && !!state && state.phase==='battle' && u.owner===0 && state.turn<=F.turns; }
 function firstSetup(){ if(!T3()) return; const F=TACT.first, md=String(F.mode||''); if((F.skip||[]).includes(BT.kind)) return;   // 野生は飛び出してくる相手=先手のままでよい   // 'gauge' / 'guard' / 'guard+gauge'
   if(md.includes('gauge')){ const g=(typeof F.gauge==='object')?(F.gauge[BT.startStage||1]||0):(+F.gauge||0); if(g>0) for(const u of alive(1)) u.g=Math.min(GAUGE_MAX,(u.g||0)+g); }
+  const sec=(TACT.flag.second&&typeof TACT.flag.second==='object')?TACT.flag.second[BT.startStage||1]:TACT.flag.second;
+  if(TACT.flag.on && sec && state.flags){ for(const f of state.flags){ const ctr=(f.r===MIDR&&f.c===CC); if((sec==='center'&&ctr)||(sec==='flanks'&&!ctr)||sec==='all') f.owner=1; } if(!BT.headless&&structGroup) buildStructures(); }   // 後手が最初から持つ旗
   if(md.includes('guard')){ const gd=(typeof F.guard==='object')?(F.guard[BT.startStage||1]||0):(+F.guard||0); if(gd>0) for(const u of alive(1)){ (u.buf||(u.buf={})).def={x:gd, until:2*F.turns}; } } }   // 後手は turns 回目の自分の手番の始めまで 守り+
 // ---- 背水・土壇場進化 ----
 function behindOf(o){ return T3() && !!state && state.phase==='battle' && hpShare(o)<TACT.behind.share; }
@@ -4327,6 +4339,16 @@ function aiComboPlan(u){ const list=comboReady(u); if(!list.length) return null;
   let solo=0; for(const x of best.team){ const p=aiPlanAt(x, x.moved, true); if(p && p.t){ const ev=expDmg(x,p.t,p.mv,p.mv.target==='area').ev; solo+=Math.min(ev, Math.max(1,p.t.hp))*(p.t.leader?1.6:1)+(ev>=p.t.hp?(p.t.leader?5000:400):0); } }
   return best.sc>=solo*0.95 ? best : null; }
 // AI の移動: 同じシリーズの仲間(まだ動いていない)のそばはよい(合体の陣形)
+function awayArm(u){ if(T3() && TACT.charge.away>0 && state.units[u.uid] && u.hp>0 && hasType(mon(u),'風') && !u.anc) u.away=TACT.charge.away; }
+// AI: 攻撃のあと 相手の届きにくいマスへ(旗はとる)
+function aiAway(u){ if(!(u.away>0 && u.acted) || !state.units[u.uid]) return; const foes=alive(1-u.owner); let best=null, bs=-1e9;
+  for(const [r,c] of [[u.r,u.c]].concat(moveTargets(u).move)){ let th=0; for(const e of foes){ if(e.dug>0) continue; if(Math.max(0,Math.abs(e.r-r)+Math.abs(e.c-c)-effMove(e))<=effRange(e)) th+=mon(e).atk*(e.atkX||1); }
+    const sc=-th+aiFlagScore(u,r,c)*0.5+(isHealCellFor(u.owner,r,c)?40:0); if(sc>bs){ bs=sc; best=[r,c]; } }
+  if(best && (best[0]!==u.r||best[1]!==u.c)) moveUnit(u,best[0],best[1]); u.away=0; }
+function aiFlagScore(u, r, c){ if(!T3()||!TACT.flag.on||!state.flags||u.anc||(u.leader&&alive(u.owner).length>1)) return 0; const F=TACT.flag; const fast=effMove(u)>=3?F.fastX:1;
+  const f=flagAt(r,c); let s=0; if(f && f.owner!==u.owner) s+=F.ai*fast*(f.owner>=0?1.2:1);
+  let bd=99; for(const g of state.flags){ if(g.owner===u.owner) continue; const d=Math.abs(g.r-r)+Math.abs(g.c-c); if(d<bd) bd=d; } if(bd<99) s-=bd*F.pull*fast;
+  return s; }
 function aiFormationScore(u, r, c){ if(!T3()) return 0; let s=0; const ser=seriesOf(u.mid).filter(sr=>(sr.combos||[]).some(cb=>!comboUsed(u.owner,cb))); if(!ser.length) return 0;
   for(const a of alive(u.owner)){ if(a.uid===u.uid || a.acted || !ser.some(sr=>sr._ids.has(a.mid))) continue; const d=Math.max(Math.abs(a.r-r),Math.abs(a.c-c)); if(d<=TACT.combo.gather) s+=TACT.ai.formation; }
   return Math.min(s, TACT.ai.formation*2); }
@@ -4355,6 +4377,22 @@ function comboTapTarget(r,c){ if(!sel||!selCombo) return false; const e=unitAt(r
 function comboButtons(ac){ if(!T3()||!sel||sel.owner!==0) return; for(const it of comboReady(sel)){ const c=it.c;
   const b=mkbt(`${IC('combo')}${IC(c._s.icon||'combo')}${c.name}`, 'fuse'+(selCombo&&selCombo.c===c?' on':''), true, ()=>{ selCombo={c}; selMode='combo'; recompute(); drawSelHL(); updateUI(); }); ac.appendChild(b); } }
 function IC_STEP(){ return icTag('move'); }
+// ---- 旗(中間地点のとりあい) ----
+function flagCellsInit(){ if(!T3()||!TACT.flag.on||(TACT.flag.skip||[]).includes(BT.kind)) return []; const cs=[[MIDR,CC],[MIDR,N<=7?1:1],[MIDR,N<=7?N-2:N-2]]; return cs.map(([r,c])=>({r,c,owner:-1})); }
+function flagAt(r,c){ return state&&state.flags ? state.flags.find(f=>f.r===r&&f.c===c)||null : null; }
+function flagCount(o){ return state&&state.flags ? state.flags.filter(f=>f.owner===o).length : 0; }
+function flagClaim(u){ const f=flagAt(u.r,u.c); if(!f || f.owner===u.owner || u.dug>0 || (state.turn||1)<TACT.flag.openTurn) return; const was=f.owner; f.owner=u.owner;
+  if(state.stats){ const s=state.stats.flag||(state.stats.flag=[0,0]); s[u.owner]++; if(was>=0){ const t=state.stats.flagSteal||(state.stats.flagSteal=[0,0]); t[u.owner]++; } }
+  if(!BT.headless){ if(structGroup) buildStructures(); floatText(u.r,u.c,IC('flag')+(was>=0?'うばった':'旗'),u.owner===0?'#8fc8ff':'#ff9a8a','tag'); fxRing(u.r,u.c,u.owner===0?0x4f8bff:0xff5a48,{max:2.2,dur:620}); } }
+function flagTick(side){ const n=flagCount(side); if(!n) return; for(const u of alive(side)) if(!(u.dug>0)) addGauge(u, TACT.flag.gauge*n); }
+function buildFlags(){ if(!state||!state.flags) return; for(const f of state.flags){ const w=cell2world(f.r,f.c), h=cellH(f.r,f.c); const col=f.owner===0?0x4f8bff:f.owner===1?0xff5a48:0xf2efe6;
+    const g=new THREE.Group(); const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.035,1.15,6), new THREE.MeshStandardMaterial({color:0xd9c79a})); pole.position.y=0.58; g.add(pole);
+    const cl=new THREE.Shape(); cl.moveTo(0,0); cl.lineTo(0.46,-0.14); cl.lineTo(0,-0.3); cl.lineTo(0,0); const cloth=new THREE.Mesh(new THREE.ShapeGeometry(cl), new THREE.MeshStandardMaterial({color:col, side:THREE.DoubleSide, emissive:col, emissiveIntensity:0.25})); cloth.position.set(0.03,1.12,0); g.add(cloth);
+    const off=(f.r===MIDR&&f.c===CC)?0.36:0; g.position.set(w.x-off,h,w.z-off); structGroup.add(g);
+    const disc=new THREE.Mesh(new THREE.RingGeometry(0.34,0.46,24), new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.6,side:THREE.DoubleSide})); disc.rotation.x=-Math.PI/2; disc.position.set(w.x,h+0.04,w.z); structGroup.add(disc); } }
+// ---- 突進(動いたマスの分だけ強い) ----
+function chargeSteps(u){ if(!T3()||u.sr==null||!state||state.cur!==u.owner) return 0; return Math.abs(u.r-u.sr)+Math.abs(u.c-u.sc); }
+function chargeX(u, mv){ if(!mv||mv._combo||mv.target==='map') return 0; const d=chargeSteps(u), C=TACT.charge; if(d<C.min) return 0; const w=hasType(mon(u),'風'); return Math.min(w?C.windCap:C.cap, d*(w?C.windPer:C.per)); }
 function seriesBadges(mid){ const ss=seriesOf(mid); return ss.length?' '+ss.map(s=>icTag(s.icon||'combo')).join(''):''; }
 // ======================= 戦術 v3 ここまで =======================
 
@@ -4636,6 +4674,8 @@ function newBattleState(){
   s.items=genItems().slice(0, BT.rules?BT.rules.items:3);
   s.stats={evo:[0,0], fuse:[0,0], atk:[0,0], act:[0,0], spr:[0,0], sprHp:[0,0], combo:[0,0], comboBy:{}, clutch:[0,0]};   // 戦術v3: 合体・土壇場進化の回数
   s.comboUsed=[{},{}];
+  { const fl=flagCellsInit(); s.flags=fl; s.stats.flag=[0,0]; s.stats.flagSteal=[0,0]; const foot=BT.base||'plain';
+    for(const f of fl){ const t=s.terrain[f.r][f.c]; if(t==='sea'||t==='lava') s.terrain[f.r][f.c]=(foot==='sea'||foot==='water'||foot==='lava')?'plain':foot; s.items=(s.items||[]).filter(it=>!(it.r===f.r&&it.c===f.c)); } }   // 戦術v3: 旗(足場は歩ける地面)
   return s;
 }
 
@@ -5122,7 +5162,7 @@ function simulate(opts){
   let mn=1, st0=null; if(w>=0) for(const [t,h0,h1] of log){ const tot=h0+h1; if(!tot) continue; const sh=(w===0?h0:h1)/tot; if(st0==null) st0=sh; if(t<2) continue; mn=Math.min(mn,sh); }
   res={ w, how:state.endHow||'leader', turns:Math.min(state.turn, MAX_TURN), leaderKill:(state.endHow||'leader')==='leader' && w>=0,
     evo:state.stats.evo.slice(), fuse:state.stats.fuse.slice(), atk:state.stats.atk.slice(), act:tl.act, sideTurns:tl.turns,
-    comeback: w>=0 && mn<Math.min(0.4,(st0==null?0.5:st0)-0.1), ev:(state.stats.ev||[]).slice(), stage:{evo:BT.evoOn, fusion:BT.fusionOn, triple:!!BT.tripleOn}, /* 逆転=勝った側の体力の割合が2ターン目以降に40%未満かつ開始時より10ポイント以上低くなった */ n:[alive(0).length, alive(1).length], hp:[hp(0),hp(1)], combo:(state.stats.combo||[0,0]).slice(), comboBy:Object.assign({},state.stats.comboBy||{}), clutch:(state.stats.clutch||[0,0]).slice(), awake:(state.stats.awake||[0,0]).slice(), layout:BT.t3layout||null, cutins:{atk:state.stats.atk[0]+state.stats.atk[1], evo:state.stats.evo[0]+state.stats.evo[1], fuse:state.stats.fuse[0]+state.stats.fuse[1]} };
+    comeback: w>=0 && mn<Math.min(0.4,(st0==null?0.5:st0)-0.1), ev:(state.stats.ev||[]).slice(), stage:{evo:BT.evoOn, fusion:BT.fusionOn, triple:!!BT.tripleOn}, /* 逆転=勝った側の体力の割合が2ターン目以降に40%未満かつ開始時より10ポイント以上低くなった */ n:[alive(0).length, alive(1).length], hp:[hp(0),hp(1)], combo:(state.stats.combo||[0,0]).slice(), flag:(state.stats.flag||[0,0]).slice(), flagSteal:(state.stats.flagSteal||[0,0]).slice(), flagEnd:[flagCount(0),flagCount(1)], comboBy:Object.assign({},state.stats.comboBy||{}), clutch:(state.stats.clutch||[0,0]).slice(), awake:(state.stats.awake||[0,0]).slice(), layout:BT.t3layout||null, cutins:{atk:state.stats.atk[0]+state.stats.atk[1], evo:state.stats.evo[0]+state.stats.evo[1], fuse:state.stats.fuse[0]+state.stats.fuse[1]} };
   BT.headless=prevHeadless;
   return res;
 }
