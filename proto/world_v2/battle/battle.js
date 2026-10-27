@@ -2167,7 +2167,7 @@ const THEME_TERR={
   desert:{plain:['#e1c78a','#d7b974','#ebd49c'], forest:['#5f9a4a','#538a3e','#6ca856'], wasteland:['#b97d4f','#a86d42','#c88c5e'], mountain:['#a8724a','#96643e','#b6825a']},
   castle:{wasteland:['#8c8a93','#7e7c86','#9a98a1'], plain:['#6f8b5e','#637e53','#7c986a'], mountain:['#5e5a64','#524e58','#6a6670']},
   sky:{plain:['#f3f7fb','#e6eef7','#ffffff'], sea:['#a9cff0','#9bc4ea','#b8daf5']},
-  snow:{wasteland:['#9ea8b4','#8e98a4','#b0b9c4'], forest:['#4b7a5c','#3f6a4e','#577e66'], plain:['#dfe8ef','#d2dde6','#edf3f8']},
+  snow:{wasteland:['#9ea8b4','#8e98a4','#b0b9c4'], forest:['#4b7a5c','#3f6a4e','#577e66'], plain:['#a9bf9c','#9db493','#b5caa8']},   // 2026-10-27 雪原のマス(白)と見分けられるよう、雪の盤の平原は霜の草の色
   underworld:{wasteland:['#5a4a46','#4e3f3b','#665652'], plain:['#7a6a52','#6c5d47','#88775d']},
   volcano:{wasteland:['#5a4238','#4c3730','#684d42']},
   rift:{wasteland:['#a0704c','#8e6240','#ae7e58'], plain:['#9a9a5a','#8a8a4e','#a8a866']},
@@ -2236,7 +2236,7 @@ function buildLiquid(kind, theme){
   let o={grid:true};
   if(kind==='sea'){ if(theme==='sky') o=Object.assign(o,{deep:0xa8d0f4,shallow:0xe8f4ff,foam:0xffffff,alpha:0.9}); else if(theme==='gloom'||theme==='castle') o=Object.assign(o,{deep:0x16253a,shallow:0x2d4a6a,foam:0x8ab0d0}); else if(theme==='snow') o=Object.assign(o,{deep:0x3a7aa0,shallow:0x9fd4ee,foam:0xffffff}); else if(theme==='coast') o=Object.assign(o,{deep:0x1f6a9a,shallow:0x56c0e8,foam:0xf0fbff}); }
   else if(kind==='water'){ o=Object.assign(o,{deep:0x3f8e8a,shallow:0x8fd6d0,foam:0xf2fffb,alpha:0.74,scale:1.6,amp:0.012}); }   // world_v2: 水辺=浅い川・湿地(明るく透ける)
-  else { if(theme==='gloom') o=Object.assign(o,{deep:0x0c1a0c,shallow:0x4ad070,foam:0xb0ffc0}); }
+  else { if(theme==='gloom') o=Object.assign(o,{deep:0x0c1a0c,shallow:0x4ad070,foam:0xb0ffc0}); else o=Object.assign(o,{deep:0x8a2206,shallow:0xff7a1a,foam:0xffe28a}); }   // 2026-10-27 溶岩は明るい橙(遠目にも溶岩と分かる)
   const m=new THREE.Mesh(g, liquidMat(kind==='water'?'sea':kind,o)); m.renderOrder=1; m.frustumCulled=false; m.userData.liquid=kind; decoGroup.add(m);
   if(kind==='lava'){ const gl=new THREE.PointLight(theme==='gloom'?0x60ff90:0xff6a20, 0.9, 9, 2); const w=cell2world(cells[(cells.length/2)|0][0],cells[(cells.length/2)|0][1]); gl.position.set(w.x,0.8,w.z); decoGroup.add(gl);
     const ph=Math.random()*9; ambient.push(t=>{ gl.intensity=0.7+0.3*Math.sin(t*3+ph); }); }
@@ -4274,6 +4274,16 @@ const PLACES={
   stadium: {jp:'競技場の跡', mix:{ruins:0.42, plain:0.38, wasteland:0.12, forest:0.08}, look:'agora'},
   desert:  {jp:'砂漠',       mix:{wasteland:0.80, plain:0.12, ruins:0.08},             look:'desert'},
   rocky:   {jp:'岩場',       mix:{wasteland:0.60, plain:0.30, forest:0.10},            look:'olive'},
+  // 2026-10-27 オーナー: どのタイプの2つめの得意な地形も盤に出るように(雪原・溶岩・瘴気を少しずつ。盤まるごとにはしない)
+  snowfield: {jp:'雪原',     mix:{plain:0.42, snow:0.28, wasteland:0.18, forest:0.12},  look:'snow'},
+  snowforest:{jp:'雪の森',   mix:{forest:0.45, snow:0.25, plain:0.30},                 look:'snow'},
+  snowrock:  {jp:'雪の岩場', mix:{wasteland:0.50, snow:0.24, plain:0.26},              look:'snow'},
+  snowcoast: {jp:'氷の海辺', mix:{sea:0.32, snow:0.24, plain:0.22, wasteland:0.22},    coast:true, look:'snow'},
+  volcanic:  {jp:'火山',     mix:{wasteland:0.55, lava:0.15, plain:0.30},              look:'volcano'},
+  tomb:      {jp:'墓所',     mix:{ruins:0.50, gloom:0.20, wasteland:0.15, plain:0.15}, look:'gloom'},
+  kingsvalley:{jp:'王家の谷', mix:{wasteland:0.58, ruins:0.16, gloom:0.12, plain:0.14}, look:'desert'},
+  nightwood: {jp:'夜の森',   mix:{forest:0.50, gloom:0.18, plain:0.32},                look:'grove'},
+  arkcore:   {jp:'アークの中心', mix:{ruins:0.45, gloom:0.22, wasteland:0.18, plain:0.15}, look:'gloom'},
 };
 const TERR_ALL=['plain','forest','wasteland','sea','water','ruins','lava','snow','gloom'];
 function normMix(m){ const o={}; let s=0; for(const k in m){ if(TERR_ALL.includes(k) && m[k]>0){ o[k]=+m[k]; s+=o[k]; } } if(!s) return {plain:1}; for(const k in o) o[k]/=s; return o; }

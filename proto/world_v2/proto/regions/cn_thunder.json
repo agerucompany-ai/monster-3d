@@ -799,7 +799,7 @@
     "backdrop": "mountain"
    },
    "夜の竹の森": {
-    "terrainTheme": "forest",
+    "terrainTheme": "nightwood",
     "backdrop": "grove"
    }
   }

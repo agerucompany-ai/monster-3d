@@ -899,11 +899,11 @@
   },
   "byArea": {
    "説教壇の岩": {
-    "terrainTheme": "rocky",
+    "terrainTheme": "snowrock",
     "backdrop": "mountain"
    },
    "鷲の道": {
-    "terrainTheme": "forest",
+    "terrainTheme": "snowforest",
     "backdrop": "mountain"
    },
    "フィヨルドの島": {

@@ -831,20 +831,20 @@
  ],
  "battle": {
   "default": {
-   "terrainTheme": "rocky",
+   "terrainTheme": "snowrock",
    "backdrop": "snow"
   },
   "byArea": {
    "海の氷": {
-    "terrainTheme": "seaside",
+    "terrainTheme": "snowcoast",
     "backdrop": "snow"
    },
    "ペンギンの氷": {
-    "terrainTheme": "seaside",
+    "terrainTheme": "snowcoast",
     "backdrop": "snow"
    },
    "海の氷の先": {
-    "terrainTheme": "seaside",
+    "terrainTheme": "snowcoast",
     "backdrop": "snow"
    }
   }

@@ -334,8 +334,8 @@
    "lv": 61,
    "tier": 6,
    "tune": {
-    "hp": 0.95,
-    "atk": 4.2
+    "hp": 1.03,
+    "atk": 4.91
    }
   }
  ],
@@ -769,20 +769,20 @@
  ],
  "battle": {
   "default": {
-   "terrainTheme": "forest",
+   "terrainTheme": "snowforest",
    "backdrop": "snow"
   },
   "byArea": {
    "オーロラの見はらし台": {
-    "terrainTheme": "rocky",
+    "terrainTheme": "snowrock",
     "backdrop": "snow"
    },
    "凍った湖の島": {
-    "terrainTheme": "rocky",
+    "terrainTheme": "snowrock",
     "backdrop": "snow"
    },
    "トルネ湖": {
-    "terrainTheme": "pasture",
+    "terrainTheme": "snowfield",
     "backdrop": "snow"
    }
   }

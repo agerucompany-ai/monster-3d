@@ -672,11 +672,11 @@
   },
   "byArea": {
    "火の山の火口": {
-    "terrainTheme": "rift",
+    "terrainTheme": "volcanic",
     "backdrop": "volcano"
    },
    "火の山の坂": {
-    "terrainTheme": "rift",
+    "terrainTheme": "volcanic",
     "backdrop": "volcano"
    }
   }

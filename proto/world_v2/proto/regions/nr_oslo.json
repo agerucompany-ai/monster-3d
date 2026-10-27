@@ -235,8 +235,8 @@
    "flagWin": "nr_champ0",
    "todo": "使い手の絵は未作成(ヤニスの体を仮に使用)",
    "ai": {
-    "hpX": 1.08,
-    "atkX": 1.16
+    "hpX": 1.02,
+    "atkX": 1.03
    }
   },
   {
@@ -984,12 +984,12 @@
  ],
  "battle": {
   "default": {
-   "terrainTheme": "meadow",
+   "terrainTheme": "snowfield",
    "backdrop": "village"
   },
   "byArea": {
    "ホルメンコーレンの森": {
-    "terrainTheme": "forest",
+    "terrainTheme": "snowforest",
     "backdrop": "forest"
    }
   }

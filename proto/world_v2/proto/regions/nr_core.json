@@ -452,7 +452,7 @@
   },
   "byArea": {
    "アークの中心": {
-    "terrainTheme": "ruins",
+    "terrainTheme": "arkcore",
     "backdrop": "gloom"
    }
   }

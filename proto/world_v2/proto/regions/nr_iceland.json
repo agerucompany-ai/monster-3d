@@ -332,8 +332,8 @@
    "lv": 57,
    "tier": 5,
    "tune": {
-    "hp": 1.35,
-    "atk": 2.2
+    "hp": 0.88,
+    "atk": 3.02
    }
   }
  ],
@@ -900,7 +900,7 @@
  ],
  "battle": {
   "default": {
-   "terrainTheme": "rocky",
+   "terrainTheme": "volcanic",
    "backdrop": "volcano"
   },
   "byArea": {
@@ -913,7 +913,7 @@
     "backdrop": "mountain"
    },
    "苔の溶岩原": {
-    "terrainTheme": "rocky",
+    "terrainTheme": "volcanic",
     "backdrop": "volcano"
    }
   }

@@ -617,7 +617,7 @@
  "quiet": [],
  "battle": {
   "default": {
-   "terrainTheme": "rocky",
+   "terrainTheme": "snowrock",
    "backdrop": "snow"
   },
   "byArea": {

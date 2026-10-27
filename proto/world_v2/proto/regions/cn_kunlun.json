@@ -741,7 +741,7 @@
  "snowSand": 0.12,
  "battle": {
   "default": {
-   "terrainTheme": "snow",
+   "terrainTheme": "snowfield",
    "backdrop": "snow"
   }
  },
