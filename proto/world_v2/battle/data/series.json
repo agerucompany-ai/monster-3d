@@ -1,0 +1,84 @@
+{
+ "_meta": {
+  "about": "シリーズ(神話・言い伝えのつながり)と合体攻撃の表。戦術v3(2026-10-28 オーナー「特定のテリオン同士の合体攻撃・昆虫同士とかエジプト神同士とか北欧同士とか中国同士とかシリーズでくくる」)。ふるさとは world_v2/ピクシー地域分類.md・テリオン_編ごとの表.md",
+  "lines": "lines = 系統の1段目のid(その系統の2段目・3段目も入る)。fusions = 融合の子のid。types = そのタイプを持つ子を全部入れる(竜)",
+  "combo": "n=参加する数(呼んだ子を入れて) / need=入っていないといけない系統(1段目のid か 融合のid) / needAny={ids,k}=この中から k 体 / range=呼んだ子から相手まで / area=相手のまわり何マスまで当たるか / mult=倍率 / small=ちいさな力(1段目+20%・2段目+10%)を使うか / fx=おまけ(ail+chance・pierce=守りをむしする割合・heal=合わせたダメージのこの割合を参加した子で分けて回復・buff/debuff={stat,x,turns}・knock=おしだし)",
+  "rule": "参加する子 = 呼んだ子から2マス以内の味方で、同じシリーズ・まだ行動していない・潜っていない。同じ合体はその側で1戦1回。必ず当たる。参加した子は全員行動済み・闘気+15"
+ },
+ "series": [
+  {"id":"insect", "name":"ムシ", "icon":"s_insect", "color":"#7cc040",
+   "lines":[1033,1019,1039,1056], "fusions":[2061,2006,2063],
+   "combos":[
+    {"id":"tsunotsuno", "name":"ツノツノクロス", "n":2, "need":[1033,1039], "range":2, "area":0, "mult":1.3, "fx":{"pierce":0.5}, "tx":"カブトの角とクワガタのあごで はさむ"},
+    {"id":"kamarush", "name":"カマカマラッシュ", "n":2, "need":[1019], "range":2, "area":0, "mult":1.2, "fx":{"debuff":{"stat":"def","x":-0.25,"turns":2}}, "tx":"カマで守りを切りさく"},
+    {"id":"hotaruring", "name":"ホタルサークル", "n":2, "need":[1056], "range":3, "area":1, "mult":1.1, "fx":{"heal":0.35}, "tx":"ホタルの光の輪で なかまを回復"},
+    {"id":"mushiparade", "name":"ムシムシパレード", "n":3, "range":3, "area":1, "mult":1.35, "fx":{"ail":"poison","chance":0.6}, "tx":"ムシのむれで おしよせる"}
+   ]},
+  {"id":"greek", "name":"ギリシャ", "icon":"s_greek", "color":"#e8c860",
+   "lines":[1001,1007,1030,1033,166,1053,1062], "fusions":[2061,2005,2014,2015,2017,2020,2045,2054,2055,2066,2067],
+   "combos":[
+    {"id":"athenawing", "name":"アテナウィング", "n":2, "need":[1062], "range":3, "area":0, "mult":1.2, "fx":{"debuff":{"stat":"def","x":-0.25,"turns":2}}, "tx":"知恵のフクロウが すきを見ぬく"},
+    {"id":"irisarch", "name":"イリスアーチ", "n":2, "need":[166], "range":3, "area":1, "mult":1.1, "fx":{"heal":0.35}, "tx":"にじの橋で なかまを回復"},
+    {"id":"heraklescharge", "name":"ヘラクレスホーン", "n":2, "need":[1033], "range":2, "area":0, "mult":1.3, "fx":{"knock":1}, "tx":"英雄の角で つき飛ばす"},
+    {"id":"olympusflare", "name":"オリンポスフレア", "n":3, "range":3, "area":1, "mult":1.35, "fx":{"ail":"burn","chance":0.4}, "tx":"神々の山の炎"}
+   ]},
+  {"id":"egypt", "name":"エジプトの神", "icon":"s_egypt", "color":"#f0b040",
+   "lines":[1004,1011], "fusions":[2010,2011,2016,2032,2059,2068,2012],
+   "combos":[
+    {"id":"serketsting", "name":"セルケトスティング", "n":2, "need":[1004,1011], "range":2, "area":0, "mult":1.25, "fx":{"ail":"poison","chance":0.8,"pierce":0.3}, "tx":"サソリとワニの女神と神の ひと刺し"},
+    {"id":"niljudge", "name":"ナイルジャッジ", "n":2, "range":3, "area":0, "mult":1.2, "fx":{"ail":"para","chance":0.5}, "tx":"ナイルの神の さばき"},
+    {"id":"anubisgate", "name":"アヌビスゲート", "n":2, "need":[2068], "range":3, "area":1, "mult":1.15, "fx":{"debuff":{"stat":"atk","x":-0.25,"turns":2}}, "tx":"死者の門が 力をすいとる"},
+    {"id":"pyramidsun", "name":"ピラミッドサン", "n":3, "range":3, "area":1, "mult":1.35, "fx":{"ail":"burn","chance":0.5}, "tx":"ピラミッドの上の太陽"}
+   ]},
+  {"id":"norse", "name":"北欧", "icon":"s_norse", "color":"#8fb8ff",
+   "lines":[1026,178,1017,26,16,198,1048], "fusions":[2069,2064,2065,2027,2070,2062,2071,2035,2033,2044,2013],
+   "combos":[
+    {"id":"mjolnir", "name":"ミョルニルストーム", "n":2, "need":[1026], "range":3, "area":1, "mult":1.15, "fx":{"ail":"para","chance":0.5}, "tx":"雷の神のハンマーのあらし"},
+    {"id":"yggroots", "name":"ユグドラシルルーツ", "n":2, "need":[1017], "range":2, "area":0, "mult":1.15, "fx":{"heal":0.45}, "tx":"世界樹の根で すいとって回復"},
+    {"id":"berserk", "name":"ベルセルクラッシュ", "n":2, "need":[178], "range":2, "area":0, "mult":1.3, "fx":{"buff":{"stat":"atk","x":0.2,"turns":2}}, "tx":"熊の戦士の とっしん"},
+    {"id":"ragnahorn", "name":"ラグナロクホルン", "n":3, "range":3, "area":1, "mult":1.35, "fx":{}, "tx":"世界の終わりを告げる角笛"}
+   ]},
+  {"id":"china", "name":"中国・四神", "icon":"s_china", "color":"#e05a48",
+   "lines":[1022,195,1019,1045,1068], "fusions":[2004,2053,2001,2022,2025,2007,2009,2026,2049,2052,2058],
+   "combos":[
+    {"id":"ryukocross", "name":"リュウコクロス", "n":2, "need":[1022,195], "range":3, "area":0, "mult":1.3, "fx":{"pierce":0.4}, "tx":"白虎と青龍が 十字にかける"},
+    {"id":"shishin", "name":"シシンノジン", "n":3, "needAny":{"ids":[1022,195,2004,2053],"k":2}, "range":3, "area":1, "mult":1.4, "fx":{"buff":{"stat":"def","x":0.2,"turns":2}}, "tx":"東西南北の四神の じん"},
+    {"id":"karajishi", "name":"カラジシマイ", "n":2, "need":[2001], "range":2, "area":1, "mult":1.15, "fx":{"ail":"burn","chance":0.5}, "tx":"唐獅子の まい"},
+    {"id":"tourouken", "name":"トウロウケン", "n":2, "need":[1019], "range":2, "area":0, "mult":1.2, "fx":{"debuff":{"stat":"def","x":-0.25,"turns":2}}, "tx":"かまきり拳の 型"},
+    {"id":"kunlun", "name":"コンロンブリザード", "n":2, "need":[1045], "range":3, "area":1, "mult":1.1, "fx":{"ail":"freeze","chance":0.4}, "tx":"雪の山の ふぶき"}
+   ]},
+  {"id":"dragon", "name":"竜", "icon":"s_dragon", "color":"#b15ad6",
+   "lines":[1068,195,198], "types":["竜"],
+   "combos":[
+    {"id":"ryuoubreath", "name":"リュウオウブレス", "n":2, "range":3, "area":1, "mult":1.0, "small":false, "fx":{}, "tx":"竜どうしの いき"},
+    {"id":"haryujin", "name":"ハリュウジン", "n":3, "range":3, "area":1, "mult":1.15, "small":false, "fx":{}, "tx":"三つの竜の じん"}
+   ]},
+  {"id":"sea", "name":"海の子", "icon":"s_sea", "color":"#40a8e0",
+   "lines":[26,1011,1014,1048,16], "fusions":[2035,2033,2031,2018,2008,2034,2029],
+   "combos":[
+    {"id":"uminari", "name":"ウミナリウェーブ", "n":2, "range":3, "area":1, "mult":1.15, "fx":{"knock":1}, "tx":"海なりの 大波"},
+    {"id":"kujirashower", "name":"クジラシャワー", "n":2, "need":[1014], "range":3, "area":1, "mult":1.1, "fx":{"heal":0.4}, "tx":"クジラの しおふき"},
+    {"id":"hyoukaislide", "name":"ヒョウカイスライド", "n":2, "need":[1048,16], "range":2, "area":0, "mult":1.25, "fx":{"ail":"freeze","chance":0.6}, "tx":"ペンギンとアザラシの こおりすべり"},
+    {"id":"ooshio", "name":"オオシオウズマキ", "n":3, "range":3, "area":1, "mult":1.35, "fx":{}, "tx":"大しおの うずまき"}
+   ]},
+  {"id":"yokai", "name":"言い伝え", "icon":"s_yokai", "color":"#9fd8ff",
+   "lines":[70,49,1059,1056], "fusions":[2046,2051,2024,2028,2048,2036,2038,2063,2037,2039,2040],
+   "combos":[
+    {"id":"narukami", "name":"ナルカミドン", "n":2, "need":[70], "range":3, "area":1, "mult":1.15, "fx":{"ail":"para","chance":0.5}, "tx":"かみなりさまの たいこ"},
+    {"id":"nobusuma", "name":"ノブスマカゼ", "n":2, "need":[49], "range":3, "area":0, "mult":1.2, "fx":{"knock":1}, "tx":"空とぶモモンガの つむじ風"},
+    {"id":"hyakki", "name":"ヨイヤミマツリ", "n":3, "range":3, "area":1, "mult":1.35, "fx":{"ail":"poison","chance":0.4}, "tx":"夜の大行進"}
+   ]},
+  {"id":"night", "name":"よるの子", "icon":"s_night", "color":"#8a6ad0",
+   "lines":[1062,1065,1059], "fusions":[2027,2035,2046,2051,2054,2059,2062,2063,2064,2068,2069],
+   "combos":[
+    {"id":"tsukiyo", "name":"ツキヨノカゲ", "n":2, "range":3, "area":0, "mult":1.2, "fx":{"ail":"poison","chance":0.6,"pierce":0.3}, "tx":"月夜の かげから"},
+    {"id":"yominomant", "name":"ヨミノマント", "n":3, "range":3, "area":1, "mult":1.35, "fx":{"debuff":{"stat":"atk","x":-0.25,"turns":2}}, "tx":"やみのマントで つつむ"}
+   ]},
+  {"id":"earth", "name":"だいちの子", "icon":"s_earth", "color":"#c09050",
+   "lines":[1036,1042], "fusions":[2013,2029,2043,2038,2032],
+   "combos":[
+    {"id":"ganesha", "name":"ガネーシャロード", "n":2, "need":[1042], "range":2, "area":0, "mult":1.3, "fx":{"buff":{"stat":"def","x":0.2,"turns":2}}, "tx":"ゾウの神の 大行進"},
+    {"id":"daichidrum", "name":"ダイチノドラム", "n":2, "range":2, "area":1, "mult":1.15, "fx":{"knock":1}, "tx":"大地を たたいて ゆらす"}
+   ]}
+ ]
+}

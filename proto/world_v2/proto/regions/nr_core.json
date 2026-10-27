@@ -184,12 +184,7 @@
    "zeroday": 1,
    "size": 13,
    "final": 1,
-   "ai": {
-    "winAll": true,
-    "hpX": 0.45,
-    "atkX": 0.28,
-    "rage": 0.4
-   },
+   "ai": {"winAll": true, "hpX": 0.4, "atkX": 0.25, "rage": 0.38},
    "scene": "adrian",
    "after": "adrian_win",
    "flagWin": "nr_adrian",

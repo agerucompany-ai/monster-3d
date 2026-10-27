@@ -1994,8 +1994,8 @@ function npcMesh(o){ const B=new Builder(); CUR={B,cols:[],dyn:[],extra:[]}; con
   CUR=null; const g=new THREE.Group(); B.build(g); return g; }
 function makeLabel(text){ const e=document.createElement('div'); e.className='lbl'; e.textContent=text; document.body.appendChild(e); return e; }
 function initActors(){ for(const o of D.npcs){ const g=new THREE.Group(); g.position.set(o.x,0,o.z); g.rotation.y=(o.rot||0)*DEG; NPCS.push({o,g,x:o.x,z:o.z,r:0.36,yaw:(o.rot||0)*DEG,lbl:makeLabel(o.n),ph:Math.random()*6,pi:0,wait:0}); }
-  for(const o of D.wild){ if((o.ancient||o.boss)&&SAVE&&SAVE.flags[o.flag||'guard1']) continue;   // 古代テリオン(守り)は認められたら広間からいなくなる
-    MONS.push({o,x:o.x,z:o.z,yaw:Math.random()*6.28,st:'idle',t:Math.random()*3,tx:o.x,tz:o.z,inst:null,want:false,wild:true,r:0.32}); }
+  for(const o of D.wild){ let re=false; if((o.ancient||o.boss)&&SAVE&&SAVE.flags[o.flag||'guard1']){ if(!(window.Progress&&Progress.state())||Progress.bossDone(o.id)) continue; re=true; }   // 古代テリオン(守り)・ボスは認められたら広間からいなくなる。2026-10-28: 覚えるまでは同じ場所に残り「再戦」で何度でも(自分からは寄ってこない)
+    MONS.push({o,x:o.x,z:o.z,yaw:Math.random()*6.28,st:'idle',t:Math.random()*3,tx:o.x,tz:o.z,inst:null,want:false,wild:true,r:0.32,rematch:re}); }
   for(const o of D.helpers) MONS.push({o,x:o.x,z:o.z,yaw:(o.rot||0)*DEG,st:'still',t:0,inst:null,want:false,wild:false,r:0.32});
   for(const d of D.drones){ const B=new Builder(); CUR={B,cols:[],dyn:[],extra:[]}; P_(rbox(0.56,0.16,0.56,0.07,1),0xf6f6f4,T(0,0,0)); P_(rbox(0.58,0.05,0.12,0.02,1),0x3c9a9a,T(0,0.05,0));
     for(let i=0;i<4;i++){ const a=i/4*6.28+0.785; P_(rbox(0.4,0.04,0.05,0.02,1),0xd0d4da,T(Math.cos(a)*0.28,0.04,Math.sin(a)*0.28,-a)); P_(cyl(0.16,0.16,0.015,14),0xbfc8d4,T(Math.cos(a)*0.46,0.1,Math.sin(a)*0.46)); }
@@ -2098,7 +2098,7 @@ const areaEl=document.getElementById('area'), enterEl=document.getElementById('e
 function zoneAt(x,z){ for(const a of D.areas){ if(a.c&&Math.hypot(x-a.c[0],z-a.c[1])<a.c[2]) return a.n; if(a.r&&x>a.r[0]&&x<a.r[2]&&z>a.r[1]&&z<a.r[3]) return a.n;
     if(a.seg){ const p=a.seg; if(segDT(x,z,p[0][0],p[0][1],p[1][0],p[1][1])[0]<a.w) return a.n; } if(a.stream&&TER.streamQ(x,z)[0]<a.stream) return a.n; if(a.coast&&TER.coastD(x,z)<a.coast) return a.n; } return ''; }
 function showArea(n){ areaEl.textContent=n; areaEl.classList.add('on'); clearTimeout(showArea.t); showArea.t=setTimeout(()=>areaEl.classList.remove('on'),2600); }
-enterEl.addEventListener('click',()=>{ if(!ENTER||STORY) return; if(ENTER.npc){ npcTalk(ENTER.npc); return; } enterPlace(ENTER.n); });
+enterEl.addEventListener('click',()=>{ if(!ENTER||STORY) return; if(ENTER.npc){ npcTalk(ENTER.npc); return; } if(ENTER.mon){ if(!ENC&&!TRANS) startEncounter({type:'wild',m:ENTER.mon}); return; } enterPlace(ENTER.n); });
 function enterPlace(n){ const f=SAVE?SAVE.flags:{};
   if(n==='記憶館'){ toast('記憶館'); return; }
   if(n==='旅人の宿'){ if(!f.tasos) storyField('tasos'); else toast('旅人の宿'); return; }
@@ -2129,7 +2129,7 @@ function loadScript(src){ return new Promise((res,rej)=>{ const e=document.creat
 function placeAt(x,z){ if(TER.streamQ(x,z)[0]<8) return 'stream'; if(TER.coastD(x,z)<14) return 'seaside'; for(const e of D.grass.tall){ if(inEll(x,z,[e[0],e[1],e[2]+2,e[3]+2])<1) return 'meadow'; } if(x>-34&&x<46&&z>23&&z<50) return 'olive'; return 'meadow'; }
 function inTown(x,z){ if(!D) return true; if(D.quiet) return D.quiet.some(r=>x>r[0]&&x<r[2]&&z>r[1]&&z<r[3]); return !D.nature; }   // 街のマップは全部が静域。quiet(矩形の列)があればその中だけ静域(アテネ・クレタ 2026-10-25)
 function encounterCheck(dt){ encCool-=dt; if(WORLD.noEnc||ENC||STORY||TRANS||BRIEF||encCool>0||!READY.hero) return; const town=inTown(HERO.x,HERO.z);
-  if(!town) for(const m of MONS){ if(!m.wild||!m.inst||m.gone) continue; if(Math.hypot(m.x-HERO.x,m.z-HERO.z)<(m.o.ancient||m.o.boss?2.8:1.5)){ startEncounter({type:'wild',m}); return; } }
+  if(!town) for(const m of MONS){ if(!m.wild||!m.inst||m.gone||m.rematch) continue; if(Math.hypot(m.x-HERO.x,m.z-HERO.z)<(m.o.ancient||m.o.boss?2.8:1.5)){ startEncounter({type:'wild',m}); return; } }
   for(const n of NPCS){ if(!n.o.trainer||n.beaten||!n.rig) continue; if(Math.hypot(n.x-HERO.x,n.z-HERO.z)<3.4){ startEncounter({type:'trainer',n}); return; } } }
 async function startEncounter(e){ ENC=e; AUTO=null; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; enterEl.classList.remove('on');
   const who=e.m?e.m:e.n; const P=new THREE.Vector3(who.x,groundAt(who.x,who.z)+(e.m?e.m.o.h+0.3:1.9),who.z).project(camera);
@@ -2151,7 +2151,7 @@ async function startEncounter(e){ ENC=e; AUTO=null; IN.active=false; IN.sx=IN.sy
   if(e.m&&!(anc||boss)) enemy.pack=[...new Set((D.wild||[]).filter(w=>!w.ancient&&!w.boss).map(w=>+w.id))];   // 野生の群れ(2026-10-27): 触った子がリーダー+このマップの野生から。数は progress.js(編の pack と自分の出せる数)
   const opt={ kind:e.m?((anc||boss)?'ancient':'wild'):(e.n.o.master?'master':'trainer'), size:e.m?((anc||boss)?(+e.m.o.size||9):7):(+e.n.o.size||(e.n.o.master?11:9)), terrainTheme:place, backdrop:place==='seaside'?'aegean':'olive', player:{items:ITEMS}, enemy };
   try{ Progress.prepare(opt,{area, zeroday:enemy.zeroday}); }catch(err){ console.warn('progress.prepare',err&&err.message); opt.player={party:PARTY,items:ITEMS,box:BOX,rankCap:10,owned:ownedList()}; }
-  if(anc||boss){ const bf=!!(window.Progress&&Progress.isBossForm&&Progress.isBossForm(e.m.o.id)); if(bf){ opt.enemy.catchable=true; opt.recruit=l=>Progress.recruitBoss(l); } else opt.recruit=()=>null; }   // 2026-10-28 オーナー「ボスだけは倒さないと仲間にならない」: 系統の子のボス(トールガ・ボルケン・セイリュウ)は倒すと必ず仲間(初めての時)。生み出すでは出ない。古代テリオン(融合の守り・王)は仲間にならない
+  if(anc||boss){ opt.enemy.catchable=true; opt.recruit=l=>Progress.learnBoss(l); }   // 2026-10-28 オーナー: 倒すと だいたい33%(Progress.config.cfg.bossLearn)で覚える。古代テリオン(融合体)=融合の仕方・ボスの姿(セイリュウ・ボルケン・トールガ)=進化の仕方。覚えるまで再戦できる   // 2026-10-28 オーナー「ボスだけは倒さないと仲間にならない」: 系統の子のボス(トールガ・ボルケン・セイリュウ)は倒すと必ず仲間(初めての時)。生み出すでは出ない。古代テリオン(融合の守り・王)は仲間にならない
   if(e.m&&e.m.o.ai&&!(anc||boss)) opt.enemy.ai=Object.assign({},e.m.o.ai);
   if(e.n&&e.n.o.ai) opt.enemy.ai=Object.assign({},e.n.o.ai);   // 2026-10-27 人の札の強さ(北欧編の終盤のボス: 体力・攻撃の倍率 hpX/atkX)   // 野生の個別の強さ(任意)。古代テリオン・ボスの強さは battle.js の ANCIENT(tier)で決まる(2026-10-26: マップ側の hpX/atkX はやめた)
   if(unlocks().fusion) opt.fusionUnlocked=true; if(unlocks().triple) opt.tripleUnlocked=true;   // 3体融合はラグナディオのあと(北欧編 2026-10-27)   // 融合は解禁のあとだけ渡す(守り④のあと)
@@ -2163,11 +2163,13 @@ const npcKey=n=>'beat_'+n.o.n+'@'+MAP+':'+n.o.x+','+n.o.z;   // 同じ名前の�
 function endEncounter(e,res){ if(res&&res.result==='quit'){ WORLD.lastBattle=res; ENC=null; encCool=4; saveGame(); toTitle(); return; }
   PAUSED=false; LAST=performance.now(); WORLD.lastBattle=res; if(res&&res.items) ITEMS=res.items;
   // 仲間・EXP・レベル・ジェムは progress.js が decorate の中で済ませ、結果画面にも出している。ここでは旗と連れ歩きの更新だけ
-  const pg=res&&res.progress; if(pg){ if(pg.recruit&&pg.recruit.isNew){ flag('caught'); toast(monName(pg.recruit.mid)+'が仲間になった！'); } else if(pg.lvup&&pg.lvup.length){ const l=pg.lvup[0]; toast(monName(l.mid)+'が Lv'+l.after+'になった！'); } }
+  const pg=res&&res.progress; if(pg){ if(pg.recruit&&pg.recruit.isNew){ if(pg.recruit.uid) flag('caught'); toast(pg.recruit.tag||(monName(pg.recruit.mid)+'が仲間になった！')); } else if(pg.lvup&&pg.lvup.length){ const l=pg.lvup[0]; toast(monName(l.mid)+'が Lv'+l.after+'になった！'); } }
   followersSet();
   let after=null; const win=!!(res&&res.result==='win');   // 勝ったあとの場面(ログ＆パッチの撤収・アレクが道をあける・守りに認められる)
   if(e.n&&SAVE){ if(e.n.o.scene==='dimi') flag('dimi'); if(win){ SAVE.flags[npcKey(e.n)]=1; if(e.n.o.scene==='stavros') flag('stavros'); if(e.n.o.scene==='patch') flag('mission'); if(e.n.o.scene==='alek') flag('alek'); if(e.n.o.flagWin) flag(e.n.o.flagWin); if(e.n.o.after&&SC[e.n.o.after]) after=e.n.o.after; } }
-  if(e.m&&(e.m.o.ancient||e.m.o.boss)){ if(win){ e.m.gone=true; if(e.m.inst&&e.m.inst.root.parent) scene.remove(e.m.inst.root); flag(e.m.o.flag||'guard1'); if(e.m.o.after&&SC[e.m.o.after]) after=e.m.o.after; }   // 古代テリオン・ボスは認められた(勝った)ら広間からいなくなる
+  if(e.m&&(e.m.o.ancient||e.m.o.boss)){ if(win){ const fk=e.m.o.flag||'guard1', first=!(SAVE&&SAVE.flags[fk]); const done=!(window.Progress&&Progress.state())||Progress.bossDone(e.m.o.id);
+      if(done){ e.m.gone=true; if(e.m.inst&&e.m.inst.root.parent) scene.remove(e.m.inst.root); } else e.m.rematch=true;   // 覚えられなかった時は同じ場所に残る(再戦)
+      flag(fk); if(first&&e.m.o.after&&SC[e.m.o.after]) after=e.m.o.after; }   // 物語(旗・あとの場面)は初めて勝った時だけ   // 古代テリオン・ボスは認められた(勝った)ら広間からいなくなる
     const dx=HERO.x-e.m.x, dz=HERO.z-e.m.z, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*1.6,HERO.z+dz/L*1.6); }
   else if(e.m){ if(res&&(res.result==='win'||res.result==='draw'||res.result==='flee')){ e.m.gone=true; if(e.m.inst&&e.m.inst.root.parent) scene.remove(e.m.inst.root); setTimeout(()=>{ e.m.gone=false; e.m.x=e.m.o.x; e.m.z=e.m.o.z; },60000); }
     const dx=HERO.x-e.m.x, dz=HERO.z-e.m.z, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*1.2,HERO.z+dz/L*1.2); }
@@ -2181,8 +2183,9 @@ function uiUpdate(dt){ autosaveTick(dt); areaT-=dt; if(areaT<=0){ areaT=0.3; con
   // 話しかけられる人(入口より優先)
   let tn=null, td=2.3; for(const n of NPCS){ if(!n.rig||n.o.trainer&&!n.beaten) continue; const d=Math.hypot(HERO.x-n.x,HERO.z-n.z); if(d<td){ td=d; tn=n; } }
   if(tn){ best={n:'話す',npc:tn}; }
+  if(!tn&&!inTown(HERO.x,HERO.z)){ let rd=3.2; for(const m of MONS){ if(!m.rematch||!m.inst||m.gone) continue; const d=Math.hypot(HERO.x-m.x,HERO.z-m.z); if(d<rd){ rd=d; best={n:'再戦',mon:m}; } } }   // 2026-10-28 古代テリオン・ボスの再戦(覚えるまで)
   if(STORY||TRANS||BRIEF) best=null; briefHud();
-  if(best!==ENTER&&!(best&&ENTER&&best.npc&&best.npc===ENTER.npc)){ ENTER=best; if(best){ enterEl.textContent=best.n; enterEl.classList.add('on'); } else enterEl.classList.remove('on'); }
+  if(best!==ENTER&&!(best&&ENTER&&((best.npc&&best.npc===ENTER.npc)||(best.mon&&best.mon===ENTER.mon)))){ ENTER=best; if(best){ enterEl.textContent=best.n; enterEl.classList.add('on'); } else enterEl.classList.remove('on'); }
   if(TALK&&Math.hypot(HERO.x-TALK.x,HERO.z-TALK.z)>3.2) talkClose();
   encounterCheck(dt);
   const W=innerWidth, H=innerHeight; for(const n of NPCS){ const d=Math.hypot(HERO.x-n.x,HERO.z-n.z); const on=d<6.5&&!!n.rig; if(on){ _pv.set(n.x,n.g.position.y+(n.o.h||1.55)+0.32,n.z).project(camera); if(_pv.z<1){ n.lbl.style.transform=`translate(${(_pv.x*0.5+0.5)*W}px,${(-_pv.y*0.5+0.5)*H}px) translate(-50%,-100%)`; } }
@@ -2407,7 +2410,7 @@ const QUEST_GEMS={mission:120,guard1:150,guard2:150,guard3:150,guard4:150,king:3
 function onFlag(k){ if(!(window.Progress&&Progress.state())) return;
   if(k==='guard2') Progress.unlockLate();                 // 守り②のあと: 連れて歩くのが5体に
   if(k==='corinth'&&SAVE.unlock) SAVE.unlock.evo=true;    // 運河の町コリンタ(第19話 エンジュ→エンレオ): 進化の解禁
-  if(k==='guard4'&&SAVE.unlock) SAVE.unlock.fusion=true;  // 守り④のあと(第26話 初めての融合): 融合の解禁
+  if(k==='guard4'&&SAVE.unlock){ SAVE.unlock.fusion=true; setTimeout(()=>toast('融合の仕方を覚えた：'+Progress.fusionKnownList().filter(f=>!Progress.isAncientFusion(f)).length+'しゅるい'),2600); }   // 2026-10-28: 古代テリオン以外の融合の仕方はここでまとめて覚える  // 守り④のあと(第26話 初めての融合): 融合の解禁
   if(k==='cn_bund') Progress.setArc('china');            // 中国編(2026-10-26): 巨大都市アークに着いたら編を中国へ(「生み出す」の種類・野生の既定)
   if(k==='eg_cairo') Progress.setArc('egypt');
   if(k==='nr_oslo') Progress.setArc('norse');            // 北欧編(2026-10-27): 未来のオスロに着いたら編を北欧へ
@@ -2800,15 +2803,16 @@ function testHud(){ const on=TESTMODE; $('testBadge').style.display=on?'block':'
 // 2026-10-28 オーナー: 融合体・3体融合・古代テリオン(マップの古代・ボス)は持たせない(戦いの中の融合でだけ出る)。系統の子(1〜3段目)だけ
 async function testSaveNew(){ const list=await fetch('../battle/data/monsters.json').then(r=>r.json()); const t=Date.now();
   const anc=new Set(); await Promise.all(WARP_ARCS.flatMap(a=>a[1]).map(id=>briefRegion(id).then(j=>{ for(const w of (j.wild||[])) if(w.ancient||w.boss) anc.add(+w.id); }).catch(()=>{})));
-  const mine=list.filter(m=>m.role!=='fusion'&&!anc.has(m.id));
-  const roster=mine.map((m,i)=>({uid:'t'+i.toString(36)+'_'+m.id, mid:m.id, lv:50, exp:0, src:'test', t}));
-  const pick=[1001,178,1022,1003,180,1024].map(id=>mine.find(m=>m.id===id)?id:null).filter(Boolean); for(const m of mine){ if(pick.length>=6) break; if((m.level||1)===3&&!pick.includes(m.id)) pick.push(m.id); }
+  const mine=list.filter(m=>m.role!=='fusion'&&!anc.has(m.id)); const bases=list.filter(m=>m.role!=='fusion'&&m.evolves_from==null);   // 2026-10-28: 持つ子は系統の1段目だけ・進化と融合の仕方は全部覚えている
+  const roster=bases.map((m,i)=>({uid:'t'+i.toString(36)+'_'+m.id, mid:m.id, lv:50, exp:0, src:'test', t}));
+  const forms={}; for(const m of list) if(m.role!=='fusion'&&(m.level||1)>=2) forms[m.id]=1; const fusions={}; for(const m of list) if(m.role==='fusion') fusions[m.id]=1;
+  const pick=[1001,178,1022,180,1026,195].map(id=>bases.find(m=>m.id===id)?id:null).filter(Boolean); for(const m of bases){ if(pick.length>=6) break; if(!pick.includes(m.id)) pick.push(m.id); }
   const party=pick.slice(0,6).map(id=>roster.find(c=>c.mid===id).uid);
-  const lines={}; for(const m of mine) if(m.evolves_from==null) lines[m.id]=1;
-  return {v:1,g:'m',name:DEFN('m'),partner:1001,flags:{arrived:1},unlock:{evo:true,fusion:true,triple:true},owned:mine.map(m=>m.id),stage:'field',test:2,items:{heal:9},
-    map:'oliva_town',x:null,z:null,yaw:null, prog:{v:1,gems:99999,roster,party,partyMax:6,lines,quests:{},log:[],arc:'greece',pulls:0}}; }
+  const lines={}; for(const m of bases) lines[m.id]=1;
+  return {v:1,g:'m',name:DEFN('m'),partner:1001,flags:{arrived:1},unlock:{evo:true,fusion:true,triple:true},owned:mine.map(m=>m.id),stage:'field',test:3,items:{heal:9},
+    map:'oliva_town',x:null,z:null,yaw:null, prog:{v:1,gems:99999,roster,party,partyMax:6,lines,forms,fusions,learnV:1,starter:1001,quests:{},log:[],arc:'greece',pulls:0}}; }
 async function testGame(fresh){ ST.title.style.display='none'; SKEY=SKEY_TEST; TESTMODE=true; NOSAVE=false;
-  let sv=null; if(!fresh) try{ const s=JSON.parse(localStorage.getItem(SKEY_TEST)); if(s&&s.v===1&&s.test===2) sv=s; /* test:1(融合体も持っていた前の形)は作り直す */ }catch(e){}
+  let sv=null; if(!fresh) try{ const s=JSON.parse(localStorage.getItem(SKEY_TEST)); if(s&&s.v===1&&s.test===3) sv=s; /* test:1・2(融合体や2段目の子を持っていた前の形)は作り直す */ }catch(e){}
   if(!sv) sv=await testSaveNew();
   SAVE=sv; SAVE.unlock={evo:true,fusion:true,triple:true}; PARTY=sv.party||PARTY; BOX=sv.box||BOX; ITEMS=sv.items||ITEMS; heroGo('m'); await progInit();
   if(Progress.partyMax()<6) Progress.setPartyMax(6); if(Progress.gems()<99999) Progress.addGems(99999-Progress.gems(),'test');

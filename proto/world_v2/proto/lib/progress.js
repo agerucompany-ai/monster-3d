@@ -23,7 +23,8 @@ const CFG={
   packExp:0.5,                                // 野生の群れのリーダー以外の子は1体ぶんの半分(2026-10-27・群れになってもEXPが倍々にならないように)
   packLeadLv:2,                               // 群れのリーダー(触った子)は帯のレベル+2
   cradlePrice:150,                            // 「テリオンを生み出す」1回のジェム(中の名前は cradle のまま)
-  dupGemsBack:75,                             // ダブりで相手がLv99の時だけジェムを返す(ふだんのダブりは「その子が1レベル上がる」)
+  dupGemsBack:75,
+  bossLearn:0.33,                             // 2026-10-28 オーナー「だいたい33％」: ボスの姿(進化)・古代テリオン(融合)を倒した時に覚える確率。初めての時だけ・また戦えば何度でも挑める                             // ダブりで相手がLv99の時だけジェムを返す(ふだんのダブりは「その子が1レベル上がる」)
   partyMax:3, partyMaxLate:5, partyMaxFinal:6, followMax:3,    // 連れて歩く数(序盤3・守り②のあと5・北欧編に入ったら6=2026-10-27 終盤のボス戦が6対6)・画面でついて歩くのは3
   arc:'greece',
 };
@@ -36,11 +37,18 @@ const ARC_POOL={
   norse:[26,1017,1048,16,198],
 };
 const STARTERS=[1001,178,1022];
+// 2026-10-28 オーナー「進化の2段目と融合進化は仲間にするというより、進化とか融合の仕方を覚える」:
+//   持つ子(仲間・牧場)=系統の1段目だけ。2段目・3段目の姿=「進化の仕方」(prog.forms)・融合=「融合の仕方」(prog.fusions)を覚える
+//   古代テリオン(マップの ancient の融合体)を倒す → bossLearn の確率でその融合の仕方を覚える(仲間の記録には入るが盤のはじめには出せない・融合でだけ出る)
+//   古代テリオン以外の融合の仕方 = 物語で融合が解禁(守り④のあと unlock.fusion)された時にまとめて覚える
+//   ボスの姿(セイリュウ・ボルケン・トールガ)は野生・群れ・生み出すに出ない。倒す → bossLearn の確率でその進化の仕方を覚える
+const ANCIENT_FUSIONS=[2066,2017,2045,2067,2061,2028,2004,2053,2046,2048,2001,2058,2016,2032,2010,2068,2030,2012,2011,2059,2018,2027,2008,2035,2070,2069,2065,2044,2064,2062,2056,2013,2033,2071];   // proto/regions の wild[].ancient の融合体(2071 ラグナディオ=3体融合)
+const BOSS_FORMS=[291,1024,1028];
 // 地方(編)ごとの野生のレベル帯と開始の段(オーナー 10/26: 後半は2段目/3段目から)。マップごとの上書きは P.config.areas[キー]={lv:[a,b], startStage:n}
 // pack = 野生の群れの数(リーダー含む・2026-10-27 オーナー「敵が1体はおかしい」→「野生戦は絞る」: 2〜3体)。自分が盤に出せる数も同じ(battle.js が群れの数に合わせる)
 const ARC_RULE={ greece:{lv:[2,4],startStage:1,pack:2}, china:{lv:[18,24],startStage:2,pack:2}, egypt:{lv:[30,38],startStage:2,pack:2}, norse:{lv:[47,68],startStage:3,pack:3} };   // 北欧の帯は 2026-10-27 に後ろほど上げた(マップの D.lv が優先・コア 66〜68)
 const AREA_RULE={ oliva_hill:{lv:[2,4]}, oliva_maze:{lv:[4,6]}, arcadia:{lv:[5,8]}, athens:{lv:[7,10]}, crete:{lv:[9,12]}, egypt_late:{lv:[38,44],startStage:3} };
-P.config={cfg:CFG, areas:AREA_RULE, arcs:ARC_RULE, pools:ARC_POOL, starters:STARTERS};
+P.config={cfg:CFG, areas:AREA_RULE, arcs:ARC_RULE, pools:ARC_POOL, starters:STARTERS, ancientFusions:ANCIENT_FUSIONS, bossForms:BOSS_FORMS};
 
 // ---------------------------------------------------------------- モンスターの表(名前・段・進化先)
 let MON={}, BASE='', IMG=(mid)=>BASE+'img/'+mid+'.webp';
@@ -96,7 +104,7 @@ P.init=function(o){ o=o||{}; BASE=o.base||scriptBase(); if(o.arc) CFG.arc=o.arc;
       const pg=SAVE[CFG.sub]; if(!pg.lines) pg.lines={}; if(!pg.quests) pg.quests={}; if(!pg.log) pg.log=[]; if(!pg.partyMax) pg.partyMax=CFG.partyMax; if(!pg.arc) pg.arc=CFG.arc;
       pg.roster=pg.roster.filter(c=>mon(c.mid)); pg.party=pg.party.filter(u=>pg.roster.some(c=>c.uid===u));
       if(!pg.party.length&&pg.roster.length) pg.party.push(pg.roster[0].uid);
-      legacySync(); emit('change',pg); return loadMoves().then(()=>P); });
+      normalizeLearn(pg); legacySync(); emit('change',pg); return loadMoves().then(()=>P); });
   return ready; };
 // ---------------------------------------------------------------- 技(2026-10-27 Phase B): stats_v2.json の覚える技・moves.json。battle.js が読んでいればそれを使う
 let LS={}, MV={}, STV={};
@@ -118,7 +126,7 @@ function dropDom(list){ return list.filter((A,i)=>!list.some((B,j)=>domB(B,A)&&!
 function newMovesBetween(mid, a, b){ const L=LS[mid]||LS[String(mid)]; if(!L||L.fixed) return []; return learnAt(mid).filter(e=>(e.lv||1)>a && (e.lv||1)<=b).map(e=>MV[e.move]); }
 P.movesOf=(c)=>{ const f=formFor(c); return movesAt(f, c.lv); }; P.formFor=formFor; P.newMovesBetween=newMovesBetween;
 P.ready=()=>ready||Promise.reject(new Error('Progress.init を先に'));
-P.attachSave=function(sv, fn){ SAVE=sv; onSave=fn||onSave; if(!SAVE[CFG.sub]) SAVE[CFG.sub]=migrate(SAVE); legacySync(); emit('change',prog()); };
+P.attachSave=function(sv, fn){ SAVE=sv; onSave=fn||onSave; if(!SAVE[CFG.sub]) SAVE[CFG.sub]=migrate(SAVE); normalizeLearn(SAVE[CFG.sub]); legacySync(); emit('change',prog()); };
 
 // ---------------------------------------------------------------- 仲間・パーティ・牧場
 P.roster=()=>(prog()?prog().roster.slice():[]);
@@ -130,29 +138,60 @@ P.setPartyMax=(n)=>{ const pg=prog(); if(!pg) return; pg.partyMax=Math.max(1,Mat
 P.unlockLate=()=>P.setPartyMax(CFG.partyMaxLate);
 P.followers=()=>P.party().slice(0,CFG.followMax).map(c=>c.mid);   // 画面でついて歩く子(3体まで)
 P.leader=()=>P.party()[0]||null;
-const BOSS_FORMS=[291,1024,1028];   // 系統の3段目だがボスとして出る子(セイリュウ・ボルケン・トールガ): 倒した時だけ仲間になる
 P.isBossForm=(mid)=>BOSS_FORMS.includes(+mid);
-P.recruitBoss=function(lead){ if(!lead||!mon(lead.mid)||P.hasForm(lead.mid)) return null; const c=P.add(lead.mid, lead.lv||1, 'boss'); return {isNew:true, lv:c.lv, uid:c.uid, inParty:prog().party.includes(c.uid), p:1}; };
-P.hasForm=(mid)=>{ const pg=prog(); if(!pg) return false; mid=+mid; return !!(pg.forms&&pg.forms[mid]) || pg.roster.some(c=>c.mid===mid); };   // 2026-10-28 オーナー: 姿(段)ごとに集める。持っている姿にだけ進化できる
-P.hasLine=(mid)=>{ const pg=prog(); if(!pg) return false; const b=baseOf(mid); return !!pg.lines[b] || pg.roster.some(c=>baseOf(c.mid)===b); };
-P.add=function(mid, lv, src){ const pg=prog(); if(!pg||!mon(mid)) return null; const c={uid:uid(), mid:+mid, lv:Math.max(1,Math.min(LV_MAX,+lv||1)), exp:0, src:src||'', t:Date.now()}; pg.roster.push(c); pg.lines[baseOf(mid)]=1;
+P.isAncientFusion=(mid)=>ANCIENT_FUSIONS.includes(+mid);
+// ---------------------------------------------------------------- 覚える(2026-10-28): 進化の仕方(prog.forms)・融合の仕方(prog.fusions)
+function learnForm(mid){ const pg=prog(); if(!pg) return []; pg.forms=pg.forms||{}; const ln=lineOf(mid), i=ln.indexOf(+mid), out=[];   // その姿まで(3段目を覚えたら2段目も)
+  for(let j=1;j<=i;j++){ const id=ln[j]; if(stageOf(id)>=2&&!pg.forms[id]){ pg.forms[id]=1; out.push(id); } } return out; }
+P.hasLine=(mid)=>{ const pg=prog(); if(!pg) return false; const b=baseOf(mid); return pg.roster.some(c=>baseOf(c.mid)===b); };   // その系統の子(1段目)を持っている
+P.knowsForm=(mid)=>{ const pg=prog(); if(!pg||!mon(mid)) return false; if(stageOf(mid)<=1) return P.hasLine(mid); return !!(pg.forms&&pg.forms[+mid]); };
+P.knowsFusion=(fid)=>{ const pg=prog(); const m=mon(fid); if(!pg||!m||m.role!=='fusion') return false; if(pg.fusions&&pg.fusions[+fid]) return true; return !!(SAVE&&SAVE.unlock&&SAVE.unlock.fusion) && !ANCIENT_FUSIONS.includes(+fid) && Array.isArray(m.recipe) && m.recipe.length===2; };
+P.hasForm=(mid)=>{ const m=mon(mid); if(!m) return false; return m.role==='fusion'?P.knowsFusion(mid):P.knowsForm(mid); };
+P.fusionKnownList=()=>Object.values(MON).filter(m=>m.role==='fusion'&&P.knowsFusion(m.id)).map(m=>m.id);
+P.formsList=()=>{ const pg=prog(); return pg&&pg.forms?Object.keys(pg.forms).map(Number).filter(id=>mon(id)):[]; };
+// その姿を手に入れた(野生のリーダー・生み出す・ボス): 2段目以上 → 進化の仕方を覚える / その系統の子がいなければ1段目の子を1体
+function obtain(mid, lv, src){ const out={mid:+mid, forms:[], gave:null}; if(stageOf(mid)>=2) out.forms=learnForm(mid); if(!P.hasLine(mid)) out.gave=P.add(baseOf(mid), lv, src); return out; }
+P.obtain=obtain;
+const formTag=(ids)=>'進化の仕方を覚えた：'+ids.map(nameOf).join('・');
+function caughtOf(o, p){ const pg=prog(), c=o.gave; const r={isNew:true, p, forms:o.forms.slice(), uid:c?c.uid:null, gaveMid:c?c.mid:null, lv:c?c.lv:null, inParty:!!(c&&pg.party.includes(c.uid))};
+  r.tag=o.forms.length?formTag(o.forms):(c?nameOf(c.mid)+'が仲間になった！':''); return r; }
+// 古代テリオン・ボスを倒した時(battle.js の recruit から): 融合体 → 融合の仕方 / ボスの姿 → 進化の仕方。bossLearn の確率・覚えるまで何度でも
+P.learnBoss=function(lead){ const pg=prog(); const mid=+(lead&&lead.mid); const m=mon(mid); if(!pg||!m) return null; const fus=m.role==='fusion';
+  if(fus?(pg.fusions&&pg.fusions[mid]):(P.knowsForm(mid)&&P.hasLine(mid))) return null;
+  const p=CFG.bossLearn; if(!(Math.random()<p)) return {isNew:false, miss:true, p, tag:'覚えられなかった'};
+  if(fus){ pg.fusions=pg.fusions||{}; pg.fusions[mid]=1; return {isNew:true, p, fusion:mid, tag:'融合の仕方を覚えた：'+nameOf(mid)}; }
+  return caughtOf(obtain(mid, lead.lv||1, 'boss'), p); };
+P.recruitBoss=P.learnBoss;   // 前の名前
+P.bossDone=(mid)=>{ const m=mon(mid); if(!m) return true; return m.role==='fusion'?!!(prog()&&prog().fusions&&prog().fusions[+mid]):(P.knowsForm(mid)&&P.hasLine(mid)); };   // 覚えた(もう再戦しなくてよい)
+// 古いセーブ: 2段目・3段目の子 → その進化の仕方を覚える＋その系統の子は1体(1段目・いちばん高いLv)に。融合体の子 → 融合の仕方
+function normalizeLearn(pg){ if(!pg||pg.learnV>=1) return; const F={}; for(const k in (pg.forms||{})){ const m=mon(+k); if(m&&m.role!=='fusion'&&stageOf(+k)>=2) F[+k]=1; } pg.forms=F; pg.fusions=pg.fusions||{};
+  const groups={}, keepOf={}, drop=new Set();
+  for(const c of pg.roster){ const m=mon(c.mid); if(m&&m.role==='fusion'){ pg.fusions[c.mid]=1; drop.add(c.uid); continue; } if(stageOf(c.mid)>=2) learnForm(c.mid); const b=baseOf(c.mid); (groups[b]=groups[b]||[]).push(c); }
+  for(const b in groups){ const g=groups[b]; const best=g.slice().sort((x,y)=>((y.lv||1)-(x.lv||1))||((pg.party.includes(y.uid)?1:0)-(pg.party.includes(x.uid)?1:0)))[0]; best.mid=+b; for(const c of g) if(c!==best){ drop.add(c.uid); keepOf[c.uid]=best.uid; } }
+  pg.roster=pg.roster.filter(c=>!drop.has(c.uid)); const np=[]; for(const u of pg.party){ const k=keepOf[u]||u; if(!np.includes(k)&&pg.roster.some(c=>c.uid===k)) np.push(k); } pg.party=np;
+  if(!pg.party.length&&pg.roster.length) pg.party.push(pg.roster[0].uid);
+  const st=pg.roster.find(c=>c.src==='start'); const sb=st?baseOf(st.mid):(SAVE&&SAVE.partner?baseOf(SAVE.partner):null); if(sb&&STARTERS.includes(sb)){ pg.starter=sb; const ln=lineOf(sb); learnForm(ln[ln.length-1]); }   // 相棒の系統は進化の仕方を知っている(物語で進化する)
+  if(SAVE){ const L=pg.party.map(u=>pg.roster.find(c=>c.uid===u)).filter(Boolean)[0]; if(L) SAVE.partner=L.mid; }
+  pg.learnV=1; }
+P.add=function(mid, lv, src){ const pg=prog(); if(!pg||!mon(mid)) return null; mid=baseOf(mid); const c={uid:uid(), mid:+mid, lv:Math.max(1,Math.min(LV_MAX,+lv||1)), exp:0, src:src||'', t:Date.now()}; pg.roster.push(c); pg.lines[baseOf(mid)]=1;
   if(pg.party.length<pg.partyMax) pg.party.push(c.uid); return c; };
-P.giveStarter=function(mid){ const pg=prog(); if(!pg) return null; const c=P.add(mid, CFG.startLv, 'start'); if(c){ pg.party=pg.party.filter(u=>u!==c.uid); pg.party.unshift(c.uid); SAVE.partner=+mid; P.save(); } return c; };
+P.giveStarter=function(mid){ const pg=prog(); if(!pg) return null; const c=P.add(mid, CFG.startLv, 'start'); if(c){ pg.starter=baseOf(mid); const ln=lineOf(mid); learnForm(ln[ln.length-1]); pg.party=pg.party.filter(u=>u!==c.uid); pg.party.unshift(c.uid); SAVE.partner=+mid; P.save(); } return c; };
 P.toParty=function(u){ const pg=prog(); const c=P.get(u); if(!pg||!c||pg.party.includes(u)) return false; if(pg.party.length>=pg.partyMax) return false; pg.party.push(u); P.save(); return true; };
 P.toRanch=function(u){ const pg=prog(); if(!pg||!pg.party.includes(u)||pg.party.length<=1) return false; pg.party=pg.party.filter(x=>x!==u); P.save(); return true; };
 P.swap=function(uParty,uRanch){ const pg=prog(); if(!pg) return false; const i=pg.party.indexOf(uParty); if(i<0||pg.party.includes(uRanch)||!P.get(uRanch)) return false; pg.party[i]=uRanch; P.save(); return true; };
 P.setLeader=function(u){ const pg=prog(); if(!pg||!pg.party.includes(u)) return false; pg.party=[u].concat(pg.party.filter(x=>x!==u)); SAVE.partner=P.get(u).mid; P.save(); return true; };
 P.release=function(u){ const pg=prog(); if(!pg) return false; if(pg.party.includes(u)&&pg.party.length<=1) return false; pg.roster=pg.roster.filter(c=>c.uid!==u); pg.party=pg.party.filter(x=>x!==u); P.save(); return true; };
-// 持っている種類(バトルの進化の判定に渡す): 仲間にいる姿だけ(2026-10-28 オーナー: 2段目も集めないと進化できない)
-P.ownedList=function(){ const pg=prog(); const o=new Set(); const evo=!!(SAVE&&SAVE.unlock&&SAVE.unlock.evo); for(const c of (pg?pg.roster:[])) o.add(c.mid); if(pg&&pg.forms) for(const k in pg.forms) o.add(+k); void evo; for(const id of (SAVE&&SAVE.owned)||[]) o.add(+id); return [...o]; };
+// 持っている種類(バトルの進化の判定に渡す): 持っている子(1段目)＋覚えた進化の仕方(物語で進化が解禁されたあと)。2026-10-28
+P.ownedList=function(){ const pg=prog(); const o=new Set(); const evo=!!(SAVE&&SAVE.unlock&&SAVE.unlock.evo); for(const c of (pg?pg.roster:[])) o.add(baseOf(c.mid)); if(evo&&pg&&pg.forms) for(const k in pg.forms) o.add(+k); if(SAVE&&SAVE.test) for(const id of (SAVE.owned||[])) o.add(+id); return [...o]; };
 P.legacyBox=function(){ const box={}; for(const c of P.roster()){ const b=baseOf(c.mid); if(!box[b]||box[b].lv<c.lv) box[b]={rank:Math.round(lvRank(c.lv)), lv:c.lv}; } return box; };
 P.battleParty=()=>P.party().map(c=>({mid:c.mid, lv:c.lv, uid:c.uid}));
 
 // ---------------------------------------------------------------- ずかん(2026-10-27): 見た=バトルで出会った姿(その段まで)・もっている=仲間にいる姿。編ごとの数は ARC_POOL の系統の全部の姿
 P.markSeen=function(mids, st){ const pg=prog(); if(!pg) return; pg.seen=pg.seen||{}; st=+st||1; for(const mid of mids||[]){ if(!mon(mid)) continue; pg.seen[+mid]=1; const ln=lineOf(mid), i=ln.indexOf(+mid); ln.forEach((id,j)=>{ if(j>i&&stageOf(id)<=st) pg.seen[id]=1; }); } };   // 野生は開始の段まで進化して出るので、その姿も「見た」
-P.dex=function(){ const pg=prog(); const seen=(pg&&pg.seen)||{}; const own=new Set(P.roster().map(c=>c.mid)); const ARCJ={greece:'ギリシャ',china:'中国',egypt:'エジプト',norse:'北欧'};
+P.dex=function(){ const pg=prog(); const seen=(pg&&pg.seen)||{}; const own=new Set(P.roster().map(c=>baseOf(c.mid)).concat(P.formsList())); /* もっている=持っている子(1段目)＋覚えた進化の仕方 */ const ARCJ={greece:'ギリシャ',china:'中国',egypt:'エジプト',norse:'北欧'};
   const rows=ARC_ORDER.map(a=>{ const ids=[]; for(const b of ARC_POOL[a]) for(const id of lineOf(b)) if(!ids.includes(id)) ids.push(id); return {arc:a, name:ARCJ[a], total:ids.length, seen:ids.filter(id=>seen[id]||own.has(id)).length, owned:ids.filter(id=>own.has(id)).length}; });
-  return {rows, owned:[...own]}; };
+  const lines=[...new Set(P.roster().map(c=>baseOf(c.mid)))].sort((a,b)=>a-b);
+  return {rows, owned:[...own], lines, fusions:P.fusionKnownList()}; };
 
 // ---------------------------------------------------------------- ジェム
 P.gems=()=>prog()?prog().gems:0;
@@ -179,21 +218,21 @@ function fieldCount(party, st, owned){ const cap=3*st; let used=0, n=0; const ow
   for(const p of (party||[])){ let m=mon(p.mid), g=0; while(m&&m.evolves_to!=null&&mon(m.evolves_to)&&(mon(m.evolves_to).level||1)<=st&&(!own||own.has(m.evolves_to))&&g++<4) m=mon(m.evolves_to); const lv=m?(m.level||1):1; if(n>0&&used+lv>cap) continue; used+=lv; n++; } return n; }
 P.packSize=function(area, party, owned){ const want=P.rule(area).pack||1; const st=P.startStage(area); return Math.max(1, Math.min(want, fieldCount(party, st, owned)||1)); };
 P.wildPack=function(lead, area, pool, n){ const L=Object.assign({}, lead, {leader:true}); L.lv=Math.min(LV_MAX,(+L.lv||P.wildLv(area))+CFG.packLeadLv); const out=[L];
-  const ids=(pool||[]).map(Number).filter(id=>mon(id)); for(let k=1;k<n&&ids.length;k++) out.push({mid:ids[Math.floor(Math.random()*ids.length)], lv:P.wildLv(area), pack:true}); return out; };
+  const st=P.startStage(area); const ids=(pool||[]).map(Number).filter(id=>mon(id)&&!BOSS_FORMS.some(b=>lineOf(id).indexOf(b)>=0&&stageOf(b)<=st)); for(let k=1;k<n&&ids.length;k++) out.push({mid:ids[Math.floor(Math.random()*ids.length)], lv:P.wildLv(area), pack:true}); return out; };
 
 // ---------------------------------------------------------------- バトル(battle.js の startBattle に渡す物を作り、結果を反映)
 // 倒して仲間(G1): その系統を初めて → 段ごとの確率で仲間に / すでに持っている系統 → 何も起きない(null)
-P.recruitRoll=function(lead){ if(!mon(lead.mid)) return null; if(P.hasForm(lead.mid)) return null; if(BOSS_FORMS.includes(+lead.mid)) return null;
+P.recruitRoll=function(lead){ if(!mon(lead.mid)) return null; if(P.knowsForm(lead.mid)&&P.hasLine(lead.mid)) return null; if(BOSS_FORMS.includes(+lead.mid)||mon(lead.mid).role==='fusion') return null;   // 2026-10-28: 1段目=仲間 / 2段目以上=進化の仕方を覚える(系統の子がいなければ1段目の子も)
   const st=stageOf(lead.mid); const m=mon(lead.mid); const ty=[].concat(m.type||[],m.type2||[]); let p;
   if(ty.some(t=>String(t).indexOf('竜')>=0)) p=CFG.recruitDragon;
   else { p=(CFG.recruit[st]!=null?CFG.recruit[st]:0.3)*((CFG.recruitArc||{})[P.arc()]||1); }
   p=Math.max(CFG.recruitMin,Math.min(CFG.recruitMax,p)); const ok=Math.random()<p;
-  if(!ok) return {isNew:false, miss:true, p};
-  const c=P.add(lead.mid, lead.lv||1, 'wild'); return {isNew:true, lv:c.lv, uid:c.uid, inParty:prog().party.includes(c.uid), p}; };
+  if(!ok) return {isNew:false, miss:true, p, tag:st>=2?'覚えられなかった':undefined};
+  return caughtOf(obtain(lead.mid, lead.lv||1, 'wild'), p); };
 // prepare(opt, ctx): startBattle の opts に player / recruit / decorate / startStage を足す。ctx={area, zeroday}
 P.prepare=function(opt, ctx){ opt=opt||{}; ctx=ctx||{}; const pl=opt.player||{};
   const party=P.battleParty(); if(!party.length) throw new Error('progress: パーティが空');
-  opt.player=Object.assign({}, pl, {party, box:P.legacyBox(), owned:pl.owned||P.ownedList(), rankCap:20, items:pl.items||(SAVE&&SAVE.items)||{heal:0}});
+  opt.player=Object.assign({}, pl, {party, box:P.legacyBox(), owned:pl.owned||P.ownedList(), fusionKnown:pl.fusionKnown||P.fusionKnownList(), rankCap:20, items:pl.items||(SAVE&&SAVE.items)||{heal:0}});
   if(opt.startStage==null) opt.startStage=P.startStage(ctx.area);
   if((opt.kind||'wild')==='wild' && opt.enemy && Array.isArray(opt.enemy.pack) && opt.enemy.party && opt.enemy.party.length===1){   // 野生の群れ(呼ぶ側が enemy.pack=そのマップの野生の種類 を渡した時)
     const n=P.packSize(ctx.area, party, opt.player.owned); opt.enemy=Object.assign({}, opt.enemy, {party:P.wildPack(opt.enemy.party[0], ctx.area, opt.enemy.pack, n)}); delete opt.enemy.pack; }
@@ -214,7 +253,9 @@ P.applyResult=function(res, ctx){ const rows=[]; const pg=prog(); if(!pg) return
       const f=formFor(c); const nw=newMovesBetween(f, r.before, r.after); if(nw.length){ const L={uid:c.uid, mid:f, name:nameOf(f), moves:nw.map(x=>x.name)}; (res.progress.learn||(res.progress.learn=[])).push(L); rows.push(`<span class="lvup">新しい技を覚えた　${nameOf(f)}「${L.moves.join('」「')}」</span>`); } } });
   if(res.progress.learn&&res.progress.learn.length) UI.learnNotice(res.progress.learn);
   if(res.rewards){ if(ctx.zeroday&&ctx.kind!=='wild'){ res.progress.gems=res.rewards.gems; if(res.rewards.gems) P.addGems(res.rewards.gems,'zeroday'); } else res.rewards.gems=0; }   // ジェムはゼロデイ(手下・幹部)を倒した時だけ(G2)
-  if(res.caught&&res.caught.isNew){ const c=P.get(res.caught.uid); if(c) rows.push(`${nameOf(c.mid)}　Lv${c.lv}　${res.caught.inParty?'仲間':'牧場'}`); }
+  const K=res.caught; if(K&&K.isNew){ if(K.forms&&K.forms.length) rows.push(`<span class="lvup">${formTag(K.forms)}</span>`); if(K.fusion) rows.push(`<span class="lvup">融合の仕方を覚えた：${nameOf(K.fusion)}</span>`);
+    const c=K.uid&&P.get(K.uid); if(c) rows.push(`${nameOf(c.mid)}　Lv${c.lv}　${K.inParty?'仲間':'牧場'}`); }
+  else if(K&&K.miss&&K.tag) rows.push(K.tag);
   P.save(); return rows; };
 P.battle=async function(opt, ctx){ P.prepare(opt, ctx); const sb=root.startBattle||(root.MonBattle&&root.MonBattle.startBattle); if(!sb) throw new Error('battle.js が読まれていない'); const res=await sb(opt); return res; };
 
@@ -226,7 +267,7 @@ P.cradle={
     const maxSt=Math.min(3,(ARC_RULE[arc]&&ARC_RULE[arc].startStage||1)+1), W=CFG.cradleW, rows=[];
     for(const b of ids) for(const id of lineOf(b)){ const st=stageOf(id); if(st<=maxSt&&mon(id)&&!BOSS_FORMS.includes(id)) rows.push({mid:id, st, w:W[st]||0}); }
     const tot=rows.reduce((a,r)=>a+r.w,0)||1;
-    return rows.map(r=>({mid:r.mid, name:nameOf(r.mid), stage:r.st, w:r.w, pct:+(100*r.w/tot).toFixed(1), owned:P.hasForm(r.mid)})); },   // 確率はそのまま画面に出す
+    return rows.map(r=>({mid:r.mid, name:nameOf(r.mid), stage:r.st, w:r.w, pct:+(100*r.w/tot).toFixed(1), owned:r.st<=1?P.hasLine(r.mid):P.knowsForm(r.mid), learn:r.st>=2})); },   // learn=2段目以上(出たら進化の仕方を覚える)   // 確率はそのまま画面に出す
   canPull(){ return P.totalGems()>=CFG.cradlePrice && this.pool().length>0; },
   pull(){ const pg=prog(); if(!pg) return {ok:false, why:'nosave'}; const pool=this.pool(); if(!pool.length) return {ok:false, why:'empty'}; if(pg.gems<CFG.cradlePrice) return {ok:false, why:'gems'};
     pg.gems-=CFG.cradlePrice; pg.log.unshift({t:Date.now(), n:-CFG.cradlePrice, r:'cradle'}); return this._roll(pg, pool); },
@@ -240,9 +281,10 @@ P.cradle={
       return this._roll(pg, pool); } finally{ this._busy=false; } },
   _roll(pg, pool){ pg.pulls=(pg.pulls||0)+1; pg.log=pg.log.slice(0,30);
     let rr=Math.random()*pool.reduce((a,r)=>a+(r.w||1),0), pick=pool[pool.length-1].mid; for(const r of pool){ rr-=(r.w||1); if(rr<0){ pick=r.mid; break; } } const out={ok:true, mid:pick, name:nameOf(pick)};
-    if(P.hasForm(pick)){ const same=pg.roster.filter(c=>c.mid===+pick).sort((a,b)=>a.t-b.t)[0]; out.dup=true; out.target=same.uid; out.targetMid=same.mid;
+    const newForm=stageOf(pick)>=2&&!P.knowsForm(pick), newLine=!P.hasLine(pick); out.stage=stageOf(pick);
+    if(!newForm&&!newLine){ const b=baseOf(pick); const same=pg.roster.filter(c=>baseOf(c.mid)===b).sort((a,b)=>a.t-b.t)[0]; out.dup=true; out.target=same.uid; out.targetMid=same.mid;
       if(same.lv>=LV_MAX){ pg.gems+=CFG.dupGemsBack; out.gemsBack=CFG.dupGemsBack; } else { const r=addExp(same, CFG.expNeed(same.lv)-(same.exp||0)); out.before=r.before; out.after=r.after; } }   // ダブり=その子が1レベル上がる(Lv99ならジェム75を返す)
-    else { const c=P.add(pick, 1, 'cradle'); out.uid=c.uid; out.lv=c.lv; out.inParty=pg.party.includes(c.uid); }
+    else { const o=obtain(pick, 1, 'cradle'); out.forms=o.forms; if(o.gave){ out.uid=o.gave.uid; out.gaveMid=o.gave.mid; out.lv=o.gave.lv; out.inParty=pg.party.includes(o.gave.uid); } }   // 2段目以上=進化の仕方を覚える(系統の子がいなければ1段目の子も)
     P.save(); emit('cradle', out); return out; }
 };
 
@@ -310,8 +352,8 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgMvR{display:flex;align-items:center;gap:4px;font-size:13px;padding:4px 0;border-top:1px solid rgba(255,255,255,.07)}
 .pgMvR .lvx{min-width:2.6em;font-size:11px;color:#9aa7c4}.pgMvR .sp{margin-left:auto;font-size:11px;color:#c8d4f0;white-space:nowrap}
 .pgMvR.lock{opacity:.45}
-#pgTabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 10px 8px}
-#pgTabs button{font:800 14px/1.1 inherit;font-family:inherit;min-height:58px;padding:6px 2px;border-radius:14px;border:2px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);color:#dfe6ff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
+#pgTabs{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:0 8px 8px}
+#pgTabs button{font:800 13px/1.1 inherit;font-family:inherit;min-height:58px;padding:6px 2px;border-radius:14px;border:2px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);color:#dfe6ff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
 #pgTabs button img.ui-ic{width:26px;height:26px;margin:0}
 #pgTabs button.on{background:#2c3e66;border-color:#ffd977;color:#fff}
 .pgDet{background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.16);border-radius:16px;padding:10px 10px 6px;margin:0 0 10px}
@@ -340,6 +382,20 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgGrid.sm{grid-template-columns:repeat(auto-fill,minmax(74px,1fr))}
 .pgGrid.sm .pgCard{min-height:96px;padding:6px 4px 4px}
 .pgGrid.sm .pgCard img{width:52px;height:52px}
+.pgPath{display:flex;align-items:center;gap:2px;margin:8px 0 2px;flex-wrap:wrap}
+.pgPath .f{display:flex;flex-direction:column;align-items:center;width:62px;font-size:10px;font-weight:800;color:#dfe6ff;text-align:center}
+.pgPath .f img{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.pgPath .f span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62px}
+.pgPath .f.lock img{filter:grayscale(1) brightness(.35)}
+.pgPath .f.lock span{color:#6f7a96}
+.pgPath .f.cur span{color:#ffd86b}
+.pgPath i{font-style:normal;color:#9aa7c4;font-weight:900}
+.pgFu{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.07);border-radius:12px;padding:6px 8px;margin-bottom:6px;font-size:12px;font-weight:800}
+.pgFu img{width:40px;height:40px;object-fit:contain}
+.pgFu .to{width:56px;height:56px}
+.pgFu b{font-size:14px;color:#ffe9a8;margin-left:4px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pgFu i{font-style:normal;color:#9aa7c4}
+.pgOdds .lrn{color:#9fe0ff;font-size:10px}
 #pgToast{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);background:rgba(10,14,30,.92);border:1px solid rgba(255,217,119,.6);color:#ffe9a8;font-weight:800;font-size:15px;padding:10px 18px;border-radius:999px;display:none;pointer-events:none;white-space:nowrap}
 `;
 const REASON={zeroday:'ゼロデイ',cradle:'生み出す',cradle_paid:'生み出す(有償)',dup:'ダブり',test:'テスト',start:'はじめ'};
@@ -384,17 +440,21 @@ UI.isOpen=()=>!!cur; UI.tab=()=>cur==='menu'?tab:null;
 function card(c, opts){ const d=el('div','pgCard'+(opts.on?' on':'')+(opts.pend?' pend':'')); const need=CFG.expNeed(c.lv); const pct=c.lv>=LV_MAX?100:Math.min(100,Math.round(100*(c.exp||0)/need));
   d.innerHTML=`${opts.leader?'<i class="ld"></i>':''}${opts.tag?`<span class="tg">${opts.tag}</span>`:''}<img src="${IMG(c.mid)}" alt=""><div class="nm">${nameOf(c.mid)}</div><div class="lv">Lv${c.lv}</div><div class="bar"><i style="width:${pct}%"></i></div>`; d.dataset.uid=c.uid; return d; }
 // メニュー(2026-10-27 オーナー「ステータスとかパーティーの情報みれるタブのような画面欲しいな」): パーティ・牧場・ずかん・もちもの。ラベル・アイコン・数字だけ
-const TABS=[['party','パーティ','ally'],['ranch','牧場','terrain'],['dex','ずかん','evolve'],['items','もちもの','potion']];
+const TABS=[['party','パーティ','ally'],['ranch','牧場','terrain'],['dex','ずかん','evolve'],['fuse','融合','fuse'],['items','もちもの','potion']];
 const ITEMJ={heal:['回復の水筒','potion'], snack:['おやつの材料','elixir']};
 function terrInfo(){ const MB=root.MonBattle; return MB&&MB.TYPE_TERR&&MB.BRIEF?{TT:MB.TYPE_TERR, J:MB.BRIEF.TERR_JP, H:MB.BRIEF.TERR_HEX, X:Math.round((MB.BRIEF.TERR_X||0.3)*100)}:null; }
 function tnB(t,I){ const h=I.H[t]; const hx=h!=null?'#'+(h>>>0&0xffffff).toString(16).padStart(6,'0'):'#777'; const lt=h!=null&&(((h>>16)&255)*0.299+((h>>8)&255)*0.587+(h&255)*0.114)>150; return `<span class="pgTn${lt?' lt':''}" style="background:${hx}">${I.J[t]||t}</span>`; }
 function canSwap(){ if(UI.opts&&UI.opts.canSwap===false){ UI.toast('入れかえは街の中で'); return false; } return true; }
 // 1体ぶんの詳しい札: 絵・名前・タイプ・段・Lv と EXP・ステータス(Lv の倍率込み)・地形の得意/苦手・覚えている技(下位互換は出さない)・次に覚える技
+// 進化の道すじ(1段目 › 2段目 › 3段目): 覚えていない姿は暗く
+function pathHtml(mid, cur){ const ln=lineOf(mid); if(ln.length<2) return ''; return `<div class="pgPath">`+ln.map((id,i)=>`${i?'<i>›</i>':''}<div class="f${P.knowsForm(id)?'':' lock'}${id===cur?' cur':''}" data-mid="${id}"><img src="${IMG(id)}" alt=""><span>${nameOf(id)}</span></div>`).join('')+`</div>`; }
+function fuseRow(fid){ const m=mon(fid)||{}; const mats=m.recipe3||m.recipe||m.fusion_from||[]; return `<div class="pgFu" data-fid="${fid}">`+mats.map((id,i)=>`${i?'<i>＋</i>':''}<img src="${IMG(id)}" alt="" title="${nameOf(id)}">`).join('')+`<i>→</i><img class="to" src="${IMG(fid)}" alt=""><b>${nameOf(fid)}</b></div>`; }
+UI.pathHtml=pathHtml; UI.fuseRow=fuseRow;
 UI.detail=function(c, o){ o=o||{}; const d=el('div','pgDet'+(o.leader?' lead':'')); if(!c) return d; const f=formFor(c); const m=mon(f)||{}; const L=LS[f]||LS[String(f)]; const x=statX(c.lv);
   const need=CFG.expNeed(c.lv), ex=c.lv>=LV_MAX?need:Math.min(need,c.exp||0), pct=Math.round(100*ex/need);
   let h=`<div class="pgDetHd"><img class="art" src="${IMG(f)}" alt=""><div class="in"><div class="nm">${o.leader?ICON('leader'):''}${nameOf(f)} ${tyb(m.type||'')}${m.type2?tyb(m.type2):''}</div>
     <div class="pgLvR"><span>Lv ${c.lv}</span><span class="pgChip">${stageOf(f)}段</span></div>
-    <div class="pgExp"><span>EXP</span><span class="bar"><i style="width:${pct}%"></i></span><span>${c.lv>=LV_MAX?'MAX':ex+'/'+need}</span></div></div></div>`;
+    <div class="pgExp"><span>EXP</span><span class="bar"><i style="width:${pct}%"></i></span><span>${c.lv>=LV_MAX?'MAX':ex+'/'+need}</span></div></div></div>`+pathHtml(c.mid, f);
   if(L) h+=`<div class="pgSt"><span>HP<b>${Math.round(L.hp*x)}</b></span><span>攻撃<b>${Math.round(L.atk*x)}</b></span><span>防御<b>${Math.round(L.def*x)}</b></span><span>素早さ<b>${Math.round(L.spd*x)}</b></span><span>機動<b>${L.mob}</b></span></div>`;
   const I=terrInfo(); if(I){ const tys=[m.type,m.type2].filter(t=>t&&I.TT[t]); const up=[], dn=[]; for(const t of tys){ for(const k of I.TT[t].up) if(!up.includes(k)) up.push(k); for(const k of I.TT[t].dn) if(!dn.includes(k)) dn.push(k); }
     if(tys.length) h+=`<div class="pgTer">${ICON('terrain')}<span class="u">+${I.X}%</span>${up.map(t=>tnB(t,I)).join('')}<span class="d">−${I.X}%</span>${dn.map(t=>tnB(t,I)).join('')}</div>`; }
@@ -423,8 +483,14 @@ UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const 
           b1.onclick=()=>{ if(!canSwap()) return; if(full){ pend=pick; pick=null; UI.render(); B.scrollTop=0; } else { P.toParty(pick); pick=null; UI.render(); } }; a.appendChild(b1); B.appendChild(a); B.appendChild(UI.detail(P.get(pick))); } } }
     else if(tab==='dex'){ const D=P.dex(); B.appendChild(el('div','pgDex','<span></span><span class="h">見た</span><span class="h">もっている</span>'));
       for(const r of D.rows) B.appendChild(el('div','pgDex',`<span>${r.name}</span><span class="c"><b>${r.seen}</b> / ${r.total}</span><span class="c"><b>${r.owned}</b> / ${r.total}</span>`));
-      B.appendChild(el('div','pgSec',`<span>もっている</span><span>${D.owned.length}</span>`)); const g=el('div','pgGrid sm');
-      D.owned.sort((a,b)=>a-b).forEach(mid=>{ const d=el('div','pgCard',`<img src="${IMG(mid)}" alt=""><div class="nm">${nameOf(mid)}</div><div class="lv">${tyb(mon(mid).type)}${mon(mid).type2?tyb(mon(mid).type2):''}</div>`); g.appendChild(d); }); B.appendChild(g); }
+      B.appendChild(el('div','pgSec',`<span>系統</span><span>${D.lines.length}</span>`));
+      for(const b of D.lines){ const d=el('div','pgDet',pathHtml(b, null)); d.style.padding='2px 8px'; B.appendChild(d); }
+      const fk=D.fusions.filter(f=>prog().fusions&&prog().fusions[f]); B.appendChild(el('div','pgSec',`<span>古代テリオン</span><span>${fk.length} / ${ANCIENT_FUSIONS.filter(f=>mon(f)).length}</span>`)); const g=el('div','pgGrid sm');
+      fk.forEach(mid=>{ g.appendChild(el('div','pgCard',`<img src="${IMG(mid)}" alt=""><div class="nm">${nameOf(mid)}</div><div class="lv">${tyb(mon(mid).type)}${mon(mid).type2?tyb(mon(mid).type2):''}</div>`)); }); B.appendChild(g); if(!fk.length) B.appendChild(el('div','pgSec','<span>—</span>')); }
+    else if(tab==='fuse'){ const all=Object.values(MON).filter(m=>m.role==='fusion').length; const fk=P.fusionKnownList(); const anc=fk.filter(f=>ANCIENT_FUSIONS.includes(f)), nor=fk.filter(f=>!ANCIENT_FUSIONS.includes(f));
+      B.appendChild(el('div','pgSec',`<span>融合の仕方</span><span>${fk.length} / ${all}</span>`)); if(!fk.length) B.appendChild(el('div','pgItem','<span>—</span>'));
+      if(anc.length){ B.appendChild(el('div','pgSec',`<span>古代テリオン</span><span>${anc.length}</span>`)); for(const f of anc) B.appendChild(el('div','',fuseRow(f))); }
+      if(nor.length){ B.appendChild(el('div','pgSec',`<span>融合</span><span>${nor.length}</span>`)); for(const f of nor) B.appendChild(el('div','',fuseRow(f))); } }
     else if(tab==='items'){ const it=(SAVE&&SAVE.items)||{}; B.appendChild(el('div','pgSec','<span>もちもの</span>'));
       const ks=Object.keys(it).filter(k=>+it[k]>0); for(const k of ks){ const j=ITEMJ[k]||[k,'potion']; B.appendChild(el('div','pgItem',`${ICON(j[1])}<span>${j[0]}</span><b>×${it[k]}</b>`)); } if(!ks.length) B.appendChild(el('div','pgItem','<span>—</span>'));
       B.appendChild(el('div','pgSec','<span>ジェム</span>')); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>無料ジェム</span><b>${P.gems()}</b>`));
@@ -435,12 +501,12 @@ UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const 
   }
   else if(cur==='cradle'){ T.textContent='生み出す'; const pool=P.cradle.pool(); const price=P.cradle.price();
     const h=el('div'); h.id='pgHatch'; B.appendChild(h);
-    if(UI._hatch){ const r=UI._hatch; h.classList.add('on'); h.innerHTML=`<img src="${IMG(r.mid)}" alt=""><div class="nm">${r.name}</div>`+(r.dup?(r.gemsBack?`<span class="tag dup">ダブり　${ICON('gem')}+${r.gemsBack}</span>`:`<span class="tag dup">ダブり　${nameOf(r.targetMid)} Lv${r.before} → Lv${r.after}</span>`):`<span class="tag">生まれた！　Lv${r.lv}　${r.inParty?'仲間':'牧場'}</span>`); }
+    if(UI._hatch){ const r=UI._hatch; h.classList.add('on'); h.innerHTML=`<img src="${IMG(r.mid)}" alt=""><div class="nm">${r.name}</div>`+(r.dup?(r.gemsBack?`<span class="tag dup">ダブり　${ICON('gem')}+${r.gemsBack}</span>`:`<span class="tag dup">ダブり　${nameOf(r.targetMid)} Lv${r.before} → Lv${r.after}</span>`):((r.forms&&r.forms.length?`<span class="tag">${formTag(r.forms)}</span>`:'')+(r.gaveMid?`<span class="tag">${r.forms&&r.forms.length?nameOf(r.gaveMid)+'　':'生まれた！　'}Lv${r.lv}　${r.inParty?'仲間':'牧場'}</span>`:''))); }
     const a=el('div','pgAct'); const b=el('button','pgBtn main',`テリオンを生み出す　${ICON('gem')}${price}`); b.disabled=!P.cradle.canPull(); b.id='pgPull';
     b.onclick=async()=>{ b.disabled=true; let r; try{ r=await P.cradle.pullAsync(); }catch(e){ r={ok:false, why:'net'}; } if(!r.ok){ b.disabled=!P.cradle.canPull(); UI.toast(r.why==='gems'||r.why==='insufficient'?'ジェムがたりない':(r.why==='busy'?'処理中':'通信エラー')); return; } UI._hatch=r; UI.render(); };   // 無料が足りない時は有償をサーバーで引く(pullAsync)   // 生まれた子は _hatch に持ち、render で描く(save の change で描き直されても消えない)
     a.appendChild(b); B.appendChild(a);
     B.appendChild(el('div','pgSec',`<span>でる子と確率</span><span>${pool.length}しゅるい</span>`));
-    function odds(){ const o=el('div','pgOdds'); o.id='pgOdds'; for(const q of P.cradle.pool()) o.appendChild(el('div','',`<img src="${IMG(q.mid)}" alt="">${q.name}<b>${q.pct}%</b>${q.owned?'<span class="own">もってる</span>':''}`)); return o; }
+    function odds(){ const o=el('div','pgOdds'); o.id='pgOdds'; for(const q of P.cradle.pool()) o.appendChild(el('div','',`<img src="${IMG(q.mid)}" alt="">${q.name}<b>${q.pct}%</b>${q.learn?(q.owned?'<span class="own">覚えた</span>':'<span class="lrn">進化の仕方</span>'):(q.owned?'<span class="own">もってる</span>':'')}`)); return o; }
     B.appendChild(odds());
     B.appendChild(el('div','pgSec',`<span>ダブり</span><span>Lv +1</span>`));
   }

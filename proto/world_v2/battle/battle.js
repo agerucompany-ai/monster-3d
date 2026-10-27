@@ -12,13 +12,14 @@ const IS_NODE = (typeof document==='undefined');
 const BT = { headless:IS_NODE, running:false, kind:'trainer', size:11, auto:false, opts:null, diff:null, rules:null, look:'olive', mix:null, place:null,
   party:[], enemyParty:[], items:{}, fusedNew:[], startedAt:0, onEnd:null, resolve:null, loop:false, dmgX:1, aiSkill:[1,1], log:null };
 // 部品の置き場所(既定=この battle.js のあるフォルダ)。init({base}) で変えられる
-const CFG = { base:'', data:'data/monsters.json', stats:'data/stats_v2.json', moves:'data/moves.json', img:'img/', ci:'../../img/ci/', models:'../../design_v2/models/', zIndex:9000 };
+const CFG = { base:'', data:'data/monsters.json', stats:'data/stats_v2.json', moves:'data/moves.json', series:'data/series.json', img:'img/', ci:'../../img/ci/', models:'../../design_v2/models/', zIndex:9000 };
 try{ if(!IS_NODE){ const cs=document.currentScript; if(cs&&cs.src) CFG.base=cs.src.replace(/[^\/]*$/,''); } }catch(e){}
 function $id(k){ return IS_NODE?null:document.getElementById('mb-'+k); }
 
 // ---- UIアイコン(2026-10-27): 絵文字の代わりの自前アイコン img/ui/{name}.webp ----
 //   文字列の中では IC('gem') = 目印(\u0001gem\u0002)。HTMLは icHTML/setIc で <img class="ui-ic"> に、キャンバスは icText で drawImage する
-const UI_ICONS=['ally','enemy','area','single','map','atk','heal','burn','poison','freeze','para','dig','cancel','undo','move','combo','cure','revive','elixir','potion','kicrystal','evolve','fuse','fuse3','gem','hint','warn','weak','resist','terrain','leader'];
+const UI_ICONS=['ally','enemy','area','single','map','atk','heal','burn','poison','freeze','para','dig','cancel','undo','move','combo','cure','revive','elixir','potion','kicrystal','evolve','fuse','fuse3','gem','hint','warn','weak','resist','terrain','leader',
+  'clutch','cover','s_insect','s_greek','s_egypt','s_norse','s_china','s_dragon','s_sea','s_yokai','s_night','s_earth'];   // 2026-10-28 戦術v3: 背水・かげ・シリーズ
 function IC(n){ return '\u0001'+n+'\u0002'; }
 function icSrc(n){ return CFG.base+CFG.img+'ui/'+n+'.webp'; }
 function LMK(){ return `<i class="lmk" style="background-image:url(${icSrc('leader')})"></i>`; }
@@ -217,7 +218,7 @@ function usesLeft(u, mv){ let n = mv.mp>0 ? ((u.mp&&u.mp[mv.id]!=null)?u.mp[mv.i
 function usesMax(mv){ return mv.mp>0 ? mv.mp : Infinity; }
 function spendMove(u, mv){ if(state&&state.stats){ const mu=state.stats.mvUse||(state.stats.mvUse={}); const k=(u.anc?'A':u.owner)+':'+mv.id; mu[k]=(mu[k]||0)+1; } if(mv.mp>0){ if(!u.mp) u.mp={}; u.mp[mv.id]=Math.max(0, usesLeft(u,mv)-1); } if(mv.group==='heal') u.hg=Math.max(0,(u.hg!=null?u.hg:V2.HEAL_GROUP)-1); }
 // その技を今使えるか(回数・移動後・行動済み・潜行)。moved を渡すと「その位置まで動いた後なら」で見る(AI)
-function moveUsable(u, mv, moved){ if(!mv || u.acted || u.dug>0) return false; if(usesLeft(u,mv)<1) return false; const mvd=(moved!=null)?moved:u.moved; if(mv.p===false && mvd) return false; return true; }
+function moveUsable(u, mv, moved){ if(!mv || u.acted || u.dug>0) return false; if(usesLeft(u,mv)<1) return false; if(isOffense(mv) && firstNoAtk(u)) return false; /* 戦術v3: 先手の1ターン目(TACT.first.mode='noatk') */ const mvd=(moved!=null)?moved:u.moved; if(mv.p===false && mvd) return false; return true; }
 // ---- 強化・弱体(u.buf / u.dbf)。until = state.ht(半ターンの数)で切れる ----
 function bufOn(b){ return !!b && state && (state.ht||0) < b.until; }
 function statMod(u, k){ let v=0; const b=u.buf&&u.buf[k], d=u.dbf&&u.dbf[k]; if(bufOn(b)) v+=(b.x!=null?b.x:(b.add||0)); if(bufOn(d)) v+=(d.x!=null?d.x:(d.add||0)); return v; }
@@ -269,13 +270,14 @@ function calcDamageV2(att, def, mv, o){
   const pen = legacy ? typePenaltyM(ma,md) : typePenaltyT(mv.type||ma.type, md);
   const trb = terrBonusM(ma, state.terrain[att.r][att.c]);
   const chg = (!legacy && att.buf && bufOn(att.buf.charge)) ? 1+(att.buf.charge.x||0.5) : 1;
-  const A = ma.atk*(att.atkX||1)*Math.max(0.2,1+statMod(att,'atk'))*chg;
+  const A = ma.atk*(att.atkX||1)*Math.max(0.2,1+statMod(att,'atk'))*chg*balX(ma,'atk');   // 戦術v3: balX=タイプごとのつまみ(TACT.bal)
   const sxA=rankX(att.rank||1), sxD=rankX(def.rank||1);
-  let D=(md.def!=null?md.def:30)*sxD*Math.max(0,1+statMod(def,'def'))*(1-((mv.effect&&mv.effect.pierce)||0)); if(tb>0) D*=0.3;
+  let D=(md.def!=null?md.def:30)*balX(md,'def')*sxD*Math.max(0,1+statMod(def,'def'))*(1-((mv.effect&&mv.effect.pierce)||0)); if(tb>0) D*=0.3;
   const red=Math.min(0.62, D/(D+100*sxA));
   let dmg = A*(power/100)*(1+tb+pen+trb)*(1-red);
   if(o&&o.crit) dmg*=V2.CRIT.x;
   if(!legacy && terrFx(md, state.terrain[def.r][def.c], 'guard')) dmg*=1-TERR_FX.guard;   // 地: 荒地・遺跡で受けるダメージ−20%
+  if(!legacy && coverOn(att, def, mv)) dmg*=1-TACT.cover.x;   // 戦術v3: 森・遺跡のかげ(2マス以上はなれた所から −15%)
   if(def.ancTired) dmg*=ANCIENT.breakX;
   if(att.anc && !legacy) dmg*=V2.ancX;
   const rg=(att.owner===1&&BT.diff&&BT.diff.rage)?1+BT.diff.rage*((state.koN&&state.koN[1])||0):1;
@@ -355,12 +357,12 @@ function gaugeReady(u){ const n=evoNeed(u); return n!=null && gaugeOf(u)>=n; }
 function canEvolveHere(u){ return !!u && gaugeReady(u) && isEvoCell(u.r,u.c) && !u.acted && !(u.dug>0); }
 // 2026-10-27 技 v2: 古代テリオン・人(9×9 以上)の戦いも 最後の left ターンは「決戦」(ダメージ +step ずつ)。時間切れを減らすつまみ(人の3段目は STAGE_HUMAN.final のまま)
 const FINAL_V2={left:6, step:0.35}; try{ if(IS_NODE && process.env.FINV2) Object.assign(FINAL_V2, JSON.parse(process.env.FINV2)); }catch(e){}
-function finCfg(){ if(BT.sh&&BT.sh.final) return BT.sh.final; if(V2ON() && FINAL_V2 && BT.size!==7 && (BT.kind==='ancient'||BT.kind==='trainer'||BT.kind==='master')) return FINAL_V2; return null; }
+function finCfg(){ if(BT.sh&&BT.sh.final) return BT.sh.final; if(V2ON() && FINAL_V2 && BT.size!==7 && (BT.kind==='ancient'||BT.kind==='trainer'||BT.kind==='master')) return (T3()&&TACT.final)||FINAL_V2; return null; }   // 戦術v3: かげ・陣地で長引くので 決戦を2ターン早く(TACT.final)
 function finalStart(){ const F=finCfg(); return F ? MAX_TURN-F.left+1 : Infinity; }   // 決戦が始まるターン(STAGE_HUMAN.final)
 function finalX(){ const F=state&&finCfg(); if(!F) return 1; const k=state.turn-finalStart()+1; return k>0 ? 1+F.step*k : 1; }   // 決戦: 1ターン目+step・2ターン目+2step…
 function shPush(me){ const P=BT.sh&&BT.sh.push; if(!P||!state) return false; return state.turn>=P.turn || hpShare(me)>=P.ahead; }   // 人の3段目: リーダーが前に出る(下がって守り続けない)
 function hpShare(o){ let a=0,b=0; for(const u of Object.values(state.units)){ const v=Math.max(0,u.hp); if(u.owner===o) a+=v; else b+=v; } return (a+b)>0?a/(a+b):0.5; }
-function gaugeMul(o){ const sh=hpShare(o); return sh<0.45 ? Math.min(1.6, 1+(0.45-sh)*2.4) : 1; }   // 背水: 押されている側ほど溜まりやすい
+function gaugeMul(o){ const sh=hpShare(o); if(T3()){ const B=TACT.behind; return sh<B.share ? Math.min(B.gaugeMax, 1+(B.share-sh)*B.gaugeK) : 1; } return sh<0.45 ? Math.min(1.6, 1+(0.45-sh)*2.4) : 1; }   // 背水: 押されている側ほど溜まりやすい(戦術v3: ×1.8まで)
 // 2026-10-28 オーナー「進化のインセンティブがないと中央付近にモンスターが集まらない」: 中央(進化のマス)= 闘気が1.5倍たまる・手番の始めに+15・進化と融合はここだけ・
 //   進化できない子(3段目・融合・進化先なし)は闘気MAXで「覚醒」(1戦1回・攻撃と守り+25%・3ターン)
 const CENTER={gaugeX:1.5, tick:15, awake:{x:0.25, turns:3}};
@@ -446,7 +448,7 @@ function tripleThird(a,b){   // a,bユニットに対し、3体目素材が bの
 function tripleResult(a,b){
   if(!BT.tripleOn||!state||!a||!b||a.uid===b.uid||a.owner!==b.owner) return null;
   const A=mon(a), B=mon(b); if(!A||!B||A.level!==2||B.level!==2||A.role==='fusion'||B.role==='fusion') return null;
-  const f=tripleRecipe(a.mid,b.mid); if(!f) return null; const c=tripleThird(a,b); return c?{id:f.id, c}:null; }
+  const f=tripleRecipe(a.mid,b.mid); if(!f||!fuseKnownOk(a.owner,f.id)) return null; const c=tripleThird(a,b); return c?{id:f.id, c}:null; }
 
 // ==== [template 785-799] 盤の地形テーマ ====
 // マップテーマ（火山生成の応用: base敷き詰め+川+ブロブ成長）
@@ -555,8 +557,8 @@ function genTheme(name){
 }
 function genTerrain(){
   if(BT.grid && BT.grid.length===N){ return grid((r,c)=>(BT.grid[r]&&BT.grid[r][c])||'plain'); }   // world_v2: 盤をそのまま渡された
-  if(BT.mix){ return genMix(BT.mix, BT.place||{}); }                                                    // world_v2: 出会った場所の地形の割合
-  if(campTheme && CAMP_THEMES[campTheme]){ const t=genTheme(campTheme); if(t) return t; }
+  if(BT.mix){ return (T3()&&TACT.board.gen!==false) ? genTactical(BT.mix, BT.place||{}) : genMix(BT.mix, BT.place||{}); }          // world_v2: 出会った場所の地形の割合(戦術v3: 鏡うつしで地形をまぜる)
+  if(campTheme && CAMP_THEMES[campTheme]){ if(T3()&&TACT.board.gen!==false){ const mx=themeMix(campTheme); if(mx) return genTactical(mx, {river:CAMP_THEMES[campTheme].river?'sea':null}); } const t=genTheme(campTheme); if(t) return t; }
   if(mapType==='volcano') return genVolcano();
   // 通常：川(海)が中央を蛇行して横断＋森/荒地の塊
   const t = grid(()=> 'plain');
@@ -705,27 +707,27 @@ function alive(owner){ return Object.values(state.units).filter(u=>u.owner===own
 
 function moveTargets(u){
   // 4方向BFS。空きマス、または融合可能な味方マスを終点に許可
-  const seen={}, res=[], fuse=[];
+  // 戦術v3(2026-10-28): 深い海・溶岩は2歩(moveCost)。歩数の少ない順に広げる
+  const seen={}, res=[], fuse=[], fz=new Set();
   const start=u.r+','+u.c; seen[start]=0;
-  let frontier=[[u.r,u.c]]; const maxd=effMove(u);
-  while(frontier.length){
-    const nf=[];
-    for(const [r,c] of frontier){
-      const d=seen[r+','+c];
-      if(d>=maxd) continue;
-      for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){
-        const rr=r+dr, cc=c+dc; if(rr<0||cc<0||rr>=N||cc>=N)continue;
-        const k=rr+','+cc; if(k in seen)continue;
-        if(u.dug>0 && (state.terrain[rr][cc]==='sea'||state.terrain[rr][cc]==='lava')) continue;   // 潜行中は海・溶岩を潜って越えられない
-        const occ=unitAt(rr,cc);
-        if(occ){
-          if(occ.owner===u.owner && (fusionResult(u,occ)!=null || tripleResult(u,occ))){ fuse.push([rr,cc]); }
-          continue; // 占有マスは通過不可・終点不可(融合除く)
-        }
-        seen[k]=d+1; res.push([rr,cc]); nf.push([rr,cc]);
+  const q=[[0,u.r,u.c]]; const maxd=effMove(u);
+  while(q.length){
+    let bi=0; for(let i=1;i<q.length;i++) if(q[i][0]<q[bi][0]) bi=i; const [d,r,c]=q.splice(bi,1)[0];
+    if(d>seen[r+','+c] || d>=maxd) continue;
+    for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const rr=r+dr, cc=c+dc; if(rr<0||cc<0||rr>=N||cc>=N)continue;
+      const k=rr+','+cc; if(k===start) continue;
+      if(u.dug>0 && (state.terrain[rr][cc]==='sea'||state.terrain[rr][cc]==='lava')) continue;   // 潜行中は海・溶岩を潜って越えられない
+      const nd=d+moveCost(u,rr,cc); if(nd>maxd) continue;
+      const occ=unitAt(rr,cc);
+      if(occ){
+        if(occ.owner===u.owner && !fz.has(k) && (fusionResult(u,occ)!=null || tripleResult(u,occ))){ fz.add(k); fuse.push([rr,cc]); }
+        continue; // 占有マスは通過不可・終点不可(融合除く)
       }
+      if(k in seen && seen[k]<=nd) continue;
+      if(!(k in seen)) res.push([rr,cc]);
+      seen[k]=nd; q.push([nd,rr,cc]);
     }
-    frontier=nf;
   }
   return {move:res, fuse};
 }
@@ -737,8 +739,12 @@ function fusionResult(a,b){
   if(!fuseWindow(a.owner)) return null;
   if(!(a.evo||b.evo) && !fuseRelaxed(a.owner)) return null;   // 少なくとも片方は戦闘中に進化したLv2(味方が倒されていれば不要)
   if(V2ON() && !isEvoCell(b.r,b.c)) return null;   // 2026-10-28: 融合は中央のマス(進化のマス)だけ
-  return fusePair(a.mid,b.mid);   // 2段目か3段目どうし・決まった組(recipe)だけ(所持は不要)
+  const fid=fusePair(a.mid,b.mid);   // 2段目か3段目どうし・決まった組(recipe)だけ
+  if(fid!=null && !fuseKnownOk(a.owner, fid)) return null;   // 2026-10-28: 自分は覚えた融合の仕方だけ(player.fusionKnown)
+  return fid;
 }
+// 2026-10-28 オーナー「融合の仕方を覚える」: player.fusionKnown(融合体idの配列)を渡した時、自分の子はその融合だけ。渡さない(CPU対戦など)=全部・敵(AI)は今まで通り
+function fuseKnownOk(owner, fid){ return owner!==0 || ONLINE || !BT.fuseKnown || BT.fuseKnown.has(+fid); }
 function attackTargets(u, range){
   if(V2ON()) return attackTargetsV2(u, (range&&typeof range==='object')?range:null);   // 技 v2: 2つめは技
   if(!canAttack(u)) return [];
@@ -929,8 +935,9 @@ function doSupport(u, mv, tgt, cell){
   if(!supportReady(u,mv)){ if(u.owner===0) toast('その技は使えない'); return false; }
   const e=mv.effect||{}; const nm=mon(u).name; let msg='';
   if(mv.category==='heal' && e.heal){ const cs=supportTargets(u,mv); const list = mv.target==='ally_all' ? cs : [ (tgt&&cs.includes(tgt))?tgt:cs.slice().sort((a,b)=>(a.hp/a.maxhp)-(b.hp/b.maxhp))[0] ];
-    const hx=terrFx(mon(u), state.terrain[u.r][u.c], 'heal')?TERR_FX.heal:1;   // 光: 遺跡で回復の技+50%
+    const hx=(terrFx(mon(u), state.terrain[u.r][u.c], 'heal')?TERR_FX.heal:1)*(behindOf(u.owner)?TACT.behind.healX:1);   // 光: 遺跡で回復の技+50%・戦術v3: 背水は+30%
     let tot=0; for(const a of list){ if(!a) continue; const h=Math.min(a.maxhp-a.hp, Math.min((e.cap||9999)*hx, Math.round(a.maxhp*e.heal*sustainX()*hx))); if(h>0){ a.hp+=h; tot+=h; healFx(a.r,a.c); floatText(a.r,a.c,`+${h}`,'#7be0a0'); } }
+    if(tot>0 && T3()) addGauge(u, TACT.healGauge);   // 戦術v3: 回復役も闘気(進化・覚醒にとどく)
     msg=`${nm}の「${mvName(mv)}」 ${IC('heal')}+${tot}`; }
   else if(mv.category==='heal' && e.regen){ u.regen={x:e.regen.x, n:e.regen.turns}; healFx(u.r,u.c); msg=`${nm}の「${mvName(mv)}」`; }
   else if(mv.category==='cure'){ const L=e.cure||[]; const c=supportTargets(u,mv); const t=(tgt&&c.includes(tgt))?tgt:c[0]; for(const k of L) t[k]=0; healFx(t.r,t.c); floatText(t.r,t.c,IC('cure')+'浄化','#bfffe0'); msg=`${nm}の「${mvName(mv)}」→ ${mon(t).name}`; }
@@ -1226,6 +1233,7 @@ function tryFusion(a, b, r, c){
     if(A.level<2||B.level<2||A.role==='fusion'||B.role==='fusion') toast('融合は2段目か3段目どうし');
     else if(V2ON() && !isEvoCell(b.r,b.c)) toast('融合は中央のマスで');
     else if(fusePair(a.mid,b.mid)==null) toast(`${A.name}と${B.name}の組み合わせでは融合できない`);
+    else if(!fuseKnownOk(a.owner, fusePair(a.mid,b.mid))) toast('融合の仕方を覚えていない');
     else if(!(a.evo||b.evo)) toast('どちらかが戦闘中に進化したLv2なら融合できる');
     else toast(`${A.name}と${B.name}は融合できない`);
     return;
@@ -1297,7 +1305,7 @@ function evolveUnit(u, free){
   const m=mon(u); if(m.evolves_to==null) return false;
   // 進化先を集めていないと進化できない（ガチャで収集。オンラインのみ無制限）
   if(!ONLINE && !canEverEvolve(u.owner, u.mid, !!u.isBoss) && (u.owner===0 || !free)){
-    if(!free) toast(`進化先「${MID[m.evolves_to].name}」が未所持`);
+    if(!free) toast(`「${MID[m.evolves_to].name}」の進化の仕方を覚えていない`);
     return false;
   }
   if(!free){
@@ -1307,10 +1315,13 @@ function evolveUnit(u, free){
     u.g=0;
   }
   const dmgTaken = u.maxhp - u.hp;           // 受けたダメージは進化後も維持
+  const clutch = T3() && (behindOf(u.owner) || u.hp/u.maxhp<=TACT.behind.selfHp);   // 戦術v3: 土壇場進化(背水か その子の体力が半分以下)
   const mv0 = V2ON() ? movesV2(u).map(x=>x.id) : null;
   u.mid=m.evolves_to; const nm=mon(u);
   u.maxhp=Math.max(1,Math.round(nm.hp*(u.hx||1))); u.hp=Math.max(1, u.maxhp - dmgTaken);
-  { const T=BT.tune||TUNE; const h=Math.min(u.maxhp-u.hp, Math.round(u.maxhp*T.evoHeal)); if(h>0){ u.hp+=h; floatText(u.r,u.c,'+'+h,'#7ee08a'); } }   // 進化で体力が少し戻る
+  { const T=BT.tune||TUNE; const h=Math.min(u.maxhp-u.hp, Math.round(u.maxhp*(clutch?TACT.behind.evoHeal:T.evoHeal))); if(h>0){ u.hp+=h; floatText(u.r,u.c,'+'+h,'#7ee08a'); } }   // 進化で体力が少し戻る(土壇場は45%)
+  if(clutch){ setBuf(u,'buf',{stat:'atk', x:TACT.behind.evoAtk, turns:TACT.behind.evoTurns},false); if(state.stats){ const s=state.stats.clutch||(state.stats.clutch=[0,0]); s[u.owner]++; }
+    if(!BT.headless){ floatText(u.r,u.c,IC('clutch')+'土壇場','#ff9a60','tag'); showBanner(`${IC('clutch')}土壇場進化！`); } }
   (state.stats.ev||(state.stats.ev=[])).push({k:'evo', o:u.owner, sh:hpShare(u.owner), t:state.turn});   // 上限だけ上がる（全快しない）。world_v2: 成長ランク・リーダー・敵の強さの倍率(hx)は継ぐ
   clearAllStatus(u);                         // 進化すると状態異常は治る
   u.evo=true;                                // 戦闘中に進化した印(融合の条件)
@@ -1354,6 +1365,7 @@ function startTurn(side){
   }
   for(const u of alive(side).slice()){ applyStatusTick(u); }   // 状態異常の解決（撃破あり得る）
   springTick(side);   // 回復の泉
+  if(T3()){ const tot=Object.values(state.units).reduce((a,x)=>a+Math.max(0,x.hp),0)+Object.keys(state.units).length*1e6; state.idle=(state._idleHp===tot)?(state.idle||0)+1:0; state._idleHp=tot; }   // 戦術v3: 体力が動かない手番の数
   if(V2ON()) for(const u of alive(side)) if(isEvoCell(u.r,u.c) && !(u.dug>0)) addGauge(u, CENTER.tick);   // 中央のマスにいると闘気+
   ancCheck();         // 古代テリオンの目覚め(毒などで体力ゲージが減った時)
   refreshEvoArea();
@@ -1426,6 +1438,7 @@ function setOwned(pl, en){ const own=new Set();
   for(const id of (pl.owned||[])) own.add(+id);
   for(const p of BT.party) own.add(p.mid); for(const k in (pl.box||{})) own.add(+k);
   STORY.owned=[...own];
+  BT.fuseKnown=Array.isArray(pl.fusionKnown)?new Set(pl.fusionKnown.map(Number)):null;   // 2026-10-28 覚えた融合の仕方(なし=全部)
   const eo=new Set((en.owned||[]).map(Number)); const pa=(en.party||en)||[];
   for(const e of (Array.isArray(pa)?pa:[])){ if(e && typeof e==='object' && e.evo){ let m=MID[+e.mid], g=0; while(m && m.evolves_to!=null && g++<4){ eo.add(m.evolves_to); m=MID[m.evolves_to]; } } }
   BT.enemyOwned=eo; }
@@ -1485,7 +1498,7 @@ function aiStrikeV2(u){ if(!state.units[u.uid] || u.acted || u.dug>0) return fal
 function aiSupportV2(u){ if(!V2.ai.support || u.acted || u.dug>0) return false; const ms=movesV2(u).filter(mv=>!isOffense(mv) && supportReady(u,mv)); if(!ms.length) return false;
   const rev=ms.find(mv=>mv.category==='revive'); if(rev) return doSupport(u,rev);
   const hl=ms.filter(mv=>mv.category==='heal' && mv.effect && mv.effect.heal);
-  if(hl.length){ const R=Math.max(...hl.map(mv=>mv.range[1])); const w=alive(u.owner).filter(a=>cheby(a,u)<=R && a.hp<a.maxhp*0.55);
+  if(hl.length){ const R=Math.max(...hl.map(mv=>mv.range[1])); const thr=behindOf(u.owner)?(TACT.ai.healBehind||0.7):0.55; const w=alive(u.owner).filter(a=>cheby(a,u)<=R && (a.hp<a.maxhp*thr || (T3() && a.leader && a.hp<a.maxhp*TACT.ai.healLeader)));   // 戦術v3: 背水はもっと早めに・リーダーは75%で
     if(w.length){ const all=hl.find(mv=>mv.target==='ally_all'), one=hl.find(mv=>mv.target!=='ally_all'); const pick=(w.length>=2&&all)?all:(one||all); if(pick) return doSupport(u,pick); } }
   const cu=ms.find(mv=>mv.category==='cure'); if(cu && supportTargets(u,cu).some(a=>a.freeze>0||a.para>0||a.hp<a.maxhp*0.7)) return doSupport(u,cu);
   return false; }
@@ -1525,7 +1538,8 @@ function aiBestMove(u){
   // 2026-10-25: 1体だけの側(野生の1対1・最後の1体)は引きこもると時間切れ＝決着しないので、敵への引き寄せを強く・敵の射程を恐れる重みを弱くする
   // (旧: 引き寄せ12/マス・リーダーの脅威回避0.7〜1.1 → 川(地形-36)や相手の射程(-23前後)を越えられず、7x7で両軍が4行離れたまま一度も攻撃せず終わっていた)
   const lone = alive(me).length===1;
-  const pullW = u.anc ? 30 : (lone ? 40 : 12);   // 古代テリオンは子分がいても前に出る
+  const idle = T3() ? Math.min(4, state.idle||0) : 0;   // 戦術v3: だれも当たらない手番が続いたら前へ(川・かげでにらみ合いのまま時間切れにしない)
+  const pullW = (u.anc ? 30 : (lone ? 40 : 12))*(1+idle*0.5);   // 古代テリオンは子分がいても前に出る
   let best=null, bs=-1e9; const cand=[];
   for(const [r,c] of cells){
     let sc=0;
@@ -1538,7 +1552,8 @@ function aiBestMove(u){
     if(V2ON() && isEvoCell(r,c)) sc+=(mode==='fuse'?400:25);   // 中央をとりあう
     if(mode==='fuse' && goal && man(r,c,goal.r,goal.c)===1) sc+=160;
     sc+=terrBonusM(mon(u), terrAt(r,c))*120;
-    const th=threat(r,c);
+    if(T3()){ if(TACT.cover.terr.includes(terrAt(r,c))) sc+=TACT.ai.cover*(u.leader?2:1); sc+=aiFormationScore(u,r,c); }   // 戦術v3: かげ・合体の陣形
+    const th=threat(r,c)*(idle?Math.max(0.25,1-idle*0.25):1);
     const push = u.leader && !u.anc && shPush(me);   // 人の3段目: 押している/長引いたらリーダーも前へ(STAGE_HUMAN.push)
     sc-=th*(u.anc?0.15:(u.leader?(lone?(me===0?0.7:0.2):(push?(hpR<0.35?0.6:0.25):(hpR<0.6?1.1:0.7))):(hpR<0.35?0.35:0.08)));   // 1体だけ: 自軍は相手の射程の外で待てる時は待つ(先手を取る)・敵(野生)は気にせず詰める。古代テリオンは恐れない
     if(u.leader && !u.anc && !push && mode!=='evo' && alive(me).length>1){ const back=START_ROWS[me][0]; sc-=Math.max(0, (me===0?(back-r):(r-back))-2)*70; }   // リーダーは前に出すぎない(進化に向かう時を除く・古代テリオンは除く)
@@ -1556,8 +1571,9 @@ function aiOneUnit(u){
   // ボス専用攻撃(ニドグラ/ラグナディオ/完全体)を最優先で試す
   if(BOSS_SPECIALS[u.mid]){ if(bossSpecialTurn(u)){ return; } }
   // 合体攻撃: トリオが揃い射程内に敵がいれば放つ
-  if(comboFor(u) && alive(foe).some(e=>e.dug<=0 && cheby(e,u)<=4)){ if(doCombo(u)) return; }
+  if(!T3() && comboFor(u) && alive(foe).some(e=>e.dug<=0 && cheby(e,u)<=4)){ if(doCombo(u)) return; }
   if(canEvolveHere(u) && aiCanEvo(u)) evolveUnit(u,false); else if(canAwaken(u)) doAwaken(u);
+  if(T3()){ const cp=aiComboPlan(u); if(cp){ doComboV3(u, cp.c, cp.t); return; } }   // 戦術v3: シリーズの合体攻撃(動く前)
   // 融合: 届く/隣のLv2と組めるなら融合してから攻撃
   const fz=aiFuseCell(u);
   if(fz){ moveUnit(u,fz[0],fz[1]); const nu=unitAt(fz[0],fz[1]); if(nu && nu.owner===me && state.phase!=='end') aiStrike(nu); return; }
@@ -1574,6 +1590,7 @@ function aiOneUnit(u){
   if(best && (best[0]!==u.r || best[1]!==u.c)){ moveUnit(u,best[0],best[1]); }
   const u2=state.units[u.uid]; if(!u2 || state.phase==='end') return;
   if(canEvolveHere(u2) && aiCanEvo(u2)) evolveUnit(u2,false); else if(canAwaken(u2)) doAwaken(u2);
+  if(T3()){ const cp=aiComboPlan(u2); if(cp){ doComboV3(u2, cp.c, cp.t); return; } }   // 戦術v3: 動いた後に仲間がそろえば合体
   aiStrike(u2);
 }
 
@@ -1664,13 +1681,13 @@ function tagTex(text,kind){ const k=text+'|'+kind; if(_tagTex[k]) return _tagTex
   const ok=draw(); const tex=_tagTex[k]=new THREE.CanvasTexture(cv);
   if(!ok){ const f=()=>{ if(!draw()) _icWait.push(f); tex.needsUpdate=true; }; _icWait.push(f); let n=0; const rt=()=>{ if(draw()){ tex.needsUpdate=true; return; } if(++n<10) setTimeout(rt,300); }; setTimeout(rt,300); }   // アイコンが読めたら描き直す(読み終わりの知らせを取りこぼした時も 0.3秒おきに)
   return tex; }
-function addTag(r,c,text,kind,h){ const m=new THREE.SpriteMaterial({map:tagTex(text,kind),transparent:true,depthTest:false,depthWrite:false}); m.toneMapped=false; const sp=new THREE.Sprite(m);
-  sp.scale.set(1.6,0.45,1); sp.position.copy(cell2world(r,c)); sp.position.y=cellH(r,c)+(h||1.95); sp.position.set(sp.position.x,sp.position.y,sp.position.z); const w=cell2world(r,c); sp.position.x=w.x; sp.position.z=w.z; sp.renderOrder=45; fxGroup.add(sp); hlMeshes.push(sp); }
+function addTag(r,c,text,kind,h,sx){ const m=new THREE.SpriteMaterial({map:tagTex(text,kind),transparent:true,depthTest:false,depthWrite:false}); m.toneMapped=false; const sp=new THREE.Sprite(m);
+  sx=sx||1; sp.scale.set(1.6*sx,0.45*sx,1); sp.position.copy(cell2world(r,c)); sp.position.y=cellH(r,c)+(h||1.95); sp.position.set(sp.position.x,sp.position.y,sp.position.z); const w=cell2world(r,c); sp.position.x=w.x; sp.position.z=w.z; sp.renderOrder=45; fxGroup.add(sp); hlMeshes.push(sp); }
 function affinityOf(a,d){ const ma=mon(a), md=mon(d); return typeBonusM(ma,md)>0?'weak':(typePenaltyM(ma,md)<0?'res':''); }
 // 技 v2(2026-10-27 オーナー「相性と地形を重視」): 当てる前に、相手の頭の上に 弱点/いまひとつ/地形+ のアイコンと だいたいのダメージ
 function previewTag(u, e, mv){ const ally=e.owner===u.owner; let d=0; if(mv.power>0){ d=calcDamage(u,e,mv)*((mv.effect&&mv.effect.hits)||1); if(ally) d*=(mv.ff||V2.FF); }
   const adv=!ally && typeBonusT(mv.type,mon(e))>0, res=!ally && typePenaltyT(mv.type,mon(e))<0, tup=terrBonusM(mon(u),state.terrain[u.r][u.c])>0, tdn=terrBonusM(mon(u),state.terrain[u.r][u.c])<0;
-  const et=state.terrain[e.r][e.c]; const gd=!ally && terrFx(mon(e),et,'guard'), ev=!ally && mv.target!=='map' && terrFx(mon(e),et,'evade');
+  const et=state.terrain[e.r][e.c]; const gd=!ally && terrFx(mon(e),et,'guard'), ev=!ally && mv.target!=='map' && (terrFx(mon(e),et,'evade') || coverOn(u,e,mv));   // 戦術v3: かげ(森・遺跡・2マス以上)
   let t=(adv?IC('weak')+'弱点':res?IC('resist')+'いまひとつ':'')+(tup?IC('terrain'):'')+(tdn?'地形−':'')+(gd?'守り':'')+(ev?'かげ':''); if(d>0) t+=(t?' ':'')+'-'+Math.round(d); if(!t) return null;
   return {text:t, kind:adv?'weak':(res||ally||tdn)?'res':'', kill:!ally && d>=e.hp}; }
 function addAffTags(list, mv){ if(!sel) return;
@@ -1706,7 +1723,7 @@ function vPixTex(pal, rx, ry){   // 旧ピクセル→筆致のある塗り(シ�
 }
 // ==== [template 3833-3889] カットイン ====
 // ======================= カットイン(技・進化・融合の瞬間だけ・1〜1.5秒・タップで飛ばす) =======================
-const CUTIN_MS={atk:1100, evo:1400, fuse:1500, sp:2000};
+const CUTIN_MS={atk:1100, evo:1400, fuse:1500, sp:2000, combo:1800};   // combo=戦術v3 合体攻撃
 const _ci={on:false, timer:0, q:[], after:[]};
 function cutinOn(){ try{ return localStorage.getItem('ms3d_cutin')!=='off'; }catch(e){ return true; } }
 function cutinToggle(){ try{ localStorage.setItem('ms3d_cutin', cutinOn()?'off':'on'); }catch(e){} updateUI(); }
@@ -1770,6 +1787,7 @@ function _cutinShowNow(kind, o, use3d){
     const pp=el.querySelector('.ciParts'); let h=''; for(let i=0;i<26;i++){ const a=Math.random()*6.283, d=28+Math.random()*30; h+=`<i style="--x:${(Math.cos(a)*d).toFixed(1)}vmax;--y:${(Math.sin(a)*d).toFixed(1)}vmax;--d:${(0.15+Math.random()*0.9).toFixed(2)}s;${i%3?'':'background:#fff;'}"></i>`; } pp.innerHTML=h; }
   else if(kind==='evo'){ ciSrc(q('.ciA'),o.from); ciSrc(q('.ciB'),o.to); q('.ciTxt').textContent='進化！'; q('.ciSub').textContent=`${(MID[o.from]||{}).name||''} → ${(MID[o.to]||{}).name||''}`; }
   else if(kind==='fuse'){ ciSrc(q('.ciA'),o.a); ciSrc(q('.ciB'),o.b); ciSrc(q('.ciC'),o.to); q('.ciTxt').textContent='融合！'; q('.ciSub').textContent=(MID[o.to]||{}).name||''; }
+  else if(kind==='combo'){ const ids=o.ids||[]; el.classList.add(ids.length>=3?'n3':'n2'); ciSrc(q('.ciA'),ids[0]); if(ids[1]!=null) ciSrc(q('.ciB'),ids[1]); if(ids[2]!=null) ciSrc(q('.ciC'),ids[2]); q('.ciTxt').textContent=o.n||'合体'; q('.ciSub').textContent=o.sub||''; }   // 戦術v3: 合体攻撃(参加した子が並ぶ・2D)
   // (クラスはアニメーションを毎回最初からにするため、上で付け直し済み)
   _ci.on=true; clearTimeout(_ci.timer); _ci.timer=setTimeout(_cutinEnd, ((CUTIN_MS[kind]||1200)+(o.fz?400:0))/SPD());
   window._cutinLog=(window._cutinLog||0)+1; window._cutinLast=kind;
@@ -1786,7 +1804,7 @@ function _cutinEnd(){
 // 文字(技名・名前)・白い閃光・粒は今までどおり DOM(上に乗る)。モデルは体ごとに1回だけ複製して使い回す(最大12体)。読めなかった時だけ 2D の絵。
 const CI3={on:false, sc:null, cam:null, U:null, inst:new Map(), cur:null, last:0, warm:false, keep:12};
 function ci3Ok(mid){ return RENDER3D && !window._CI3_OFF && M3D.has(mid); }
-function ci3Ids(kind,o){ return kind==='evo'?[o.from,o.to]:kind==='fuse'?[o.a,o.b,o.c,o.to].filter(x=>x!=null):[o.mid]; }
+function ci3Ids(kind,o){ if(kind==='combo') return []; return kind==='evo'?[o.from,o.to]:kind==='fuse'?[o.a,o.b,o.c,o.to].filter(x=>x!=null):[o.mid]; }
 const CI3_VS='void main(){ gl_Position=vec4(position.xy,0.9999,1.0); }';
 const CI3_FS=`uniform vec2 uRes, uCen, uFoc; uniform float uHalf, uPx, uTan, uT, uA, uDim, uSp, uFz, uRay, uRot, uLine; uniform vec3 uC1, uC2;
 float h1(float n){ return fract(sin(n)*43758.5453); }
@@ -3608,6 +3626,8 @@ function handlePick(sc, tc){
     return;
   }
 
+  if(sel && selMode==='combo'){ const a1=sc||tc, a2=tc||sc; if((a1&&comboTapTarget(a1[0],a1[1])) || (a2&&a2!==a1&&comboTapTarget(a2[0],a2[1]))) return;   // 戦術v3: 合体攻撃の相手をタップ
+    const t=sc||tc; const u=t&&unitAt(t[0],t[1]); if(u&&u.owner===0&&u.uid!==sel.uid){ selectUnit(u); return; } return; }
   // 移動モード：地面セル優先（背の高い駒の手前マスもちゃんと押せる）
   if(sel && selMode==='move'){
     const t = tc || sc;
@@ -3624,7 +3644,7 @@ function handlePick(sc, tc){
       }
       const u=unitAt(t[0],t[1]);
       if(u&&u.owner===0&&u.uid!==sel.uid){
-        if(fusionResult(sel,u)==null) toast(`${mon(sel).name}と${mon(u).name}は融合の組合せじゃない`);
+        if(fusionResult(sel,u)==null){ const fp=fusePair(sel.mid,u.mid); toast(fp!=null&&!fuseKnownOk(0,fp)?'融合の仕方を覚えていない':`${mon(sel).name}と${mon(u).name}は融合の組合せじゃない`); }
         selectUnit(u); return;
       }
       if(u&&u.owner!==0){ showMonsterDetail(u.mid, u); return; }   // 射程外の敵=モンスター情報
@@ -3693,7 +3713,7 @@ function v2Tap(r,c){ if(!V2ON()||!sel||!selMove) return false; const mv=selMove;
   if(r===sel.r&&c===sel.c && noAimMove(mv)) return useSelMoveV2();
   return false; }
 function setSelGhost(uid){ for(const k in sprites){ const s=sprites[k]; const o=(+k===uid)?0.55:1; if(s.mat.opacity!==o) s.mat.opacity=o; } }
-function selectUnit(u){ sel=u; BT.tileInfo=null; selMove=pickSelMove(u); selAim=null; if(V2ON()&&selMove&&selMove.target==='map'){ const b=aiMapBest(u,selMove); selAim=b?b.aim:null; } recompute(); selMode = canMove(u)?'move':'attack'; setSelGhost(u.uid); drawSelHL(); updateUI(); }
+function selectUnit(u){ sel=u; BT.tileInfo=null; selCombo=null; selMove=pickSelMove(u); selAim=null; if(V2ON()&&selMove&&selMove.target==='map'){ const b=aiMapBest(u,selMove); selAim=b?b.aim:null; } recompute(); selMode = canMove(u)?'move':'attack'; setSelGhost(u.uid); drawSelHL(); updateUI(); }
 function setMode(mode){
   if(!sel) return;
   if(mode==='evolve'){ pushUndo(); if(evolveUnit(sel,false)) reselectAfter(); else undoStack.pop(); return; }
@@ -3710,6 +3730,7 @@ function drawSelHL(){
   addHL(sel.r,sel.c,0xffe089,0.5);
   if(gaugeReady(sel) && aiCanEvo(sel) && !sel.acted) for(const [r,c] of EVO_CELLS){ if(!(r===sel.r&&c===sel.c)) addHL(r,c,0xffd24a,0.6); }   // 進化エリア
   if(selMode==='move' && selMoves && sel.hp<sel.maxhp) for(const [r,c] of HEAL_CELLS[sel.owner]){ if(selMoves.move.some(p=>p[0]===r&&p[1]===c)) addHL(r,c,0x50f0b0,0.7); }   // 届く回復の泉
+  if(selMode==='combo' && selCombo){ drawComboHL(); return; }   // 戦術v3: 合体攻撃のねらい
   if(V2ON()){ drawSelHLV2(); return; }
   const aoe = effMulti(sel) || isAreaTerrain(sel);
   const drawAtk=(strong)=>{
@@ -3750,7 +3771,7 @@ function drawSelHLV2(){
   if(mv.category==='heal'||mv.category==='cure'){ const R=mv.range[1]; for(const a of alive(sel.owner)) if(cheby(a,sel)<=R) addHL(a.r,a.c, supportTargets(sel,mv).includes(a)?0x50f090:0x2a6050, supportTargets(sel,mv).includes(a)?0.6:0.25); return; }
   if(mv.category==='revive'){ const cl=freeCastleCell(sel.owner); if(cl) addHL(cl[0],cl[1],0xffe6a0,0.6); return; }
   if(mv.target==='ally_all'){ for(const a of alive(sel.owner)) if(cheby(a,sel)<=mv.range[1]) addHL(a.r,a.c,0xffe680,0.45); } }
-function clearSel(){ sel=null; selMode='none'; selMoves=null; selAtks=null; selMove=null; setSelGhost(null); clearHL(); syncUnits(); updateUI(); }
+function clearSel(){ sel=null; selMode='none'; selMoves=null; selAtks=null; selMove=null; selCombo=null; setSelGhost(null); clearHL(); syncUnits(); updateUI(); }
 
 // ---- 待った（1手戻す）----
 let undoStack=[];
@@ -3800,7 +3821,7 @@ function updateUI(){ if(BT.headless) return;
   if(state.phase==='battle'||state.phase==='place'){
     const lm=(o)=>{ const L=leaderOf(o); let p=L?Math.round(100*Math.max(0,L.hp)/L.maxhp):0; let col=o===0?'#4f8bff':'#ff5a48', tail='';
       if(o===1 && L && L.anc && BT.anc){ const n=BT.anc.T.phases, per=L.maxhp/n, ph=Math.max(1,Math.ceil(Math.max(0,L.hp)/per-1e-9)); p=Math.round(100*Math.max(0,L.hp-(ph-1)*per)/per); col=['#ff5a48','#ff9a30','#c050ff'][Math.min(2,n-ph)]; tail=`<b>×${ph}</b>`; }   // 古代テリオン: 体力ゲージ×本数
-      return `<span class="meter ${o?'foe':''}">${LMK()}<span class="track"><i style="width:${p}%;background:${col}"></i></span>${tail}</span>`; };
+      return `<span class="meter ${o?'foe':''}">${LMK()}<span class="track"><i style="width:${p}%;background:${col}"></i></span>${tail}${state.phase==='battle'&&behindOf(o)?icTag('clutch'):''}</span>`; };   // 戦術v3: 背水のアイコン
     const am=autoMode();
     const autoB = BT.autoButton!==false && state.phase==='battle' ? `<button class="tbb ${am?'on':''}" data-m="cycleAuto">${am===2?'オート×2':am?'オート':'手動'}</button>` : '';
     tb.innerHTML = (state.phase==='battle'
@@ -3840,12 +3861,16 @@ function updateUI(){ if(BT.headless) return;
     sd.innerHTML = `<img src="${IMG[sel.mid]}"><div><b style="color:#ffd86b">${sel.leader?LMK():''}${m.name}</b>${terrChip(sel)} <span class="muted">${m.type}・${DAN[m.level]}・${rkStr(sel)}</span> ${mpStr} ${gStr}<br>`
       +`<span class="muted">HP ${sel.hp}/${sel.maxhp}・ATK ${m.atk}・防御-${Math.round(defReduction(sel)*100)}%・移動 ${effMove(sel)}・射程 ${R}${R>m.atk_range?'↑':''}</span>`
       +(note?`<br><span style="color:#7be0a0;font-size:11px">${note}</span>`:'')+`</div>`;
-    if(V2ON()) sd.innerHTML = `<img src="${IMG[sel.mid]}"><div><b style="color:#ffd86b">${sel.leader?LMK():''}${m.name}</b>${terrChip(sel)} <span class="muted">${typeBadges(m)}・${DAN[m.level]}・${rkStr(sel)}</span> ${gStr}<br>`
+    if(V2ON()) sd.innerHTML = `<img src="${IMG[sel.mid]}"><div><b style="color:#ffd86b">${sel.leader?LMK():''}${m.name}</b>${terrChip(sel)}${T3()?seriesBadges(sel.mid):''} <span class="muted">${typeBadges(m)}・${DAN[m.level]}・${rkStr(sel)}</span> ${gStr}<br>`
       +`<span class="muted">HP ${sel.hp}/${sel.maxhp}・攻撃 ${Math.round(m.atk*(sel.atkX||1))}・防御 ${Math.round((m.def||0)*rankX(sel.rank||1))}・素早さ ${Math.round(spdOf(sel))}・移動 ${effMove(sel)}</span>${statusChips(sel)}</div>`;
-    if(V2ON() && selMode==='attack'){
+    if(T3() && selMode==='combo' && selCombo){   // 戦術v3: 合体攻撃のねらい(相手をタップ)
+      const c=selCombo.c, team=comboTeam(sel,c)||[]; const row=document.createElement('div'); row.className='tinfo'; row.innerHTML=`<b>${icTag('combo')}${icTag(c._s.icon||'combo')}${escH(c.name)}</b>`+team.map(x=>`<img src="${IMG[x.mid]}" style="width:28px;height:28px;border-radius:6px;object-fit:cover;vertical-align:middle">`).join('')+`<span class="ex">${icTag('single')}${c.range}${c.area?'・'+icTag('area')+c.area:''}・闘気-${comboCost(c)}</span>`; ac.appendChild(row);
+      ac.appendChild(mkbt(IC('cancel')+'解除','',true,()=>{ selCombo=null; selMode=canMove(sel)?'move':'attack'; recompute(); drawSelHL(); updateUI(); }));
+    } else if(V2ON() && selMode==='attack'){
       if(selMove && !sel.acted && (selMove.target==='map' || noAimMove(selMove))){ const okU = selMove.target==='map' ? (moveUsable(sel,selMove) && mapUnits(sel,selMove,selAim).some(x=>x.owner!==sel.owner)) : supportReady(sel,selMove);
         ac.appendChild(mkbt(`${IC(selMove.target==='map'?'map':'atk')}${mvName(selMove)}`,'go', !!okU, ()=>{ useSelMoveV2(); })); }
       if(!sel.acted) ac.appendChild(moveMenuV2());
+      comboButtons(ac);   // 戦術v3
       appendFuseBtns();
       if(canMove(sel)) ac.appendChild(mkbt(IC('move')+'移動にもどる','',true,()=>setMode('move')));
       ac.appendChild(mkbt(IC('cancel')+'解除','',true,clearSel));
@@ -3871,8 +3896,9 @@ function updateUI(){ if(BT.headless) return;
       if(V2ON()){ const anyOk=!sel.acted && !(sel.dug>0) && movesV2(sel).some(mv=>moveReady(sel,mv));
         ac.appendChild(mkbt(`${IC('atk')}技${sel.acted?'(済)':''}`,'go', !!anyOk, ()=>setMode('attack'))); }
       else ac.appendChild(mkbt(`${IC('atk')}攻撃${sel.acted?'(済)':(outMP?'(MP切れ)':(noMP(sel)?'':`(残${atkLeft(sel)})`))}`,'go', !!atkOk, ()=>setMode('attack')));
+      comboButtons(ac);   // 戦術v3: シリーズの合体攻撃
       // 合体攻撃: 対象トリオが近くに揃っていれば発動可
-      { const cr=comboFor(sel);
+      if(!T3()){ const cr=comboFor(sel);
         if(cr){ const cb=cr.cb; const okC=canAtkMP(sel);
           const base=comboBaseAtk(cr.members);
           ac.appendChild(mkbt(`${IC('combo')}合体攻撃「${cb.label}」(射程${cb.rng}・威力${base+COMBO_BONUS_MIN}〜${base+COMBO_BONUS_MAX})${okC?'':'(MP切れ)'}`,'fuse', !!okC, ()=>{ pushUndo(); doCombo(sel); reselectAfter(); })); } }
@@ -3914,7 +3940,7 @@ function updateUI(){ if(BT.headless) return;
       if(m.evolves_to!=null){
         const nm=MID[m.evolves_to];
         let ok=true, why='';
-        if(!ONLINE && !STORY.owned.includes(m.evolves_to)){ ok=false; why='(未所持)'; }
+        if(!ONLINE && !STORY.owned.includes(m.evolves_to)){ ok=false; why='(覚えていない)'; }
         else if(sel.acted){ ok=false; why='(行動済)'; }
         else if(!gaugeReady(sel)){ ok=false; why=`(闘気${gaugeOf(sel)}/${evoNeed(sel)})`; }
         else if(!isEvoCell(sel.r,sel.c)){ ok=false; why='(進化エリアへ)'; }
@@ -3966,7 +3992,7 @@ function terrTraitHere(ty, t){ const T=TYPE_TERR[ty], fx=T.fx, o=[]; if((fx.evad
   if(ty==='雷'&&t==='sea') o.push('通電'); if(ty==='炎'&&t==='forest') o.push('燃え広がる'); if(ty==='闇'&&t==='gloom') o.push('範囲'); return o; }
 function tileInfoHTML(r,c){ const t=state.terrain[r][c]; const up=TERR_BONUS[t]||[], dn=TERR_WEAK[t]||[];
   const ups=up.map(ty=>{ const tr=terrTraitHere(ty,t); return `<span class="up">${typeBadge(ty)}+${Math.round(TERR_X*100)}%${tr.length?' '+tr.join('・'):''}</span>`; }).join('');
-  const ins = t==='forest' ? `<span class="ex">蟲 +${Math.round(TERR_X*100)}%・移動+1</span>` : '';
+  const ins = (t==='forest' ? `<span class="ex">蟲 +${Math.round(TERR_X*100)}%・移動+1</span>` : '')+(T3()&&TACT.cover.terr.includes(t)?`<span class="ex">${icTag('cover')}−${Math.round(TACT.cover.x*100)}%</span>`:'')+(T3()&&TACT.cost[t]?`<span class="dn">${IC_STEP()}${TACT.cost[t]}</span>`:'');   // 戦術v3: かげ・歩数
   return `<div class="tinfo"><b>${icTag('terrain')}${TERR_JP[t]||t}</b>${ups}${dn.length?`<span class="dn">${dn.map(typeBadge).join('')}−${Math.round(TERR_X*100)}%</span>`:''}${ins}</div>`; }
 function terrChip(u){ const tr=state.terrain[u.r][u.c], tb=terrBonusM(mon(u),tr); if(!tb) return ''; return ` <span class="tchipT ${tb>0?'up':'dn'}">${TERR_JP[tr]||tr} ${tb>0?'+':'−'}${Math.round(Math.abs(tb)*100)}%</span>`; }
 function mkbt(label,cls,enabled,fn){ const b=document.createElement('button'); b.className='bt '+(cls||''); setIc(b,label); b.disabled=!enabled; b.onclick=fn; return b; }
@@ -4056,6 +4082,7 @@ function drawPlaceHL(){
   clearHL();
   const sel0 = placePick!=null && placeList[placePick] && !placeList[placePick].placed;
   for(const [r,c] of castleArea(0)){ if(!unitAt(r,c)) addHL(r,c,0xffe23a, sel0?0.62:0.32); }   // 置けるマス=黄(選択中は濃く)
+  if(T3() && placePick!=null && placeList[placePick]) tactPlaceTags(placeList[placePick].mid);   // 戦術v3: 選んだ子の地形の数(金 +30%・灰 −30%・かげ)
   const pu = placePick!=null && placeList[placePick] && placeList[placePick].placed ? Object.values(state.units).find(x=>x.owner===0&&x._pl===placePick) : null;
   if(pu) addReticle(pu.r,pu.c,0x6ad0ff);
 }
@@ -4127,6 +4154,8 @@ function autoPlace(){   // リーダーを自陣の奥の中央に、残りは�
   const cc=CASTLE[0];
   const spots=castleArea(0).filter(([r,c])=>!unitAt(r,c)).sort((a,b)=>(Math.abs(a[0]-cc.r)+Math.abs(a[1]-cc.c)*0.9)-(Math.abs(b[0]-cc.r)+Math.abs(b[1]-cc.c)*0.9));
   let si=0;
+  if(T3()&&TACT.place!==false) placeList.forEach((p,i)=>{ if(p.placed||!fitsBudget(i)) return; const sp=tactPickSpot(p.mid,0,i===0); if(sp) placeOne(i,sp[0],sp[1]); });   // 戦術v3: リーダー=奥の行の得意な地形・ほか=前の行
+  else
   placeList.forEach((p,i)=>{ if(p.placed||si>=spots.length||!fitsBudget(i)) return; const [r,c]=spots[si++]; placeOne(i,r,c); });
   placePick=null; if(!BT.headless){ syncUnits(); drawPlaceHL(); renderPlaceRow(); }
 }
@@ -4134,7 +4163,7 @@ function beginBattle(){
   if(!placeList[0]||!placeList[0].placed) autoPlace();
   if(!BT.headless){ for(const id of ['ovPlace','ovDetail']) $id(id).style.display='none'; setBoardVisible(true); }
   state.phase='battle'; pickEnabled=true; if(!BT.headless) clearSel();
-  ensureLeaders(); BT.startedAt=(typeof performance!=='undefined'?performance.now():Date.now());
+  ensureLeaders(); firstSetup(); BT.startedAt=(typeof performance!=='undefined'?performance.now():Date.now());
   setEvoArea(V2ON()||evoNeededNow(), false);
   if(!BT.headless) setTimeout(flashGoodTerrain, 900);
   if(!BT.headless && (BT.kind==='master'||BT.kind==='ancient')) setTimeout(bossIntro, 150);   // FX2: 物語のボス・古代テリオンの登場
@@ -4147,6 +4176,187 @@ function setBoardVisible(v){ for(const g of [tileGroup,gridGroup,structGroup,dec
 // =====================================================================================
 // ここから下は world_v2 用に新しく書いたところ(template にはない)
 // =====================================================================================
+
+// =====================================================================================
+// ======================= 戦術 v3(2026-10-28 TACTICS_V3.md) =======================
+// オーナー「どのマップも単調な地形はやめよう・リーダーは有利な地形に置いて攻めのフォーメーション・回復・土壇場の進化・先行有利にしない・地味な奴でも巻き返せる・シリーズの合体攻撃」
+//   1) 盤: 鏡うつしで地形をまぜる(陣地2つ・真ん中の形・深い海と溶岩は2歩・森と遺跡はかげ)  genTactical
+//   2) 配置: 札を選ぶと黄色のマスに地形の数・おまかせ/敵はリーダーを得意な地形へ・ほかは前の行   tactPlaceScore
+//   3) 先手と後手: TACT.first  4) 背水・土壇場進化・回復の闘気  5) シリーズと合体攻撃(data/series.json)  6) TACT.bal
+// =====================================================================================
+const TACT={ on:true,
+  cost:{sea:2, lava:2},                                   // 入るのに何歩(水・氷・風は海を1歩・炎は溶岩を1歩)
+  cover:{terr:['forest','ruins'], x:0.15, minDist:2},     // かげ: 2マス以上はなれた所からの攻撃 −15%(マップの技・合体はかげなし)
+  board:{maxShare:0.7},                                   // 1つの地形は盤の70%まで
+  first:{mode:'guard+gauge', turns:1, gauge:{1:40, 2:70, 3:0}, guard:{1:0, 2:0, 3:0.5}, skip:['wild','ancient']},   // 段ごと(BT.startStage): 1段目=闘気40・2段目=闘気70(進化の手前)・3段目=最初の相手の手番だけ守り+50%   // 先手と後手(sim_tactics3.js A で決めた 2026-10-28): 後手(相手)の子は闘気40から(3段目から始まる戦いはなし=もとから後手が少し有利)。'noatk'=先手は1ターン目攻撃なし / 'guard'=後手は turns 回目の手番まで守り+guard / 'guard+gauge' / null=なし
+  behind:{share:0.45, gaugeMax:1.8, gaugeK:3.0, healX:1.3, evoHeal:0.45, evoAtk:0.2, evoTurns:2, selfHp:0.5},   // 背水・土壇場進化
+  healGauge:10,                                           // 回復の技を使った子の闘気
+  combo:{gather:2, power:100, mult2:1.15, mult3:1.35, small:{1:0.2, 2:0.1}, gauge:0, cost:{2:35, 3:25}},   // cost=参加する子それぞれが使う闘気(2体の合体/3体の合体)
+  bal:{},                                                 // タイプごとの {atk, def} の倍率(バランスのつまみ・例 {"竜":{"def":0.9}})
+  ai:{formation:10, cover:8, healLeader:0.75},
+  final:{left:8, step:0.35},
+  pve:{wild:{hp:1,atk:1}, trainer:{hp:1,atk:1}, master:{hp:0.97,atk:0.97}, ancient:{hp:0.95,atk:0.96}},   // 2026-10-28 シム(sim_champ*・sim_ancient*)で決めた   // 相手(敵)の体力・攻撃のつまみ(後手の闘気で敵が少し強くなった分を戻す・シムで決める)
+  placeW:{terr:300, cov:12, covL:40, cen:1.5, cenL:3, back:30, front:30} };   // 配置の点(地形・かげ・中央からの列の数)
+function _deepAssign(a,b){ for(const k in b){ if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==='object') _deepAssign(a[k],b[k]); else a[k]=b[k]; } return a; }
+try{ if(IS_NODE && process.env.TACT) _deepAssign(TACT, JSON.parse(process.env.TACT)); }catch(e){ console.error('TACT', e); }
+function T3(){ return TACT.on && V2ON(); }
+// ---- 盤: 鏡うつしで地形をまぜる ----
+const T3_FALLBACK={plain:['forest','ruins','wasteland','water'], forest:['water','plain','ruins'], wasteland:['ruins','plain','forest'], ruins:['wasteland','plain','forest'], snow:['forest','wasteland','plain'], gloom:['ruins','wasteland','forest'], water:['plain','forest'], sea:['plain','wasteland']};
+function genTactical(mix, o){
+  o=o||{}; mix=normMix(mix);
+  const R=(a,b)=>a+((Math.random()*(b-a+1))|0), pick=a=>a[(Math.random()*a.length)|0];
+  const keys=Object.keys(mix).sort((a,b)=>mix[b]-mix[a]);
+  const isLand=k=>k!=='sea'&&k!=='water'&&k!=='lava';
+  const land=keys.filter(isLand); const base=land[0]||'plain';
+  const t=grid(()=>base); const H=MIDR; const lock=new Set(); const K=(r,c)=>r+','+c;
+  const coast=!!(o.coast && mix.sea);
+  const mirrorPt=!coast;   // 海岸の盤は上下の折り返し(片側の縁が海のまま)・ほかは点対称(回復の泉と同じ)
+  // 1) 海岸
+  if(coast){ const left=Math.random()<0.5; const w=Math.max(1,Math.min(N<=7?1:2,Math.round(mix.sea*N*0.8)));
+    for(let r=0;r<=H;r++){ const ww=Math.max(1,Math.min(N-4,w+(r%3===0?R(-1,1):0))); for(let i=0;i<ww;i++){ const c=left?i:N-1-i; t[r][c]='sea'; lock.add(K(r,c)); } } }
+  // 2) 陣地2つ(相手の陣の奥=上。下へは折り返しで写る): その場所の地形から、得意なタイプのちがう2種類
+  const cand=keys.filter(k=>isLand(k)&&k!==base).concat(mix.water?['water']:[]).concat((T3_FALLBACK[base]||['forest','ruins'])).filter((k,i,a)=>a.indexOf(k)===i && k!==base);
+  const wpick=(list)=>{ const ws=list.map(k=>(mix[k]?2+mix[k]*4:1)); let x=Math.random()*ws.reduce((a,b)=>a+b,0); for(let i=0;i<list.length;i++){ x-=ws[i]; if(x<=0) return list[i]; } return list[0]; };   // 盤にある地形ほど選ばれやすい(毎回同じ地形の陣地にしない)
+  const p1=cand.length?wpick(cand):'forest'; const rest=cand.filter(k=>k!==p1 && (TERR_BONUS[k]||[]).join()!==(TERR_BONUS[p1]||[]).join()); const p2=rest.length?wpick(rest):(cand.find(k=>k!==p1)||'ruins');
+  const back=START_ROWS[1].slice().sort((a,b)=>a-b);   // [0] か [0,1]
+  const po=TACT.board.pocketOff||2; const pk = N<=7 ? [[0,1],[0,2]] : [[back[0],CC-po-1],[back[0],CC-po],[back[back.length-1],CC-po]];   // 陣地は中央の列から po 列はなれた所(はしに寄せすぎるとリーダーがこもって時間切れになった)
+  const pocketsL=pk, pocketsR=pk.map(([r,c])=>[r,N-1-c]);
+  const swap=Math.random()<0.5; for(const [r,c] of pocketsL){ t[r][c]=swap?p2:p1; lock.add(K(r,c)); } for(const [r,c] of pocketsR){ t[r][c]=swap?p1:p2; lock.add(K(r,c)); }
+  BT.t3pockets=[p1,p2];
+  // 3) 真ん中の形: 川(水辺か海)・林・柱・岩の帯
+  const riv=o.river||((mix.sea&&!coast)?'sea':(mix.water?'water':null));
+  const coverT=mix.forest?'forest':mix.ruins?'ruins':(T3_FALLBACK[base]||['forest'])[0];
+  const layouts=[]; if(riv) layouts.push('river','river'); layouts.push('groves','pillars','ridge');
+  const lay=pick(layouts); BT.t3layout=lay;
+  const set=(r,c,k)=>{ if(r<0||c<0||r>=N||c>=N||lock.has(K(r,c))) return; t[r][c]=k; };
+  if(lay==='river'){ for(let c=0;c<N;c++) set(H,c,riv); if((mix[riv]||0)>=0.2 && N>=9) for(let c=0;c<N;c++) if(Math.random()<0.5) set(H-1,c,riv);
+    const ford=R(0,1)?1:2; set(H,ford,base); }   // 橋 = 真ん中の十字(進化のマス)とはしの浅瀬
+  else if(lay==='groves'){ const rr=Math.max(back[back.length-1]+1,H-2); for(const c of [1,2]) for(const r of [rr,rr+1]) if(r<H) set(r,c,coverT); if(N>=9) set(H-1,CC,coverT); }
+  else if(lay==='pillars'){ const pt=mix.ruins?'ruins':(mix.wasteland?'wasteland':coverT); set(H-1,CC-2,pt); set(H-1,CC+2,pt); set(Math.max(back[back.length-1]+1,H-2),1,pt); set(H,0,pt); if(N>=11) set(H-2,CC,pt); }
+  else { const rt=mix.wasteland&&base!=='wasteland'?'wasteland':(mix.snow&&base!=='snow'?'snow':(base!=='ruins'?'ruins':'wasteland')); const gaps=new Set([CC, R(1,CC-1), R(CC+1,N-2)]); for(let c=0;c<N;c++) if(!gaps.has(c)) set(H-1,c,rt); }
+  // 4) 残りを割合どおりに塊で(上の半分と真ん中の行の左半分だけ・後で写す)
+  const inHalf=(r,c)=>r<H || (r===H && (coast || c<CC));   // 海岸の盤は真ん中の行をまるごと作る(左右の鏡にしない)
+  const cnt=k=>{ let n=0; for(let r=0;r<=H;r++) for(let c=0;c<N;c++) if(inHalf(r,c)&&t[r][c]===k) n++; return n; };
+  const half=H*N+(coast?N:CC); const want={}; for(const k of keys) want[k]=Math.round(mix[k]*half);
+  if(mix[base]>TACT.board.maxShare){ const extra=Math.round((mix[base]-TACT.board.maxShare)*half); const sec=(land[1]||(T3_FALLBACK[base]||['forest'])[0]); want[sec]=(want[sec]||0)+extra; }
+  for(const k of Object.keys(want).filter(k=>k!==base).sort((a,b)=>want[b]-want[a])){ if(coast && k==='sea') continue; if(lay==='river' && k===riv) continue; let guard=0;
+    while(cnt(k)<want[k] && guard++<50){ let r=R(0,H), c=R(0,N-1); const grow=R(2,Math.max(3,Math.round(N*0.6)));
+      for(let g=0; g<grow && cnt(k)<want[k]; g++){ if(inHalf(r,c) && t[r][c]===base && !lock.has(K(r,c))) t[r][c]=k; r=Math.max(0,Math.min(H,r+R(-1,1))); c=Math.max(0,Math.min(N-1,c+R(-1,1))); } } }
+  // ならし(上の半分の、まわりに同じ地形がない1マス)
+  for(let r=0;r<H;r++) for(let c=0;c<N;c++){ const v=t[r][c]; if(v==='sea'||v==='water'||lock.has(K(r,c))) continue; let same=0, cn={}; for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){ const rr=r+dr, cc=c+dc; if(rr<0||cc<0||rr>=N||cc>=N) continue; const w=t[rr][cc]; if(w===v) same++; cn[w]=(cn[w]||0)+1; }
+    if(!same){ let best=null,bn=0; for(const k in cn) if(k!=='sea'&&k!=='water'&&cn[k]>bn){ bn=cn[k]; best=k; } if(best&&bn>=3) t[r][c]=best; } }
+  // 5) 写す(点対称 か 上下の折り返し)。真ん中の行は左右の鏡
+  for(let r=0;r<H;r++) for(let c=0;c<N;c++){ if(mirrorPt) t[N-1-r][N-1-c]=t[r][c]; else t[N-1-r][c]=t[r][c]; }
+  if(!coast) for(let c=0;c<CC;c++) t[H][N-1-c]=t[H][c];
+  // 6) 足場: 進化のマス・回復の泉
+  const foot=isLand(base)?base:'plain'; const evoFoot=(mix.ruins||0)>=0.3?'ruins':foot;
+  for(const [r,c] of EVO_BASE) t[r][c]=evoFoot;
+  for(const s of [0,1]) for(const [r,c] of HEAL_CELLS[s]) if(!isLand(t[r][c])) t[r][c]=foot;
+  BT.base=foot;
+  return t; }
+// 本番の章テーマ(castle/mountain/coast…)は、作った盤の割合から
+function themeMix(name){ const t=genTheme(name); if(!t) return null; const f={}; for(const row of t) for(const v of row) f[v]=(f[v]||0)+1; return f; }
+// ---- 歩数・かげ ----
+function moveCost(u, r, c){ if(!T3()) return 1; const t=state.terrain[r][c]; const k=TACT.cost[t]; if(!k) return 1; const m=mon(u);
+  if(t==='sea' && (hasType(m,'水')||hasType(m,'氷')||hasType(m,'風'))) return 1; if(t==='lava' && hasType(m,'炎')) return 1; return k; }
+function coverOn(att, def, mv){ if(!T3() || !def || def.r==null || (mv&&(mv._combo||mv.target==='map'))) return false; return TACT.cover.terr.includes(state.terrain[def.r][def.c]) && cheby(att,def)>=TACT.cover.minDist; }
+function balX(m, k){ let x=1; for(const ty of monTypes(m)){ const b=TACT.bal[ty]; if(b && b[k]!=null) x*=b[k]; } return x; }
+// ---- 先手と後手(先手=自分=side0 の1ターン目) ----
+function firstNoAtk(u){ const F=TACT.first; return T3() && F.mode==='noatk' && !!state && state.phase==='battle' && u.owner===0 && state.turn<=F.turns; }
+function firstSetup(){ if(!T3()) return; const F=TACT.first, md=String(F.mode||''); if((F.skip||[]).includes(BT.kind)) return;   // 野生は飛び出してくる相手=先手のままでよい   // 'gauge' / 'guard' / 'guard+gauge'
+  if(md.includes('gauge')){ const g=(typeof F.gauge==='object')?(F.gauge[BT.startStage||1]||0):(+F.gauge||0); if(g>0) for(const u of alive(1)) u.g=Math.min(GAUGE_MAX,(u.g||0)+g); }
+  if(md.includes('guard')){ const gd=(typeof F.guard==='object')?(F.guard[BT.startStage||1]||0):(+F.guard||0); if(gd>0) for(const u of alive(1)){ (u.buf||(u.buf={})).def={x:gd, until:2*F.turns}; } } }   // 後手は turns 回目の自分の手番の始めまで 守り+
+// ---- 背水・土壇場進化 ----
+function behindOf(o){ return T3() && !!state && state.phase==='battle' && hpShare(o)<TACT.behind.share; }
+// ---- シリーズと合体攻撃(data/series.json) ----
+let SERIES=[]; const SERIES_OF={};
+function applySeries(data){ SERIES=((data&&data.series)||[]).slice(); for(const k in SERIES_OF) delete SERIES_OF[k];
+  for(const s of SERIES){ const ids=new Set(); for(const b of (s.lines||[])) for(const id of lineUpIds(+b)) ids.add(id); for(const f of (s.fusions||[])) if(MID[+f]) ids.add(+f);
+    if(Array.isArray(s.types)) for(const m of MONSTERS) if(s.types.some(ty=>hasType(m,ty))) ids.add(m.id);
+    s._ids=ids; for(const id of ids) (SERIES_OF[id]||(SERIES_OF[id]=[])).push(s); for(const c of (s.combos||[])) c._s=s; } }
+function seriesOf(mid){ return SERIES_OF[mid]||[]; }
+function lineKey(mid){ const m=MID[mid]; return (m&&m.role==='fusion')?m.id:baseFormId(mid); }
+function comboUsed(o, c){ return !!(state && state.comboUsed && state.comboUsed[o] && state.comboUsed[o][c.id]); }
+function comboOk(x){ return !!x && !x.acted && !(x.dug>0) && !x.anc && !(x.freeze>0) && !firstNoAtk(x); }
+// 合体の組(呼んだ子 u ＋ 2マス以内の同じシリーズの仲間)。need/needAny を満たす組の中で攻撃の合計がいちばん大きい物
+function comboCost(c){ const n=Math.max(2,c.n||2); return (TACT.combo.cost&&TACT.combo.cost[n>=3?3:2])||0; }
+function comboTeam(u, c){ const s=c._s; if(!s || !s._ids.has(u.mid) || !comboOk(u)) return null; const n=Math.max(2,c.n||2); const cost=comboCost(c); if(gaugeOf(u)<cost) return null;
+  const P=alive(u.owner).filter(a=>a.uid!==u.uid && comboOk(a) && s._ids.has(a.mid) && cheby(a,u)<=TACT.combo.gather && gaugeOf(a)>=cost);
+  if(P.length<n-1) return null; let best=null, bs=-1;
+  const test=(mem)=>{ const ks=mem.map(x=>lineKey(x.mid)); const used=new Set();
+    for(const nd of (c.need||[])){ const i=ks.findIndex((k,j)=>k===+nd && !used.has(j)); if(i<0) return; used.add(i); }
+    if(c.needAny){ const ids=c.needAny.ids.map(Number); if(new Set(ks.filter(k=>ids.includes(k))).size<(c.needAny.k||1)) return; }
+    const sc=mem.reduce((a,x)=>a+mon(x).atk*(x.atkX||1),0); if(sc>bs){ bs=sc; best=mem.slice(); } };
+  const rec=(st, mem)=>{ if(mem.length===n){ test(mem); return; } for(let i=st;i<P.length;i++){ mem.push(P[i]); rec(i+1,mem); mem.pop(); } };
+  rec(0,[u]); return best; }
+function comboTargets(u, c){ return alive(1-u.owner).filter(e=>!(e.dug>0) && cheby(e,u)<=c.range); }
+function comboHits(u, c, t){ if(!c.area) return [t]; return alive(1-u.owner).filter(e=>!(e.dug>0) && cheby(e,t)<=c.area); }
+function comboMult(c, team){ let m=c.mult!=null?c.mult:((c.n||2)>=3?TACT.combo.mult3:TACT.combo.mult2);
+  if(c.small!==false) for(const x of team){ const mm=mon(x); if(mm.role!=='fusion') m+=(TACT.combo.small[mm.level]||0); } return m*((TACT.combo.seriesX&&TACT.combo.seriesX[c._s.id])||1); }   // seriesX=シリーズごとのつまみ
+function comboDmg(c, team, t){ const mult=comboMult(c,team); let d=0; for(const x of team){ const mv={power:TACT.combo.power, type:mon(x).type, hit:100, effect:{pierce:(c.fx&&c.fx.pierce)||0}, _combo:true}; d+=calcDamage(x,t,mv); } return Math.max(1,Math.round(d*mult)); }
+// 今 u が呼べる合体の一覧 [{c, team, tg}]
+function comboReady(u){ if(!T3() || !u || !comboOk(u)) return []; const out=[];
+  for(const s of seriesOf(u.mid)) for(const c of (s.combos||[])){ if(comboUsed(u.owner,c)) continue; const team=comboTeam(u,c); if(!team) continue; const tg=comboTargets(u,c); if(!tg.length) continue; out.push({c, team, tg}); }
+  return out; }
+function doComboV3(u, c, t){
+  const team=comboTeam(u,c); if(!team || !t || !state.units[t.uid] || cheby(t,u)>c.range || comboUsed(u.owner,c)){ if(u.owner===0) toast('合体できない'); return false; }
+  const hits=comboHits(u,c,t); const o=u.owner, fx=c.fx||{};
+  (state.comboUsed||(state.comboUsed=[{},{}]))[o][c.id]=true;
+  const cost=comboCost(c); for(const x of team){ x.acted=true; x.moved=true; x.g=Math.max(0,gaugeOf(x)-cost); }   // 闘気を分けあって使う
+  const st=state.stats; if(st){ (st.combo||(st.combo=[0,0]))[o]++; const cb=st.comboBy||(st.comboBy={}); cb[c.name]=(cb[c.name]||0)+1; if(st.atk) st.atk[o]++; }
+  if(!BT.headless){ comboFx(u, team); const sp=u.spReady; u.spReady=false; cutin('combo',{ids:team.map(x=>x.mid), n:c.name, sub:c._s.name, owner:o, ty:mon(u).type}); attackFx(u, hits, t, {name:c.name, power:TACT.combo.power, type:mon(u).type, tier:3}); u.spReady=sp; showBanner(`${IC('combo')}${IC(c._s.icon||'combo')}${c.name}`); }
+  let dealt=0, kills=0;
+  for(const e of hits){ if(!state.units[e.uid]) continue; const dmg=comboDmg(c,team,e); e.hp-=dmg; dealt+=Math.min(dmg, dmg+Math.min(0,e.hp)); floatText(e.r,e.c,`-${dmg}`,'#ffd24a','num weak');
+    if(e.hp<=0){ const wasLeader=!!e.leader; if(killUnit(e)){ kills++; if(e.owner===1) state.killLv=(state.killLv||0)+mon(e).level; toast(`${wasLeader?'リーダーの ':''}${mon(e).name} を撃破！`); } }
+    else { addGauge(e,(e.hp<=e.maxhp/2)?GAUGE_TAKEN_LOW:GAUGE_TAKEN);
+      if(fx.ail) inflictStatusV2(u, e, {effect:{ail:fx.ail, chance:fx.chance!=null?fx.chance:0.5}});
+      if(fx.debuff){ setBuf(e,'dbf',fx.debuff,true); floatText(e.r,e.c,'弱体','#c8b0ff','tag'); }
+      if(fx.knock) knockBack(u, e, fx.knock); } }
+  if(fx.heal && dealt>0){ const share=Math.round(dealt*fx.heal*sustainX()/team.length); for(const x of team){ if(!state.units[x.uid]) continue; const h=Math.min(x.maxhp-x.hp, share); if(h>0){ x.hp+=h; healFx(x.r,x.c); floatText(x.r,x.c,`+${h}`,'#7be0a0'); } } }
+  if(fx.buff) for(const x of team){ if(state.units[x.uid]){ setBuf(x,'buf',fx.buff,false); floatText(x.r,x.c,'強化','#ffe680','tag'); } }
+  if(TACT.combo.gauge) for(const x of team) addGauge(x, TACT.combo.gauge);
+  toast(`${IC('combo')}${c.name}！ ${team.map(x=>mon(x).name).join('＋')}${hits.length>1?` 敵${hits.length}体`:''}`);
+  afterAction(); return true; }
+// AI: 合体のほうが「それぞれが攻撃する」より良い時だけ(倒せる・リーダーに大きい・まとめて当たる)
+function aiComboPlan(u){ const list=comboReady(u); if(!list.length) return null; let best=null;
+  for(const {c,team,tg} of list) for(const t of tg){ const hits=comboHits(u,c,t); let sc=0, dm=0;
+    for(const e of hits){ const d=comboDmg(c,team,e), hp=Math.max(1,e.hp); dm+=Math.min(d,hp); sc+=Math.min(d,hp)+(d>=hp?(e.leader?5000:400):0)+(e.leader?Math.min(d,hp)*0.6:0); }
+    if(c.fx&&c.fx.heal) sc+=team.reduce((a,x)=>a+Math.min(x.maxhp-x.hp, dm*c.fx.heal/team.length),0)*0.6;
+    if(!best||sc>best.sc) best={c,team,t,sc,dm}; }
+  if(!best) return null;
+  let solo=0; for(const x of best.team){ const p=aiPlanAt(x, x.moved, true); if(p && p.t){ const ev=expDmg(x,p.t,p.mv,p.mv.target==='area').ev; solo+=Math.min(ev, Math.max(1,p.t.hp))*(p.t.leader?1.6:1)+(ev>=p.t.hp?(p.t.leader?5000:400):0); } }
+  return best.sc>=solo*0.95 ? best : null; }
+// AI の移動: 同じシリーズの仲間(まだ動いていない)のそばはよい(合体の陣形)
+function aiFormationScore(u, r, c){ if(!T3()) return 0; let s=0; const ser=seriesOf(u.mid).filter(sr=>(sr.combos||[]).some(cb=>!comboUsed(u.owner,cb))); if(!ser.length) return 0;
+  for(const a of alive(u.owner)){ if(a.uid===u.uid || a.acted || !ser.some(sr=>sr._ids.has(a.mid))) continue; const d=Math.max(Math.abs(a.r-r),Math.abs(a.c-c)); if(d<=TACT.combo.gather) s+=TACT.ai.formation; }
+  return Math.min(s, TACT.ai.formation*2); }
+// 配置: リーダー=奥の行の得意な地形(＞かげ＞中央)・ほかの子=前の行・得意な地形を先に
+function tactPlaceScore(mid, r, c, owner, isLeader){ const m=MID[mid]; const tr=state.terrain[r][c]; const tb=terrBonusM(m,tr); const cov=TACT.cover.terr.includes(tr);
+  const rows=START_ROWS[owner]; const backRow=rows[0], front=rows.length>1?rows[1]:rows[0];
+  const W=TACT.placeW; let s=tb*W.terr + (cov?(isLeader?W.covL:W.cov):0) - Math.abs(c-CC)*(isLeader?W.cenL:W.cen);
+  if(terrFx(m,tr,'guard')||terrFx(m,tr,'evade')) s+=20;
+  if(isLeader) s+= r===backRow?W.back:0; else s+= r===front?W.front:0;
+  return s; }
+function tactPickSpot(mid, owner, isLeader){ let best=null, bs=-1e9; for(const [r,c] of castleArea(owner)){ if(unitAt(r,c)) continue; const s=tactPlaceScore(mid,r,c,owner,isLeader)+Math.random()*0.5; if(s>bs){ bs=s; best=[r,c]; } } return best; }
+// 配置の画面: 選んだ子の地形の数をマスに
+function tactPlaceTags(mid){ if(BT.headless||!mid) return; const m=MID[mid];
+  for(const [r,c] of castleArea(0)){ if(unitAt(r,c)) continue; const tr=state.terrain[r][c]; const tb=terrBonusM(m,tr); const cov=TACT.cover.terr.includes(tr);
+    if(tb>0) addHL(r,c,0xffc030,0.72); else if(tb<0) addHL(r,c,0x707888,0.5);
+    const txt=(tb>0?'+'+Math.round(tb*100):tb<0?'−'+Math.round(-tb*100):'')+(cov?IC('cover'):''); if(txt) addTag(r,c,txt,tb>0?'weak':'res',0.6,0.62); } }
+// 合体のハイライト(選んだ合体: 届く相手・当たる範囲・合わせたダメージ)
+let selCombo=null;
+function drawComboHL(){ if(!sel||!selCombo) return; const {c}=selCombo; const team=comboTeam(sel,c); if(!team) return;
+  for(const x of team) if(x.uid!==sel.uid) addReticle(x.r,x.c,0xffe27a);
+  for(let r=Math.max(0,sel.r-c.range);r<=Math.min(N-1,sel.r+c.range);r++) for(let cc=Math.max(0,sel.c-c.range);cc<=Math.min(N-1,sel.c+c.range);cc++) if(!(r===sel.r&&cc===sel.c)) addHL(r,cc,0xffd070,0.16);
+  for(const e of comboTargets(sel,c)){ addReticle(e.r,e.c,0xff2820); const d=comboDmg(c,team,e); const sp=sprites[e.uid]; const h=(sp&&sp.m3d?sp.m3d.h:(sp?sp.sc:1.4))+0.55;
+    const adv=team.some(x=>typeBonusT(mon(x).type,mon(e))>0); addTag(e.r,e.c,`${IC('combo')}${adv?IC('weak'):''}-${d}${d>=e.hp?' KO':''}`, 'weak', h); } }
+function comboTapTarget(r,c){ if(!sel||!selCombo) return false; const e=unitAt(r,c); if(!e||e.owner===sel.owner) return false; if(!comboTargets(sel,selCombo.c).includes(e)) return false;
+  pushUndo(); const ok=doComboV3(sel, selCombo.c, e); if(!ok) undoStack.pop(); selCombo=null; reselectAfter(); return true; }
+function comboButtons(ac){ if(!T3()||!sel||sel.owner!==0) return; for(const it of comboReady(sel)){ const c=it.c;
+  const b=mkbt(`${IC('combo')}${IC(c._s.icon||'combo')}${c.name}`, 'fuse'+(selCombo&&selCombo.c===c?' on':''), true, ()=>{ selCombo={c}; selMode='combo'; recompute(); drawSelHL(); updateUI(); }); ac.appendChild(b); } }
+function IC_STEP(){ return icTag('move'); }
+function seriesBadges(mid){ const ss=seriesOf(mid); return ss.length?' '+ss.map(s=>icTag(s.icon||'combo')).join(''):''; }
+// ======================= 戦術 v3 ここまで =======================
 
 // ---- 盤の大きさごとの決まり(decisions.md 3 / game_design.md 8-3) ----
 // leaderHpX=リーダーの体力倍率(template は2.0) / budget=出せる子のLv合計 / maxTurn=最大ターン / rows=開始の行数(自陣の最奥から) / evo=進化エリア / springs=回復の泉(片側のマス数) / items=盤の回復薬 / dmgX=ダメージの倍率(バランス用) / sustainX=光の回復量・森の吸収量の倍率(省略=1)
@@ -4201,7 +4411,7 @@ function baseBudget(){ const n=BT.kind==='wild'?Math.max(1,Math.min(BT.rules.bud
 function ancientBudget(){ return Math.max(1, BT.party.reduce((s,p)=>s+((MID[playerStartMid(p.mid)]||{}).level||1),0)); }   // 全パーティがその段で出せる
 function ancientApply(u){ const A=BT.anc, T=A.T, m=mon(u), R=ANCIENT.stageRef, s=A.pst;
   const hx=rankX(u.rank)*(R.hp[s]/R.hp[3])*T.hp, ax=rankX(u.rank)*(R.atk[s]/R.atk[3])*T.atk;
-  u.hx=hx; u.atkX=ax; u.ancAtk0=ax; u.maxhp=u.hp=Math.max(1,Math.round(m.hp*hx)); u.isBoss=true; u.anc=true; u.leader=true; }
+  const PV=(T3()&&TACT.pve.ancient)||{}; u.hx=hx*(PV.hp||1); u.atkX=ax*(PV.atk||1); u.ancAtk0=u.atkX; u.maxhp=u.hp=Math.max(1,Math.round(m.hp*u.hx)); u.isBoss=true; u.anc=true; u.leader=true; }   // 戦術v3: TACT.pve.ancient
 function ancBigCells(u){ const B=BT.anc.T.big, out=[]; for(let r=0;r<N;r++) for(let c=0;c<N;c++){ if(r===u.r&&c===u.c) continue; const dr=Math.abs(r-u.r), dc=Math.abs(c-u.c);
     const ok = B.shape==='cross' ? ((dr<=1||dc<=1) && Math.max(dr,dc)<=B.rng) : Math.max(dr,dc)<=B.rng; if(ok) out.push([r,c]); } return out; }
 function ancIsCover(r,c){ return ANCIENT.cover.includes(terrAt(r,c)); }
@@ -4424,7 +4634,8 @@ function buildGreekFar(kind, L, k, R0, gh, add, ring, rnd, S, near0, near1, mid0
 function newBattleState(){
   const s=newState();
   s.items=genItems().slice(0, BT.rules?BT.rules.items:3);
-  s.stats={evo:[0,0], fuse:[0,0], atk:[0,0], act:[0,0], spr:[0,0], sprHp:[0,0]};
+  s.stats={evo:[0,0], fuse:[0,0], atk:[0,0], act:[0,0], spr:[0,0], sprHp:[0,0], combo:[0,0], comboBy:{}, clutch:[0,0]};   // 戦術v3: 合体・土壇場進化の回数
+  s.comboUsed=[{},{}];
   return s;
 }
 
@@ -4438,14 +4649,18 @@ function setMonsters(list){
   buildFuseTables();
 }
 function init(o){
-  o=o||{}; for(const k of ['base','data','stats','moves','img','ci','models','zIndex']) if(o[k]!=null) CFG[k]=o[k];
+  o=o||{}; for(const k of ['base','data','stats','moves','series','img','ci','models','zIndex']) if(o[k]!=null) CFG[k]=o[k];
   icPreload();
-  if(o.monsters){ setMonsters(o.monsters); if(o.stats&&o.moves) applyV2Data(o.stats,o.moves); return (_loadP=Promise.resolve(true)); }
+  if(o.monsters){ setMonsters(o.monsters); if(o.stats&&o.moves) applyV2Data(o.stats,o.moves); if(o.seriesData) applySeries(o.seriesData); return (_loadP=Promise.resolve(true)); }
   if(_loadP) return _loadP;
   if(IS_NODE){ const fs=require('fs'), path=require('path'); const rd=f=>JSON.parse(fs.readFileSync(path.join(CFG.base||__dirname, f),'utf8')); setMonsters(rd(CFG.data));
-    try{ applyV2Data(rd(CFG.stats), rd(CFG.moves)); }catch(e){ V2DATA=false; } return (_loadP=Promise.resolve(true)); }
+    try{ applyV2Data(rd(CFG.stats), rd(CFG.moves)); }catch(e){ V2DATA=false; }
+    try{ applySeries(rd(CFG.series)); }catch(e){ applySeries(null); }   // 戦術v3: シリーズと合体攻撃
+    return (_loadP=Promise.resolve(true)); }
   const gj=(f)=>fetch(CFG.base+f).then(r=>{ if(!r.ok) throw new Error(f+' '+r.status); return r.json(); });
-  _loadP=gj(CFG.data).then(list=>{ setMonsters(list); return Promise.all([gj(CFG.stats),gj(CFG.moves)]).then(([st,mv])=>applyV2Data(st,mv)).catch(e=>{ console.warn('技 v2 のデータが読めない',e); V2DATA=false; }); }).then(()=>true);   // 2026-10-27 技 v2
+  _loadP=gj(CFG.data).then(list=>{ setMonsters(list); return Promise.all([gj(CFG.stats),gj(CFG.moves)]).then(([st,mv])=>applyV2Data(st,mv)).catch(e=>{ console.warn('技 v2 のデータが読めない',e); V2DATA=false; }); })
+    .then(()=>gj(CFG.series).then(applySeries).catch(e=>{ console.warn('シリーズの表が読めない',e); applySeries(null); }))   // 戦術v3
+    .then(()=>true);   // 2026-10-27 技 v2
   return _loadP;
 }
 
@@ -4640,6 +4855,14 @@ const CSS=`
 @keyframes ciFuseA{0%{opacity:1;transform:skewY(7deg) translateX(-40%)}20%{opacity:1;transform:skewY(7deg) translateX(0)}46%{opacity:1;transform:skewY(7deg) translateX(55%) scale(.8)}48%{opacity:0;transform:skewY(7deg) translateX(55%) scale(.8)}100%{opacity:0}}
 @keyframes ciFuseB{0%{opacity:1;transform:skewY(7deg) translateX(40%)}20%{opacity:1;transform:skewY(7deg) translateX(0)}46%{opacity:1;transform:skewY(7deg) translateX(-55%) scale(.8)}48%{opacity:0;transform:skewY(7deg) translateX(-55%) scale(.8)}100%{opacity:0}}
 @media (max-width:520px){ #mb-cutin.k-sp .ciA{margin-left:-46vw;height:100%} #mb-cutin.k-evo .ciA,#mb-cutin.k-evo .ciB,#mb-cutin.k-fuse .ciC{margin-left:-46vw;height:100%} #mb-cutin img{height:100%} #mb-cutin.k-fuse .ciA,#mb-cutin.k-fuse .ciB{height:78%} }
+#mb-cutin.k-combo .ciBand{background:linear-gradient(100deg,var(--c2) 0%,#b8860b 30%,#ffe27a 50%,#b8860b 70%,var(--c2) 100%)}
+#mb-cutin.k-combo .ciA{opacity:1;left:-4%;height:96%;animation:ciInL .34s cubic-bezier(.2,.9,.3,1.1) both}
+#mb-cutin.k-combo .ciB{opacity:1;right:-4%;left:auto;height:96%;animation:ciInR .34s .12s cubic-bezier(.2,.9,.3,1.1) both}
+#mb-cutin.k-combo.n3 .ciC{opacity:1;left:50%;margin-left:-24vh;height:104%;z-index:2;animation:ciEvoB 1.2s .1s ease-out both}
+#mb-cutin.k-combo.n2 .ciC{display:none}
+#mb-cutin.k-combo .ciTxt{left:50%;right:auto;transform:skewY(7deg) translateX(-50%);z-index:3;color:#fffbe8}
+#mb-cutin.k-combo .ciSub{left:50%;right:auto;transform:skewY(7deg) translateX(-50%);z-index:3}
+@media (max-width:520px){ #mb-cutin.k-combo .ciA,#mb-cutin.k-combo .ciB{height:74%} #mb-cutin.k-combo.n3 .ciC{margin-left:-34vw;height:86%} }
 #mb-cutin.m3{background:none}
 #mb-cutin.m3 .ciBand{background:none!important;box-shadow:none!important;overflow:visible}
 #mb-cutin.m3 .ciLines,#mb-cutin.m3 .ciRays,#mb-cutin.m3 img{display:none!important}
@@ -4687,7 +4910,7 @@ function spawnEnemy(){
   const lead=team.splice(li,1)[0]; if(lead) team.unshift(lead);
   const cc=CASTLE[1];
   const spots=castleArea(1).filter(([r,c])=>!unitAt(r,c)).sort((a,b)=>(Math.abs(a[0]-cc.r)+Math.abs(a[1]-cc.c)*0.9)-(Math.abs(b[0]-cc.r)+Math.abs(b[1]-cc.c)*0.9));
-  team.forEach((e,i)=>{ if(i>=spots.length) return; const [r,c]=spots[i]; const u=addUnit(1,e.mid,r,c); unitMul(u,e.rank,D.hpX,D.atkX); if(e.lv) u.lv=e.lv; u.src=[e.idx]; u.mid0=e.mid; if(i===0) u.leader=true; if(e.boss) u.isBoss=true; if(BT.anc && i===0) ancientApply(u); });   // 古代テリオンは ANCIENT の決まりで体力・攻撃を決める(ai.hpX/atkX は使わない)
+  team.forEach((e,i)=>{ if(i>=spots.length) return; const [r,c]=(T3()&&TACT.place!==false&&!BT.anc&&tactPickSpot(e.mid,1,i===0))||spots.find(([rr,cc])=>!unitAt(rr,cc))||spots[i]; const u=addUnit(1,e.mid,r,c); /* 戦術v3: 敵も同じ並べ方(古代テリオンは中央のまま) */ const PV=(T3()&&TACT.pve[BT.kind])||{}; unitMul(u,e.rank,(D.hpX||1)*(PV.hp||1),(D.atkX||1)*(PV.atk||1)); if(e.lv) u.lv=e.lv; u.src=[e.idx]; u.mid0=e.mid; if(i===0) u.leader=true; if(e.boss) u.isBoss=true; if(BT.anc && i===0) ancientApply(u); });   // 古代テリオンは ANCIENT の決まりで体力・攻撃を決める(ai.hpX/atkX は使わない)
   state.leaderSet=false;
 }
 
@@ -4859,7 +5082,7 @@ function showResult(res, done){
   const card=$id('endCard'), list=$id('endList'); card.innerHTML=''; list.innerHTML='';
   const c=res.caught;
   if(c){ const m=MID[c.mid]; card.innerHTML=`<img src="${IMG[c.mid]}" alt=""><div class="nm">${m.name}</div>`
-      +(c.isNew?`<span class="tag">${m.name}が仲間になった！</span>`:c.miss?`<span class="tag miss">仲間にならなかった</span>`:`<span class="tag stack">重ね ${c.stack}　★${c.rankBefore} → ★${c.rankAfter}</span>`); }   // miss = 倒して仲間(ランダム)のはずれ(2026-10-26)
+      +(c.tag?`<span class="tag${c.miss?' miss':''}">${c.tag}</span>`:c.isNew?`<span class="tag">${m.name}が仲間になった！</span>`:c.miss?`<span class="tag miss">仲間にならなかった</span>`:`<span class="tag stack">重ね ${c.stack}　★${c.rankBefore} → ★${c.rankAfter}</span>`); }   // miss = 倒して仲間(ランダム)のはずれ(2026-10-26)
   const rows=[]; if(toWL && res.hpShare!=null) rows.push(`<span class="tohp">残り体力　自分 ${Math.round(res.hpShare*100)}%　相手 ${Math.round((1-res.hpShare)*100)}%</span>`);
   if(res.rewards.gems>0) rows.push(`<span class="gem">ジェム +${res.rewards.gems}</span>`);
   for(const r of (res.extraRows||[])) rows.push(r);   // 進行(progress.js)の decorate が返した行: EXP・レベルアップなど
@@ -4885,7 +5108,7 @@ function simulate(opts){
   BT.diff=Object.assign({}, KD.ai, (kind==='wild'&&(BT.solo?BT.rules.ai:WILD_STAGE[BT.startStage]))||{}, en.ai||{}); BT.aiSkill=[(pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1];
   BT.place=resolvePlace(opts.terrainTheme, opts.backdrop); BT.budget=+opts.budget||(BT.anc?ancientBudget():baseBudget());
   applyPlace(); state=newBattleState(); uidSeq=1;
-  spawnEnemy(); ancientEscort(); preparePlaceList(); autoPlace(); state.phase='battle'; ensureLeaders(); setEvoArea(V2ON()||evoNeededNow(), false); state.turn=1; state.cur=0;
+  spawnEnemy(); ancientEscort(); preparePlaceList(); autoPlace(); state.phase='battle'; ensureLeaders(); firstSetup(); setEvoArea(V2ON()||evoNeededNow(), false); state.turn=1; state.cur=0;
   const hp=o=>alive(o).reduce((s,u)=>s+Math.max(0,u.hp),0);
   const log=[]; let guard=0; const tl={act:[0,0], turns:[0,0]};
   startTurn(0);
@@ -4899,7 +5122,7 @@ function simulate(opts){
   let mn=1, st0=null; if(w>=0) for(const [t,h0,h1] of log){ const tot=h0+h1; if(!tot) continue; const sh=(w===0?h0:h1)/tot; if(st0==null) st0=sh; if(t<2) continue; mn=Math.min(mn,sh); }
   res={ w, how:state.endHow||'leader', turns:Math.min(state.turn, MAX_TURN), leaderKill:(state.endHow||'leader')==='leader' && w>=0,
     evo:state.stats.evo.slice(), fuse:state.stats.fuse.slice(), atk:state.stats.atk.slice(), act:tl.act, sideTurns:tl.turns,
-    comeback: w>=0 && mn<Math.min(0.4,(st0==null?0.5:st0)-0.1), ev:(state.stats.ev||[]).slice(), stage:{evo:BT.evoOn, fusion:BT.fusionOn, triple:!!BT.tripleOn}, /* 逆転=勝った側の体力の割合が2ターン目以降に40%未満かつ開始時より10ポイント以上低くなった */ n:[alive(0).length, alive(1).length], hp:[hp(0),hp(1)], cutins:{atk:state.stats.atk[0]+state.stats.atk[1], evo:state.stats.evo[0]+state.stats.evo[1], fuse:state.stats.fuse[0]+state.stats.fuse[1]} };
+    comeback: w>=0 && mn<Math.min(0.4,(st0==null?0.5:st0)-0.1), ev:(state.stats.ev||[]).slice(), stage:{evo:BT.evoOn, fusion:BT.fusionOn, triple:!!BT.tripleOn}, /* 逆転=勝った側の体力の割合が2ターン目以降に40%未満かつ開始時より10ポイント以上低くなった */ n:[alive(0).length, alive(1).length], hp:[hp(0),hp(1)], combo:(state.stats.combo||[0,0]).slice(), comboBy:Object.assign({},state.stats.comboBy||{}), clutch:(state.stats.clutch||[0,0]).slice(), awake:(state.stats.awake||[0,0]).slice(), layout:BT.t3layout||null, cutins:{atk:state.stats.atk[0]+state.stats.atk[1], evo:state.stats.evo[0]+state.stats.evo[1], fuse:state.stats.fuse[0]+state.stats.fuse[1]} };
   BT.headless=prevHeadless;
   return res;
 }
@@ -4909,7 +5132,7 @@ const TIME_MODEL={perUnit:8, turnSwitch:2, cpuStart:1.0, cpuPerUnit:0.64, cutAtk
 function estSeconds(r){ const T=TIME_MODEL; return Math.round(T.setup + r.act[0]*T.perUnit + r.sideTurns[0]*T.turnSwitch + r.sideTurns[1]*T.cpuStart + r.act[1]*T.cpuPerUnit + r.atk[1]*T.cutAtk + (r.evo[0]+r.evo[1])*T.cutEvo + (r.fuse[0]+r.fuse[1])*T.cutFuse); }
 
 // ---- 外に出すもの ----
-const API={ init, startBattle, simulate, V2, FINAL_V2, TYPE_TERR, TERR_FX, TERR_BONUS, TERR_WEAK, dropDominated:(ids)=>dropDominated(ids.map(id=>MV2[id]).filter(Boolean),null).map(m=>m.id), get MOVES2(){ return MV2; }, get v2Ready(){ return V2DATA; }, learnedIds:(mid,lv)=>learnedIds(mid,lv,false), estSeconds, TIME_MODEL, SIZE_RULES, KIND_DEFAULTS, ANCIENT, STAGE_HUMAN, TUNE, STAGE_DMGX, WILD_STAGE, packCount, PLACES, THEME_LOOK, BRIEF:{TERR_JP, TERR_HEX, TERR_X, CAMP_THEMES, THEME_JP, STRONG, WEAK, TYPES, TYPE_COL},   /* 2026-10-27 地図の案内(greece_town.html の briefing)が読むだけの表。ルールは変えない */ rankX, STACK_RANK, STACK_GEM, LV_MAX, lvRank, stageForm:(mid,stage,owned)=>stageForm(mid,stage,owned),
+const API={ init, startBattle, simulate, TACT, get SERIES(){ return SERIES; }, seriesOf:(mid)=>seriesOf(+mid).map(s=>s.id),   /* 2026-10-28 戦術v3 */ V2, FINAL_V2, TYPE_TERR, TERR_FX, TERR_BONUS, TERR_WEAK, dropDominated:(ids)=>dropDominated(ids.map(id=>MV2[id]).filter(Boolean),null).map(m=>m.id), get MOVES2(){ return MV2; }, get v2Ready(){ return V2DATA; }, learnedIds:(mid,lv)=>learnedIds(mid,lv,false), estSeconds, TIME_MODEL, SIZE_RULES, KIND_DEFAULTS, ANCIENT, STAGE_HUMAN, TUNE, STAGE_DMGX, WILD_STAGE, packCount, PLACES, THEME_LOOK, BRIEF:{TERR_JP, TERR_HEX, TERR_X, CAMP_THEMES, THEME_JP, STRONG, WEAK, TYPES, TYPE_COL},   /* 2026-10-27 地図の案内(greece_town.html の briefing)が読むだけの表。ルールは変えない */ rankX, STACK_RANK, STACK_GEM, LV_MAX, lvRank, stageForm:(mid,stage,owned)=>stageForm(mid,stage,owned),
   get MID(){ return MID; }, get MONSTERS(){ return MONSTERS; }, baseFormId:(m)=>baseFormId(m), lineOf:(m)=>lineUpIds(m),
   setAuto(v){ if(v===2||v==='fast'){ BT.fastPref=true; setAutoMode(2); } else if(!!v!==BT.auto) toggleAuto(); return BT.auto; },
   // 確認用(test.html・puppeteer)
