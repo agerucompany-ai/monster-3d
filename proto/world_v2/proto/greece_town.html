@@ -2402,8 +2402,8 @@ function flag(k){ if(SAVE&&!SAVE.flags[k]){ SAVE.flags[k]=1; onFlag(k); objUpdat
 // 旗が立った時の解禁とクエストのジェム(progress.js: 同じ id は1回だけ)。ミッション120・守り150・王300・雷のボス120・古印100・新しい土地40
 const QUEST_GEMS={mission:120,guard1:150,guard2:150,guard3:150,guard4:150,king:300,thunder:120,stavros:100,mihalis:100,sophia:100,bella:150,bridge:60,arcadia:40,corinth:40,cloudroad:40,delphi:40,stadium_under:40,
   cn_bund:60,cn_bamboo:40,cn_plateau:40,cn_fossil:40,cn_karst:40,cn_pillars:40,cn_gorges:40,cn_thunder:40,cn_capital:40,cn_kunlun:40,cn_sea:40, cn_dojo:100,guard_w:150,cn_kagu:120,guard_s:150,dimi4:60,guard_n:150,cn_nue:120,cn_sajin:200,cn_lion:150,cn_champ:100,dimi5:60,cn_setsu:150,cn_ransom:150,cn_dragon:300,
-  eg_cairo:60,eg_giza:40,eg_delta:40,eg_luxor:40,eg_valley:40,eg_tomb:40,eg_aswan:40,eg_abusimbel:40,eg_white:40,eg_redsea:40, eg_champ0:100,eg_sphinga:150,eg_doroka:150,eg_champ1:100,eg_osira:150,eg_anubid:150,eg_champ2:100,eg_ransom:150,eg_eleki:150,eg_raga:200,eg_ekuri:150,eg_levia:300,
-  nr_oslo:60,nr_fjord:40,nr_lofoten:40,nr_iceland:40,nr_uppsala:40,nr_lapland:40,nr_ygg:40,nr_svalbard:40,nr_glacier:40,nr_core:40, nr_champ0:100,nr_champ1:100,nr_champ2:100,nr_mitsu:150,nr_kubi:120,nr_kraken:150,nr_surtr:150,nr_odin:150,nr_sleip:150,nr_aurora:150,nr_fenrir:150,nr_nidhogg:200,nr_unicorn:120,nr_mammoth:120,nr_narwhal:150,nr_hyoseki:150,nr_ransom3:150,nr_bot:200,nr_bella3:200,nr_adrian:300,nr_ragna:500};   // 北欧編(2026-10-27): 新しい土地40・古印100・古代テリオン150・幹部200・アドリアン300・ラグナディオ500   // 中国編(2026-10-26): 新しい土地40・守り150・八つ首200・青龍300 / エジプト編(2026-10-26): 新しい土地40・古印100・古代テリオン150・ラーガ200・リヴァイア300
+  eg_cairo:60,eg_giza:40,eg_delta:40,eg_luxor:40,eg_valley:40,eg_tomb:40,eg_aswan:40,eg_abusimbel:40,eg_white:40,eg_redsea:40, eg_champ0:100,eg_sphinga:150,eg_doroka:150,eg_champ1:100,eg_osira:150,eg_anubid:150,eg_champ2:100,eg_ransom:150,eg_eleki:150,eg_oberi:120,eg_raga:200,eg_ekuri:150,eg_levia:300,
+  nr_oslo:60,nr_fjord:40,nr_lofoten:40,nr_iceland:40,nr_uppsala:40,nr_lapland:40,nr_ygg:40,nr_svalbard:40,nr_glacier:40,nr_core:40, nr_champ0:100,nr_champ1:100,nr_champ2:100,nr_mitsu:150,nr_kubi:120,nr_kraken:150,nr_surtr:150,nr_odin:150,nr_sleip:150,nr_aurora:150,nr_fenrir:150,nr_nidhogg:200,nr_unicorn:120,nr_mammoth:120,nr_narwhal:150,nr_ransom3:150,nr_bot:200,nr_bella3:200,nr_adrian:300,nr_ragna:500};   // 北欧編(2026-10-27): 新しい土地40・古印100・古代テリオン150・幹部200・アドリアン300・ラグナディオ500   // 中国編(2026-10-26): 新しい土地40・守り150・八つ首200・青龍300 / エジプト編(2026-10-26): 新しい土地40・古印100・古代テリオン150・ラーガ200・リヴァイア300
 function onFlag(k){ if(!(window.Progress&&Progress.state())) return;
   if(k==='guard2') Progress.unlockLate();                 // 守り②のあと: 連れて歩くのが5体に
   if(k==='corinth'&&SAVE.unlock) SAVE.unlock.evo=true;    // 運河の町コリンタ(第19話 エンジュ→エンレオ): 進化の解禁
@@ -2464,7 +2464,7 @@ function objText(){ const f=SAVE?SAVE.flags:{}; if(!f.arrived||TESTMODE) return 
   if(!f.nr_uppsala) return '空の船でオスロへ戻り、リニアでウプサラへ'; if(!f.nr_odin) return '王の塚の上で、オーディガルに会う'; if(!f.nr_sleip) return '木の教会の前で、スレイプニアに会う';
   if(!f.nr_lapland) return '北のリニアで、ラップランドへ'; if(!f.nr_aurora) return 'オーロラの見はらし台で、オーロフに会う'; if(!f.nr_fenrir) return '凍った湖の島で、フェンガロをしずめる';
   if(!f.nr_ygg) return 'ラップランドの門を北へぬけ、世界樹の森へ'; if(!f.nr_nidhogg) return '世界樹の根もとで、ニドグラをしずめる'; if(!f.nr_svalbard) return '森の空の船乗り場から、スヴァールバルへ';
-  if(!f.nr_narwhal) return '海の氷の先で、イッカクオウに会う'; if(!f.nr_glacier) return '海の氷をわたり、氷の研究所へ'; if(!f.nr_hyoseki) return '氷河の門で、ヒョウセキオウに会う'; if(!f.nr_ransom3) return '研究所の前の広場で、ランサムを止める'; if(!f.nr_bot) return '研究所の入口で、ボットを止める';
+  if(!f.nr_narwhal) return '海の氷の先で、イッカクオウに会う'; if(!f.nr_glacier) return '海の氷をわたり、氷の研究所へ'; if(!f.nr_ransom3) return '研究所の前の広場で、ランサムを止める'; if(!f.nr_bot) return '研究所の入口で、ボットを止める';
   if(!f.nr_core) return '研究所の門から、アークの中心へ'; if(!f.nr_bella3) return 'サーバーの部屋で、ベラドンナを止める'; if(!f.nr_adrian) return 'アークの中心の前で、アドリアンと向き合う'; if(!f.nr_ragna) return 'アークの中心で、ラグナディオの前に立つ';
   return 'ゲームクリア。空の船で東京へ(エンディングは未作成)'; }
 function objUpdate(){ const t=objText(); objEl.textContent=t; objEl.style.display=t&&!STORY&&!TRANS?'block':'none'; }
@@ -2701,6 +2701,9 @@ const SC={
  ransom2_win:[ {todo:'story'}, {w:'ransom',t:''},{w:'nadia',t:''},{w:'hero',t:''},{w:'elly',t:''} ],
  eleki:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'エレキナギ',t:''},{w:'hero',f:'surprised',t:''},{w:'elly',f:'serious',t:''},{w:'partner',t:''} ],
  eleki_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'nadia',t:''} ],
+ // アスワン: 西岸の石切り場(切りかけのオベリスク)のオベリオン(寄り道・2026-10-28 北欧の氷河の門から移した)
+ oberi:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'オベリオン',t:''},{w:'hero',f:'surprised',t:''},{w:'elly',f:'serious',t:''},{w:'partner',t:''} ],
+ oberi_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'nadia',t:''} ],
  // アブ・シンベル: 朝の光のラーガ
  raga:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ラーガ',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'nadia',t:''},{w:'partner',t:''} ],
  raga_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ラーガ',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
@@ -2750,9 +2753,7 @@ const SC={
  narwhal_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'イッカクオウ',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
  sval_champ:[ {todo:'story'}, {w:'x',n:'スヴァールバルの使い手',t:''},{w:'hero',f:'serious',t:''},{w:'liv',t:''} ],
  sval_champ_win:[ {todo:'story'}, {w:'x',n:'スヴァールバルの使い手',t:''},{w:'hero',f:'smile',t:''},{w:'elly',t:''} ],
- // 氷の研究所: 氷河の門のヒョウセキオウ・幹部ランサム・幹部ボット(ユキ＆ハル)
- hyoseki:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ヒョウセキオウ',t:''},{w:'hero',f:'surprised',t:''},{w:'elly',f:'serious',t:''},{w:'partner',t:''} ],
- hyoseki_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'liv',t:''} ],
+ // 氷の研究所: 幹部ランサム・幹部ボット(ユキ＆ハル)(氷河の門のオベリオンは 2026-10-28 アスワンの石切り場へ移した)
  ransom3:[ {todo:'story'}, {w:'ransom',t:''},{w:'hero',f:'angry',t:''},{w:'nadia',t:''},{w:'partner',t:''} ],
  ransom3_win:[ {todo:'story'}, {w:'ransom',t:''},{w:'hero',t:''},{w:'elly',t:''} ],
  bot:[ {todo:'story'}, {w:'yuki',t:''},{w:'haru',t:''},{w:'bot',t:''},{w:'liv',f:'serious',t:''},{w:'hero',f:'angry',t:''},{w:'partner',t:''} ],
@@ -2796,14 +2797,18 @@ const WARP_ARCS=[['ギリシャ',['oliva_town','oliva_hill','oliva_maze','arcadi
   ['北欧',['nr_oslo','nr_fjord','nr_lofoten','nr_iceland','nr_uppsala','nr_lapland','nr_ygg','nr_svalbard','nr_glacier','nr_core']],
   ['試作',['athens','crete','crete_maze','greece_oliva']]];
 function testHud(){ const on=TESTMODE; $('testBadge').style.display=on?'block':'none'; if(!on) $('btWarp').style.display='none'; if(!on) $('warp').classList.remove('on'); }
+// 2026-10-28 オーナー: 融合体・3体融合・古代テリオン(マップの古代・ボス)は持たせない(戦いの中の融合でだけ出る)。系統の子(1〜3段目)だけ
 async function testSaveNew(){ const list=await fetch('../battle/data/monsters.json').then(r=>r.json()); const t=Date.now();
-  const roster=list.map((m,i)=>({uid:'t'+i.toString(36)+'_'+m.id, mid:m.id, lv:50, exp:0, src:'test', t}));
-  const pick=[1001,178,1022,1009,1028,2071].filter(id=>list.some(m=>m.id===id)); const party=pick.map(id=>roster.find(c=>c.mid===id).uid);
-  const lines={}; for(const m of list) if(m.evolves_from==null) lines[m.id]=1;
-  return {v:1,g:'m',name:DEFN('m'),partner:1001,flags:{arrived:1},unlock:{evo:true,fusion:true,triple:true},owned:list.map(m=>m.id),stage:'field',test:1,items:{heal:9},
+  const anc=new Set(); await Promise.all(WARP_ARCS.flatMap(a=>a[1]).map(id=>briefRegion(id).then(j=>{ for(const w of (j.wild||[])) if(w.ancient||w.boss) anc.add(+w.id); }).catch(()=>{})));
+  const mine=list.filter(m=>m.role!=='fusion'&&!anc.has(m.id));
+  const roster=mine.map((m,i)=>({uid:'t'+i.toString(36)+'_'+m.id, mid:m.id, lv:50, exp:0, src:'test', t}));
+  const pick=[1001,178,1022,1003,180,1024].map(id=>mine.find(m=>m.id===id)?id:null).filter(Boolean); for(const m of mine){ if(pick.length>=6) break; if((m.level||1)===3&&!pick.includes(m.id)) pick.push(m.id); }
+  const party=pick.slice(0,6).map(id=>roster.find(c=>c.mid===id).uid);
+  const lines={}; for(const m of mine) if(m.evolves_from==null) lines[m.id]=1;
+  return {v:1,g:'m',name:DEFN('m'),partner:1001,flags:{arrived:1},unlock:{evo:true,fusion:true,triple:true},owned:mine.map(m=>m.id),stage:'field',test:2,items:{heal:9},
     map:'oliva_town',x:null,z:null,yaw:null, prog:{v:1,gems:99999,roster,party,partyMax:6,lines,quests:{},log:[],arc:'greece',pulls:0}}; }
 async function testGame(fresh){ ST.title.style.display='none'; SKEY=SKEY_TEST; TESTMODE=true; NOSAVE=false;
-  let sv=null; if(!fresh) try{ const s=JSON.parse(localStorage.getItem(SKEY_TEST)); if(s&&s.v===1&&s.test) sv=s; }catch(e){}
+  let sv=null; if(!fresh) try{ const s=JSON.parse(localStorage.getItem(SKEY_TEST)); if(s&&s.v===1&&s.test===2) sv=s; /* test:1(融合体も持っていた前の形)は作り直す */ }catch(e){}
   if(!sv) sv=await testSaveNew();
   SAVE=sv; SAVE.unlock={evo:true,fusion:true,triple:true}; PARTY=sv.party||PARTY; BOX=sv.box||BOX; ITEMS=sv.items||ITEMS; heroGo('m'); await progInit();
   if(Progress.partyMax()<6) Progress.setPartyMax(6); if(Progress.gems()<99999) Progress.addGems(99999-Progress.gems(),'test');

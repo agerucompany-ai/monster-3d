@@ -108,7 +108,7 @@ details .wrap{display:flex;flex-wrap:wrap;gap:6px;padding:0 8px 8px}
 
   <section><h2><img src="img/ui/ally.webp" alt="">自分</h2>
     <div class="slots" id="meSlots"></div>
-    <div class="row"><button class="chip" data-mp="start">最初の3体</button><button class="chip" data-mp="rand">ランダム6</button><button class="chip" data-mp="fuse">融合テリオン</button><button class="chip" data-mp="anc">古代テリオン</button><button class="chip" data-mp="clear"><img class="ic" src="img/ui/cancel.webp" alt=""></button></div>
+    <div class="row"><button class="chip" data-mp="start">最初の3体</button><button class="chip" data-mp="rand">ランダム6</button><button class="chip" data-mp="fuse">融合できる組</button><button class="chip" data-mp="anc">進化の最後</button><button class="chip" data-mp="clear"><img class="ic" src="img/ui/cancel.webp" alt=""></button></div>
     <div class="row"><span class="lab">Lv</span><input type="range" id="meLv" min="1" max="99"><span class="num" id="meLvN"></span></div>
     <div class="row"><span class="lab">開始の段</span><div class="seg" id="meStage"><button data-v="0">自動</button><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button></div></div>
   </section>
@@ -185,6 +185,7 @@ let S=load();
 function load(){ try{ const s=JSON.parse(localStorage.getItem(LSK)); if(s&&s.me&&s.foe&&s.board&&s.rule) return Object.assign(JSON.parse(JSON.stringify(D0)), s); }catch(e){} return JSON.parse(JSON.stringify(D0)); }
 function save(){ try{ localStorage.setItem(LSK, JSON.stringify(S)); }catch(e){} }
 const mon=id=>MID[+id];
+const canOwn=id=>{ const m=mon(id); return !!m&&m.role!=='fusion'&&!ANC.has(m.id); };   // 2026-10-28 オーナー: 融合体・3体融合・古代テリオンは最初から出せない(戦いの中の融合でだけ出る)。相手側は今まで通り
 const nm=id=>(mon(id)||{}).name||('#'+id);
 const art=id=>'img/'+id+'.webp';
 const stg=id=>{ const m=mon(id); return m?(m.role==='fusion'?'融合':String(m.level||1)):''; };
@@ -335,13 +336,13 @@ const PF={q:'', ty:null, st:null, arc:null}; let PK=null;
 function openPick(who, i){ PK={who, i}; const list=who==='me'?S.me.party:S.foe.party; $('pkDel').style.display=list[i]!=null?'':'none'; $('pk').classList.add('on'); renderPick(); }
 function closePick(){ $('pk').classList.remove('on'); PK=null; }
 function buildPickFilters(){ const F=$('pkF'); F.innerHTML='';
-  const add=(g,v,label,col)=>{ const b=document.createElement('button'); b.className='chip'; b.dataset.g=g; b.dataset.v=v; b.textContent=label; if(col) b.style.boxShadow=`inset 0 -3px 0 ${col}`; b.onclick=()=>{ PF[g]=PF[g]===v?null:v; renderPick(); }; F.appendChild(b); };
+  const add=(g,v,label,col,foeOnly)=>{ const b=document.createElement('button'); b.className='chip'; if(foeOnly) b.dataset.foe='1'; b.dataset.g=g; b.dataset.v=v; b.textContent=label; if(col) b.style.boxShadow=`inset 0 -3px 0 ${col}`; b.onclick=()=>{ PF[g]=PF[g]===v?null:v; renderPick(); }; F.appendChild(b); };
   for(const t of MB.BRIEF.TYPES) add('ty',t,t,TYPE_COL[t]);
-  for(const [v,l] of [['1','1段'],['2','2段'],['3','3段'],['融合','融合']]) add('st',v,l);
-  for(const [v,l] of [['start','相棒'],['greece','ギリシャ'],['china','中国'],['egypt','エジプト'],['norse','北欧'],['fuse','融合'],['anc','古代']]) add('arc',v,l); }
-function renderPick(){ for(const b of $('pkF').children) b.classList.toggle('on', PF[b.dataset.g]===b.dataset.v);
+  for(const [v,l] of [['1','1段'],['2','2段'],['3','3段'],['融合','融合']]) add('st',v,l,null,v==='融合');
+  for(const [v,l] of [['start','相棒'],['greece','ギリシャ'],['china','中国'],['egypt','エジプト'],['norse','北欧'],['fuse','融合'],['anc','古代']]) add('arc',v,l,null,v==='fuse'||v==='anc'); }
+function renderPick(){ const meP=!!(PK&&PK.who==='me'); for(const b of $('pkF').children){ if(b.dataset.foe){ b.style.display=meP?'none':''; if(meP&&PF[b.dataset.g]===b.dataset.v) PF[b.dataset.g]=null; } b.classList.toggle('on', PF[b.dataset.g]===b.dataset.v); }
   const q=PF.q.trim(); const list=PK?(PK.who==='me'?S.me.party:S.foe.party):[];
-  const L=MON.filter(m=>(!q||m.name.includes(q))&&(!PF.ty||m.type===PF.ty||m.type2===PF.ty)&&(!PF.st||stg(m.id)===PF.st)&&(!PF.arc||arcTag(m.id)===PF.arc||(PF.arc==='fuse'&&m.role==='fusion')));
+  const L=MON.filter(m=>(!meP||canOwn(m.id))&&(!q||m.name.includes(q))&&(!PF.ty||m.type===PF.ty||m.type2===PF.ty)&&(!PF.st||stg(m.id)===PF.st)&&(!PF.arc||arcTag(m.id)===PF.arc||(PF.arc==='fuse'&&m.role==='fusion')));
   $('pkN').textContent=L.length; const G=$('pkGrid'); G.innerHTML='';
   const frag=document.createDocumentFragment(); for(const m of L){ const d=document.createElement('button'); d.className='cd'+(list.includes(m.id)?' in':''); d.innerHTML=`<span class="st">${stg(m.id)}</span><img class="a" src="${art(m.id)}" alt="" loading="lazy"><span class="nm">${m.name}</span>${tyHTML(m.id)}`;
     d.onclick=()=>{ const arr=PK.who==='me'?S.me.party:S.foe.party; arr[PK.i]=m.id; const c=arr.filter(x=>x!=null); arr.length=0; arr.push(...c.slice(0,6)); if(PK.who==='foe') S.foe.mode='pick'; save(); closePick(); renderAll(); }; frag.appendChild(d); }
@@ -353,9 +354,9 @@ $('pkDel').onclick=()=>{ const arr=PK.who==='me'?S.me.party:S.foe.party; arr.spl
 // ---- 自分の早見 ----
 document.querySelectorAll('[data-mp]').forEach(b=>b.onclick=()=>{ const k=b.dataset.mp; const L1=MON.filter(m=>m.role!=='fusion').map(m=>m.id);
   if(k==='start') S.me.party=STARTERS.slice();
-  else if(k==='rand') S.me.party=shuffle(MON.map(m=>m.id)).slice(0,6);
-  else if(k==='fuse') S.me.party=shuffle(MON.filter(m=>m.role==='fusion'&&!ANC.has(m.id)).map(m=>m.id)).slice(0,6);
-  else if(k==='anc') S.me.party=shuffle([...ANC].filter(id=>mon(id))).slice(0,6);
+  else if(k==='rand') S.me.party=shuffle(MON.filter(m=>canOwn(m.id)).map(m=>m.id)).slice(0,6);
+  else if(k==='fuse'){ const used=new Set(), out=[]; for(const r of shuffle(RECIPE2)){ if(out.length>=6) break; if(r.some(x=>used.has(baseOf(x))||!canOwn(x))) continue; r.forEach(x=>{ used.add(baseOf(x)); out.push(x); }); } S.me.party=out; S.rule.fuse=true; }   // 融合の組になる2段目の子 3組(隣どうしで融合できる)
+  else if(k==='anc') S.me.party=shuffle(MON.filter(m=>canOwn(m.id)&&(m.level||1)===3&&m.evolves_to==null).map(m=>m.id)).slice(0,6);   // 進化の最後(3段目)
   else if(k==='clear') S.me.party=[];
   save(); renderAll(); });
 $('meLv').addEventListener('input', e=>{ S.me.lv=+e.target.value; $('meLvN').textContent='Lv'+S.me.lv; renderSum(); save(); });
@@ -374,6 +375,7 @@ segBind('bTier', v=>S.board.tier=+v);
 const STR=[{skill:0.5, hpX:0.8, atkX:0.8, eg:0.4}, null, {skill:1, hpX:1.25, atkX:1.25, eg:0.85}];   // よわい/ふつう(そのまま)/つよい
 function buildOpt(){ const allIds=MON.map(m=>m.id);
   if(!S.me.party.length) S.me.party=STARTERS.slice();
+  S.me.party=S.me.party.filter(canOwn); if(!S.me.party.length) S.me.party=STARTERS.slice();
   const me=S.me.party.slice(0,6).map(m=>({mid:m, lv:S.me.lv}));
   const owned=S.rule.evo?allIds:S.me.party.slice();
   let opt={ kind:S.board.kind, size:S.board.size, terrainTheme:S.board.place.tt, backdrop:S.board.place.bd||undefined, player:{party:me, owned, items:{heal:3}, rankCap:20}, enemy:null };
@@ -435,7 +437,7 @@ perfShow();
   await loadRegions(); buildBosses(); buildPickFilters();
   // 並び: 相棒→編の順→融合→古代
   const ord={start:0, greece:1, china:2, egypt:3, norse:4, other:5, fuse:6, anc:7}; MON.sort((a,b)=>(ord[arcTag(a.id)]-ord[arcTag(b.id)])||(baseOf(a.id)-baseOf(b.id))||((a.level||1)-(b.level||1)));
-  S.me.party=S.me.party.filter(id=>mon(id)); S.foe.party=S.foe.party.filter(id=>mon(id)); if(S.foe.boss&&!BOSSES.some(b=>b.key===S.foe.boss)) S.foe.boss=null;
+  S.me.party=S.me.party.filter(canOwn); S.foe.party=S.foe.party.filter(id=>mon(id)); if(S.foe.boss&&!BOSSES.some(b=>b.key===S.foe.boss)) S.foe.boss=null;
   renderScenes(); renderAll(); $('load').style.display='none';
   window.VS={S, buildOpt, sceneOpt, SCENES, BOSSES, REG, run, encounterOpt};
 }catch(e){ console.error(e); $('load').textContent='読み込みエラー'; } })();

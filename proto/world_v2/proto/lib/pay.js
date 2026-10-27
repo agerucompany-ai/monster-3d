@@ -103,7 +103,7 @@ img.tp-ic{display:inline-block;width:1.3em;height:1.3em;vertical-align:-.32em;ob
 .tpSpin{width:34px;height:34px;border-radius:50%;border:4px solid rgba(255,255,255,.2);border-top-color:#ffd977;margin:6px auto 10px;animation:tpR 0.9s linear infinite}
 @keyframes tpR{to{transform:rotate(360deg)}}
 `;
-let R=null, S=null, pendingBuy=null, band=null;
+let R=null, S=null, pendingBuy=null, band=null, lastTokErr=null;
 function el(t,c,h){ const e=document.createElement(t); if(c) e.className=c; if(h!=null) e.innerHTML=h; return e; }
 function mount(){ if(R) return; const st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);
   R=el('div'); R.id='tpRoot'; R.innerHTML=`<div id="tpSheet"><div id="tpHd"><h2>ジェムを買う</h2><span class="env" id="tpEnv" style="display:none">テスト環境</span><button id="tpX">${ICON('cancel')}</button></div><div id="tpBody"></div></div>`;
@@ -138,7 +138,7 @@ function show(state, o){ S=state; o=o||{}; const B=R.querySelector('#tpBody'); R
 async function main(){ if(!CFG) return show('off'); if(!W) await wallet(); if(!W) return show('off'); if(!W.ageBand) return show('age'); show('buy'); }
 async function buy(){ const B=R.querySelector('#tpBody'); const go=B.querySelector('#tpGo'); go.disabled=true; B.querySelector('#tpErr').textContent='';
   let tok; try{ tok=await card.tokenize(); }catch(e){ tok=null; }
-  if(!tok||tok.status!=='OK'){ B.querySelector('#tpErr').textContent='カード情報を確かめてください'; go.disabled=false; return; }
+  if(!tok||tok.status!=='OK'){ lastTokErr=tok?{status:tok.status, errors:(tok.errors||[]).map(e=>e.field+':'+e.type)}:{status:'throw'}; B.querySelector('#tpErr').textContent='カード情報を確かめてください'; go.disabled=false; return; }
   let vt; try{ if(payments.verifyBuyer){ const v=await payments.verifyBuyer(tok.token,{ amount:String(CFG.product.priceJpy), currencyCode:'JPY', intent:'CHARGE', billingContact:{} }); vt=v&&v.token; } }catch(e){ vt=undefined; }   // 本人確認(3Dセキュア)。sandbox で通るかは要確認
   pendingBuy={ sourceId:tok.token, verificationToken:vt, purchaseId:rid() }; send(); }
 async function send(){ if(!pendingBuy) return main(); show('busy');
@@ -156,7 +156,7 @@ async function open(){ mount(); R.classList.add('on'); band=null; pendingBuy=nul
 function close(){ if(!R||S==='busy') return; R.classList.remove('on'); S=null; if(card){ card.destroy().catch(()=>{}); card=null; } push(); }
 
 // ---------------------------------------------------------------- progress.js とつなぐ
-const Pay={ open, close, api:API, state:()=>({cfg:CFG, wallet:W, sheet:S}), refresh:wallet, isOpen:()=>!!(R&&R.classList.contains('on')) };
+const Pay={ open, close, api:API, state:()=>({cfg:CFG, wallet:W, sheet:S, tokErr:lastTokErr}), refresh:wallet, isOpen:()=>!!(R&&R.classList.contains('on')) };
 root.TherionPay=Pay;
 function hook(){ const P=root.Progress; if(!P||!P.on||!P.setPaid) return false;
   P.on('buy',()=>open());

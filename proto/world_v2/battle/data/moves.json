@@ -1,7 +1,7 @@
 {
  "_meta": {
   "version": "v2-phaseA-mece",
-  "made": "2026-10-27",
+  "made": "2026-10-28",
   "fields": {
    "name": "技の名前",
    "yomi": "よみ(照合用)",
@@ -63,8 +63,8 @@
     1
    ],
    "p": true,
-   "mp": 8,
-   "power": 100,
+   "mp": 0,
+   "power": 95,
    "hit": 100,
    "crit": 0,
    "effect": {
@@ -73,7 +73,7 @@
    },
    "desc": "炎の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "ぼるから"
   },
   "fire_ladder3": {
@@ -88,8 +88,8 @@
     1
    ],
    "p": true,
-   "mp": 6,
-   "power": 120,
+   "mp": 0,
+   "power": 110,
    "hit": 100,
    "crit": 5,
    "effect": {
@@ -98,7 +98,7 @@
    },
    "desc": "大きな炎の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "ぼるかどん"
   },
   "fire_ladder4": {
@@ -110,20 +110,20 @@
    "target": "single",
    "range": [
     1,
-    2
+    1
    ],
-   "p": false,
-   "mp": 3,
+   "p": true,
+   "mp": 0,
    "power": 125,
-   "hit": 90,
-   "crit": 15,
+   "hit": 100,
+   "crit": 10,
    "effect": {
     "ail": "burn",
     "chance": "stage"
    },
    "desc": "いちばん大きな炎の力。移動したら使えない",
-   "range_class": "mid",
-   "cost": "few",
+   "range_class": "near",
+   "cost": "free",
    "yomi": "ぼるかどーん"
   },
   "fire_toss": {
@@ -174,6 +174,7 @@
    "desc": "遠くの敵をねらう。隣には撃てない",
    "range_class": "far",
    "cost": "some",
+   "enabled": false,
    "yomi": "ぼうぼうあろー"
   },
   "fire_ring": {
@@ -230,6 +231,7 @@
    "desc": "ねらった場所のまわりに当たる",
    "range_class": "shape",
    "cost": "few",
+   "enabled": false,
    "yomi": "ぼうぼうれいん"
   },
   "fire_ail": {
@@ -320,14 +322,14 @@
     1
    ],
    "p": true,
-   "mp": 8,
-   "power": 100,
+   "mp": 0,
+   "power": 95,
    "hit": 100,
    "crit": 0,
    "effect": {},
    "desc": "水の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "ざっぱら"
   },
   "water_ladder3": {
@@ -342,14 +344,14 @@
     1
    ],
    "p": true,
-   "mp": 6,
-   "power": 120,
+   "mp": 0,
+   "power": 110,
    "hit": 100,
    "crit": 5,
    "effect": {},
    "desc": "大きな水の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "ざっぱどん"
   },
   "water_ladder4": {
@@ -363,15 +365,15 @@
     1,
     1
    ],
-   "p": false,
-   "mp": 3,
-   "power": 160,
-   "hit": 90,
-   "crit": 15,
+   "p": true,
+   "mp": 0,
+   "power": 125,
+   "hit": 100,
+   "crit": 10,
    "effect": {},
    "desc": "いちばん大きな水の力。移動したら使えない",
    "range_class": "near",
-   "cost": "few",
+   "cost": "free",
    "yomi": "ざっぱどーん"
   },
   "water_spear": {
@@ -386,14 +388,14 @@
     2
    ],
    "p": true,
-   "mp": 6,
-   "power": 78,
+   "mp": 0,
+   "power": 70,
    "hit": 100,
    "crit": 0,
    "effect": {},
    "desc": "2マス先までつく",
    "range_class": "mid",
-   "cost": "many",
+   "cost": "free",
    "yomi": "じゃぶじゃぶらんす"
   },
   "water_pierce": {
@@ -418,6 +420,7 @@
    "desc": "守りを半分つらぬく",
    "range_class": "near",
    "cost": "some",
+   "enabled": false,
    "yomi": "じゃぶじゃぶどりる"
   },
   "water_ring": {
@@ -467,6 +470,7 @@
    "desc": "まっすぐ4マスに走る",
    "range_class": "shape",
    "cost": "few",
+   "enabled": false,
    "yomi": "じゃぶじゃぶらいん"
   },
   "water_debuff": {
@@ -564,8 +568,8 @@
     1
    ],
    "p": true,
-   "mp": 8,
-   "power": 75,
+   "mp": 0,
+   "power": 71,
    "hit": 100,
    "crit": 0,
    "effect": {
@@ -575,7 +579,7 @@
    },
    "desc": "森の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "もりだら"
   },
   "forest_ladder3": {
@@ -590,8 +594,8 @@
     1
    ],
    "p": true,
-   "mp": 6,
-   "power": 90,
+   "mp": 0,
+   "power": 82,
    "hit": 100,
    "crit": 5,
    "effect": {
@@ -601,7 +605,7 @@
    },
    "desc": "大きな森の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "もりだどん"
   },
   "forest_ladder4": {
@@ -613,21 +617,21 @@
    "target": "single",
    "range": [
     1,
-    2
+    1
    ],
-   "p": false,
-   "mp": 3,
+   "p": true,
+   "mp": 0,
    "power": 94,
-   "hit": 90,
-   "crit": 15,
+   "hit": 100,
+   "crit": 10,
    "effect": {
     "ail": "poison",
     "chance": "stage",
     "drain": 0.5
    },
    "desc": "いちばん大きな森の力。移動したら使えない",
-   "range_class": "mid",
-   "cost": "few",
+   "range_class": "near",
+   "cost": "free",
    "yomi": "もりだどーん"
   },
   "forest_toss": {
@@ -680,6 +684,7 @@
    "desc": "遠くの敵をねらう。隣には撃てない",
    "range_class": "far",
    "cost": "some",
+   "enabled": false,
    "yomi": "わさわさあろー"
   },
   "forest_ring": {
@@ -737,6 +742,7 @@
    "desc": "自分のまわり2マスに当たる",
    "range_class": "shape",
    "cost": "few",
+   "enabled": false,
    "yomi": "わさわさすぱいらる"
   },
   "forest_ail": {
@@ -829,8 +835,8 @@
     1
    ],
    "p": true,
-   "mp": 8,
-   "power": 100,
+   "mp": 0,
+   "power": 95,
    "hit": 100,
    "crit": 0,
    "effect": {
@@ -839,7 +845,7 @@
    },
    "desc": "雷の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "ぴしゃら"
   },
   "thunder_ladder3": {
@@ -854,8 +860,8 @@
     1
    ],
    "p": true,
-   "mp": 6,
-   "power": 120,
+   "mp": 0,
+   "power": 110,
    "hit": 100,
    "crit": 5,
    "effect": {
@@ -864,7 +870,7 @@
    },
    "desc": "大きな雷の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "ぴしゃどん"
   },
   "thunder_ladder4": {
@@ -876,20 +882,20 @@
    "target": "single",
    "range": [
     1,
-    2
+    1
    ],
-   "p": false,
-   "mp": 3,
+   "p": true,
+   "mp": 0,
    "power": 125,
-   "hit": 90,
-   "crit": 15,
+   "hit": 100,
+   "crit": 10,
    "effect": {
     "ail": "para",
     "chance": "stage"
    },
    "desc": "いちばん大きな雷の力。移動したら使えない",
-   "range_class": "mid",
-   "cost": "few",
+   "range_class": "near",
+   "cost": "free",
    "yomi": "ぴしゃどーん"
   },
   "thunder_toss": {
@@ -940,6 +946,7 @@
    "desc": "遠くの敵をねらう。隣には撃てない",
    "range_class": "far",
    "cost": "some",
+   "enabled": false,
    "yomi": "ばりばりあろー"
   },
   "thunder_ring": {
@@ -995,6 +1002,7 @@
    "desc": "まっすぐ5マスに走る",
    "range_class": "shape",
    "cost": "few",
+   "enabled": false,
    "yomi": "ばりばりらいん"
   },
   "thunder_ail": {
@@ -1085,14 +1093,14 @@
     1
    ],
    "p": true,
-   "mp": 8,
-   "power": 100,
+   "mp": 0,
+   "power": 95,
    "hit": 100,
    "crit": 0,
    "effect": {},
    "desc": "風の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "ひゅるら"
   },
   "wind_ladder3": {
@@ -1107,14 +1115,14 @@
     1
    ],
    "p": true,
-   "mp": 6,
-   "power": 120,
+   "mp": 0,
+   "power": 110,
    "hit": 100,
    "crit": 5,
    "effect": {},
    "desc": "大きな風の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "ひゅるどん"
   },
   "wind_ladder4": {
@@ -1128,15 +1136,15 @@
     1,
     1
    ],
-   "p": false,
-   "mp": 3,
-   "power": 160,
-   "hit": 90,
-   "crit": 15,
+   "p": true,
+   "mp": 0,
+   "power": 125,
+   "hit": 100,
+   "crit": 10,
    "effect": {},
    "desc": "いちばん大きな風の力。移動したら使えない",
    "range_class": "near",
-   "cost": "few",
+   "cost": "free",
    "yomi": "ひゅるどーん"
   },
   "wind_combo": {
@@ -1151,8 +1159,8 @@
     1
    ],
    "p": true,
-   "mp": 5,
-   "power": 55,
+   "mp": 0,
+   "power": 52,
    "hit": 100,
    "crit": 10,
    "effect": {
@@ -1160,7 +1168,7 @@
    },
    "desc": "2回つづけて たたき、相手を1マスおしだす",
    "range_class": "near",
-   "cost": "some",
+   "cost": "free",
    "yomi": "びゅんびゅんだぶる"
   },
   "wind_pierce": {
@@ -1185,6 +1193,7 @@
    "desc": "守りを半分つらぬく",
    "range_class": "near",
    "cost": "some",
+   "enabled": false,
    "yomi": "びゅんびゅんどりる"
   },
   "wind_ring": {
@@ -1234,6 +1243,7 @@
    "desc": "自分のたて・よこ2マスに当たる",
    "range_class": "shape",
    "cost": "few",
+   "enabled": false,
    "yomi": "びゅんびゅんくろす"
   },
   "wind_buff": {
@@ -1324,14 +1334,14 @@
     1
    ],
    "p": true,
-   "mp": 8,
-   "power": 100,
+   "mp": 0,
+   "power": 95,
    "hit": 100,
    "crit": 0,
    "effect": {},
    "desc": "大地の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "ごろら"
   },
   "earth_ladder3": {
@@ -1346,14 +1356,14 @@
     1
    ],
    "p": true,
-   "mp": 6,
-   "power": 120,
+   "mp": 0,
+   "power": 110,
    "hit": 100,
    "crit": 5,
    "effect": {},
    "desc": "大きな大地の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "ごろどん"
   },
   "earth_ladder4": {
@@ -1367,15 +1377,15 @@
     1,
     1
    ],
-   "p": false,
-   "mp": 3,
-   "power": 160,
-   "hit": 90,
-   "crit": 15,
+   "p": true,
+   "mp": 0,
+   "power": 125,
+   "hit": 100,
+   "crit": 10,
    "effect": {},
    "desc": "いちばん大きな大地の力。移動したら使えない",
    "range_class": "near",
-   "cost": "few",
+   "cost": "free",
    "yomi": "ごろどーん"
   },
   "earth_spear": {
@@ -1390,14 +1400,14 @@
     2
    ],
    "p": true,
-   "mp": 6,
-   "power": 78,
+   "mp": 0,
+   "power": 70,
    "hit": 100,
    "crit": 0,
    "effect": {},
    "desc": "2マス先までつく",
    "range_class": "mid",
-   "cost": "many",
+   "cost": "free",
    "yomi": "ぐらぐららんす"
   },
   "earth_pierce": {
@@ -1422,6 +1432,7 @@
    "desc": "守りを半分つらぬく",
    "range_class": "near",
    "cost": "some",
+   "enabled": false,
    "yomi": "ぐらぐらどりる"
   },
   "earth_ring": {
@@ -1471,6 +1482,7 @@
    "desc": "自分のまわり2マスに当たる",
    "range_class": "shape",
    "cost": "few",
+   "enabled": false,
    "yomi": "ぐらぐらすぱいらる"
   },
   "earth_dig": {
@@ -1563,8 +1575,8 @@
     1
    ],
    "p": true,
-   "mp": 8,
-   "power": 100,
+   "mp": 0,
+   "power": 95,
    "hit": 100,
    "crit": 0,
    "effect": {
@@ -1573,7 +1585,7 @@
    },
    "desc": "氷の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "ひえら"
   },
   "ice_ladder3": {
@@ -1588,8 +1600,8 @@
     1
    ],
    "p": true,
-   "mp": 6,
-   "power": 120,
+   "mp": 0,
+   "power": 110,
    "hit": 100,
    "crit": 5,
    "effect": {
@@ -1598,7 +1610,7 @@
    },
    "desc": "大きな氷の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "ひえどん"
   },
   "ice_ladder4": {
@@ -1612,18 +1624,18 @@
     1,
     1
    ],
-   "p": false,
-   "mp": 3,
-   "power": 160,
-   "hit": 90,
-   "crit": 15,
+   "p": true,
+   "mp": 0,
+   "power": 125,
+   "hit": 100,
+   "crit": 10,
    "effect": {
     "ail": "freeze",
     "chance": "stage"
    },
    "desc": "いちばん大きな氷の力。移動したら使えない",
    "range_class": "near",
-   "cost": "few",
+   "cost": "free",
    "yomi": "ひえどーん"
   },
   "ice_spear": {
@@ -1638,8 +1650,8 @@
     2
    ],
    "p": true,
-   "mp": 6,
-   "power": 78,
+   "mp": 0,
+   "power": 70,
    "hit": 100,
    "crit": 0,
    "effect": {
@@ -1648,7 +1660,7 @@
    },
    "desc": "2マス先までつく",
    "range_class": "mid",
-   "cost": "many",
+   "cost": "free",
    "yomi": "かちこちらんす"
   },
   "ice_pierce": {
@@ -1675,6 +1687,7 @@
    "desc": "守りを半分つらぬく",
    "range_class": "near",
    "cost": "some",
+   "enabled": false,
    "yomi": "かちこちどりる"
   },
   "ice_ring": {
@@ -1730,6 +1743,7 @@
    "desc": "自分のたて・よこ3マスに当たる",
    "range_class": "shape",
    "cost": "few",
+   "enabled": false,
    "yomi": "かちこちくろす"
   },
   "ice_ail": {
@@ -1820,14 +1834,14 @@
     1
    ],
    "p": true,
-   "mp": 8,
-   "power": 100,
+   "mp": 0,
+   "power": 95,
    "hit": 100,
    "crit": 0,
    "effect": {},
    "desc": "光の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "きらら"
   },
   "light_ladder3": {
@@ -1842,14 +1856,14 @@
     1
    ],
    "p": true,
-   "mp": 6,
-   "power": 120,
+   "mp": 0,
+   "power": 110,
    "hit": 100,
    "crit": 5,
    "effect": {},
    "desc": "大きな光の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "きらどん"
   },
   "light_ladder4": {
@@ -1861,17 +1875,17 @@
    "target": "single",
    "range": [
     1,
-    2
+    1
    ],
-   "p": false,
-   "mp": 3,
+   "p": true,
+   "mp": 0,
    "power": 125,
-   "hit": 90,
-   "crit": 15,
+   "hit": 100,
+   "crit": 10,
    "effect": {},
    "desc": "いちばん大きな光の力。移動したら使えない",
-   "range_class": "mid",
-   "cost": "few",
+   "range_class": "near",
+   "cost": "free",
    "yomi": "きらどーん"
   },
   "light_toss": {
@@ -1916,6 +1930,7 @@
    "desc": "遠くの敵をねらう。隣には撃てない",
    "range_class": "far",
    "cost": "some",
+   "enabled": false,
    "yomi": "ぴかぴかあろー"
   },
   "light_ring": {
@@ -1966,6 +1981,7 @@
    "desc": "ねらった場所のまわりに当たる",
    "range_class": "shape",
    "cost": "few",
+   "enabled": false,
    "yomi": "ぴかぴかれいん"
   },
   "light_heal1": {
@@ -1987,9 +2003,15 @@
    "effect": {
     "heal": 0.3,
     "cap": 600,
-    "pick": "most_hurt"
+    "pick": "most_hurt",
+    "cure": [
+     "burn",
+     "poison",
+     "freeze",
+     "para"
+    ]
    },
-   "desc": "いちばん弱った味方1体の体力を回復",
+   "desc": "いちばん弱った味方1体の体力を回復し、状態異常もなおす",
    "group": "heal",
    "noWild": true,
    "range_class": "support",
@@ -2023,6 +2045,7 @@
    "desc": "味方1体の状態異常をなおす",
    "group": "heal",
    "noWild": true,
+   "enabled": false,
    "range_class": "support",
    "cost": "few",
    "yomi": "ぴかぴかくりあ"
@@ -2119,8 +2142,8 @@
     1
    ],
    "p": true,
-   "mp": 8,
-   "power": 100,
+   "mp": 0,
+   "power": 95,
    "hit": 100,
    "crit": 0,
    "effect": {
@@ -2129,7 +2152,7 @@
    },
    "desc": "闇の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "よみら"
   },
   "dark_ladder3": {
@@ -2144,8 +2167,8 @@
     1
    ],
    "p": true,
-   "mp": 6,
-   "power": 120,
+   "mp": 0,
+   "power": 110,
    "hit": 100,
    "crit": 5,
    "effect": {
@@ -2154,7 +2177,7 @@
    },
    "desc": "大きな闇の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "よみどん"
   },
   "dark_ladder4": {
@@ -2168,18 +2191,18 @@
     1,
     1
    ],
-   "p": false,
-   "mp": 3,
-   "power": 160,
-   "hit": 90,
-   "crit": 15,
+   "p": true,
+   "mp": 0,
+   "power": 125,
+   "hit": 100,
+   "crit": 10,
    "effect": {
     "ail": "poison",
     "chance": "stage"
    },
    "desc": "いちばん大きな闇の力。移動したら使えない",
    "range_class": "near",
-   "cost": "few",
+   "cost": "free",
    "yomi": "よみどーん"
   },
   "dark_spear": {
@@ -2194,8 +2217,8 @@
     2
    ],
    "p": true,
-   "mp": 6,
-   "power": 78,
+   "mp": 0,
+   "power": 70,
    "hit": 100,
    "crit": 0,
    "effect": {
@@ -2204,7 +2227,7 @@
    },
    "desc": "2マス先までつく",
    "range_class": "mid",
-   "cost": "many",
+   "cost": "free",
    "yomi": "ぞくぞくらんす"
   },
   "dark_pierce": {
@@ -2231,6 +2254,7 @@
    "desc": "守りを半分つらぬく",
    "range_class": "near",
    "cost": "some",
+   "enabled": false,
    "yomi": "ぞくぞくどりる"
   },
   "dark_ring": {
@@ -2286,6 +2310,7 @@
    "desc": "自分のまわり2マスに当たる",
    "range_class": "shape",
    "cost": "few",
+   "enabled": false,
    "yomi": "ぞくぞくすぱいらる"
   },
   "dark_debuff": {
@@ -2379,14 +2404,14 @@
     1
    ],
    "p": true,
-   "mp": 8,
-   "power": 100,
+   "mp": 0,
+   "power": 95,
    "hit": 100,
    "crit": 0,
    "effect": {},
    "desc": "竜の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "りゅがら"
   },
   "dragon_ladder3": {
@@ -2401,14 +2426,14 @@
     1
    ],
    "p": true,
-   "mp": 6,
-   "power": 120,
+   "mp": 0,
+   "power": 110,
    "hit": 100,
    "crit": 5,
    "effect": {},
    "desc": "大きな竜の力をぶつける",
    "range_class": "near",
-   "cost": "many",
+   "cost": "free",
    "yomi": "りゅがどん"
   },
   "dragon_ladder4": {
@@ -2420,17 +2445,17 @@
    "target": "single",
    "range": [
     1,
-    2
+    1
    ],
-   "p": false,
-   "mp": 3,
+   "p": true,
+   "mp": 0,
    "power": 125,
-   "hit": 90,
-   "crit": 15,
+   "hit": 100,
+   "crit": 10,
    "effect": {},
    "desc": "いちばん大きな竜の力。移動したら使えない",
-   "range_class": "mid",
-   "cost": "few",
+   "range_class": "near",
+   "cost": "free",
    "yomi": "りゅがどーん"
   },
   "dragon_toss": {
@@ -2475,6 +2500,7 @@
    "desc": "遠くの敵をねらう。隣には撃てない",
    "range_class": "far",
    "cost": "some",
+   "enabled": false,
    "yomi": "がおがおあろー"
   },
   "dragon_ring": {
@@ -2524,6 +2550,7 @@
    "desc": "まっすぐ4マスに走る",
    "range_class": "shape",
    "cost": "few",
+   "enabled": false,
    "yomi": "がおがおらいん"
   },
   "dragon_buff": {

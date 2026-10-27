@@ -1,7 +1,7 @@
 {
  "_meta": {
   "version": "v2-phaseA-mece",
-  "made": "2026-10-27",
+  "made": "2026-10-28",
   "note": "battle.js にはまだつないでいない(Phase A)。数の決め方は STATS_MOVES_SPEC.md",
   "formula": {
    "hp": "monsters.json の hp × (1-今の軽減率)/(1-新しい軽減率)。神の融合は ×1.12",
@@ -109,10 +109,6 @@
      "from": 1001
     },
     {
-     "move": "fire_arrow",
-     "lv": 22
-    },
-    {
      "move": "fire_ladder4",
      "lv": 34
     }
@@ -156,6 +152,11 @@
      "evo": true
     },
     {
+     "move": "sig_enou",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "fire_ail",
      "lv": 4,
      "from": 1001
@@ -171,22 +172,9 @@
      "from": 1001
     },
     {
-     "move": "fire_arrow",
-     "lv": 22,
-     "from": 1002
-    },
-    {
      "move": "fire_ladder4",
      "lv": 34,
      "from": 1002
-    },
-    {
-     "move": "fire_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_enou",
-     "lv": 52
     }
    ]
   },
@@ -268,10 +256,6 @@
      "from": 1004
     },
     {
-     "move": "fire_arrow",
-     "lv": 22
-    },
-    {
      "move": "fire_ladder4",
      "lv": 34
     }
@@ -310,6 +294,11 @@
      "evo": true
     },
     {
+     "move": "sig_sasori",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "fire_ail",
      "lv": 4,
      "from": 1004
@@ -325,22 +314,9 @@
      "from": 1004
     },
     {
-     "move": "fire_arrow",
-     "lv": 22,
-     "from": 1005
-    },
-    {
      "move": "fire_ladder4",
      "lv": 34,
      "from": 1005
-    },
-    {
-     "move": "fire_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_sasori",
-     "lv": 52
     }
    ]
   },
@@ -422,10 +398,6 @@
      "from": 1007
     },
     {
-     "move": "fire_arrow",
-     "lv": 22
-    },
-    {
      "move": "fire_ladder4",
      "lv": 34
     }
@@ -464,6 +436,11 @@
      "evo": true
     },
     {
+     "move": "sig_sala",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "fire_ail",
      "lv": 4,
      "from": 1007
@@ -479,22 +456,9 @@
      "from": 1007
     },
     {
-     "move": "fire_arrow",
-     "lv": 22,
-     "from": 1008
-    },
-    {
      "move": "fire_ladder4",
      "lv": 34,
      "from": 1008
-    },
-    {
-     "move": "fire_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_sala",
-     "lv": 52
     }
    ]
   },
@@ -567,10 +531,6 @@
      "from": 26
     },
     {
-     "move": "water_pierce",
-     "lv": 22
-    },
-    {
      "move": "water_ladder4",
      "lv": 34
     }
@@ -609,6 +569,11 @@
      "evo": true
     },
     {
+     "move": "sig_otter",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "water_ladder2",
      "lv": 8,
      "from": 26
@@ -619,22 +584,9 @@
      "from": 26
     },
     {
-     "move": "water_pierce",
-     "lv": 22,
-     "from": 111
-    },
-    {
      "move": "water_ladder4",
      "lv": 34,
      "from": 111
-    },
-    {
-     "move": "water_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_otter",
-     "lv": 52
     }
    ]
   },
@@ -707,10 +659,6 @@
      "from": 1011
     },
     {
-     "move": "water_pierce",
-     "lv": 22
-    },
-    {
      "move": "water_ladder4",
      "lv": 34
     }
@@ -749,6 +697,11 @@
      "evo": true
     },
     {
+     "move": "sig_croc",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "water_ladder2",
      "lv": 8,
      "from": 1011
@@ -759,22 +712,9 @@
      "from": 1011
     },
     {
-     "move": "water_pierce",
-     "lv": 22,
-     "from": 1012
-    },
-    {
      "move": "water_ladder4",
      "lv": 34,
      "from": 1012
-    },
-    {
-     "move": "water_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_croc",
-     "lv": 52
     }
    ]
   },
@@ -847,10 +787,6 @@
      "from": 1014
     },
     {
-     "move": "water_pierce",
-     "lv": 22
-    },
-    {
      "move": "water_ladder4",
      "lv": 34
     }
@@ -889,6 +825,11 @@
      "evo": true
     },
     {
+     "move": "sig_whale",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "water_ladder2",
      "lv": 8,
      "from": 1014
@@ -899,22 +840,9 @@
      "from": 1014
     },
     {
-     "move": "water_pierce",
-     "lv": 22,
-     "from": 1015
-    },
-    {
      "move": "water_ladder4",
      "lv": 34,
      "from": 1015
-    },
-    {
-     "move": "water_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_whale",
-     "lv": 52
     }
    ]
   },
@@ -1000,10 +928,6 @@
      "from": 178
     },
     {
-     "move": "forest_arrow",
-     "lv": 22
-    },
-    {
      "move": "forest_ladder4",
      "lv": 34
     }
@@ -1047,6 +971,11 @@
      "evo": true
     },
     {
+     "move": "sig_kuma",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "forest_ail",
      "lv": 4,
      "from": 178
@@ -1062,22 +991,9 @@
      "from": 178
     },
     {
-     "move": "forest_arrow",
-     "lv": 22,
-     "from": 179
-    },
-    {
      "move": "forest_ladder4",
      "lv": 34,
      "from": 179
-    },
-    {
-     "move": "forest_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_kuma",
-     "lv": 52
     }
    ]
   },
@@ -1159,10 +1075,6 @@
      "from": 1017
     },
     {
-     "move": "forest_arrow",
-     "lv": 22
-    },
-    {
      "move": "forest_ladder4",
      "lv": 34
     }
@@ -1201,6 +1113,11 @@
      "evo": true
     },
     {
+     "move": "sig_aloe",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "forest_ail",
      "lv": 4,
      "from": 1017
@@ -1216,22 +1133,9 @@
      "from": 1017
     },
     {
-     "move": "forest_arrow",
-     "lv": 22,
-     "from": 185
-    },
-    {
      "move": "forest_ladder4",
      "lv": 34,
      "from": 185
-    },
-    {
-     "move": "forest_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_aloe",
-     "lv": 52
     }
    ]
   },
@@ -1313,10 +1217,6 @@
      "from": 1019
     },
     {
-     "move": "forest_arrow",
-     "lv": 22
-    },
-    {
      "move": "forest_ladder4",
      "lv": 34
     }
@@ -1355,6 +1255,11 @@
      "evo": true
     },
     {
+     "move": "sig_mantis",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "forest_ail",
      "lv": 4,
      "from": 1019
@@ -1370,22 +1275,9 @@
      "from": 1019
     },
     {
-     "move": "forest_arrow",
-     "lv": 22,
-     "from": 1020
-    },
-    {
      "move": "forest_ladder4",
      "lv": 34,
      "from": 1020
-    },
-    {
-     "move": "forest_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_mantis",
-     "lv": 52
     }
    ]
   },
@@ -1471,10 +1363,6 @@
      "from": 1022
     },
     {
-     "move": "thunder_arrow",
-     "lv": 22
-    },
-    {
      "move": "thunder_ladder4",
      "lv": 34
     }
@@ -1518,6 +1406,11 @@
      "evo": true
     },
     {
+     "move": "sig_tora",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "thunder_ail",
      "lv": 4,
      "from": 1022
@@ -1533,22 +1426,9 @@
      "from": 1022
     },
     {
-     "move": "thunder_arrow",
-     "lv": 22,
-     "from": 1023
-    },
-    {
      "move": "thunder_ladder4",
      "lv": 34,
      "from": 1023
-    },
-    {
-     "move": "thunder_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_tora",
-     "lv": 52
     }
    ],
    "ancient": [
@@ -1559,13 +1439,11 @@
     "thunder_ladder2",
     "thunder_toss",
     "thunder_ring",
+    "sig_tora",
     "thunder_ail",
     "starter_tora",
     "thunder_ladder3",
-    "thunder_arrow",
-    "thunder_ladder4",
-    "thunder_map",
-    "sig_tora"
+    "thunder_ladder4"
    ]
   },
   "70": {
@@ -1646,10 +1524,6 @@
      "from": 70
     },
     {
-     "move": "thunder_arrow",
-     "lv": 22
-    },
-    {
      "move": "thunder_ladder4",
      "lv": 34
     }
@@ -1688,6 +1562,11 @@
      "evo": true
     },
     {
+     "move": "sig_piri",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "thunder_ail",
      "lv": 4,
      "from": 70
@@ -1703,22 +1582,9 @@
      "from": 70
     },
     {
-     "move": "thunder_arrow",
-     "lv": 22,
-     "from": 71
-    },
-    {
      "move": "thunder_ladder4",
      "lv": 34,
      "from": 71
-    },
-    {
-     "move": "thunder_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_piri",
-     "lv": 52
     }
    ]
   },
@@ -1800,10 +1666,6 @@
      "from": 1026
     },
     {
-     "move": "thunder_arrow",
-     "lv": 22
-    },
-    {
      "move": "thunder_ladder4",
      "lv": 34
     }
@@ -1842,6 +1704,11 @@
      "evo": true
     },
     {
+     "move": "sig_thor",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "thunder_ail",
      "lv": 4,
      "from": 1026
@@ -1857,22 +1724,9 @@
      "from": 1026
     },
     {
-     "move": "thunder_arrow",
-     "lv": 22,
-     "from": 1027
-    },
-    {
      "move": "thunder_ladder4",
      "lv": 34,
      "from": 1027
-    },
-    {
-     "move": "thunder_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_thor",
-     "lv": 52
     }
    ],
    "ancient": [
@@ -1882,13 +1736,11 @@
     "thunder_ladder1",
     "thunder_toss",
     "thunder_ring",
+    "sig_thor",
     "thunder_ail",
     "thunder_ladder2",
     "thunder_ladder3",
-    "thunder_arrow",
-    "thunder_ladder4",
-    "thunder_map",
-    "sig_thor"
+    "thunder_ladder4"
    ]
   },
   "49": {
@@ -1960,10 +1812,6 @@
      "from": 49
     },
     {
-     "move": "wind_pierce",
-     "lv": 22
-    },
-    {
      "move": "wind_ladder4",
      "lv": 34
     }
@@ -2002,6 +1850,11 @@
      "evo": true
     },
     {
+     "move": "sig_momonga",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "wind_ladder2",
      "lv": 8,
      "from": 49
@@ -2012,22 +1865,9 @@
      "from": 49
     },
     {
-     "move": "wind_pierce",
-     "lv": 22,
-     "from": 1029
-    },
-    {
      "move": "wind_ladder4",
      "lv": 34,
      "from": 1029
-    },
-    {
-     "move": "wind_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_momonga",
-     "lv": 52
     }
    ]
   },
@@ -2100,10 +1940,6 @@
      "from": 1030
     },
     {
-     "move": "wind_pierce",
-     "lv": 22
-    },
-    {
      "move": "wind_ladder4",
      "lv": 34
     }
@@ -2142,6 +1978,11 @@
      "evo": true
     },
     {
+     "move": "sig_taka",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "wind_ladder2",
      "lv": 8,
      "from": 1030
@@ -2152,22 +1993,9 @@
      "from": 1030
     },
     {
-     "move": "wind_pierce",
-     "lv": 22,
-     "from": 1031
-    },
-    {
      "move": "wind_ladder4",
      "lv": 34,
      "from": 1031
-    },
-    {
-     "move": "wind_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_taka",
-     "lv": 52
     }
    ]
   },
@@ -2240,10 +2068,6 @@
      "from": 1033
     },
     {
-     "move": "wind_pierce",
-     "lv": 22
-    },
-    {
      "move": "wind_ladder4",
      "lv": 34
     }
@@ -2282,6 +2106,11 @@
      "evo": true
     },
     {
+     "move": "sig_kabuto",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "wind_ladder2",
      "lv": 8,
      "from": 1033
@@ -2292,22 +2121,9 @@
      "from": 1033
     },
     {
-     "move": "wind_pierce",
-     "lv": 22,
-     "from": 1034
-    },
-    {
      "move": "wind_ladder4",
      "lv": 34,
      "from": 1034
-    },
-    {
-     "move": "wind_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_kabuto",
-     "lv": 52
     }
    ]
   },
@@ -2389,10 +2205,6 @@
      "from": 1036
     },
     {
-     "move": "earth_pierce",
-     "lv": 22
-    },
-    {
      "move": "earth_ladder4",
      "lv": 34
     }
@@ -2436,6 +2248,11 @@
      "evo": true
     },
     {
+     "move": "sig_armad",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "earth_ladder2",
      "lv": 8,
      "from": 1036
@@ -2446,22 +2263,9 @@
      "from": 1036
     },
     {
-     "move": "earth_pierce",
-     "lv": 22,
-     "from": 1037
-    },
-    {
      "move": "earth_ladder4",
      "lv": 34,
      "from": 1037
-    },
-    {
-     "move": "earth_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_armad",
-     "lv": 52
     }
    ]
   },
@@ -2543,10 +2347,6 @@
      "from": 1039
     },
     {
-     "move": "earth_pierce",
-     "lv": 22
-    },
-    {
      "move": "earth_ladder4",
      "lv": 34
     }
@@ -2590,6 +2390,11 @@
      "evo": true
     },
     {
+     "move": "sig_kuwa",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "earth_ladder2",
      "lv": 8,
      "from": 1039
@@ -2600,22 +2405,9 @@
      "from": 1039
     },
     {
-     "move": "earth_pierce",
-     "lv": 22,
-     "from": 1040
-    },
-    {
      "move": "earth_ladder4",
      "lv": 34,
      "from": 1040
-    },
-    {
-     "move": "earth_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_kuwa",
-     "lv": 52
     }
    ]
   },
@@ -2697,10 +2489,6 @@
      "from": 1042
     },
     {
-     "move": "earth_pierce",
-     "lv": 22
-    },
-    {
      "move": "earth_ladder4",
      "lv": 34
     }
@@ -2744,6 +2532,11 @@
      "evo": true
     },
     {
+     "move": "sig_zou",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "earth_ladder2",
      "lv": 8,
      "from": 1042
@@ -2754,22 +2547,9 @@
      "from": 1042
     },
     {
-     "move": "earth_pierce",
-     "lv": 22,
-     "from": 1043
-    },
-    {
      "move": "earth_ladder4",
      "lv": 34,
      "from": 1043
-    },
-    {
-     "move": "earth_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_zou",
-     "lv": 52
     }
    ]
   },
@@ -2851,10 +2631,6 @@
      "from": 1045
     },
     {
-     "move": "ice_pierce",
-     "lv": 22
-    },
-    {
      "move": "ice_ladder4",
      "lv": 34
     }
@@ -2893,6 +2669,11 @@
      "evo": true
     },
     {
+     "move": "sig_yuki",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "ice_ail",
      "lv": 4,
      "from": 1045
@@ -2908,22 +2689,9 @@
      "from": 1045
     },
     {
-     "move": "ice_pierce",
-     "lv": 22,
-     "from": 1046
-    },
-    {
      "move": "ice_ladder4",
      "lv": 34,
      "from": 1046
-    },
-    {
-     "move": "ice_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_yuki",
-     "lv": 52
     }
    ]
   },
@@ -3005,10 +2773,6 @@
      "from": 1048
     },
     {
-     "move": "ice_pierce",
-     "lv": 22
-    },
-    {
      "move": "ice_ladder4",
      "lv": 34
     }
@@ -3047,6 +2811,11 @@
      "evo": true
     },
     {
+     "move": "sig_pen",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "ice_ail",
      "lv": 4,
      "from": 1048
@@ -3062,22 +2831,9 @@
      "from": 1048
     },
     {
-     "move": "ice_pierce",
-     "lv": 22,
-     "from": 1049
-    },
-    {
      "move": "ice_ladder4",
      "lv": 34,
      "from": 1049
-    },
-    {
-     "move": "ice_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_pen",
-     "lv": 52
     }
    ]
   },
@@ -3159,10 +2915,6 @@
      "from": 16
     },
     {
-     "move": "ice_pierce",
-     "lv": 22
-    },
-    {
      "move": "ice_ladder4",
      "lv": 34
     }
@@ -3201,6 +2953,11 @@
      "evo": true
     },
     {
+     "move": "sig_seal",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "ice_ail",
      "lv": 4,
      "from": 16
@@ -3216,22 +2973,9 @@
      "from": 16
     },
     {
-     "move": "ice_pierce",
-     "lv": 22,
-     "from": 1051
-    },
-    {
      "move": "ice_ladder4",
      "lv": 34,
      "from": 1051
-    },
-    {
-     "move": "ice_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_seal",
-     "lv": 52
     }
    ]
   },
@@ -3259,10 +3003,6 @@
     {
      "move": "light_heal1",
      "lv": 1
-    },
-    {
-     "move": "light_cure",
-     "lv": 4
     },
     {
      "move": "light_ladder2",
@@ -3311,11 +3051,6 @@
      "evo": true
     },
     {
-     "move": "light_cure",
-     "lv": 4,
-     "from": 166
-    },
-    {
      "move": "light_ladder2",
      "lv": 8,
      "from": 166
@@ -3329,10 +3064,6 @@
      "move": "light_ladder3",
      "lv": 15,
      "from": 166
-    },
-    {
-     "move": "light_arrow",
-     "lv": 22
     },
     {
      "move": "light_ladder4",
@@ -3383,9 +3114,9 @@
      "evo": true
     },
     {
-     "move": "light_cure",
-     "lv": 4,
-     "from": 166
+     "move": "sig_prism",
+     "lv": 1,
+     "evo": true
     },
     {
      "move": "light_ladder2",
@@ -3403,22 +3134,9 @@
      "from": 166
     },
     {
-     "move": "light_arrow",
-     "lv": 22,
-     "from": 167
-    },
-    {
      "move": "light_ladder4",
      "lv": 34,
      "from": 167
-    },
-    {
-     "move": "light_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_prism",
-     "lv": 52
     }
    ]
   },
@@ -3446,10 +3164,6 @@
     {
      "move": "light_heal1",
      "lv": 1
-    },
-    {
-     "move": "light_cure",
-     "lv": 4
     },
     {
      "move": "light_ladder2",
@@ -3498,11 +3212,6 @@
      "evo": true
     },
     {
-     "move": "light_cure",
-     "lv": 4,
-     "from": 1053
-    },
-    {
      "move": "light_ladder2",
      "lv": 8,
      "from": 1053
@@ -3516,10 +3225,6 @@
      "move": "light_ladder3",
      "lv": 15,
      "from": 1053
-    },
-    {
-     "move": "light_arrow",
-     "lv": 22
     },
     {
      "move": "light_ladder4",
@@ -3570,9 +3275,9 @@
      "evo": true
     },
     {
-     "move": "light_cure",
-     "lv": 4,
-     "from": 1053
+     "move": "sig_grif",
+     "lv": 1,
+     "evo": true
     },
     {
      "move": "light_ladder2",
@@ -3590,22 +3295,9 @@
      "from": 1053
     },
     {
-     "move": "light_arrow",
-     "lv": 22,
-     "from": 1054
-    },
-    {
      "move": "light_ladder4",
      "lv": 34,
      "from": 1054
-    },
-    {
-     "move": "light_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_grif",
-     "lv": 52
     }
    ]
   },
@@ -3633,10 +3325,6 @@
     {
      "move": "light_heal1",
      "lv": 1
-    },
-    {
-     "move": "light_cure",
-     "lv": 4
     },
     {
      "move": "light_ladder2",
@@ -3685,11 +3373,6 @@
      "evo": true
     },
     {
-     "move": "light_cure",
-     "lv": 4,
-     "from": 1056
-    },
-    {
      "move": "light_ladder2",
      "lv": 8,
      "from": 1056
@@ -3703,10 +3386,6 @@
      "move": "light_ladder3",
      "lv": 15,
      "from": 1056
-    },
-    {
-     "move": "light_arrow",
-     "lv": 22
     },
     {
      "move": "light_ladder4",
@@ -3757,9 +3436,9 @@
      "evo": true
     },
     {
-     "move": "light_cure",
-     "lv": 4,
-     "from": 1056
+     "move": "sig_hotaru",
+     "lv": 1,
+     "evo": true
     },
     {
      "move": "light_ladder2",
@@ -3777,22 +3456,9 @@
      "from": 1056
     },
     {
-     "move": "light_arrow",
-     "lv": 22,
-     "from": 1057
-    },
-    {
      "move": "light_ladder4",
      "lv": 34,
      "from": 1057
-    },
-    {
-     "move": "light_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_hotaru",
-     "lv": 52
     }
    ]
   },
@@ -3865,10 +3531,6 @@
      "from": 1059
     },
     {
-     "move": "dark_pierce",
-     "lv": 22
-    },
-    {
      "move": "dark_ladder4",
      "lv": 34
     }
@@ -3907,6 +3569,11 @@
      "evo": true
     },
     {
+     "move": "sig_ghost",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "dark_ladder2",
      "lv": 8,
      "from": 1059
@@ -3917,22 +3584,9 @@
      "from": 1059
     },
     {
-     "move": "dark_pierce",
-     "lv": 22,
-     "from": 1060
-    },
-    {
      "move": "dark_ladder4",
      "lv": 34,
      "from": 1060
-    },
-    {
-     "move": "dark_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_ghost",
-     "lv": 52
     }
    ]
   },
@@ -4005,10 +3659,6 @@
      "from": 1062
     },
     {
-     "move": "dark_pierce",
-     "lv": 22
-    },
-    {
      "move": "dark_ladder4",
      "lv": 34
     }
@@ -4047,6 +3697,11 @@
      "evo": true
     },
     {
+     "move": "sig_owl",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "dark_ladder2",
      "lv": 8,
      "from": 1062
@@ -4057,22 +3712,9 @@
      "from": 1062
     },
     {
-     "move": "dark_pierce",
-     "lv": 22,
-     "from": 1063
-    },
-    {
      "move": "dark_ladder4",
      "lv": 34,
      "from": 1063
-    },
-    {
-     "move": "dark_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_owl",
-     "lv": 52
     }
    ]
   },
@@ -4145,10 +3787,6 @@
      "from": 1065
     },
     {
-     "move": "dark_pierce",
-     "lv": 22
-    },
-    {
      "move": "dark_ladder4",
      "lv": 34
     }
@@ -4187,6 +3825,11 @@
      "evo": true
     },
     {
+     "move": "sig_bat",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "dark_ladder2",
      "lv": 8,
      "from": 1065
@@ -4197,22 +3840,9 @@
      "from": 1065
     },
     {
-     "move": "dark_pierce",
-     "lv": 22,
-     "from": 1066
-    },
-    {
      "move": "dark_ladder4",
      "lv": 34,
      "from": 1066
-    },
-    {
-     "move": "dark_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_bat",
-     "lv": 52
     }
    ]
   },
@@ -4285,10 +3915,6 @@
      "from": 1068
     },
     {
-     "move": "dragon_arrow",
-     "lv": 22
-    },
-    {
      "move": "dragon_ladder4",
      "lv": 34
     }
@@ -4327,6 +3953,11 @@
      "evo": true
     },
     {
+     "move": "sig_dino",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "dragon_ladder2",
      "lv": 8,
      "from": 1068
@@ -4337,22 +3968,9 @@
      "from": 1068
     },
     {
-     "move": "dragon_arrow",
-     "lv": 22,
-     "from": 1069
-    },
-    {
      "move": "dragon_ladder4",
      "lv": 34,
      "from": 1069
-    },
-    {
-     "move": "dragon_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_dino",
-     "lv": 52
     }
    ]
   },
@@ -4425,10 +4043,6 @@
      "from": 195
     },
     {
-     "move": "dragon_arrow",
-     "lv": 22
-    },
-    {
      "move": "dragon_ladder4",
      "lv": 34
     }
@@ -4467,6 +4081,11 @@
      "evo": true
     },
     {
+     "move": "sig_seiryu",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "dragon_ladder2",
      "lv": 8,
      "from": 195
@@ -4477,22 +4096,9 @@
      "from": 195
     },
     {
-     "move": "dragon_arrow",
-     "lv": 22,
-     "from": 196
-    },
-    {
      "move": "dragon_ladder4",
      "lv": 34,
      "from": 196
-    },
-    {
-     "move": "dragon_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_seiryu",
-     "lv": 52
     }
    ],
    "ancient": [
@@ -4502,12 +4108,10 @@
     "dragon_ladder1",
     "dragon_toss",
     "dragon_ring",
+    "sig_seiryu",
     "dragon_ladder2",
     "dragon_ladder3",
-    "dragon_arrow",
-    "dragon_ladder4",
-    "dragon_map",
-    "sig_seiryu"
+    "dragon_ladder4"
    ]
   },
   "198": {
@@ -4579,10 +4183,6 @@
      "from": 198
     },
     {
-     "move": "dragon_arrow",
-     "lv": 22
-    },
-    {
      "move": "dragon_ladder4",
      "lv": 34
     }
@@ -4621,6 +4221,11 @@
      "evo": true
     },
     {
+     "move": "sig_lind",
+     "lv": 1,
+     "evo": true
+    },
+    {
      "move": "dragon_ladder2",
      "lv": 8,
      "from": 198
@@ -4631,22 +4236,9 @@
      "from": 198
     },
     {
-     "move": "dragon_arrow",
-     "lv": 22,
-     "from": 199
-    },
-    {
      "move": "dragon_ladder4",
      "lv": 34,
      "from": 199
-    },
-    {
-     "move": "dragon_map",
-     "lv": 45
-    },
-    {
-     "move": "sig_lind",
-     "lv": 52
     }
    ]
   },
@@ -4668,31 +4260,11 @@
    "src_move": 3,
    "learnset": [
     {
-     "move": "wind_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "wind_combo",
-     "lv": 1
-    },
-    {
-     "move": "wind_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "wind_ring",
-     "lv": 1
-    },
-    {
-     "move": "light_ring",
-     "lv": 1
-    },
-    {
      "move": "wind_ladder4",
      "lv": 1
     },
     {
-     "move": "wind_map",
+     "move": "light_ring",
      "lv": 1
     },
     {
@@ -4705,10 +4277,6 @@
     },
     {
      "move": "light_heal1",
-     "lv": 1
-    },
-    {
-     "move": "light_cure",
      "lv": 1
     },
     {
@@ -4751,19 +4319,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "fire_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "fire_toss",
-     "lv": 1
-    },
-    {
-     "move": "fire_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "fire_ring",
+     "move": "fire_ladder4",
      "lv": 1
     },
     {
@@ -4771,23 +4327,7 @@
      "lv": 1
     },
     {
-     "move": "fire_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "fire_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2001",
-     "lv": 1
-    },
-    {
-     "move": "fire_ail",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ail",
      "lv": 1
     }
    ],
@@ -4814,19 +4354,7 @@
    "src_move": 3,
    "learnset": [
     {
-     "move": "wind_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "wind_combo",
-     "lv": 1
-    },
-    {
-     "move": "wind_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "wind_ring",
+     "move": "wind_ladder4",
      "lv": 1
     },
     {
@@ -4834,19 +4362,7 @@
      "lv": 1
     },
     {
-     "move": "wind_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "wind_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2004",
-     "lv": 1
-    },
-    {
-     "move": "fire_ail",
      "lv": 1
     }
    ],
@@ -4881,19 +4397,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "forest_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "forest_toss",
-     "lv": 1
-    },
-    {
-     "move": "forest_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "forest_ring",
+     "move": "forest_ladder4",
      "lv": 1
     },
     {
@@ -4901,19 +4405,7 @@
      "lv": 1
     },
     {
-     "move": "forest_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "forest_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2005",
-     "lv": 1
-    },
-    {
-     "move": "forest_ail",
      "lv": 1
     }
    ],
@@ -4937,31 +4429,11 @@
    "src_move": 3,
    "learnset": [
     {
-     "move": "earth_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "earth_spear",
-     "lv": 1
-    },
-    {
-     "move": "earth_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
-     "move": "wind_ring",
-     "lv": 1
-    },
-    {
      "move": "earth_ladder4",
      "lv": 1
     },
     {
-     "move": "earth_map",
+     "move": "wind_ring",
      "lv": 1
     },
     {
@@ -4993,31 +4465,11 @@
    "src_move": 3,
    "learnset": [
     {
-     "move": "dragon_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "dragon_toss",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
-     "lv": 1
-    },
-    {
-     "move": "wind_ring",
-     "lv": 1
-    },
-    {
      "move": "dragon_ladder4",
      "lv": 1
     },
     {
-     "move": "dragon_map",
+     "move": "wind_ring",
      "lv": 1
     },
     {
@@ -5045,31 +4497,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "dragon_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "dragon_toss",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
-     "lv": 1
-    },
-    {
-     "move": "water_ring",
-     "lv": 1
-    },
-    {
      "move": "dragon_ladder4",
      "lv": 1
     },
     {
-     "move": "dragon_map",
+     "move": "water_ring",
      "lv": 1
     },
     {
@@ -5100,19 +4532,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "forest_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "forest_toss",
-     "lv": 1
-    },
-    {
-     "move": "forest_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "forest_ring",
+     "move": "forest_ladder4",
      "lv": 1
     },
     {
@@ -5120,19 +4540,7 @@
      "lv": 1
     },
     {
-     "move": "forest_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "forest_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2009",
-     "lv": 1
-    },
-    {
-     "move": "forest_ail",
      "lv": 1
     }
    ],
@@ -5156,19 +4564,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "fire_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "fire_toss",
-     "lv": 1
-    },
-    {
-     "move": "fire_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "fire_ring",
+     "move": "fire_ladder4",
      "lv": 1
     },
     {
@@ -5176,19 +4572,7 @@
      "lv": 1
     },
     {
-     "move": "fire_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "fire_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2010",
-     "lv": 1
-    },
-    {
-     "move": "fire_ail",
      "lv": 1
     }
    ],
@@ -5223,31 +4607,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "light_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "light_toss",
-     "lv": 1
-    },
-    {
-     "move": "light_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "light_ring",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
-     "lv": 1
-    },
-    {
      "move": "light_ladder4",
      "lv": 1
     },
     {
-     "move": "light_map",
+     "move": "dragon_ring",
      "lv": 1
     },
     {
@@ -5256,10 +4620,6 @@
     },
     {
      "move": "light_heal1",
-     "lv": 1
-    },
-    {
-     "move": "light_cure",
      "lv": 1
     },
     {
@@ -5285,7 +4645,7 @@
    ]
   },
   "2012": {
-   "name": "ヒョウセキオウ",
+   "name": "オベリオン",
    "type": "地",
    "type2": "氷",
    "stage": 3,
@@ -5302,31 +4662,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "earth_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "earth_spear",
-     "lv": 1
-    },
-    {
-     "move": "earth_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
-     "move": "ice_ring",
-     "lv": 1
-    },
-    {
      "move": "earth_ladder4",
      "lv": 1
     },
     {
-     "move": "earth_map",
+     "move": "ice_ring",
      "lv": 1
     },
     {
@@ -5335,10 +4675,6 @@
     },
     {
      "move": "earth_dig",
-     "lv": 1
-    },
-    {
-     "move": "ice_ail",
      "lv": 1
     }
    ],
@@ -5365,31 +4701,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "earth_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "earth_spear",
-     "lv": 1
-    },
-    {
-     "move": "earth_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
-     "lv": 1
-    },
-    {
      "move": "earth_ladder4",
      "lv": 1
     },
     {
-     "move": "earth_map",
+     "move": "dragon_ring",
      "lv": 1
     },
     {
@@ -5424,31 +4740,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "light_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "light_toss",
-     "lv": 1
-    },
-    {
-     "move": "light_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "light_ring",
-     "lv": 1
-    },
-    {
-     "move": "fire_ring",
-     "lv": 1
-    },
-    {
      "move": "light_ladder4",
      "lv": 1
     },
     {
-     "move": "light_map",
+     "move": "fire_ring",
      "lv": 1
     },
     {
@@ -5460,19 +4756,11 @@
      "lv": 1
     },
     {
-     "move": "light_cure",
-     "lv": 1
-    },
-    {
      "move": "light_heal_all",
      "lv": 1
     },
     {
      "move": "light_revive",
-     "lv": 1
-    },
-    {
-     "move": "fire_ail",
      "lv": 1
     }
    ],
@@ -5496,31 +4784,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "light_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "light_toss",
-     "lv": 1
-    },
-    {
-     "move": "light_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "light_ring",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ring",
-     "lv": 1
-    },
-    {
      "move": "light_ladder4",
      "lv": 1
     },
     {
-     "move": "light_map",
+     "move": "thunder_ring",
      "lv": 1
     },
     {
@@ -5532,19 +4800,11 @@
      "lv": 1
     },
     {
-     "move": "light_cure",
-     "lv": 1
-    },
-    {
      "move": "light_heal_all",
      "lv": 1
     },
     {
      "move": "light_revive",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ail",
      "lv": 1
     }
    ],
@@ -5568,31 +4828,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "light_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "light_toss",
-     "lv": 1
-    },
-    {
-     "move": "light_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "light_ring",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
      "move": "light_ladder4",
      "lv": 1
     },
     {
-     "move": "light_map",
+     "move": "earth_ring",
      "lv": 1
     },
     {
@@ -5601,10 +4841,6 @@
     },
     {
      "move": "light_heal1",
-     "lv": 1
-    },
-    {
-     "move": "light_cure",
      "lv": 1
     },
     {
@@ -5643,31 +4879,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "light_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "light_toss",
-     "lv": 1
-    },
-    {
-     "move": "light_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "light_ring",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
-     "lv": 1
-    },
-    {
      "move": "light_ladder4",
      "lv": 1
     },
     {
-     "move": "light_map",
+     "move": "dragon_ring",
      "lv": 1
     },
     {
@@ -5676,10 +4892,6 @@
     },
     {
      "move": "light_heal1",
-     "lv": 1
-    },
-    {
-     "move": "light_cure",
      "lv": 1
     },
     {
@@ -5714,31 +4926,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "dragon_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "dragon_toss",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
-     "lv": 1
-    },
-    {
-     "move": "water_ring",
-     "lv": 1
-    },
-    {
      "move": "dragon_ladder4",
      "lv": 1
     },
     {
-     "move": "dragon_map",
+     "move": "water_ring",
      "lv": 1
     },
     {
@@ -5769,19 +4961,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "dragon_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "dragon_toss",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
+     "move": "dragon_ladder4",
      "lv": 1
     },
     {
@@ -5789,19 +4969,7 @@
      "lv": 1
     },
     {
-     "move": "dragon_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "dragon_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2020",
-     "lv": 1
-    },
-    {
-     "move": "fire_ail",
      "lv": 1
     }
    ],
@@ -5825,19 +4993,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "fire_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "fire_toss",
-     "lv": 1
-    },
-    {
-     "move": "fire_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "fire_ring",
+     "move": "fire_ladder4",
      "lv": 1
     },
     {
@@ -5845,19 +5001,7 @@
      "lv": 1
     },
     {
-     "move": "fire_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "fire_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2022",
-     "lv": 1
-    },
-    {
-     "move": "fire_ail",
      "lv": 1
     }
    ],
@@ -5881,19 +5025,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "thunder_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "thunder_toss",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ring",
+     "move": "thunder_ladder4",
      "lv": 1
     },
     {
@@ -5901,23 +5033,7 @@
      "lv": 1
     },
     {
-     "move": "thunder_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "thunder_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2024",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ail",
-     "lv": 1
-    },
-    {
-     "move": "fire_ail",
      "lv": 1
     }
    ],
@@ -5941,31 +5057,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "earth_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "earth_spear",
-     "lv": 1
-    },
-    {
-     "move": "earth_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
-     "move": "fire_ring",
-     "lv": 1
-    },
-    {
      "move": "earth_ladder4",
      "lv": 1
     },
     {
-     "move": "earth_map",
+     "move": "fire_ring",
      "lv": 1
     },
     {
@@ -5974,10 +5070,6 @@
     },
     {
      "move": "earth_dig",
-     "lv": 1
-    },
-    {
-     "move": "fire_ail",
      "lv": 1
     }
    ],
@@ -6001,19 +5093,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "fire_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "fire_toss",
-     "lv": 1
-    },
-    {
-     "move": "fire_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "fire_ring",
+     "move": "fire_ladder4",
      "lv": 1
     },
     {
@@ -6021,23 +5101,7 @@
      "lv": 1
     },
     {
-     "move": "fire_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "fire_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2026",
-     "lv": 1
-    },
-    {
-     "move": "fire_ail",
-     "lv": 1
-    },
-    {
-     "move": "ice_ail",
      "lv": 1
     }
    ],
@@ -6061,19 +5125,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "fire_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "fire_toss",
-     "lv": 1
-    },
-    {
-     "move": "fire_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "fire_ring",
+     "move": "fire_ladder4",
      "lv": 1
     },
     {
@@ -6081,19 +5133,7 @@
      "lv": 1
     },
     {
-     "move": "fire_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "fire_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2027",
-     "lv": 1
-    },
-    {
-     "move": "fire_ail",
      "lv": 1
     }
    ],
@@ -6120,19 +5160,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "dragon_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "dragon_toss",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
+     "move": "dragon_ladder4",
      "lv": 1
     },
     {
@@ -6140,19 +5168,7 @@
      "lv": 1
     },
     {
-     "move": "dragon_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "dragon_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2028",
-     "lv": 1
-    },
-    {
-     "move": "fire_ail",
      "lv": 1
     }
    ],
@@ -6187,31 +5203,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "earth_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "earth_spear",
-     "lv": 1
-    },
-    {
-     "move": "earth_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
-     "move": "water_ring",
-     "lv": 1
-    },
-    {
      "move": "earth_ladder4",
      "lv": 1
     },
     {
-     "move": "earth_map",
+     "move": "water_ring",
      "lv": 1
     },
     {
@@ -6251,19 +5247,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "dragon_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "dragon_toss",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
+     "move": "dragon_ladder4",
      "lv": 1
     },
     {
@@ -6271,19 +5255,7 @@
      "lv": 1
     },
     {
-     "move": "dragon_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "dragon_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2030",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ail",
      "lv": 1
     }
    ],
@@ -6318,31 +5290,11 @@
    "src_move": 3,
    "learnset": [
     {
-     "move": "water_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "water_spear",
-     "lv": 1
-    },
-    {
-     "move": "water_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "water_ring",
-     "lv": 1
-    },
-    {
-     "move": "wind_ring",
-     "lv": 1
-    },
-    {
      "move": "water_ladder4",
      "lv": 1
     },
     {
-     "move": "water_map",
+     "move": "wind_ring",
      "lv": 1
     },
     {
@@ -6370,31 +5322,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "earth_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "earth_spear",
-     "lv": 1
-    },
-    {
-     "move": "earth_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
-     "move": "water_ring",
-     "lv": 1
-    },
-    {
      "move": "earth_ladder4",
      "lv": 1
     },
     {
-     "move": "earth_map",
+     "move": "water_ring",
      "lv": 1
     },
     {
@@ -6437,19 +5369,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "ice_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "ice_spear",
-     "lv": 1
-    },
-    {
-     "move": "ice_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "ice_ring",
+     "move": "ice_ladder4",
      "lv": 1
     },
     {
@@ -6457,19 +5377,7 @@
      "lv": 1
     },
     {
-     "move": "ice_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "ice_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2033",
-     "lv": 1
-    },
-    {
-     "move": "ice_ail",
      "lv": 1
     }
    ],
@@ -6496,31 +5404,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "light_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "light_toss",
-     "lv": 1
-    },
-    {
-     "move": "light_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "light_ring",
-     "lv": 1
-    },
-    {
-     "move": "water_ring",
-     "lv": 1
-    },
-    {
      "move": "light_ladder4",
      "lv": 1
     },
     {
-     "move": "light_map",
+     "move": "water_ring",
      "lv": 1
     },
     {
@@ -6529,10 +5417,6 @@
     },
     {
      "move": "light_heal1",
-     "lv": 1
-    },
-    {
-     "move": "light_cure",
      "lv": 1
     },
     {
@@ -6564,31 +5448,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "water_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "water_spear",
-     "lv": 1
-    },
-    {
-     "move": "water_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "water_ring",
-     "lv": 1
-    },
-    {
-     "move": "dark_ring",
-     "lv": 1
-    },
-    {
      "move": "water_ladder4",
      "lv": 1
     },
     {
-     "move": "water_map",
+     "move": "dark_ring",
      "lv": 1
     },
     {
@@ -6619,31 +5483,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "earth_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "earth_spear",
-     "lv": 1
-    },
-    {
-     "move": "earth_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ring",
-     "lv": 1
-    },
-    {
      "move": "earth_ladder4",
      "lv": 1
     },
     {
-     "move": "earth_map",
+     "move": "thunder_ring",
      "lv": 1
     },
     {
@@ -6652,10 +5496,6 @@
     },
     {
      "move": "earth_dig",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ail",
      "lv": 1
     }
    ],
@@ -6679,19 +5519,7 @@
    "src_move": 3,
    "learnset": [
     {
-     "move": "wind_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "wind_combo",
-     "lv": 1
-    },
-    {
-     "move": "wind_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "wind_ring",
+     "move": "wind_ladder4",
      "lv": 1
     },
     {
@@ -6699,19 +5527,7 @@
      "lv": 1
     },
     {
-     "move": "wind_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "wind_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2037",
-     "lv": 1
-    },
-    {
-     "move": "forest_ail",
      "lv": 1
     }
    ],
@@ -6735,31 +5551,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "earth_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "earth_spear",
-     "lv": 1
-    },
-    {
-     "move": "earth_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
-     "move": "forest_ring",
-     "lv": 1
-    },
-    {
      "move": "earth_ladder4",
      "lv": 1
     },
     {
-     "move": "earth_map",
+     "move": "forest_ring",
      "lv": 1
     },
     {
@@ -6768,10 +5564,6 @@
     },
     {
      "move": "earth_dig",
-     "lv": 1
-    },
-    {
-     "move": "forest_ail",
      "lv": 1
     }
    ],
@@ -6803,19 +5595,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "ice_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "ice_spear",
-     "lv": 1
-    },
-    {
-     "move": "ice_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "ice_ring",
+     "move": "ice_ladder4",
      "lv": 1
     },
     {
@@ -6823,23 +5603,7 @@
      "lv": 1
     },
     {
-     "move": "ice_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "ice_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2039",
-     "lv": 1
-    },
-    {
-     "move": "ice_ail",
-     "lv": 1
-    },
-    {
-     "move": "forest_ail",
      "lv": 1
     }
    ],
@@ -6863,19 +5627,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "forest_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "forest_toss",
-     "lv": 1
-    },
-    {
-     "move": "forest_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "forest_ring",
+     "move": "forest_ladder4",
      "lv": 1
     },
     {
@@ -6883,27 +5635,11 @@
      "lv": 1
     },
     {
-     "move": "forest_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "forest_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2040",
      "lv": 1
     },
     {
-     "move": "forest_ail",
-     "lv": 1
-    },
-    {
      "move": "light_heal1",
-     "lv": 1
-    },
-    {
-     "move": "light_cure",
      "lv": 1
     },
     {
@@ -6935,19 +5671,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "thunder_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "thunder_toss",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ring",
+     "move": "thunder_ladder4",
      "lv": 1
     },
     {
@@ -6955,23 +5679,7 @@
      "lv": 1
     },
     {
-     "move": "thunder_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "thunder_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2041",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ail",
-     "lv": 1
-    },
-    {
-     "move": "forest_ail",
      "lv": 1
     }
    ],
@@ -6995,19 +5703,7 @@
    "src_move": 3,
    "learnset": [
     {
-     "move": "wind_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "wind_combo",
-     "lv": 1
-    },
-    {
-     "move": "wind_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "wind_ring",
+     "move": "wind_ladder4",
      "lv": 1
     },
     {
@@ -7015,19 +5711,7 @@
      "lv": 1
     },
     {
-     "move": "wind_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "wind_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2042",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ail",
      "lv": 1
     }
    ],
@@ -7051,31 +5735,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "earth_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "earth_spear",
-     "lv": 1
-    },
-    {
-     "move": "earth_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ring",
-     "lv": 1
-    },
-    {
      "move": "earth_ladder4",
      "lv": 1
     },
     {
-     "move": "earth_map",
+     "move": "thunder_ring",
      "lv": 1
     },
     {
@@ -7084,10 +5748,6 @@
     },
     {
      "move": "earth_dig",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ail",
      "lv": 1
     }
    ],
@@ -7111,19 +5771,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "ice_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "ice_spear",
-     "lv": 1
-    },
-    {
-     "move": "ice_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "ice_ring",
+     "move": "ice_ladder4",
      "lv": 1
     },
     {
@@ -7131,23 +5779,7 @@
      "lv": 1
     },
     {
-     "move": "ice_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "ice_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2044",
-     "lv": 1
-    },
-    {
-     "move": "ice_ail",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ail",
      "lv": 1
     }
    ],
@@ -7174,31 +5806,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "light_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "light_toss",
-     "lv": 1
-    },
-    {
-     "move": "light_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "light_ring",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ring",
-     "lv": 1
-    },
-    {
      "move": "light_ladder4",
      "lv": 1
     },
     {
-     "move": "light_map",
+     "move": "thunder_ring",
      "lv": 1
     },
     {
@@ -7210,19 +5822,11 @@
      "lv": 1
     },
     {
-     "move": "light_cure",
-     "lv": 1
-    },
-    {
      "move": "light_heal_all",
      "lv": 1
     },
     {
      "move": "light_revive",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ail",
      "lv": 1
     }
    ],
@@ -7249,19 +5853,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "thunder_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "thunder_toss",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ring",
+     "move": "thunder_ladder4",
      "lv": 1
     },
     {
@@ -7269,19 +5861,7 @@
      "lv": 1
     },
     {
-     "move": "thunder_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "thunder_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2046",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ail",
      "lv": 1
     }
    ],
@@ -7308,19 +5888,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "dragon_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "dragon_toss",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
+     "move": "dragon_ladder4",
      "lv": 1
     },
     {
@@ -7328,19 +5896,7 @@
      "lv": 1
     },
     {
-     "move": "dragon_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "dragon_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2047",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ail",
      "lv": 1
     }
    ],
@@ -7364,31 +5920,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "dragon_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "dragon_toss",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
      "move": "dragon_ladder4",
      "lv": 1
     },
     {
-     "move": "dragon_map",
+     "move": "earth_ring",
      "lv": 1
     },
     {
@@ -7423,19 +5959,7 @@
    "src_move": 3,
    "learnset": [
     {
-     "move": "ice_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "ice_spear",
-     "lv": 1
-    },
-    {
-     "move": "ice_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "ice_ring",
+     "move": "ice_ladder4",
      "lv": 1
     },
     {
@@ -7443,19 +5967,7 @@
      "lv": 1
     },
     {
-     "move": "ice_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "ice_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2049",
-     "lv": 1
-    },
-    {
-     "move": "ice_ail",
      "lv": 1
     }
    ],
@@ -7479,31 +5991,11 @@
    "src_move": 3,
    "learnset": [
     {
-     "move": "wind_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "wind_combo",
-     "lv": 1
-    },
-    {
-     "move": "wind_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "wind_ring",
-     "lv": 1
-    },
-    {
-     "move": "light_ring",
-     "lv": 1
-    },
-    {
      "move": "wind_ladder4",
      "lv": 1
     },
     {
-     "move": "wind_map",
+     "move": "light_ring",
      "lv": 1
     },
     {
@@ -7512,10 +6004,6 @@
     },
     {
      "move": "light_heal1",
-     "lv": 1
-    },
-    {
-     "move": "light_cure",
      "lv": 1
     },
     {
@@ -7547,31 +6035,11 @@
    "src_move": 3,
    "learnset": [
     {
-     "move": "wind_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "wind_combo",
-     "lv": 1
-    },
-    {
-     "move": "wind_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "wind_ring",
-     "lv": 1
-    },
-    {
-     "move": "dark_ring",
-     "lv": 1
-    },
-    {
      "move": "wind_ladder4",
      "lv": 1
     },
     {
-     "move": "wind_map",
+     "move": "dark_ring",
      "lv": 1
     },
     {
@@ -7599,31 +6067,11 @@
    "src_move": 3,
    "learnset": [
     {
-     "move": "dragon_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "dragon_toss",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
-     "lv": 1
-    },
-    {
-     "move": "wind_ring",
-     "lv": 1
-    },
-    {
      "move": "dragon_ladder4",
      "lv": 1
     },
     {
-     "move": "dragon_map",
+     "move": "wind_ring",
      "lv": 1
     },
     {
@@ -7651,31 +6099,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "earth_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "earth_spear",
-     "lv": 1
-    },
-    {
-     "move": "earth_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
-     "move": "ice_ring",
-     "lv": 1
-    },
-    {
      "move": "earth_ladder4",
      "lv": 1
     },
     {
-     "move": "earth_map",
+     "move": "ice_ring",
      "lv": 1
     },
     {
@@ -7684,10 +6112,6 @@
     },
     {
      "move": "earth_dig",
-     "lv": 1
-    },
-    {
-     "move": "ice_ail",
      "lv": 1
     }
    ],
@@ -7722,31 +6146,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "earth_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "earth_spear",
-     "lv": 1
-    },
-    {
-     "move": "earth_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
-     "move": "dark_ring",
-     "lv": 1
-    },
-    {
      "move": "earth_ladder4",
      "lv": 1
     },
     {
-     "move": "earth_map",
+     "move": "dark_ring",
      "lv": 1
     },
     {
@@ -7778,31 +6182,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "dragon_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "dragon_toss",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
      "move": "dragon_ladder4",
      "lv": 1
     },
     {
-     "move": "dragon_map",
+     "move": "earth_ring",
      "lv": 1
     },
     {
@@ -7842,19 +6226,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "ice_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "ice_spear",
-     "lv": 1
-    },
-    {
-     "move": "ice_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "ice_ring",
+     "move": "ice_ladder4",
      "lv": 1
     },
     {
@@ -7862,27 +6234,11 @@
      "lv": 1
     },
     {
-     "move": "ice_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "ice_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2056",
      "lv": 1
     },
     {
-     "move": "ice_ail",
-     "lv": 1
-    },
-    {
      "move": "light_heal1",
-     "lv": 1
-    },
-    {
-     "move": "light_cure",
      "lv": 1
     },
     {
@@ -7917,19 +6273,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "dragon_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "dragon_toss",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
+     "move": "dragon_ladder4",
      "lv": 1
     },
     {
@@ -7937,19 +6281,7 @@
      "lv": 1
     },
     {
-     "move": "dragon_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "dragon_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2058",
-     "lv": 1
-    },
-    {
-     "move": "ice_ail",
      "lv": 1
     }
    ],
@@ -7976,31 +6308,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "light_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "light_toss",
-     "lv": 1
-    },
-    {
-     "move": "light_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "light_ring",
-     "lv": 1
-    },
-    {
-     "move": "dark_ring",
-     "lv": 1
-    },
-    {
      "move": "light_ladder4",
      "lv": 1
     },
     {
-     "move": "light_map",
+     "move": "dark_ring",
      "lv": 1
     },
     {
@@ -8009,10 +6321,6 @@
     },
     {
      "move": "light_heal1",
-     "lv": 1
-    },
-    {
-     "move": "light_cure",
      "lv": 1
     },
     {
@@ -8047,31 +6355,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "dragon_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "dragon_toss",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
-     "lv": 1
-    },
-    {
-     "move": "dark_ring",
-     "lv": 1
-    },
-    {
      "move": "dragon_ladder4",
      "lv": 1
     },
     {
-     "move": "dragon_map",
+     "move": "dark_ring",
      "lv": 1
     },
     {
@@ -8085,7 +6373,7 @@
    ]
   },
   "2063": {
-   "name": "シニガマキリ",
+   "name": "デスカマキリ",
    "type": "森",
    "type2": "闇",
    "stage": 3,
@@ -8102,19 +6390,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "forest_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "forest_toss",
-     "lv": 1
-    },
-    {
-     "move": "forest_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "forest_ring",
+     "move": "forest_ladder4",
      "lv": 1
     },
     {
@@ -8122,19 +6398,7 @@
      "lv": 1
     },
     {
-     "move": "forest_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "forest_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2063",
-     "lv": 1
-    },
-    {
-     "move": "forest_ail",
      "lv": 1
     }
    ],
@@ -8158,19 +6422,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "ice_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "ice_spear",
-     "lv": 1
-    },
-    {
-     "move": "ice_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "ice_ring",
+     "move": "ice_ladder4",
      "lv": 1
     },
     {
@@ -8178,19 +6430,7 @@
      "lv": 1
     },
     {
-     "move": "ice_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "ice_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2064",
-     "lv": 1
-    },
-    {
-     "move": "ice_ail",
      "lv": 1
     }
    ],
@@ -8217,31 +6457,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "light_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "light_toss",
-     "lv": 1
-    },
-    {
-     "move": "light_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "light_ring",
-     "lv": 1
-    },
-    {
-     "move": "ice_ring",
-     "lv": 1
-    },
-    {
      "move": "light_ladder4",
      "lv": 1
     },
     {
-     "move": "light_map",
+     "move": "ice_ring",
      "lv": 1
     },
     {
@@ -8253,19 +6473,11 @@
      "lv": 1
     },
     {
-     "move": "light_cure",
-     "lv": 1
-    },
-    {
      "move": "light_heal_all",
      "lv": 1
     },
     {
      "move": "light_revive",
-     "lv": 1
-    },
-    {
-     "move": "ice_ail",
      "lv": 1
     }
    ],
@@ -8292,31 +6504,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "earth_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "earth_spear",
-     "lv": 1
-    },
-    {
-     "move": "earth_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
-     "move": "forest_ring",
-     "lv": 1
-    },
-    {
      "move": "earth_ladder4",
      "lv": 1
     },
     {
-     "move": "earth_map",
+     "move": "forest_ring",
      "lv": 1
     },
     {
@@ -8325,10 +6517,6 @@
     },
     {
      "move": "earth_dig",
-     "lv": 1
-    },
-    {
-     "move": "forest_ail",
      "lv": 1
     }
    ],
@@ -8355,31 +6543,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "light_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "light_toss",
-     "lv": 1
-    },
-    {
-     "move": "light_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "light_ring",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
      "move": "light_ladder4",
      "lv": 1
     },
     {
-     "move": "light_map",
+     "move": "earth_ring",
      "lv": 1
     },
     {
@@ -8388,10 +6556,6 @@
     },
     {
      "move": "light_heal1",
-     "lv": 1
-    },
-    {
-     "move": "light_cure",
      "lv": 1
     },
     {
@@ -8438,31 +6602,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "earth_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "earth_spear",
-     "lv": 1
-    },
-    {
-     "move": "earth_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "earth_ring",
-     "lv": 1
-    },
-    {
-     "move": "dark_ring",
-     "lv": 1
-    },
-    {
      "move": "earth_ladder4",
      "lv": 1
     },
     {
-     "move": "earth_map",
+     "move": "dark_ring",
      "lv": 1
     },
     {
@@ -8497,19 +6641,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "thunder_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "thunder_toss",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ring",
+     "move": "thunder_ladder4",
      "lv": 1
     },
     {
@@ -8517,19 +6649,7 @@
      "lv": 1
     },
     {
-     "move": "thunder_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "thunder_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2069",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ail",
      "lv": 1
     }
    ],
@@ -8556,19 +6676,7 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "fire_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "fire_toss",
-     "lv": 1
-    },
-    {
-     "move": "fire_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "fire_ring",
+     "move": "fire_ladder4",
      "lv": 1
     },
     {
@@ -8576,19 +6684,7 @@
      "lv": 1
     },
     {
-     "move": "fire_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "fire_map",
-     "lv": 1
-    },
-    {
      "move": "fsig_2070",
-     "lv": 1
-    },
-    {
-     "move": "fire_ail",
      "lv": 1
     },
     {
@@ -8619,31 +6715,11 @@
    "src_move": 2,
    "learnset": [
     {
-     "move": "dragon_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "dragon_toss",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ladder3",
-     "lv": 1
-    },
-    {
-     "move": "dragon_ring",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ring",
-     "lv": 1
-    },
-    {
      "move": "dragon_ladder4",
      "lv": 1
     },
     {
-     "move": "dragon_map",
+     "move": "thunder_ring",
      "lv": 1
     },
     {
@@ -8656,10 +6732,6 @@
     },
     {
      "move": "ragna_fire",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ail",
      "lv": 1
     }
    ],
