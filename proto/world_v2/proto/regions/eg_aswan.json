@@ -35,6 +35,11 @@
    43,
    60,
    3.14159
+  ],
+  "from_boat": [
+   -34,
+   -24,
+   3.14159
   ]
  },
  "exits": [
@@ -57,8 +62,8 @@
    ],
    "to": "eg_abusimbel",
    "at": "from_aswan",
-   "need": "eg_eleki",
-   "lock": "ナセル湖の船は、ダムの上のあとで"
+   "need": "e10",
+   "lock": "ナセル湖の船は、湖のほとりのあとで"
   }
  ],
  "nature": true,
@@ -203,7 +208,9 @@
    "ai": {
     "hpX": 1.27,
     "atkX": 1.57
-   }
+   },
+   "rule": "eg_off:e17",
+   "until": "e17"
   },
   {
    "n": "サバンナの見はり",
@@ -264,7 +271,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "ミラの絵は未作成(ペトラの体を仮に使用)"
+   "todo": "ミラの絵は未作成(ペトラの体を仮に使用)",
+   "rule": "eg_off:e21"
   },
   {
    "n": "ジョー",
@@ -285,7 +293,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "ジョーの絵は未作成(ヤニスの体を仮に使用)"
+   "todo": "ジョーの絵は未作成(ヤニスの体を仮に使用)",
+   "rule": "eg_off:e21"
   },
   {
    "n": "ナディア",
@@ -296,7 +305,8 @@
    "rot": 300,
    "line": "",
    "role": "guide",
-   "todo": "ナディアの絵は未作成(エレナの体を仮に使用)"
+   "todo": "ナディアの絵は未作成(エレナの体を仮に使用)",
+   "until": "e21"
   },
   {
    "n": "村の人",
@@ -504,15 +514,17 @@
    "r": 0,
    "h": 1.5,
    "ancient": 1,
-   "scene": "eleki",
-   "after": "eleki_win",
+   "scene": null,
+   "after": null,
    "flag": "eg_eleki",
    "lv": 39,
    "tier": 5,
    "tune": {
     "hp": 1.89,
     "atk": 2.85
-   }
+   },
+   "need": "e08",
+   "trial": "e08"
   },
   {
    "id": 2012,
@@ -521,15 +533,17 @@
    "r": 0,
    "h": 1.8,
    "ancient": 1,
-   "scene": "oberi",
-   "after": "oberi_win",
+   "scene": null,
+   "after": null,
    "flag": "eg_oberi",
    "lv": 39,
    "tier": 5,
    "tune": {
     "hp": 1.6,
     "atk": 3.7
-   }
+   },
+   "need": "e09",
+   "trial": "e09"
   }
  ],
  "drones": [],

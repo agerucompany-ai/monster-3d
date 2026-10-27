@@ -745,7 +745,7 @@ function fusionResult(a,b){
   return fid;
 }
 // 2026-10-28 オーナー「融合の仕方を覚える」: player.fusionKnown(融合体idの配列)を渡した時、自分の子はその融合だけ。渡さない(CPU対戦など)=全部・敵(AI)は今まで通り
-function fuseKnownOk(owner, fid){ return owner!==0 || ONLINE || !BT.fuseKnown || BT.fuseKnown.has(+fid); }
+function fuseKnownOk(owner, fid){ if(owner===1 && BT.opts && BT.opts.enemyNoFuse) return false; return owner!==0 || ONLINE || !BT.fuseKnown || BT.fuseKnown.has(+fid); }   // 2026-10-28 物語: enemyNoFuse=敵の融合はエジプト11まで無し
 function attackTargets(u, range){
   if(V2ON()) return attackTargetsV2(u, (range&&typeof range==='object')?range:null);   // 技 v2: 2つめは技
   if(!canAttack(u)) return [];

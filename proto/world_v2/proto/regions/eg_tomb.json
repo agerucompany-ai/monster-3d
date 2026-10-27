@@ -126,7 +126,8 @@
    "rot": 90,
    "line": "",
    "role": "guide",
-   "todo": "ナディアの絵は未作成(エレナの体を仮に使用)"
+   "todo": "ナディアの絵は未作成(エレナの体を仮に使用)",
+   "until": "e21"
   }
  ],
  "entrances": [
@@ -240,8 +241,8 @@
    "r": 0,
    "h": 1.5,
    "ancient": 1,
-   "scene": "anubid",
-   "after": "anubid_win",
+   "scene": null,
+   "after": null,
    "flag": "eg_anubid",
    "lv": 38,
    "tier": 4,

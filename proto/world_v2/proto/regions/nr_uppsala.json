@@ -272,7 +272,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "ユキの絵は未作成(ペトラの体を仮に使用)"
+   "todo": "ユキの絵は未作成(ペトラの体を仮に使用)",
+   "rule": "nr_off:n25"
   },
   {
    "n": "ハル",
@@ -293,7 +294,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "ハルの絵は未作成(タソスの体を仮に使用)"
+   "todo": "ハルの絵は未作成(タソスの体を仮に使用)",
+   "rule": "nr_off:n25"
   }
  ],
  "entrances": [
@@ -405,15 +407,17 @@
    "r": 0,
    "h": 1.7,
    "ancient": 1,
-   "scene": "odin",
-   "after": "odin_win",
+   "scene": null,
+   "after": null,
    "flag": "nr_odin",
    "lv": 59,
    "tier": 5,
    "tune": {
     "hp": 1.4,
     "atk": 1.82
-   }
+   },
+   "need": "n25",
+   "trial": "n25"
   },
   {
    "id": 2065,

@@ -172,7 +172,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "ユキの絵は未作成(ペトラの体を仮に使用)"
+   "todo": "ユキの絵は未作成(ペトラの体を仮に使用)",
+   "rule": "nr_off:n25"
   },
   {
    "n": "ハル",
@@ -193,7 +194,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "ハルの絵は未作成(タソスの体を仮に使用)"
+   "todo": "ハルの絵は未作成(タソスの体を仮に使用)",
+   "rule": "nr_off:n25"
   }
  ],
  "entrances": [
@@ -328,15 +330,17 @@
    "r": 0,
    "h": 1.7,
    "ancient": 1,
-   "scene": "fenrir",
-   "after": "fenrir_win",
+   "scene": null,
+   "after": null,
    "flag": "nr_fenrir",
    "lv": 61,
    "tier": 6,
    "tune": {
     "hp": 1.02,
     "atk": 4.81
-   }
+   },
+   "need": "n25",
+   "trial": "n25"
   }
  ],
  "drones": [],
