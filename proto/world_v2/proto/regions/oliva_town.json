@@ -2913,7 +2913,8 @@
    "z": -1.3,
    "rot": 90,
    "role": "shop",
-   "line": ""
+   "line": "",
+   "scene": "petra_v"
   },
   {
    "n": "エリー",
@@ -2924,17 +2925,20 @@
    "rot": 0,
    "role": "guide",
    "line": "",
-   "todo": "3Dはゾイの体のまま(エリーの3Dは未作成)"
+   "todo": "3Dはゾイの体のまま(エリーの3Dは未作成)",
+   "scene": "elly_plaza",
+   "need": "morning3"
   },
   {
-   "n": "エレナ博士",
+   "n": "クロエ博士",
    "m": "v3:elena",
    "h": 1.6,
    "x": 12.4,
    "z": 6.4,
    "rot": -90,
    "role": "lab",
-   "line": ""
+   "line": "",
+   "need": "ep1"
   },
   {
    "n": "宿のタソス",
@@ -2944,8 +2948,54 @@
    "z": 19.6,
    "rot": 0,
    "role": "inn",
-   "scene": "tasos",
+   "scene": "tasos_inn",
    "line": ""
+  },
+  {
+   "n": "オリーブ畑のおじさん",
+   "m": "v3:tasos",
+   "h": 1.55,
+   "x": -11,
+   "z": 23.8,
+   "rot": 180,
+   "scene": "farmer_v",
+   "need": "morning3",
+   "line": "",
+   "todo": "絵なし(名札だけ)・3Dはタソスの体を仮に使用"
+  },
+  {
+   "n": "ヤニス",
+   "m": "v3:stavros",
+   "h": 1.55,
+   "x": 10,
+   "z": 23.8,
+   "rot": 180,
+   "scene": "yanis_v",
+   "need": "ep7",
+   "until": "yanis8",
+   "line": "",
+   "todo": "第8話の話すだけのヤニス(勝負は丘の門の外)"
+  },
+  {
+   "n": "アレク",
+   "m": "v3:dimi",
+   "h": 1.3,
+   "x": -6,
+   "z": -2,
+   "rot": 90,
+   "trainer": 1,
+   "rule": "alek28",
+   "need": "lab28",
+   "until": "fuse28",
+   "line": "",
+   "lineAfter": "",
+   "party": [
+    {
+     "mid": 1012,
+     "rank": 11
+    }
+   ],
+   "todo": "第28話の広場の練習試合。3Dは dimi の体を仮に使用"
   }
  ],
  "entrances": [
@@ -3234,7 +3284,34 @@
     30
    ],
    "to": "oliva_hill",
-   "at": "from_town"
+   "at": "from_town",
+   "need": "ep3",
+   "lock": "まだ村で、やることがある"
+  }
+ ],
+ "spots": [
+  {
+   "id": "stele",
+   "n": "神殿の石板",
+   "x": 16,
+   "z": -26,
+   "r": 1.8
+  },
+  {
+   "id": "lab_back",
+   "n": "研究所の裏",
+   "x": 14,
+   "z": 9,
+   "r": 2.6,
+   "auto": 1
+  },
+  {
+   "id": "gate",
+   "n": "静域の門",
+   "x": 0,
+   "z": 22,
+   "r": 3,
+   "auto": 1
   }
  ]
 }

@@ -57,7 +57,7 @@
    ],
    "to": "cloudroad",
    "at": "from_corinth",
-   "need": "guard3",
+   "need": "ep21",
    "lock": "丘の上のとりでが、まだ呼んでいる"
   }
  ],
@@ -141,7 +141,9 @@
    ],
    "zeroday": 1,
    "flagWin": "bridge",
-   "todo": "手下の絵は未作成(ペトラの体を仮に使用)"
+   "todo": "手下の絵は未作成(ペトラの体を仮に使用)",
+   "rule": "bridge19",
+   "until": "bridge"
   },
   {
    "n": "ゼロデイの手下",
@@ -163,7 +165,9 @@
    ],
    "zeroday": 1,
    "flagWin": "bridge",
-   "todo": "手下の絵は未作成(タソスの体を仮に使用)"
+   "todo": "手下の絵は未作成(タソスの体を仮に使用)",
+   "rule": "bridge19",
+   "until": "bridge"
   },
   {
    "n": "ミハリス",
@@ -199,7 +203,9 @@
    "ai": {
     "hpX": 0.91,
     "atkX": 0.82
-   }
+   },
+   "need": "east20",
+   "rule": "mihalis"
   },
   {
    "n": "ユスフ",
@@ -211,7 +217,8 @@
    "line": "",
    "kid": 1,
    "role": "guide",
-   "todo": "ユスフの絵は未作成(ゾイの体を仮に使用)"
+   "todo": "ユスフの絵は未作成(ゾイの体を仮に使用)",
+   "scene": "yusuf"
   },
   {
    "n": "港の人",
@@ -284,7 +291,8 @@
    "x": -60,
    "z": -40,
    "r": 5,
-   "h": 0.78
+   "h": 0.78,
+   "need": "ep23"
   },
   {
    "id": 1030,
@@ -312,7 +320,8 @@
    "x": 50,
    "z": -36,
    "r": 5,
-   "h": 0.78
+   "h": 0.78,
+   "need": "ep23"
   },
   {
    "id": 166,
@@ -367,7 +376,10 @@
    "after": "tenmarai_win",
    "flag": "guard3",
    "lv": 14,
-   "tier": 3
+   "tier": 3,
+   "need": "fort21",
+   "afterFlag": "ep21",
+   "lose": "tenmarai_lose"
   }
  ],
  "drones": [],

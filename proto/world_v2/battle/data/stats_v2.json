@@ -6739,6 +6739,39 @@
    "ancient": [
     "nr_core"
    ]
+  },
+  "2072": {
+   "name": "ナルレオン",
+   "type": "炎",
+   "type2": "雷",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1320,
+   "atk": 201,
+   "def": 49,
+   "mob": 2,
+   "spd": 57,
+   "red": 0.329,
+   "src_hp": 1320,
+   "src_atk": 175,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "thunder_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "fire_ring",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2024",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "placeholder": "ホムライジュ(2024)の写し・TODO"
   }
  }
 }

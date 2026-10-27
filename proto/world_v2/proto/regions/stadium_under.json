@@ -84,7 +84,10 @@
    "scene": "belladonna",
    "after": "belladonna_win",
    "flagWin": "bella",
-   "todo": "ベラドンナの絵は未作成(ペトラの体を仮に使用)"
+   "todo": "ベラドンナの絵は未作成(ペトラの体を仮に使用)",
+   "rule": "bella30",
+   "need": "tun30",
+   "until": "low30"
   },
   {
    "n": "ゼロデイの手下",
@@ -105,7 +108,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "手下の絵は未作成(タソスの体を仮に使用)"
+   "todo": "手下の絵は未作成(タソスの体を仮に使用)",
+   "rule": "zd30"
   },
   {
    "n": "ゼロデイの手下",
@@ -126,7 +130,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "手下の絵は未作成(タソスの体を仮に使用)"
+   "todo": "手下の絵は未作成(タソスの体を仮に使用)",
+   "rule": "zd30"
   }
  ],
  "entrances": [],
@@ -188,11 +193,13 @@
    "r": 0,
    "h": 1.6,
    "ancient": 1,
-   "scene": "godherak",
    "after": "godherak_win",
    "flag": "king",
    "lv": 24,
-   "tier": 6
+   "tier": 6,
+   "need": "low30",
+   "lose": "godherak_lose",
+   "afterFlag": "ep30"
   }
  ],
  "drones": [],

@@ -57,8 +57,8 @@
    ],
    "to": "delphi",
    "at": "from_cloud",
-   "need": "thunder",
-   "lock": "雷の嵐で、先へ進めない"
+   "need": "ep23",
+   "lock": "霧で、先へ進めない"
   }
  ],
  "nature": true,
@@ -190,7 +190,10 @@
     }
    ],
    "scene": "dimi3",
-   "flagWin": "dimi3"
+   "flagWin": "dimi3",
+   "rule": "dimi22",
+   "need": "pass22",
+   "until": "ep22"
   }
  ],
  "entrances": [
@@ -227,7 +230,8 @@
    "x": 20,
    "z": -28,
    "r": 6,
-   "h": 0.78
+   "h": 0.78,
+   "need": "ep23"
   },
   {
    "id": 166,
@@ -262,7 +266,8 @@
    "x": -26,
    "z": -72,
    "r": 5,
-   "h": 0.78
+   "h": 0.78,
+   "need": "ep23"
   },
   {
    "id": 1031,
@@ -296,7 +301,15 @@
    "after": "thunder_win",
    "flag": "thunder",
    "lv": 16,
-   "tier": 4
+   "tier": 4,
+   "need": "pass22",
+   "lose": "thunder_lose",
+   "terrain": "snow",
+   "guests": [
+    "partner",
+    1033
+   ],
+   "next": "ep22Hut"
   }
  ],
  "drones": [],

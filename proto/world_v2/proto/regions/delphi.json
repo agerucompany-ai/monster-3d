@@ -56,9 +56,9 @@
     31
    ],
    "to": "oliva_hill",
-   "at": "from_delphi",
-   "need": "guard4",
-   "lock": "空の船は、天文台のあとで"
+   "at": "from_sky",
+   "need": "ep27",
+   "lock": "空の船は、まだ出ない"
   }
  ],
  "nature": false,
@@ -161,7 +161,8 @@
    "ai": {
     "hpX": 0.9,
     "atkX": 0.8
-   }
+   },
+   "rule": "sophia"
   },
   {
    "n": "天文台の学生",
@@ -202,7 +203,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "手下の絵は未作成(ペトラの体を仮に使用)"
+   "todo": "手下の絵は未作成(ペトラの体を仮に使用)",
+   "rule": "thea24"
   },
   {
    "n": "村の人",
@@ -279,7 +281,8 @@
    "x": -58,
    "z": 2,
    "r": 5,
-   "h": 0.78
+   "h": 0.78,
+   "need": "ep23"
   },
   {
    "id": 1054,
@@ -348,7 +351,10 @@
    "after": "atlard_win",
    "flag": "guard4",
    "lv": 18,
-   "tier": 5
+   "tier": 5,
+   "need": "roof25",
+   "afterFlag": "ep25",
+   "lose": "atlard_lose"
   }
  ],
  "drones": [],
@@ -1718,6 +1724,16 @@
    ],
    "n": 70,
    "lane": 1.2
+  }
+ ],
+ "spots": [
+  {
+   "id": "marble_stub",
+   "n": "古い街道",
+   "x": 52,
+   "z": 28,
+   "r": 3,
+   "auto": 1
   }
  ]
 }

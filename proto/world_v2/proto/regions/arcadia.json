@@ -57,8 +57,8 @@
    ],
    "to": "corinth",
    "at": "from_arcadia",
-   "need": "guard2",
-   "lock": "森の奥の遺跡が、まだ呼んでいる"
+   "need": "ep18",
+   "lock": "まだ進めない"
   }
  ],
  "nature": true,
@@ -154,7 +154,8 @@
      "mid": 1033
     }
    ],
-   "todo": "3Dはタソスの体を仮に使用"
+   "todo": "3Dはタソスの体を仮に使用",
+   "need": "guard1"
   },
   {
    "n": "釣りの父",
@@ -174,7 +175,8 @@
      "mid": 1030
     }
    ],
-   "todo": "3Dはスタヴロスの体を仮に使用"
+   "todo": "3Dはスタヴロスの体を仮に使用",
+   "need": "guard1"
   },
   {
    "n": "釣りの子",
@@ -185,7 +187,8 @@
    "rot": 200,
    "line": "",
    "kid": 1,
-   "todo": "3Dはゾイの体を仮に使用"
+   "todo": "3Dはゾイの体を仮に使用",
+   "need": "guard1"
   },
   {
    "n": "レン",
@@ -200,16 +203,12 @@
    "party": [
     {
      "mid": 1033,
-     "lv": 10
-    },
-    {
-     "mid": 1026,
-     "lv": 8
+     "rank": 6
     }
    ],
-   "scene": "dimi2",
-   "after": "dimi2_win",
-   "flagWin": "dimi2"
+   "rule": "ren12",
+   "need": "ep11",
+   "until": "ep12"
   },
   {
    "n": "ゼロデイの手下",
@@ -223,14 +222,17 @@
    "lineAfter": "",
    "party": [
     {
-     "mid": 1007
+     "mid": 1007,
+     "rank": 5
     },
     {
-     "mid": 1062
+     "mid": 1065,
+     "rank": 5
     }
    ],
    "zeroday": 1,
-   "todo": "手下の絵は未作成(ペトラの体を仮に使用)"
+   "todo": "手下の絵は未作成(ペトラの体を仮に使用)",
+   "rule": "zd13"
   },
   {
    "n": "ゼロデイの手下",
@@ -251,7 +253,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "手下の絵は未作成(タソスの体を仮に使用)"
+   "todo": "手下の絵は未作成(タソスの体を仮に使用)",
+   "rule": "zd_crew"
   },
   {
    "n": "羊飼いのイリニ",
@@ -262,7 +265,51 @@
    "rot": 0,
    "line": "",
    "role": "guide",
-   "todo": "3Dはゾイの体を仮に使用"
+   "todo": "3Dはゾイの体を仮に使用",
+   "need": "guard1",
+   "scene": "irini_v"
+  },
+  {
+   "n": "アレク",
+   "m": "v3:dimi",
+   "h": 1.3,
+   "x": 0,
+   "z": 50,
+   "rot": 180,
+   "trainer": 1,
+   "rule": "alek_night",
+   "need": "alek5",
+   "until": "ep6",
+   "line": "",
+   "lineAfter": "",
+   "party": [
+    {
+     "mid": 1062,
+     "rank": 5
+    }
+   ],
+   "todo": "夜のアレク(第6話)"
+  },
+  {
+   "n": "アレク",
+   "m": "v3:dimi",
+   "h": 1.3,
+   "x": 4,
+   "z": -38,
+   "rot": 180,
+   "trainer": 1,
+   "rule": "alek_dawn",
+   "need": "dawn7",
+   "until": "alek",
+   "line": "",
+   "lineAfter": "",
+   "party": [
+    {
+     "mid": 1062,
+     "rank": 5
+    }
+   ],
+   "todo": "夜明けのアレク(第7話)"
   }
  ],
  "entrances": [
@@ -315,7 +362,8 @@
    "x": 18,
    "z": -46,
    "r": 6,
-   "h": 0.78
+   "h": 0.78,
+   "need": "ep23"
   },
   {
    "id": 1007,
@@ -357,7 +405,8 @@
    "x": 52,
    "z": -20,
    "r": 6,
-   "h": 0.78
+   "h": 0.78,
+   "need": "ep23"
   },
   {
    "id": 1033,
@@ -391,7 +440,10 @@
    "after": "luminador_win",
    "flag": "guard2",
    "lv": 11,
-   "tier": 2
+   "tier": 2,
+   "need": "ep13",
+   "afterFlag": "ep14",
+   "lose": "luminador_lose"
   }
  ],
  "drones": [],
@@ -1659,6 +1711,24 @@
    "n": 70,
    "lane": 1.2,
    "stream": 3.0
+  }
+ ],
+ "spots": [
+  {
+   "id": "ruins_core",
+   "n": "遺跡の奥",
+   "x": 0,
+   "z": -54,
+   "r": 4,
+   "auto": 1
+  },
+  {
+   "id": "nafria_stub",
+   "n": "森の南の道",
+   "x": 0,
+   "z": -84,
+   "r": 3,
+   "auto": 1
   }
  ]
 }
