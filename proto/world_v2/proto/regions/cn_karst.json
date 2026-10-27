@@ -46,7 +46,9 @@
     33
    ],
    "to": "cn_fossil",
-   "at": "from_karst"
+   "at": "from_karst",
+   "need": "c14",
+   "lock": "リニアは、まだ止まっている"
   },
   {
    "r": [
@@ -57,8 +59,8 @@
    ],
    "to": "cn_pillars",
    "at": "from_karst",
-   "need": "guard_s",
-   "lock": "リニアは、月の峰のあとで"
+   "need": "c14",
+   "lock": "リニアは、まだ止まっている"
   }
  ],
  "nature": true,
@@ -181,7 +183,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)"
+   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)",
+   "rule": "cn_off:c10"
   },
   {
    "n": "レン",
@@ -210,7 +213,8 @@
    ],
    "scene": "dimi4",
    "after": "dimi4_win",
-   "flagWin": "dimi4"
+   "flagWin": "dimi4",
+   "until": "ep30"
   },
   {
    "n": "西街の人",
@@ -351,15 +355,17 @@
    "r": 0,
    "h": 1.4,
    "ancient": 1,
-   "scene": "phenix",
-   "after": "phenix_win",
-   "flag": "guard_s",
+   "scene": null,
+   "after": null,
+   "flag": "cn_phenix",
    "lv": 24,
    "tier": 3,
    "tune": {
     "hp": 4.2,
     "atk": 1.5
-   }
+   },
+   "need": "c29",
+   "trial": "c29"
   }
  ],
  "drones": [],

@@ -46,7 +46,9 @@
     33
    ],
    "to": "cn_bund",
-   "at": "from_bamboo"
+   "at": "from_bamboo",
+   "need": "c05",
+   "lock": "師範の口伝を聞いてから"
   },
   {
    "r": [
@@ -57,8 +59,8 @@
    ],
    "to": "cn_plateau",
    "at": "from_bamboo",
-   "need": "cn_dojo",
-   "lock": "道場の師範が、まだ呼んでいる"
+   "need": "c05",
+   "lock": "師範の口伝を聞いてから"
   }
  ],
  "nature": true,
@@ -133,7 +135,9 @@
    "kid": 1,
    "scene": "hao",
    "flagWin": "hao",
-   "todo": "ハオの絵は未作成(ゾイの体を仮に使用)"
+   "todo": "ハオの絵は未作成(ゾイの体を仮に使用)",
+   "rule": "cn_off:never",
+   "until": "c05"
   },
   {
    "n": "師範",
@@ -170,7 +174,9 @@
    "ai": {
     "hpX": 1.13,
     "atkX": 1.28
-   }
+   },
+   "rule": "cn_shifu",
+   "cnStep": "c04_b"
   },
   {
    "n": "道場の弟子",

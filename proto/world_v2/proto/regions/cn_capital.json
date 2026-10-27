@@ -35,6 +35,11 @@
    0,
    -82,
    0
+  ],
+  "from_gorges": [
+   0,
+   60,
+   3.14159
   ]
  },
  "exits": [
@@ -45,8 +50,9 @@
     3,
     70
    ],
-   "to": "cn_thunder",
-   "at": "from_capital"
+   "to": "cn_gorges",
+   "at": "from_capital",
+   "was": "cn_thunder"
   },
   {
    "r": [
@@ -57,8 +63,8 @@
    ],
    "to": "cn_kunlun",
    "at": "from_capital",
-   "need": "cn_lion",
-   "lock": "北門は、唐獅子に認められてから"
+   "need": "c20",
+   "lock": "都を出るのは、まだ先"
   }
  ],
  "nature": true,
@@ -156,7 +162,8 @@
    "ai": {
     "hpX": 1.15,
     "atkX": 1.31
-   }
+   },
+   "rule": "cn_off:c20"
   },
   {
    "n": "都の衛兵",
@@ -176,7 +183,8 @@
      "mid": 1056
     }
    ],
-   "todo": "3Dはヤニスの体を仮に使用"
+   "todo": "3Dはヤニスの体を仮に使用",
+   "rule": "cn_off:c20"
   },
   {
    "n": "レン",
@@ -205,7 +213,8 @@
    ],
    "scene": "dimi5",
    "after": "dimi5_win",
-   "flagWin": "dimi5"
+   "flagWin": "dimi5",
+   "until": "ep30"
   },
   {
    "n": "ゼロデイの手下",
@@ -226,7 +235,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)"
+   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)",
+   "rule": "cn_off:c20"
   },
   {
    "n": "都の人",
@@ -390,15 +400,17 @@
    "r": 0,
    "h": 1.5,
    "ancient": 1,
-   "scene": "lion",
-   "after": "lion_win",
-   "flag": "cn_lion",
+   "scene": null,
+   "after": null,
+   "flag": "cn_lion_t",
    "lv": 25,
    "tier": 5,
    "tune": {
     "hp": 4.1,
     "atk": 1.64
-   }
+   },
+   "need": "c17",
+   "trial": "c17"
   }
  ],
  "drones": [],

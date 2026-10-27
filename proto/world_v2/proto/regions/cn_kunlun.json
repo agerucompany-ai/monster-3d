@@ -50,10 +50,11 @@
     58,
     -68
    ],
-   "to": "cn_bund",
+   "to": "cn_sea",
    "at": "from_kunlun",
-   "need": "cn_setsu",
-   "lock": "空の船は、氷河の奥のあとで"
+   "need": "c22",
+   "lock": "空の船は、吹雪がやんでから",
+   "was": "cn_bund"
   }
  ],
  "nature": true,
@@ -126,7 +127,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)"
+   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)",
+   "rule": "cn_off:c22"
   },
   {
    "n": "ゼロデイの手下",
@@ -147,7 +149,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)"
+   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)",
+   "rule": "cn_off:c22"
   },
   {
    "n": "船乗り",
@@ -274,8 +277,8 @@
    "r": 0,
    "h": 1.5,
    "ancient": 1,
-   "scene": "setsu",
-   "after": "setsu_win",
+   "scene": null,
+   "after": null,
    "flag": "cn_setsu",
    "lv": 26,
    "tier": 5,

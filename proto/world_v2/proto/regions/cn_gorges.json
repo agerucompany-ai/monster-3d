@@ -35,6 +35,11 @@
    80,
    2,
    -1.5708
+  ],
+  "from_capital": [
+   80,
+   2,
+   -1.5708
   ]
  },
  "exits": [
@@ -55,10 +60,11 @@
     90,
     5
    ],
-   "to": "cn_thunder",
+   "to": "cn_capital",
    "at": "from_gorges",
-   "need": "guard_n",
-   "lock": "東の島への船は、玄武のあとで"
+   "need": "c16",
+   "lock": "向こう岸へは、まだ渡れない",
+   "was": "cn_thunder"
   }
  ],
  "nature": true,
@@ -175,7 +181,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)"
+   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)",
+   "rule": "cn_off:c16"
   },
   {
    "n": "ゼロデイの手下",
@@ -196,7 +203,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)"
+   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)",
+   "rule": "cn_off:c16"
   },
   {
    "n": "船頭",
@@ -330,15 +338,17 @@
    "r": 0,
    "h": 1.4,
    "ancient": 1,
-   "scene": "hyogaia",
-   "after": "hyogaia_win",
-   "flag": "guard_n",
+   "scene": null,
+   "after": null,
+   "flag": "cn_hyogaia",
    "lv": 25,
    "tier": 4,
    "tune": {
     "hp": 4.17,
     "atk": 2.25
-   }
+   },
+   "need": "c16",
+   "trial": "c16"
   }
  ],
  "drones": [],

@@ -46,7 +46,9 @@
     70
    ],
    "to": "cn_plateau",
-   "at": "from_fossil"
+   "at": "from_fossil",
+   "need": "c09",
+   "lock": "火の山を、まだ登っていない"
   },
   {
    "r": [
@@ -57,8 +59,8 @@
    ],
    "to": "cn_karst",
    "at": "from_fossil",
-   "need": "cn_kagu",
-   "lock": "火の山が、まだ鳴っている"
+   "need": "c09",
+   "lock": "火の山を、まだ登っていない"
   }
  ],
  "nature": true,
@@ -144,7 +146,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)"
+   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)",
+   "rule": "cn_off:c09"
   },
   {
    "n": "ゼロデイの手下",
@@ -278,8 +281,8 @@
    "r": 0,
    "h": 1.4,
    "ancient": 1,
-   "scene": "kagu",
-   "after": "kagu_win",
+   "scene": null,
+   "after": null,
    "flag": "cn_kagu",
    "lv": 23,
    "tier": 3,

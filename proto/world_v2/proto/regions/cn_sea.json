@@ -35,6 +35,16 @@
    0,
    -80,
    0
+  ],
+  "from_kunlun": [
+   0,
+   56,
+   3.14159
+  ],
+  "from_thunder": [
+   0,
+   56,
+   3.14159
   ]
  },
  "exits": [
@@ -57,7 +67,7 @@
    ],
    "to": "eg_cairo",
    "at": "from_china",
-   "need": "cn_dragon",
+   "need": "c30",
    "lock": "青龍が、まだ眠っている"
   }
  ],
@@ -119,7 +129,8 @@
    "ai": {
     "hpX": 0.85,
     "atkX": 1.9
-   }
+   },
+   "until": "ep30"
   },
   {
    "n": "ゼロデイの手下",
@@ -140,7 +151,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)"
+   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)",
+   "rule": "cn_off:c29"
   },
   {
    "n": "ゼロデイの手下",
@@ -161,7 +173,8 @@
     }
    ],
    "zeroday": 1,
-   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)"
+   "todo": "手下の絵は未作成(ギリシャの体を仮に使用)",
+   "rule": "cn_off:c29"
   },
   {
    "n": "リーファ",
@@ -182,7 +195,8 @@
    "z": -66,
    "rot": 300,
    "line": "",
-   "role": "guide"
+   "role": "guide",
+   "until": "ep30"
   }
  ],
  "entrances": [
@@ -286,22 +300,25 @@
    "h": 0.98
   },
   {
-   "id": 291,
+   "id": 3291,
    "x": 0,
    "z": -78,
    "r": 0,
    "h": 1.7,
    "ancient": 1,
-   "scene": "seiryu",
-   "after": "seiryu_win",
-   "flag": "cn_dragon",
+   "scene": null,
+   "after": null,
+   "flag": "cn_dragon_t",
    "lv": 28,
    "tier": 6,
    "tune": {
     "hp": 3.8,
     "atk": 2.8,
     "minions": 3
-   }
+   },
+   "was": 291,
+   "need": "c30",
+   "trial": "c30"
   }
  ],
  "drones": [],

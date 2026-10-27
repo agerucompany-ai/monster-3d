@@ -46,7 +46,9 @@
     3
    ],
    "to": "cn_bamboo",
-   "at": "from_plateau"
+   "at": "from_plateau",
+   "need": "c08",
+   "lock": "まだ上海へ戻っていない"
   },
   {
    "r": [
@@ -57,8 +59,8 @@
    ],
    "to": "cn_fossil",
    "at": "from_plateau",
-   "need": "guard_w",
-   "lock": "白虎の岩が、まだ呼んでいる"
+   "need": "c08",
+   "lock": "まだ上海へ戻っていない"
   }
  ],
  "nature": true,
@@ -289,22 +291,25 @@
    "h": 0.72
   },
   {
-   "id": 1024,
+   "id": 3024,
    "x": 38,
    "z": -70,
    "r": 0,
    "h": 1.4,
    "ancient": 1,
-   "scene": "bolken",
-   "after": "bolken_win",
-   "flag": "guard_w",
+   "scene": null,
+   "after": null,
+   "flag": "cn_bolken",
    "lv": 22,
    "tier": 3,
    "tune": {
     "hp": 4.26,
     "atk": 3.24,
     "minions": 2
-   }
+   },
+   "was": 1024,
+   "need": "c07",
+   "trial": "c07"
   }
  ],
  "drones": [],
