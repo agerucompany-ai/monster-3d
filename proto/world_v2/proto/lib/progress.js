@@ -15,6 +15,7 @@ const CFG={
   startLv:5,                                  // 相棒のはじめのレベル
   recruit:{1:0.50, 2:0.30, 3:0.15},           // 倒した時に仲間になる確率(段ごと)。その種類(系統)で初回のみ
   recruitArc:{greece:1.0, china:0.75, egypt:0.6, norse:0.45},   // 2026-10-28 オーナー: 5〜50%。後の編ほど下がる
+  cradleW:{1:60, 2:30, 3:10},   // 生み出すで出る段の重み(1体あたり)
   recruitDragon:0.05, recruitMin:0.05, recruitMax:0.50,           // 竜タイプは5%
   expNeed:(lv)=>Math.round(12+1.6*lv*lv),     // 次のレベルまでのEXP(Lv1→2=14・Lv5=52・Lv10=172・Lv50=4012・Lv98=15378)
   expGain:(enemyLv,stage,kind)=>Math.round((10+4*enemyLv)*([1,1.5,2][stage-1]||1)*({wild:1,trainer:1.5,master:2.5,ancient:2.5}[kind]||1)),   // 倒した相手1体ぶん
@@ -129,6 +130,9 @@ P.setPartyMax=(n)=>{ const pg=prog(); if(!pg) return; pg.partyMax=Math.max(1,Mat
 P.unlockLate=()=>P.setPartyMax(CFG.partyMaxLate);
 P.followers=()=>P.party().slice(0,CFG.followMax).map(c=>c.mid);   // 画面でついて歩く子(3体まで)
 P.leader=()=>P.party()[0]||null;
+const BOSS_FORMS=[291,1024,1028];   // 系統の3段目だがボスとして出る子(セイリュウ・ボルケン・トールガ): 倒した時だけ仲間になる
+P.isBossForm=(mid)=>BOSS_FORMS.includes(+mid);
+P.recruitBoss=function(lead){ if(!lead||!mon(lead.mid)||P.hasForm(lead.mid)) return null; const c=P.add(lead.mid, lead.lv||1, 'boss'); return {isNew:true, lv:c.lv, uid:c.uid, inParty:prog().party.includes(c.uid), p:1}; };
 P.hasForm=(mid)=>{ const pg=prog(); if(!pg) return false; mid=+mid; return !!(pg.forms&&pg.forms[mid]) || pg.roster.some(c=>c.mid===mid); };   // 2026-10-28 オーナー: 姿(段)ごとに集める。持っている姿にだけ進化できる
 P.hasLine=(mid)=>{ const pg=prog(); if(!pg) return false; const b=baseOf(mid); return !!pg.lines[b] || pg.roster.some(c=>baseOf(c.mid)===b); };
 P.add=function(mid, lv, src){ const pg=prog(); if(!pg||!mon(mid)) return null; const c={uid:uid(), mid:+mid, lv:Math.max(1,Math.min(LV_MAX,+lv||1)), exp:0, src:src||'', t:Date.now()}; pg.roster.push(c); pg.lines[baseOf(mid)]=1;
@@ -179,7 +183,7 @@ P.wildPack=function(lead, area, pool, n){ const L=Object.assign({}, lead, {leade
 
 // ---------------------------------------------------------------- バトル(battle.js の startBattle に渡す物を作り、結果を反映)
 // 倒して仲間(G1): その系統を初めて → 段ごとの確率で仲間に / すでに持っている系統 → 何も起きない(null)
-P.recruitRoll=function(lead){ if(!mon(lead.mid)) return null; if(P.hasForm(lead.mid)) return null;
+P.recruitRoll=function(lead){ if(!mon(lead.mid)) return null; if(P.hasForm(lead.mid)) return null; if(BOSS_FORMS.includes(+lead.mid)) return null;
   const st=stageOf(lead.mid); const m=mon(lead.mid); const ty=[].concat(m.type||[],m.type2||[]); let p;
   if(ty.some(t=>String(t).indexOf('竜')>=0)) p=CFG.recruitDragon;
   else { p=(CFG.recruit[st]!=null?CFG.recruit[st]:0.3)*((CFG.recruitArc||{})[P.arc()]||1); }
@@ -218,7 +222,11 @@ P.battle=async function(opt, ctx){ P.prepare(opt, ctx); const sb=root.startBattl
 P.cradle={
   price:()=>CFG.cradlePrice,
   pool(){ const arc=P.arc(); const ids=[]; for(const a of ARC_ORDER){ for(const id of ARC_POOL[a]) if(mon(id)&&!STARTERS.includes(id)&&!ids.includes(id)) ids.push(id); if(a===arc) break; }
-    const pct=ids.length?100/ids.length:0; return ids.map(id=>({mid:id, name:nameOf(id), pct:+pct.toFixed(1), owned:P.hasForm(id)})); },   // 今の編までの野生の系統・1段目・等確率(確率はそのまま画面に出す)
+    // 2026-10-28 オーナー「ジェムで2段目以降も集められるように」: 系統の上の段も出る。出せる段は 今の編の開始の段+1 まで(ギリシャ=2段目まで・中国から3段目まで)。段ごとの重み CFG.cradleW
+    const maxSt=Math.min(3,(ARC_RULE[arc]&&ARC_RULE[arc].startStage||1)+1), W=CFG.cradleW, rows=[];
+    for(const b of ids) for(const id of lineOf(b)){ const st=stageOf(id); if(st<=maxSt&&mon(id)&&!BOSS_FORMS.includes(id)) rows.push({mid:id, st, w:W[st]||0}); }
+    const tot=rows.reduce((a,r)=>a+r.w,0)||1;
+    return rows.map(r=>({mid:r.mid, name:nameOf(r.mid), stage:r.st, w:r.w, pct:+(100*r.w/tot).toFixed(1), owned:P.hasForm(r.mid)})); },   // 確率はそのまま画面に出す
   canPull(){ return P.totalGems()>=CFG.cradlePrice && this.pool().length>0; },
   pull(){ const pg=prog(); if(!pg) return {ok:false, why:'nosave'}; const pool=this.pool(); if(!pool.length) return {ok:false, why:'empty'}; if(pg.gems<CFG.cradlePrice) return {ok:false, why:'gems'};
     pg.gems-=CFG.cradlePrice; pg.log.unshift({t:Date.now(), n:-CFG.cradlePrice, r:'cradle'}); return this._roll(pg, pool); },
@@ -231,7 +239,7 @@ P.cradle={
       const free=pg.gems; pg.gems=0; if(free) pg.log.unshift({t:Date.now(), n:-free, r:'cradle'}); pg.log.unshift({t:Date.now(), n:-need, r:'cradle_paid'});
       return this._roll(pg, pool); } finally{ this._busy=false; } },
   _roll(pg, pool){ pg.pulls=(pg.pulls||0)+1; pg.log=pg.log.slice(0,30);
-    const pick=pool[Math.floor(Math.random()*pool.length)].mid; const out={ok:true, mid:pick, name:nameOf(pick)};
+    let rr=Math.random()*pool.reduce((a,r)=>a+(r.w||1),0), pick=pool[pool.length-1].mid; for(const r of pool){ rr-=(r.w||1); if(rr<0){ pick=r.mid; break; } } const out={ok:true, mid:pick, name:nameOf(pick)};
     if(P.hasForm(pick)){ const same=pg.roster.filter(c=>c.mid===+pick).sort((a,b)=>a.t-b.t)[0]; out.dup=true; out.target=same.uid; out.targetMid=same.mid;
       if(same.lv>=LV_MAX){ pg.gems+=CFG.dupGemsBack; out.gemsBack=CFG.dupGemsBack; } else { const r=addExp(same, CFG.expNeed(same.lv)-(same.exp||0)); out.before=r.before; out.after=r.after; } }   // ダブり=その子が1レベル上がる(Lv99ならジェム75を返す)
     else { const c=P.add(pick, 1, 'cradle'); out.uid=c.uid; out.lv=c.lv; out.inParty=pg.party.includes(c.uid); }

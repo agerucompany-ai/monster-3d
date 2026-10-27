@@ -2151,7 +2151,7 @@ async function startEncounter(e){ ENC=e; AUTO=null; IN.active=false; IN.sx=IN.sy
   if(e.m&&!(anc||boss)) enemy.pack=[...new Set((D.wild||[]).filter(w=>!w.ancient&&!w.boss).map(w=>+w.id))];   // 野生の群れ(2026-10-27): 触った子がリーダー+このマップの野生から。数は progress.js(編の pack と自分の出せる数)
   const opt={ kind:e.m?((anc||boss)?'ancient':'wild'):(e.n.o.master?'master':'trainer'), size:e.m?((anc||boss)?(+e.m.o.size||9):7):(+e.n.o.size||(e.n.o.master?11:9)), terrainTheme:place, backdrop:place==='seaside'?'aegean':'olive', player:{items:ITEMS}, enemy };
   try{ Progress.prepare(opt,{area, zeroday:enemy.zeroday}); }catch(err){ console.warn('progress.prepare',err&&err.message); opt.player={party:PARTY,items:ITEMS,box:BOX,rankCap:10,owned:ownedList()}; }
-  if(anc) opt.recruit=()=>null;   // 古代テリオン(守り・王)は仲間にならない。ボス(トールガ)は野生なので判定あり
+  if(anc||boss){ const bf=!!(window.Progress&&Progress.isBossForm&&Progress.isBossForm(e.m.o.id)); if(bf){ opt.enemy.catchable=true; opt.recruit=l=>Progress.recruitBoss(l); } else opt.recruit=()=>null; }   // 2026-10-28 オーナー「ボスだけは倒さないと仲間にならない」: 系統の子のボス(トールガ・ボルケン・セイリュウ)は倒すと必ず仲間(初めての時)。生み出すでは出ない。古代テリオン(融合の守り・王)は仲間にならない
   if(e.m&&e.m.o.ai&&!(anc||boss)) opt.enemy.ai=Object.assign({},e.m.o.ai);
   if(e.n&&e.n.o.ai) opt.enemy.ai=Object.assign({},e.n.o.ai);   // 2026-10-27 人の札の強さ(北欧編の終盤のボス: 体力・攻撃の倍率 hpX/atkX)   // 野生の個別の強さ(任意)。古代テリオン・ボスの強さは battle.js の ANCIENT(tier)で決まる(2026-10-26: マップ側の hpX/atkX はやめた)
   if(unlocks().fusion) opt.fusionUnlocked=true; if(unlocks().triple) opt.tripleUnlocked=true;   // 3体融合はラグナディオのあと(北欧編 2026-10-27)   // 融合は解禁のあとだけ渡す(守り④のあと)
