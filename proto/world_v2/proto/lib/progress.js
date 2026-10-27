@@ -13,7 +13,9 @@ const P={};
 const CFG={
   key:'w2_save_v1', sub:'prog',
   startLv:5,                                  // 相棒のはじめのレベル
-  recruit:{1:0.50, 2:0.40, 3:0.30},           // 倒した時に仲間になる確率(段ごと)。その種類(系統)で初回のみ
+  recruit:{1:0.50, 2:0.30, 3:0.15},           // 倒した時に仲間になる確率(段ごと)。その種類(系統)で初回のみ
+  recruitArc:{greece:1.0, china:0.75, egypt:0.6, norse:0.45},   // 2026-10-28 オーナー: 5〜50%。後の編ほど下がる
+  recruitDragon:0.05, recruitMin:0.05, recruitMax:0.50,           // 竜タイプは5%
   expNeed:(lv)=>Math.round(12+1.6*lv*lv),     // 次のレベルまでのEXP(Lv1→2=14・Lv5=52・Lv10=172・Lv50=4012・Lv98=15378)
   expGain:(enemyLv,stage,kind)=>Math.round((10+4*enemyLv)*([1,1.5,2][stage-1]||1)*({wild:1,trainer:1.5,master:2.5,ancient:2.5}[kind]||1)),   // 倒した相手1体ぶん
   benchExp:0.5,                               // 盤に出なかったパーティの子はEXP半分
@@ -177,7 +179,10 @@ P.wildPack=function(lead, area, pool, n){ const L=Object.assign({}, lead, {leade
 // ---------------------------------------------------------------- バトル(battle.js の startBattle に渡す物を作り、結果を反映)
 // 倒して仲間(G1): その系統を初めて → 段ごとの確率で仲間に / すでに持っている系統 → 何も起きない(null)
 P.recruitRoll=function(lead){ if(!mon(lead.mid)) return null; if(P.hasLine(lead.mid)) return null;
-  const st=stageOf(lead.mid); const p=CFG.recruit[st]!=null?CFG.recruit[st]:0.4; const ok=Math.random()<p;
+  const st=stageOf(lead.mid); const m=mon(lead.mid); const ty=[].concat(m.type||[],m.type2||[]); let p;
+  if(ty.some(t=>String(t).indexOf('竜')>=0)) p=CFG.recruitDragon;
+  else { p=(CFG.recruit[st]!=null?CFG.recruit[st]:0.3)*((CFG.recruitArc||{})[P.arc()]||1); }
+  p=Math.max(CFG.recruitMin,Math.min(CFG.recruitMax,p)); const ok=Math.random()<p;
   if(!ok) return {isNew:false, miss:true, p};
   const c=P.add(lead.mid, lead.lv||1, 'wild'); return {isNew:true, lv:c.lv, uid:c.uid, inParty:prog().party.includes(c.uid), p}; };
 // prepare(opt, ctx): startBattle の opts に player / recruit / decorate / startStage を足す。ctx={area, zeroday}
