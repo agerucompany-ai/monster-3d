@@ -151,7 +151,12 @@ P.dex=function(){ const pg=prog(); const seen=(pg&&pg.seen)||{}; const own=new S
 P.gems=()=>prog()?prog().gems:0;
 P.addGems=function(n, reason){ const pg=prog(); if(!pg) return 0; n=Math.round(+n||0); if(!n) return pg.gems; pg.gems=Math.max(0,pg.gems+n); pg.log.unshift({t:Date.now(), n, r:reason||''}); pg.log=pg.log.slice(0,30); P.save(); emit('gems',{n,reason,total:pg.gems}); return pg.gems; };
 P.quest=function(id, gems){ const pg=prog(); if(!pg||pg.quests[id]) return false; pg.quests[id]=Date.now(); P.addGems(gems, 'quest:'+id); return true; };   // クエスト達成(同じidは1回だけ)
-P.buyGems=function(){ emit('buy',{}); return false; };   // 課金は置き場だけ(G5: 公開前に確率表示・未成年の上限・ストアの決まりを確かめる)。本物の決済は入れていない
+P.buyGems=function(){ const has=listeners.some(f=>f.k==='buy'); emit('buy',{}); return has; };   // 課金(2026-10-27 Square): lib/pay.js が on('buy') で購入の画面を開く。いなければ「じゅんび中」
+// 有償ジェム(2026-10-27 Square・サーバーが正本)。lib/pay.js が setPaid({balance(), spend(n, reason)}) を渡す。無ければ有償は0として今までどおり
+let PAID=null;
+P.setPaid=function(p){ PAID=p||null; if(UI.refresh) UI.refresh(); };
+P.paidGems=function(){ try{ const b=PAID&&PAID.balance(); return b==null?null:Math.max(0,+b||0); }catch(e){ return null; } };   // null = まだ分からない(サーバーにつながっていない)
+P.totalGems=()=>P.gems()+(P.paidGems()||0);
 
 // ---------------------------------------------------------------- 野生・地方の決まり
 P.arc=()=>prog()&&prog().arc||CFG.arc;
@@ -208,9 +213,18 @@ P.cradle={
   price:()=>CFG.cradlePrice,
   pool(){ const arc=P.arc(); const ids=[]; for(const a of ARC_ORDER){ for(const id of ARC_POOL[a]) if(mon(id)&&!STARTERS.includes(id)&&!ids.includes(id)) ids.push(id); if(a===arc) break; }
     const pct=ids.length?100/ids.length:0; return ids.map(id=>({mid:id, name:nameOf(id), pct:+pct.toFixed(1), owned:P.hasLine(id)})); },   // 今の編までの野生の系統・1段目・等確率(確率はそのまま画面に出す)
-  canPull(){ return P.gems()>=CFG.cradlePrice && this.pool().length>0; },
+  canPull(){ return P.totalGems()>=CFG.cradlePrice && this.pool().length>0; },
   pull(){ const pg=prog(); if(!pg) return {ok:false, why:'nosave'}; const pool=this.pool(); if(!pool.length) return {ok:false, why:'empty'}; if(pg.gems<CFG.cradlePrice) return {ok:false, why:'gems'};
-    pg.gems-=CFG.cradlePrice; pg.pulls=(pg.pulls||0)+1; pg.log.unshift({t:Date.now(), n:-CFG.cradlePrice, r:'cradle'}); pg.log=pg.log.slice(0,30);
+    pg.gems-=CFG.cradlePrice; pg.log.unshift({t:Date.now(), n:-CFG.cradlePrice, r:'cradle'}); return this._roll(pg, pool); },
+  // 無料ジェムを先に使い、足りない分だけ有償ジェムをサーバーで引く(2026-10-27)。サーバーが引けた時だけ無料の分も引いて生み出す
+  async pullAsync(){ const pg=prog(); if(!pg) return {ok:false, why:'nosave'}; const pool=this.pool(); if(!pool.length) return {ok:false, why:'empty'}; const price=CFG.cradlePrice;
+    if(pg.gems>=price) return this.pull();
+    const need=price-pg.gems, paid=P.paidGems(); if(!PAID||paid==null||paid<need) return {ok:false, why:'gems'};
+    if(this._busy) return {ok:false, why:'busy'}; this._busy=true;
+    try{ const r=await PAID.spend(need,'cradle'); if(!r||!r.ok) return {ok:false, why:(r&&r.why)||'paid'};
+      const free=pg.gems; pg.gems=0; if(free) pg.log.unshift({t:Date.now(), n:-free, r:'cradle'}); pg.log.unshift({t:Date.now(), n:-need, r:'cradle_paid'});
+      return this._roll(pg, pool); } finally{ this._busy=false; } },
+  _roll(pg, pool){ pg.pulls=(pg.pulls||0)+1; pg.log=pg.log.slice(0,30);
     const pick=pool[Math.floor(Math.random()*pool.length)].mid; const out={ok:true, mid:pick, name:nameOf(pick)};
     if(P.hasLine(pick)){ const same=pg.roster.filter(c=>baseOf(c.mid)===baseOf(pick)).sort((a,b)=>a.t-b.t)[0]; out.dup=true; out.target=same.uid; out.targetMid=same.mid;
       if(same.lv>=LV_MAX){ pg.gems+=CFG.dupGemsBack; out.gemsBack=CFG.dupGemsBack; } else { const r=addExp(same, CFG.expNeed(same.lv)-(same.exp||0)); out.before=r.before; out.after=r.after; } }   // ダブり=その子が1レベル上がる(Lv99ならジェム75を返す)
@@ -314,7 +328,7 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgGrid.sm .pgCard img{width:52px;height:52px}
 #pgToast{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);background:rgba(10,14,30,.92);border:1px solid rgba(255,217,119,.6);color:#ffe9a8;font-weight:800;font-size:15px;padding:10px 18px;border-radius:999px;display:none;pointer-events:none;white-space:nowrap}
 `;
-const REASON={zeroday:'ゼロデイ',cradle:'生み出す',dup:'ダブり',test:'テスト',start:'はじめ'};
+const REASON={zeroday:'ゼロデイ',cradle:'生み出す',cradle_paid:'生み出す(有償)',dup:'ダブり',test:'テスト',start:'はじめ'};
 function reasonJP(r){ if(!r) return ''; if(/^quest:/.test(r)) return 'クエスト'; return REASON[r]||r; }
 function el(tag,cls,html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
 UI.mount=function(o){ o=o||{}; if(R) return R; const st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);
@@ -347,7 +361,7 @@ UI.learnNotice=function(list){ if(typeof document==='undefined') return; if(!R) 
   setTimeout(show,400); };
 UI.showBar=(v)=>{ if(R) R.querySelector('#pgBar').style.display=v===false?'none':'flex'; };
 UI.toast=function(t){ if(!R) return; const e=R.querySelector('#pgToast'); e.textContent=t; e.style.display='block'; clearTimeout(UI._tt); UI._tt=setTimeout(()=>e.style.display='none',1600); };
-UI.refresh=function(){ if(!R) return; R.querySelector('#pgBtGems').innerHTML=ICON('gem')+(+P.gems()||0); R.querySelector('#pgHeadGem').innerHTML=ICON('gem')+(+P.gems()||0); if(cur) UI.render(); };
+UI.refresh=function(){ if(!R) return; R.querySelector('#pgBtGems').innerHTML=ICON('gem')+(+P.totalGems()||0); R.querySelector('#pgHeadGem').innerHTML=ICON('gem')+(+P.totalGems()||0); if(cur) UI.render(); };   // 無料+有償
 let tab='party'; UI.opts={};
 UI.open=function(k,o){ if(!R) UI.mount(); o=o||{}; if(k==='party'){ k='menu'; o.tab=o.tab||'party'; } else if(k==='gems'){ k='menu'; o.tab=o.tab||'items'; }   // 2026-10-27: 仲間・牧場・ジェムは1つのメニュー(タブ)に
   if(k==='menu'){ tab=o.tab||tab||'party'; UI.opts=o; } cur=k; pick=null; pend=null; UI._hatch=null; R.querySelector('#pgPanel').classList.add('on'); R.querySelector('#pgBar').style.visibility='hidden'; UI.render(); emit('ui',{open:k}); };
@@ -399,8 +413,9 @@ UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const 
       D.owned.sort((a,b)=>a-b).forEach(mid=>{ const d=el('div','pgCard',`<img src="${IMG(mid)}" alt=""><div class="nm">${nameOf(mid)}</div><div class="lv">${tyb(mon(mid).type)}${mon(mid).type2?tyb(mon(mid).type2):''}</div>`); g.appendChild(d); }); B.appendChild(g); }
     else if(tab==='items'){ const it=(SAVE&&SAVE.items)||{}; B.appendChild(el('div','pgSec','<span>もちもの</span>'));
       const ks=Object.keys(it).filter(k=>+it[k]>0); for(const k of ks){ const j=ITEMJ[k]||[k,'potion']; B.appendChild(el('div','pgItem',`${ICON(j[1])}<span>${j[0]}</span><b>×${it[k]}</b>`)); } if(!ks.length) B.appendChild(el('div','pgItem','<span>—</span>'));
-      B.appendChild(el('div','pgSec','<span>ジェム</span>')); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>ジェム</span><b>${P.gems()}</b>`));
-      const a=el('div','pgAct'); const b=el('button','pgBtn gem','ジェムを買う'); b.onclick=()=>{ P.buyGems(); UI.toast('じゅんび中'); }; a.appendChild(b); B.appendChild(a);
+      B.appendChild(el('div','pgSec','<span>ジェム</span>')); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>無料ジェム</span><b>${P.gems()}</b>`));
+      const pdv=P.paidGems(); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>有償ジェム</span><b>${pdv==null?'—':pdv}</b>`));
+      const a=el('div','pgAct'); const b=el('button','pgBtn gem','ジェムを買う'); b.onclick=()=>{ if(!P.buyGems()) UI.toast('じゅんび中'); }; a.appendChild(b); B.appendChild(a);
       B.appendChild(el('div','pgSec','<span>きろく</span>'));
       const Lg=el('div','pgLog'); for(const g of (prog()?prog().log:[])) Lg.appendChild(el('div','',`<span>${reasonJP(g.r)}</span><span class="${g.n>=0?'p':'m'}">${g.n>=0?'+':''}${g.n}</span>`)); if(!Lg.children.length) Lg.appendChild(el('div','','<span>—</span>')); B.appendChild(Lg); }
   }
@@ -408,7 +423,7 @@ UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const 
     const h=el('div'); h.id='pgHatch'; B.appendChild(h);
     if(UI._hatch){ const r=UI._hatch; h.classList.add('on'); h.innerHTML=`<img src="${IMG(r.mid)}" alt=""><div class="nm">${r.name}</div>`+(r.dup?(r.gemsBack?`<span class="tag dup">ダブり　${ICON('gem')}+${r.gemsBack}</span>`:`<span class="tag dup">ダブり　${nameOf(r.targetMid)} Lv${r.before} → Lv${r.after}</span>`):`<span class="tag">生まれた！　Lv${r.lv}　${r.inParty?'仲間':'牧場'}</span>`); }
     const a=el('div','pgAct'); const b=el('button','pgBtn main',`テリオンを生み出す　${ICON('gem')}${price}`); b.disabled=!P.cradle.canPull(); b.id='pgPull';
-    b.onclick=()=>{ const r=P.cradle.pull(); if(!r.ok){ UI.toast(r.why==='gems'?'ジェムがたりない':'—'); return; } UI._hatch=r; UI.render(); };   // 生まれた子は _hatch に持ち、render で描く(save の change で描き直されても消えない)
+    b.onclick=async()=>{ b.disabled=true; let r; try{ r=await P.cradle.pullAsync(); }catch(e){ r={ok:false, why:'net'}; } if(!r.ok){ b.disabled=!P.cradle.canPull(); UI.toast(r.why==='gems'||r.why==='insufficient'?'ジェムがたりない':(r.why==='busy'?'処理中':'通信エラー')); return; } UI._hatch=r; UI.render(); };   // 無料が足りない時は有償をサーバーで引く(pullAsync)   // 生まれた子は _hatch に持ち、render で描く(save の change で描き直されても消えない)
     a.appendChild(b); B.appendChild(a);
     B.appendChild(el('div','pgSec',`<span>でる子と確率</span><span>${pool.length}しゅるい</span>`));
     function odds(){ const o=el('div','pgOdds'); o.id='pgOdds'; for(const q of P.cradle.pool()) o.appendChild(el('div','',`<img src="${IMG(q.mid)}" alt="">${q.name}<b>${q.pct}%</b>${q.owned?'<span class="own">もってる</span>':''}`)); return o; }
