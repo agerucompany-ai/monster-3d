@@ -1,6 +1,6 @@
 // =====================================================================================
 // progress.js — テリオンモンスター 進行の部品(2026-10-26)
-//   仲間(倒して仲間・ランダム・その種類で初回のみ) / レベル1〜99・EXP / ジェム / 研究所のゆりかご(ガチャ) / パーティと牧場
+//   仲間(倒して仲間・ランダム・その種類で初回のみ) / レベル1〜99・EXP / ジェム / テリオン研究所の「テリオンを生み出す」(ガチャ・2026-10-27 ゆりかごから改名) / パーティと牧場 / メニュー(パーティ・牧場・ずかん・もちもの)
 //   正本: world_bible.md 2-7b・2-8、decisions.md 18・21・26・41、game_design.md 6-4、Windows共有_変更点_2026-10-26.md 3.5(G1〜G11)
 //   オーナー 10/26: オス・メス/交配/世代/性別切替は入れない(G3は無視)
 //   battle.js には触らず(呼ぶ時の opts に recruit / decorate / startStage / party[].lv を渡すだけ)。セーブは w2_save_v1 の中の prog。
@@ -19,12 +19,12 @@ const CFG={
   benchExp:0.5,                               // 盤に出なかったパーティの子はEXP半分
   packExp:0.5,                                // 野生の群れのリーダー以外の子は1体ぶんの半分(2026-10-27・群れになってもEXPが倍々にならないように)
   packLeadLv:2,                               // 群れのリーダー(触った子)は帯のレベル+2
-  cradlePrice:150,                            // ゆりかご1回のジェム
+  cradlePrice:150,                            // 「テリオンを生み出す」1回のジェム(中の名前は cradle のまま)
   dupGemsBack:75,                             // ダブりで相手がLv99の時だけジェムを返す(ふだんのダブりは「その子が1レベル上がる」)
   partyMax:3, partyMaxLate:5, partyMaxFinal:6, followMax:3,    // 連れて歩く数(序盤3・守り②のあと5・北欧編に入ったら6=2026-10-27 終盤のボス戦が6対6)・画面でついて歩くのは3
   arc:'greece',
 };
-// 編ごとの野生の系統(1段目のid)。テリオン_編ごとの表.md より。相棒3系統(1001/178/1022)はゆりかごに入れない・融合といにしえは入れない
+// 編ごとの野生の系統(1段目のid)。テリオン_編ごとの表.md より。相棒3系統(1001/178/1022)は「生み出す」に入れない・融合といにしえは入れない
 const ARC_ORDER=['greece','china','egypt','norse'];
 const ARC_POOL={
   greece:[1007,1026,1030,1033,166,1053,1062,1065],
@@ -141,6 +141,12 @@ P.ownedList=function(){ const pg=prog(); const o=new Set(); const evo=!!(SAVE&&S
 P.legacyBox=function(){ const box={}; for(const c of P.roster()){ const b=baseOf(c.mid); if(!box[b]||box[b].lv<c.lv) box[b]={rank:Math.round(lvRank(c.lv)), lv:c.lv}; } return box; };
 P.battleParty=()=>P.party().map(c=>({mid:c.mid, lv:c.lv, uid:c.uid}));
 
+// ---------------------------------------------------------------- ずかん(2026-10-27): 見た=バトルで出会った姿(その段まで)・もっている=仲間にいる姿。編ごとの数は ARC_POOL の系統の全部の姿
+P.markSeen=function(mids, st){ const pg=prog(); if(!pg) return; pg.seen=pg.seen||{}; st=+st||1; for(const mid of mids||[]){ if(!mon(mid)) continue; pg.seen[+mid]=1; const ln=lineOf(mid), i=ln.indexOf(+mid); ln.forEach((id,j)=>{ if(j>i&&stageOf(id)<=st) pg.seen[id]=1; }); } };   // 野生は開始の段まで進化して出るので、その姿も「見た」
+P.dex=function(){ const pg=prog(); const seen=(pg&&pg.seen)||{}; const own=new Set(P.roster().map(c=>c.mid)); const ARCJ={greece:'ギリシャ',china:'中国',egypt:'エジプト',norse:'北欧'};
+  const rows=ARC_ORDER.map(a=>{ const ids=[]; for(const b of ARC_POOL[a]) for(const id of lineOf(b)) if(!ids.includes(id)) ids.push(id); return {arc:a, name:ARCJ[a], total:ids.length, seen:ids.filter(id=>seen[id]||own.has(id)).length, owned:ids.filter(id=>own.has(id)).length}; });
+  return {rows, owned:[...own]}; };
+
 // ---------------------------------------------------------------- ジェム
 P.gems=()=>prog()?prog().gems:0;
 P.addGems=function(n, reason){ const pg=prog(); if(!pg) return 0; n=Math.round(+n||0); if(!n) return pg.gems; pg.gems=Math.max(0,pg.gems+n); pg.log.unshift({t:Date.now(), n, r:reason||''}); pg.log=pg.log.slice(0,30); P.save(); emit('gems',{n,reason,total:pg.gems}); return pg.gems; };
@@ -176,6 +182,7 @@ P.prepare=function(opt, ctx){ opt=opt||{}; ctx=ctx||{}; const pl=opt.player||{};
   if(opt.startStage==null) opt.startStage=P.startStage(ctx.area);
   if((opt.kind||'wild')==='wild' && opt.enemy && Array.isArray(opt.enemy.pack) && opt.enemy.party && opt.enemy.party.length===1){   // 野生の群れ(呼ぶ側が enemy.pack=そのマップの野生の種類 を渡した時)
     const n=P.packSize(ctx.area, party, opt.player.owned); opt.enemy=Object.assign({}, opt.enemy, {party:P.wildPack(opt.enemy.party[0], ctx.area, opt.enemy.pack, n)}); delete opt.enemy.pack; }
+  P.markSeen(((opt.enemy&&opt.enemy.party)||[]).map(e=>e.mid), opt.startStage);   // ずかんの「見た」(2026-10-27)
   const zeroday=!!(ctx.zeroday||opt.zeroday||(opt.enemy&&opt.enemy.zeroday));
   const enemy=(opt.enemy&&opt.enemy.party)||[];
   const kind=opt.kind||'wild';
@@ -196,7 +203,7 @@ P.applyResult=function(res, ctx){ const rows=[]; const pg=prog(); if(!pg) return
   P.save(); return rows; };
 P.battle=async function(opt, ctx){ P.prepare(opt, ctx); const sb=root.startBattle||(root.MonBattle&&root.MonBattle.startBattle); if(!sb) throw new Error('battle.js が読まれていない'); const res=await sb(opt); return res; };
 
-// ---------------------------------------------------------------- 研究所のゆりかご(ガチャ)
+// ---------------------------------------------------------------- テリオン研究所の「テリオンを生み出す」(ガチャ・中の名前は cradle)
 P.cradle={
   price:()=>CFG.cradlePrice,
   pool(){ const arc=P.arc(); const ids=[]; for(const a of ARC_ORDER){ for(const id of ARC_POOL[a]) if(mon(id)&&!STARTERS.includes(id)&&!ids.includes(id)) ids.push(id); if(a===arc) break; }
@@ -275,14 +282,44 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgMvR{display:flex;align-items:center;gap:4px;font-size:13px;padding:4px 0;border-top:1px solid rgba(255,255,255,.07)}
 .pgMvR .lvx{min-width:2.6em;font-size:11px;color:#9aa7c4}.pgMvR .sp{margin-left:auto;font-size:11px;color:#c8d4f0;white-space:nowrap}
 .pgMvR.lock{opacity:.45}
+#pgTabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 10px 8px}
+#pgTabs button{font:800 14px/1.1 inherit;font-family:inherit;min-height:58px;padding:6px 2px;border-radius:14px;border:2px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);color:#dfe6ff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
+#pgTabs button img.ui-ic{width:26px;height:26px;margin:0}
+#pgTabs button.on{background:#2c3e66;border-color:#ffd977;color:#fff}
+.pgDet{background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.16);border-radius:16px;padding:10px 10px 6px;margin:0 0 10px}
+.pgDet.lead{border-color:#ffd977}
+.pgDetHd{display:flex;gap:10px;align-items:center}
+.pgDetHd img.art{width:76px;height:76px;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));flex:none}
+.pgDetHd .in{flex:1;min-width:0}
+.pgDetHd .nm{font-size:17px;font-weight:900;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.pgDetHd .nm img.ui-ic{width:20px;height:20px}
+.pgChip{display:inline-block;font-size:12px;font-weight:800;padding:2px 9px;border-radius:999px;background:#1b2448;border:1px solid rgba(255,217,119,.5);color:#ffe9a8}
+.pgLvR{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:14px;font-weight:900;color:#ffd86b}
+.pgExp{display:flex;align-items:center;gap:6px;font-size:11px;color:#9fe0ff;margin-top:4px;font-weight:800}
+.pgExp .bar{flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,.15);overflow:hidden}.pgExp .bar i{display:block;height:100%;background:#6ad0ff}
+.pgTer{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:12px;font-weight:800;margin:8px 0 2px}
+.pgTer .u{color:#8ff0b0;margin-left:2px}.pgTer .d{color:#ff9a8a;margin-left:8px}
+.pgTer img.ui-ic{width:18px;height:18px}
+.pgTn{display:inline-block;padding:1px 6px;border-radius:6px;font-size:11px;font-weight:800;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.5)}
+.pgTn.lt{color:#2b2b38;text-shadow:none}
+.pgDex{display:grid;grid-template-columns:5.2em 1fr 1fr;gap:6px;align-items:center;font-size:14px;font-weight:800;margin-bottom:6px}
+.pgDex .h{font-size:11px;color:#9aa7c4;text-align:center}
+.pgDex .c{background:rgba(255,255,255,.07);border-radius:10px;padding:7px 8px;text-align:center}
+.pgDex .c b{color:#ffd86b;font-size:16px}
+.pgItem{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.07);border-radius:12px;padding:8px 12px;font-size:15px;font-weight:800;margin-bottom:6px}
+.pgItem img.ui-ic{width:32px;height:32px}
+.pgItem b{margin-left:auto;color:#ffd86b;font-size:17px}
+.pgGrid.sm{grid-template-columns:repeat(auto-fill,minmax(74px,1fr))}
+.pgGrid.sm .pgCard{min-height:96px;padding:6px 4px 4px}
+.pgGrid.sm .pgCard img{width:52px;height:52px}
 #pgToast{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);background:rgba(10,14,30,.92);border:1px solid rgba(255,217,119,.6);color:#ffe9a8;font-weight:800;font-size:15px;padding:10px 18px;border-radius:999px;display:none;pointer-events:none;white-space:nowrap}
 `;
-const REASON={zeroday:'ゼロデイ',cradle:'ゆりかご',dup:'ダブり',test:'テスト',start:'はじめ'};
+const REASON={zeroday:'ゼロデイ',cradle:'生み出す',dup:'ダブり',test:'テスト',start:'はじめ'};
 function reasonJP(r){ if(!r) return ''; if(/^quest:/.test(r)) return 'クエスト'; return REASON[r]||r; }
 function el(tag,cls,html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
 UI.mount=function(o){ o=o||{}; if(R) return R; const st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);
-  R=el('div'); R.id='pgRoot'; R.innerHTML=`<div id="pgBar"><button id="pgBtParty">仲間</button><button id="pgBtCradle">ゆりかご</button><button id="pgBtGems" class="gem">${ICON('gem')}0</button></div>
-  <div id="pgPanel"><div id="pgHead"><h2 id="pgTitle"></h2><span class="gem" id="pgHeadGem"></span><button id="pgClose">×</button></div><div id="pgBody"></div></div><div id="pgToast"></div>`;
+  R=el('div'); R.id='pgRoot'; R.innerHTML=`<div id="pgBar"><button id="pgBtParty">仲間</button><button id="pgBtCradle">生み出す</button><button id="pgBtGems" class="gem">${ICON('gem')}0</button></div>
+  <div id="pgPanel"><div id="pgHead"><h2 id="pgTitle"></h2><span class="gem" id="pgHeadGem"></span><button id="pgClose">×</button></div><div id="pgTabs"></div><div id="pgBody"></div></div><div id="pgToast"></div>`;
   document.body.appendChild(R);
   R.querySelector('#pgBtParty').onclick=()=>UI.open('party'); R.querySelector('#pgBtCradle').onclick=()=>UI.open('cradle'); R.querySelector('#pgBtGems').onclick=()=>UI.open('gems');
   R.querySelector('#pgClose').onclick=()=>UI.close();
@@ -311,38 +348,72 @@ UI.learnNotice=function(list){ if(typeof document==='undefined') return; if(!R) 
 UI.showBar=(v)=>{ if(R) R.querySelector('#pgBar').style.display=v===false?'none':'flex'; };
 UI.toast=function(t){ if(!R) return; const e=R.querySelector('#pgToast'); e.textContent=t; e.style.display='block'; clearTimeout(UI._tt); UI._tt=setTimeout(()=>e.style.display='none',1600); };
 UI.refresh=function(){ if(!R) return; R.querySelector('#pgBtGems').innerHTML=ICON('gem')+(+P.gems()||0); R.querySelector('#pgHeadGem').innerHTML=ICON('gem')+(+P.gems()||0); if(cur) UI.render(); };
-UI.open=function(k){ if(!R) UI.mount(); cur=k; pick=null; pend=null; UI._hatch=null; R.querySelector('#pgPanel').classList.add('on'); R.querySelector('#pgBar').style.visibility='hidden'; UI.render(); emit('ui',{open:k}); };
+let tab='party'; UI.opts={};
+UI.open=function(k,o){ if(!R) UI.mount(); o=o||{}; if(k==='party'){ k='menu'; o.tab=o.tab||'party'; } else if(k==='gems'){ k='menu'; o.tab=o.tab||'items'; }   // 2026-10-27: 仲間・牧場・ジェムは1つのメニュー(タブ)に
+  if(k==='menu'){ tab=o.tab||tab||'party'; UI.opts=o; } cur=k; pick=null; pend=null; UI._hatch=null; R.querySelector('#pgPanel').classList.add('on'); R.querySelector('#pgBar').style.visibility='hidden'; UI.render(); emit('ui',{open:k}); };
 UI.close=function(){ if(!R) return; cur=null; R.querySelector('#pgPanel').classList.remove('on'); R.querySelector('#pgBar').style.visibility=''; emit('ui',{open:null}); };
-UI.isOpen=()=>!!cur;
+UI.isOpen=()=>!!cur; UI.tab=()=>cur==='menu'?tab:null;
 function card(c, opts){ const d=el('div','pgCard'+(opts.on?' on':'')+(opts.pend?' pend':'')); const need=CFG.expNeed(c.lv); const pct=c.lv>=LV_MAX?100:Math.min(100,Math.round(100*(c.exp||0)/need));
   d.innerHTML=`${opts.leader?'<i class="ld"></i>':''}${opts.tag?`<span class="tg">${opts.tag}</span>`:''}<img src="${IMG(c.mid)}" alt=""><div class="nm">${nameOf(c.mid)}</div><div class="lv">Lv${c.lv}</div><div class="bar"><i style="width:${pct}%"></i></div>`; d.dataset.uid=c.uid; return d; }
-UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const T=R.querySelector('#pgTitle');
-  if(cur==='party'){ T.textContent='仲間'; const party=P.party(), ranch=P.ranch(); const max=P.partyMax();
-    B.appendChild(el('div','pgSec',`<span>つれていく</span><span>${party.length} / ${max}</span>`));
-    const g1=el('div','pgGrid'); party.forEach((c,i)=>{ const d=card(c,{leader:i===0,on:pick===c.uid}); d.onclick=()=>{ if(pend){ P.swap(c.uid,pend); pend=null; pick=null; UI.toast('いれかえた'); UI.render(); return; } pick=pick===c.uid?null:c.uid; UI.render(); }; g1.appendChild(d); }); B.appendChild(g1);
-    if(pick) B.appendChild(UI.movesCard(P.get(pick)));
-    if(pick&&party.some(c=>c.uid===pick)){ const a=el('div','pgAct'); const b1=el('button','pgBtn','リーダーにする'); b1.disabled=party[0].uid===pick; b1.onclick=()=>{ P.setLeader(pick); UI.render(); };
-      const b2=el('button','pgBtn','牧場へ'); b2.disabled=party.length<=1; b2.onclick=()=>{ P.toRanch(pick); pick=null; UI.render(); }; a.appendChild(b1); a.appendChild(b2); B.appendChild(a); }
-    B.appendChild(el('div','pgSec',`<span>牧場</span><span>${ranch.length}</span>`));
-    const g2=el('div','pgGrid'); ranch.forEach(c=>{ const d=card(c,{on:pick===c.uid,pend:pend===c.uid,tag:pend===c.uid?'いれかえ':''}); d.onclick=()=>{ if(pend===c.uid){ pend=null; UI.render(); return; } pick=pick===c.uid?null:c.uid; pend=null; UI.render(); }; g2.appendChild(d); }); B.appendChild(g2);
-    if(pick&&ranch.some(c=>c.uid===pick)){ const a=el('div','pgAct'); const full=party.length>=max; const b1=el('button','pgBtn',full?'いれかえる':'つれていく'); b1.onclick=()=>{ if(full){ pend=pick; pick=null; UI.render(); UI.toast('仲間をタップ'); } else { P.toParty(pick); pick=null; UI.render(); } }; a.appendChild(b1); B.appendChild(a); }
-    if(!ranch.length) B.appendChild(el('div','pgSec','<span>—</span>'));
+// メニュー(2026-10-27 オーナー「ステータスとかパーティーの情報みれるタブのような画面欲しいな」): パーティ・牧場・ずかん・もちもの。ラベル・アイコン・数字だけ
+const TABS=[['party','パーティ','ally'],['ranch','牧場','terrain'],['dex','ずかん','evolve'],['items','もちもの','potion']];
+const ITEMJ={heal:['回復の水筒','potion'], snack:['おやつの材料','elixir']};
+function terrInfo(){ const MB=root.MonBattle; return MB&&MB.TYPE_TERR&&MB.BRIEF?{TT:MB.TYPE_TERR, J:MB.BRIEF.TERR_JP, H:MB.BRIEF.TERR_HEX, X:Math.round((MB.BRIEF.TERR_X||0.3)*100)}:null; }
+function tnB(t,I){ const h=I.H[t]; const hx=h!=null?'#'+(h>>>0&0xffffff).toString(16).padStart(6,'0'):'#777'; const lt=h!=null&&(((h>>16)&255)*0.299+((h>>8)&255)*0.587+(h&255)*0.114)>150; return `<span class="pgTn${lt?' lt':''}" style="background:${hx}">${I.J[t]||t}</span>`; }
+function canSwap(){ if(UI.opts&&UI.opts.canSwap===false){ UI.toast('入れかえは街の中で'); return false; } return true; }
+// 1体ぶんの詳しい札: 絵・名前・タイプ・段・Lv と EXP・ステータス(Lv の倍率込み)・地形の得意/苦手・覚えている技(下位互換は出さない)・次に覚える技
+UI.detail=function(c, o){ o=o||{}; const d=el('div','pgDet'+(o.leader?' lead':'')); if(!c) return d; const f=formFor(c); const m=mon(f)||{}; const L=LS[f]||LS[String(f)]; const x=statX(c.lv);
+  const need=CFG.expNeed(c.lv), ex=c.lv>=LV_MAX?need:Math.min(need,c.exp||0), pct=Math.round(100*ex/need);
+  let h=`<div class="pgDetHd"><img class="art" src="${IMG(f)}" alt=""><div class="in"><div class="nm">${o.leader?ICON('leader'):''}${nameOf(f)} ${tyb(m.type||'')}${m.type2?tyb(m.type2):''}</div>
+    <div class="pgLvR"><span>Lv ${c.lv}</span><span class="pgChip">${stageOf(f)}段</span></div>
+    <div class="pgExp"><span>EXP</span><span class="bar"><i style="width:${pct}%"></i></span><span>${c.lv>=LV_MAX?'MAX':ex+'/'+need}</span></div></div></div>`;
+  if(L) h+=`<div class="pgSt"><span>HP<b>${Math.round(L.hp*x)}</b></span><span>攻撃<b>${Math.round(L.atk*x)}</b></span><span>防御<b>${Math.round(L.def*x)}</b></span><span>素早さ<b>${Math.round(L.spd*x)}</b></span><span>機動<b>${L.mob}</b></span></div>`;
+  const I=terrInfo(); if(I){ const tys=[m.type,m.type2].filter(t=>t&&I.TT[t]); const up=[], dn=[]; for(const t of tys){ for(const k of I.TT[t].up) if(!up.includes(k)) up.push(k); for(const k of I.TT[t].dn) if(!dn.includes(k)) dn.push(k); }
+    if(tys.length) h+=`<div class="pgTer">${ICON('terrain')}<span class="u">+${I.X}%</span>${up.map(t=>tnB(t,I)).join('')}<span class="d">−${I.X}%</span>${dn.map(t=>tnB(t,I)).join('')}</div>`; }
+  const all=learnAt(f); const keep=new Set(dropDom(all.map(e=>MV[e.move])).map(q=>q.id)); const gotIds=new Set(movesAt(f,c.lv).map(q=>q.id));
+  const got=all.filter(e=>gotIds.has(e.move)), next=all.filter(e=>!(L&&L.fixed)&&(e.lv||1)>c.lv&&keep.has(e.move)).slice(0,2);
+  const row=(e,lock)=>{ const mv=MV[e.move]; const pw=(mv.category==='attack'||mv.category==='ailment')&&mv.power>0?'威力'+mv.power:(CATL[mv.category]||''); const rg=rngS(mv);
+    return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${tyb(mv.type)}<b>${mv.name}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${pw}${rg?'・射程'+rg:''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
+  h+=`<div class="pgSec"><span>技</span><span>${got.length}</span></div>`+got.map(e=>row(e,false)).join('')+next.map(e=>row(e,true)).join('');
+  d.innerHTML=h; return d; };
+UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const T=R.querySelector('#pgTitle'); const TB=R.querySelector('#pgTabs');
+  TB.style.display=cur==='menu'?'grid':'none';
+  if(cur==='menu'){ T.textContent='メニュー'; TB.innerHTML=TABS.map(([k,n,ic])=>`<button data-t="${k}" class="${k===tab?'on':''}">${ICON(ic)}${n}</button>`).join('');
+    TB.querySelectorAll('button').forEach(b=>b.onclick=()=>{ tab=b.dataset.t; pick=null; pend=null; UI.render(); B.scrollTop=0; emit('ui',{open:'menu',tab}); });
+    const party=P.party(), ranch=P.ranch(), max=P.partyMax();
+    if(tab==='party'){ B.appendChild(el('div','pgSec',`<span>パーティ</span><span>${party.length} / ${max}</span>`));
+      party.forEach((c,i)=>{ const d=UI.detail(c,{leader:i===0}); const a=el('div','pgAct'); const b1=el('button','pgBtn','リーダーにする'); b1.disabled=i===0; b1.onclick=()=>{ if(!canSwap()) return; P.setLeader(c.uid); UI.render(); };
+        const b2=el('button','pgBtn','牧場へ'); b2.disabled=party.length<=1; b2.onclick=()=>{ if(!canSwap()) return; P.toRanch(c.uid); UI.render(); }; a.appendChild(b1); a.appendChild(b2); d.appendChild(a); B.appendChild(d); }); }
+    else if(tab==='ranch'){
+      if(pend){ const pc=P.get(pend); B.appendChild(el('div','pgSec',`<span>いれかえる相手</span><span>${pc?nameOf(pc.mid):''}</span>`)); const g=el('div','pgGrid');
+        party.forEach((c,i)=>{ const d=card(c,{leader:i===0}); d.onclick=()=>{ P.swap(c.uid,pend); pend=null; pick=null; UI.toast('いれかえた'); UI.render(); }; g.appendChild(d); }); B.appendChild(g);
+        const a=el('div','pgAct'); const bx=el('button','pgBtn','やめる'); bx.onclick=()=>{ pend=null; UI.render(); }; a.appendChild(bx); B.appendChild(a); }
+      else { B.appendChild(el('div','pgSec',`<span>牧場</span><span>${ranch.length}</span>`)); const g=el('div','pgGrid');
+        ranch.forEach(c=>{ const d=card(c,{on:pick===c.uid}); d.onclick=()=>{ pick=pick===c.uid?null:c.uid; UI.render(); }; g.appendChild(d); }); B.appendChild(g);
+        if(!ranch.length) B.appendChild(el('div','pgSec','<span>—</span>'));
+        if(pick&&ranch.some(c=>c.uid===pick)){ const full=party.length>=max; const a=el('div','pgAct'); const b1=el('button','pgBtn main',full?'いれかえる':'つれていく');
+          b1.onclick=()=>{ if(!canSwap()) return; if(full){ pend=pick; pick=null; UI.render(); B.scrollTop=0; } else { P.toParty(pick); pick=null; UI.render(); } }; a.appendChild(b1); B.appendChild(a); B.appendChild(UI.detail(P.get(pick))); } } }
+    else if(tab==='dex'){ const D=P.dex(); B.appendChild(el('div','pgDex','<span></span><span class="h">見た</span><span class="h">もっている</span>'));
+      for(const r of D.rows) B.appendChild(el('div','pgDex',`<span>${r.name}</span><span class="c"><b>${r.seen}</b> / ${r.total}</span><span class="c"><b>${r.owned}</b> / ${r.total}</span>`));
+      B.appendChild(el('div','pgSec',`<span>もっている</span><span>${D.owned.length}</span>`)); const g=el('div','pgGrid sm');
+      D.owned.sort((a,b)=>a-b).forEach(mid=>{ const d=el('div','pgCard',`<img src="${IMG(mid)}" alt=""><div class="nm">${nameOf(mid)}</div><div class="lv">${tyb(mon(mid).type)}${mon(mid).type2?tyb(mon(mid).type2):''}</div>`); g.appendChild(d); }); B.appendChild(g); }
+    else if(tab==='items'){ const it=(SAVE&&SAVE.items)||{}; B.appendChild(el('div','pgSec','<span>もちもの</span>'));
+      const ks=Object.keys(it).filter(k=>+it[k]>0); for(const k of ks){ const j=ITEMJ[k]||[k,'potion']; B.appendChild(el('div','pgItem',`${ICON(j[1])}<span>${j[0]}</span><b>×${it[k]}</b>`)); } if(!ks.length) B.appendChild(el('div','pgItem','<span>—</span>'));
+      B.appendChild(el('div','pgSec','<span>ジェム</span>')); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>ジェム</span><b>${P.gems()}</b>`));
+      const a=el('div','pgAct'); const b=el('button','pgBtn gem','ジェムを買う'); b.onclick=()=>{ P.buyGems(); UI.toast('じゅんび中'); }; a.appendChild(b); B.appendChild(a);
+      B.appendChild(el('div','pgSec','<span>きろく</span>'));
+      const Lg=el('div','pgLog'); for(const g of (prog()?prog().log:[])) Lg.appendChild(el('div','',`<span>${reasonJP(g.r)}</span><span class="${g.n>=0?'p':'m'}">${g.n>=0?'+':''}${g.n}</span>`)); if(!Lg.children.length) Lg.appendChild(el('div','','<span>—</span>')); B.appendChild(Lg); }
   }
-  else if(cur==='cradle'){ T.textContent='研究所のゆりかご'; const pool=P.cradle.pool(); const price=P.cradle.price();
+  else if(cur==='cradle'){ T.textContent='生み出す'; const pool=P.cradle.pool(); const price=P.cradle.price();
     const h=el('div'); h.id='pgHatch'; B.appendChild(h);
     if(UI._hatch){ const r=UI._hatch; h.classList.add('on'); h.innerHTML=`<img src="${IMG(r.mid)}" alt=""><div class="nm">${r.name}</div>`+(r.dup?(r.gemsBack?`<span class="tag dup">ダブり　${ICON('gem')}+${r.gemsBack}</span>`:`<span class="tag dup">ダブり　${nameOf(r.targetMid)} Lv${r.before} → Lv${r.after}</span>`):`<span class="tag">生まれた！　Lv${r.lv}　${r.inParty?'仲間':'牧場'}</span>`); }
-    const a=el('div','pgAct'); const b=el('button','pgBtn main',`生まれる　${ICON('gem')}${price}`); b.disabled=!P.cradle.canPull(); b.id='pgPull';
+    const a=el('div','pgAct'); const b=el('button','pgBtn main',`テリオンを生み出す　${ICON('gem')}${price}`); b.disabled=!P.cradle.canPull(); b.id='pgPull';
     b.onclick=()=>{ const r=P.cradle.pull(); if(!r.ok){ UI.toast(r.why==='gems'?'ジェムがたりない':'—'); return; } UI._hatch=r; UI.render(); };   // 生まれた子は _hatch に持ち、render で描く(save の change で描き直されても消えない)
     a.appendChild(b); B.appendChild(a);
     B.appendChild(el('div','pgSec',`<span>でる子と確率</span><span>${pool.length}しゅるい</span>`));
     function odds(){ const o=el('div','pgOdds'); o.id='pgOdds'; for(const q of P.cradle.pool()) o.appendChild(el('div','',`<img src="${IMG(q.mid)}" alt="">${q.name}<b>${q.pct}%</b>${q.owned?'<span class="own">もってる</span>':''}`)); return o; }
     B.appendChild(odds());
     B.appendChild(el('div','pgSec',`<span>ダブり</span><span>Lv +1</span>`));
-  }
-  else if(cur==='gems'){ T.textContent='ジェム'; B.appendChild(el('div','pgBig',`<div class="n">${P.gems()}</div><div class="u">ジェム</div>`));
-    const a=el('div','pgAct'); const b=el('button','pgBtn gem','ジェムを買う'); b.onclick=()=>{ P.buyGems(); UI.toast('じゅんび中'); }; a.appendChild(b); B.appendChild(a);
-    B.appendChild(el('div','pgSec','<span>きろく</span>'));
-    const L=el('div','pgLog'); for(const g of (prog()?prog().log:[])) L.appendChild(el('div','',`<span>${reasonJP(g.r)}</span><span class="${g.n>=0?'p':'m'}">${g.n>=0?'+':''}${g.n}</span>`)); if(!L.children.length) L.appendChild(el('div','','<span>—</span>')); B.appendChild(L);
   }
 };
 
