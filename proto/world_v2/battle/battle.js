@@ -4669,6 +4669,7 @@ function startBattle(opts){
     BT.diff=Object.assign({}, KD.ai, (kind==='wild'&&(BT.solo?BT.rules.ai:WILD_STAGE[BT.startStage]))||{}, en.ai||{}); BT.aiSkill=[ (pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1 ];
     BT.place=resolvePlace(opts.terrainTheme, opts.backdrop);
     BT.budget=+opts.budget||(BT.anc?ancientBudget():baseBudget());   // 2段目/3段目から出す地方は出せる段の合計も×段(=出せる体の数は変えない)。古代テリオン戦は全パーティ
+    if(+opts.maxTurn>0){ MAX_TURN=Math.round(+opts.maxTurn); BT.rules=Object.assign({}, BT.rules, {maxTurn:MAX_TURN}); }   // 2026-10-27 CPU対戦(vs.html)のターン数。省略=今まで通り
     BT.headless=IS_NODE||!!opts.headless; ancClearMarks();
     BT.autoButton = opts.autoButton!=null ? !!opts.autoButton : true;   // 2026-10-24: オートは上のバーに・全部の戦いで使える(autoButton:false で隠す)
     BT.showResult = opts.showResult!==false;

@@ -120,6 +120,23 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 .stBtn{border:2px solid #fff;border-radius:999px;background:var(--ink);color:#fff;font:inherit;font-weight:800;font-size:17px;letter-spacing:.12em;padding:12px 34px;box-shadow:0 4px 14px rgba(20,30,60,.3);cursor:pointer;min-width:220px}
 .stBtn.sub{background:rgba(255,250,240,.95);color:var(--ink);border-color:rgba(44,62,102,.25)}
 .stBtn:disabled{opacity:.45;cursor:default}
+/* 2026-10-27 確認用: タイトルの小さいボタン(全部ためす・CPU対戦)・テストの印・ワープ */
+.stMini{display:flex;gap:10px;justify-content:center}
+.stMini button,.stMini a{border:1px solid rgba(255,255,255,.7);border-radius:999px;background:rgba(20,30,60,.55);color:#fff;font:inherit;font-weight:800;font-size:13px;padding:9px 16px;min-height:40px;text-decoration:none;display:inline-flex;align-items:center;cursor:pointer}
+#testBadge{position:fixed;top:calc(12px + env(safe-area-inset-top));left:12px;padding:4px 12px;border-radius:999px;background:#c0392b;color:#fff;font-weight:900;font-size:13px;letter-spacing:.1em;z-index:5;display:none;pointer-events:none}
+#btWarp{position:fixed;top:calc(52px + env(safe-area-inset-top));left:12px;padding:6px 14px 6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--cream);color:var(--ink);font:inherit;font-weight:800;font-size:13px;box-shadow:0 2px 8px rgba(80,60,30,.12);cursor:pointer;display:none;z-index:4}
+#btWarp img.ui-ic{width:1.5em;height:1.5em;vertical-align:-.42em;margin-right:.2em}
+#warp{position:fixed;inset:0;z-index:60;background:rgba(20,28,50,.94);display:none;flex-direction:column;color:#fff}
+#warp.on{display:flex}
+#warp .wt{display:flex;gap:8px;align-items:center;padding:calc(10px + env(safe-area-inset-top)) 12px 8px;border-bottom:1px solid rgba(255,255,255,.18)}
+#warp .wt b{flex:1;font-size:17px}
+#warp .wt button{min-height:40px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;font:inherit;font-weight:800;padding:0 14px}
+#warp .wl{flex:1;overflow-y:auto;padding:8px 12px calc(20px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
+#warp h3{margin:12px 0 6px;font-size:14px;color:#ffd977}
+#warp .wg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#warp .wg button{min-height:48px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font:inherit;font-weight:800;font-size:13px;text-align:left;padding:4px 10px}
+#warp .wg button small{display:block;font-size:10.5px;opacity:.7;font-weight:700}
+#warp .wg button.cur{background:#2f5fb0;border-color:#8fb4ff}
 #stTitle{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:flex-end;gap:14px;padding-bottom:calc(70px + env(safe-area-inset-bottom))}
 #stTitle h1{position:absolute;top:17%;left:0;right:0;margin:0;text-align:center;color:#fff;font-size:clamp(32px,9.5vw,58px);letter-spacing:.14em;text-shadow:0 3px 16px rgba(20,30,60,.6),0 0 3px rgba(20,30,60,.7)}
 #st.ttl #stBg{animation:ttlZoom 26s ease-in-out infinite alternate;transform-origin:50% 70%}   /* タイトル(2026-10-27): ゆっくり寄る */
@@ -139,7 +156,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 <canvas id="cv"></canvas>
 <div id="vig"></div>
 <div id="area"></div>
-<div id="tod"><button data-t="morning">朝</button><button data-t="noon" class="sel">昼</button><button data-t="evening">夕</button></div><button id="btSave">セーブ</button><div id="pgHud"><button id="btMenu"><img class="ui-ic" src="../battle/img/ui/ally.webp" alt="">メニュー</button></div>
+<div id="tod"><button data-t="morning">朝</button><button data-t="noon" class="sel">昼</button><button data-t="evening">夕</button></div><button id="btSave">セーブ</button><div id="pgHud"><button id="btMenu"><img class="ui-ic" src="../battle/img/ui/ally.webp" alt="">メニュー</button></div><div id="testBadge">テスト</div><button id="btWarp"><img class="ui-ic" src="../battle/img/ui/map.webp" alt="">ワープ</button><div id="warp"><div class="wt"><b>ワープ</b><button id="wpReset">リセット</button><button id="wpX">とじる</button></div><div class="wl" id="wpList"></div></div>
 <button id="btMap"><img class="ui-ic" src="../battle/img/ui/map.webp" alt="">地図</button><div id="brief"></div>
 <button id="enter"></button>
 <div id="stick"><div id="knob"></div></div>
@@ -154,7 +171,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
   <img class="stP off" id="stR2" alt=""><img class="stP off" id="stL" alt=""><img class="stP off" id="stR" alt=""><div id="stPh"><img alt=""></div>
   <div id="stPick"><canvas id="stPickCv"></canvas><div class="row"><button data-m="1001">エンジュ</button><button data-m="1022">ビリトラ</button><button data-m="178">クマッパ</button></div><button class="stBtn go">この子にする</button></div>
   <div id="stBox"><b></b><p></p><i></i></div>
-  <div id="stTitle"><h1><img src="ui/logo.webp" alt="テリオンモンスター"></h1><button class="stBtn" id="btNew">はじめから</button><button class="stBtn sub" id="btCont">つづきから</button></div>
+  <div id="stTitle"><h1><img src="ui/logo.webp" alt="テリオンモンスター"></h1><button class="stBtn" id="btNew">はじめから</button><button class="stBtn sub" id="btCont">つづきから</button><div class="stMini"><button id="btTest">全部ためす</button><a id="btVs" href="../battle/vs.html">CPU対戦</a></div></div>
   <button id="stSkip">スキップ</button>
 </div>
 <script src="../../three.min.js"></script>
@@ -2244,6 +2261,7 @@ function clearMap(){
 async function loadMap(id,at,pos){ const t0=performance.now();
   const nd=MAPC[id]||(MAPC[id]=await fetch('regions/'+id+'.json').then(r=>r.json()));
   clearMap(); D=nd; MAP=id; CFG.loadR=D.loadR||52; CFG.unloadR=D.unloadR||76;
+  if(TESTMODE&&window.Progress&&Progress.state()){ const a=id.startsWith('cn_')?'china':id.startsWith('eg_')?'egypt':id.startsWith('nr_')?'norse':'greece'; if(Progress.arc()!==a) Progress.setArc(a); }   // 全部ためす: 編はマップから(開始の段・野生のレベルの既定)
   if(D.lv&&window.Progress) Progress.config.areas[id]=Object.assign({},Progress.config.areas[id]||{},{lv:D.lv},D.startStage?{startStage:D.startStage}:{});   // 野生のレベル帯はマップの lv(progress.js の config.areas)   // 読み込み半径はマップごと(アテネは見晴らしで遠くの神殿まで組み立てる)
   PATHS={un:D.paths.unpaved,town:D.paths.townPaved,stone:D.paths.stone.map(p=>prepPoly(p.p,p.w)),dirt:D.paths.dirt.map(p=>prepPoly(p.p,p.w)),sc:D.paths.stoneCircles,sr:D.paths.stoneRects,sa:D.paths.sandRects||null,rockAll:D.terrain.rockAll||0};
   { const want=PATHS.sa?GTEX.pave:(D.snowSand!=null?GTEX.snow:GTEX.sand0); GTEX.sand=want; if(MAT.ground.userData.sh) MAT.ground.userData.sh.uniforms.tSa.value=want; const tn=D.terrain.tint||[1,1,1]; GTINT.set(tn[0],tn[1],tn[2]); const rt=D.terrain.rockTint; if(rt) GROCK.set(rt[0],rt[1],rt[2],rt[3]!=null?rt[3]:1); else GROCK.set(1,1,1,0); }   // 舗装の区画があるマップは砂の代わりに板石。tint=地面の色味
@@ -2266,7 +2284,7 @@ async function goMap(to,at){ if(TRANS) return; TRANS=true; const t0=performance.
   if(D.nature) flag('hill'); flag(to); objUpdate(); saveGame(); showArea(D.name); AREA=D.name; }
 function exitCheck(){ if(TRANS||STORY||ENC||BRIEF||!D||!D.exits) return; for(const e of D.exits){ const r=e.r; if(HERO.x>r[0]&&HERO.x<r[2]&&HERO.z>r[1]&&HERO.z<r[3]){
     // todo=まだ作っていない土地(道しるべだけ)。need=物語の旗が立つまで通れない(迷路の入口はアレクに勝つまで)。手前へ押し戻す
-    if(e.todo||(e.need&&!(SAVE&&SAVE.flags[e.need]))){ if(!(exitCheck.t>NOW-2500)){ exitCheck.t=NOW; toast(e.todo?e.todo+'へ。（まだ作っていない）':(e.lock||'まだ進めない')); }
+    if(e.todo||(e.need&&!TESTMODE&&!(SAVE&&SAVE.flags[e.need]))){ if(!(exitCheck.t>NOW-2500)){ exitCheck.t=NOW; toast(e.todo?e.todo+'へ。（まだ作っていない）':(e.lock||'まだ進めない')); }
       const cx=(r[0]+r[2])/2, cz=(r[1]+r[3])/2; const dx=HERO.x-cx, dz=HERO.z-cz, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*0.5,HERO.z+dz/L*0.5); return; }
     if(briefNeed(e)){ briefAsk(e); return; }   // 初めての土地: 地図の案内(行く/もどる)
     goMap(e.to,e.at); return; } } }
@@ -2372,7 +2390,9 @@ function partnerUpdate(dt){ let lx=HERO.x, lz=HERO.z; const ls=HERO.realSpeed||0
     const y=groundAt(P.x,P.z); const R=P.inst.root; R.position.set(P.x,y,P.z); R.rotation.y=P.yaw; R.scale.setScalar(0.62); monGait(P.inst,P.spd,dt,0.62); blobAt(P.x,y,P.z,0.55); lx=P.x; lz=P.z; } }
 
 // ---------------------------------------------------------------- 記録(端末に保存: 街に入った時・バトルのあと・会話の区切り)
-const SKEY='w2_save_v1'; let SAVE=null, NOSAVE=false;
+let SKEY='w2_save_v1'; let SAVE=null, NOSAVE=false;
+// 全部ためす(2026-10-27 確認用): 別のセーブ(w2_save_test_v1)・全154体・全解禁・ジェム・ワープ。ふつうのセーブ(w2_save_v1)には触らない
+const SKEY_MAIN='w2_save_v1', SKEY_TEST='w2_save_test_v1'; let TESTMODE=false;
 function loadSave(){ try{ const s=JSON.parse(localStorage.getItem(SKEY)); return s&&s.v===1?s:null; }catch(e){ return null; } }
 function saveGame(){ if(!SAVE||NOSAVE) return; if(D&&MAP&&READY.scene) Object.assign(SAVE,{map:MAP,x:+HERO.x.toFixed(2),z:+HERO.z.toFixed(2),yaw:+HERO.yaw.toFixed(3)});
   Object.assign(SAVE,{items:ITEMS,tod:TODN,t:Date.now()}); if(!(window.Progress&&Progress.state())) Object.assign(SAVE,{party:PARTY,box:BOX});   // 進行(progress.js)が動いていれば party/box/gems はそれが今の形で書く(古い読み方も壊れない)
@@ -2396,7 +2416,7 @@ function onFlag(k){ if(!(window.Progress&&Progress.state())) return;
 const saveBtn=document.getElementById('btSave'); let AUTOSAVE_T=0;
 function canSave(){ return !!(SAVE&&!NOSAVE&&READY.scene&&D&&MAP&&!STORY&&!TRANS&&!ENC&&!PAUSED&&!(window.Progress&&Progress.ui&&Progress.ui.isOpen())); }
 saveBtn.addEventListener('click',()=>{ if(!canSave()) return; saveGame(); toast('セーブしました'); });
-function autosaveTick(dt){ const ok=canSave(); saveBtn.style.display=ok?'block':'none'; pgHud.style.display=ok&&window.Progress&&Progress.state()?'flex':'none'; if(!ok) return; AUTOSAVE_T+=dt; if(AUTOSAVE_T>30){ AUTOSAVE_T=0; saveGame(); } }
+function autosaveTick(dt){ const ok=canSave(); saveBtn.style.display=ok?'block':'none'; pgHud.style.display=ok&&window.Progress&&Progress.state()?'flex':'none'; if(TESTMODE) document.getElementById('btWarp').style.display=ok?'block':'none'; if(!ok) return; AUTOSAVE_T+=dt; if(AUTOSAVE_T>30){ AUTOSAVE_T=0; saveGame(); } }
 addEventListener('pagehide',()=>{ if(SAVE&&!NOSAVE&&READY.scene&&D&&MAP) saveGame(); });
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'&&SAVE&&!NOSAVE&&READY.scene&&D&&MAP) saveGame(); });
 // ---- 進行(progress.js・2026-10-26): 倒して仲間・Lv1〜99・EXP・ジェム・テリオン研究所の「テリオンを生み出す」(ガチャ)・パーティ3→5体と牧場。手順は proto/PROGRESS_INTEGRATION.md ----
@@ -2407,7 +2427,7 @@ async function progInit(){ if(!window.Progress) return;
   if(!PROG){ PROG=Progress.init({save:SAVE,onSave:saveGame,base:'../battle/'}).then(()=>{ Progress.ui.mount({bar:false}); Progress.on('change',hudRefresh);
       Progress.on('ui',d=>{ if(d.open){ PAUSED=true; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; talkClose(); } else { PAUSED=false; LAST=performance.now(); followersSet(); } hudRefresh(); }); hudRefresh(); }); await PROG; }
   else { await PROG; Progress.attachSave(SAVE,saveGame); hudRefresh(); } }
-document.getElementById('btMenu').addEventListener('click',async()=>{ if(!canSave()) return; try{ await briefLib(); }catch(_){} if(!canSave()) return; Progress.ui.open('menu',{canSwap:inTown(HERO.x,HERO.z)}); });   // メニュー(パーティ・牧場・ずかん・もちもの 2026-10-27)。入れかえは今までどおり街(静域)の中だけ・地形の表を出すため battle.js を先に読む
+document.getElementById('btMenu').addEventListener('click',async()=>{ if(!canSave()) return; try{ await briefLib(); }catch(_){} if(!canSave()) return; Progress.ui.open('menu',{canSwap:TESTMODE||inTown(HERO.x,HERO.z)}); });   // メニュー(パーティ・牧場・ずかん・もちもの 2026-10-27)。入れかえは今までどおり街(静域)の中だけ・地形の表を出すため battle.js を先に読む
 const MONN={1001:'エンジュ',1022:'ビリトラ',178:'クマッパ'};   // v3名簿(2026-10-25)の御三家
 let MNAME={}, MEVO={}, MMODEL={}, MTYPE={}; const MONS_P=fetch('../battle/data/monsters.json').then(r=>r.json()).then(a=>{ for(const m of a){ MNAME[m.id]=m.name; MTYPE[m.id]=[m.type,m.type2]; MEVO[m.id]=m.evolves_to; MMODEL[m.id]=m.model3d!==false; } }).catch(()=>{});
 // 持っている種類(owned): 仲間にした子は、その系統(次の段・その次の段)を全部持っている扱い(game_design 9-2)。バトルでの進化の判定に渡す
@@ -2415,7 +2435,7 @@ let MNAME={}, MEVO={}, MMODEL={}, MTYPE={}; const MONS_P=fetch('../battle/data/m
 function unlocks(){ const u=(SAVE&&SAVE.unlock)||{}; return {evo:!!u.evo,fusion:!!u.fusion,triple:!!u.triple}; }
 function ownedList(){ const o=new Set(); const evo=unlocks().evo; const add=id=>{ let k=+id, g=0; while(k!=null&&!o.has(k)&&g++<5){ o.add(k); if(!evo) break; k=MEVO[k]; } }; for(const id in BOX) add(id); for(const q of PARTY) add(q.mid); for(const id of (SAVE&&SAVE.owned)||[]) add(id); return [...o]; }
 function monName(id){ return MNAME[id]||MONN[id]||'この子'; }
-function objText(){ const f=SAVE?SAVE.flags:{}; if(!f.arrived) return '';
+function objText(){ const f=SAVE?SAVE.flags:{}; if(!f.arrived||TESTMODE) return '';
   if(!f.hill) return '静域の門から、オリーブの丘へ'; if(!f.dimi) return '丘の道で、レンと勝負';
   if(!f.mission) return '丘の上の競技場の跡へ。ゼロデイを止める'; if(!f.alek) return '丘の西のはずれ、迷路の入口へ';
   if(!f.guard1) return '丘の下の迷路の底で、守り①に会う';
@@ -2767,16 +2787,48 @@ async function contGame(sv){ ST.title.style.display='none'; SAVE=sv; if(sv.g!=='
     await runScene(SC.airship,{bg:'anime_airship_cabin_night',keepPaused:true}); await arriveTown(); return; }
   fadeEl.classList.add('on'); stHide(); await loadMap(sv.map,null,[sv.x,sv.z,sv.yaw]); followersSet(); if(sv.tod) setTime(sv.tod,true);
   await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); showArea(D.name); AREA=D.name; objUpdate(); }
+// ---- 全部ためす(2026-10-27 オーナー「操作性を確かめたい・全部モンスターが使える・全マップ」) ----
+//  別のセーブ w2_save_test_v1: 全154体を牧場に(Lv50)・パーティ6体(メニューでいつでも入れかえ)・進化/融合/3体融合の解禁・ジェム99999・出口の旗の条件なし・HUD の「ワープ」で全マップへ
+const WARP_ARCS=[['ギリシャ',['oliva_town','oliva_hill','oliva_maze','arcadia','corinth','cloudroad','delphi','stadium_under']],
+  ['中国',['cn_bund','cn_bamboo','cn_plateau','cn_fossil','cn_karst','cn_pillars','cn_gorges','cn_thunder','cn_capital','cn_kunlun','cn_sea']],
+  ['エジプト',['eg_cairo','eg_giza','eg_delta','eg_luxor','eg_valley','eg_tomb','eg_aswan','eg_abusimbel','eg_white','eg_redsea']],
+  ['北欧',['nr_oslo','nr_fjord','nr_lofoten','nr_iceland','nr_uppsala','nr_lapland','nr_ygg','nr_svalbard','nr_glacier','nr_core']],
+  ['試作',['athens','crete','crete_maze','greece_oliva']]];
+function testHud(){ const on=TESTMODE; $('testBadge').style.display=on?'block':'none'; if(!on) $('btWarp').style.display='none'; if(!on) $('warp').classList.remove('on'); }
+async function testSaveNew(){ const list=await fetch('../battle/data/monsters.json').then(r=>r.json()); const t=Date.now();
+  const roster=list.map((m,i)=>({uid:'t'+i.toString(36)+'_'+m.id, mid:m.id, lv:50, exp:0, src:'test', t}));
+  const pick=[1001,178,1022,1009,1028,2071].filter(id=>list.some(m=>m.id===id)); const party=pick.map(id=>roster.find(c=>c.mid===id).uid);
+  const lines={}; for(const m of list) if(m.evolves_from==null) lines[m.id]=1;
+  return {v:1,g:'m',name:DEFN('m'),partner:1001,flags:{arrived:1},unlock:{evo:true,fusion:true,triple:true},owned:list.map(m=>m.id),stage:'field',test:1,items:{heal:9},
+    map:'oliva_town',x:null,z:null,yaw:null, prog:{v:1,gems:99999,roster,party,partyMax:6,lines,quests:{},log:[],arc:'greece',pulls:0}}; }
+async function testGame(fresh){ ST.title.style.display='none'; SKEY=SKEY_TEST; TESTMODE=true; NOSAVE=false;
+  let sv=null; if(!fresh) try{ const s=JSON.parse(localStorage.getItem(SKEY_TEST)); if(s&&s.v===1&&s.test) sv=s; }catch(e){}
+  if(!sv) sv=await testSaveNew();
+  SAVE=sv; SAVE.unlock={evo:true,fusion:true,triple:true}; PARTY=sv.party||PARTY; BOX=sv.box||BOX; ITEMS=sv.items||ITEMS; heroGo('m'); await progInit();
+  if(Progress.partyMax()<6) Progress.setPartyMax(6); if(Progress.gems()<99999) Progress.addGems(99999-Progress.gems(),'test');
+  testHud(); fadeEl.classList.add('on'); stHide(); ST.el.style.display='none';
+  await loadMap(sv.map||'oliva_town', sv.x==null?'start':null, sv.x==null?null:[sv.x,sv.z,sv.yaw]); followersSet(); if(sv.tod) setTime(sv.tod,true);
+  await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); showArea(D.name); AREA=D.name; objUpdate(); saveGame(); }
+async function warpOpen(){ if(!TESTMODE||!canSave()) return; PAUSED=true; const el=$('wpList'); el.innerHTML='';
+  for(const [an,ids] of WARP_ARCS){ const h=document.createElement('h3'); h.textContent=an; el.appendChild(h); const g=document.createElement('div'); g.className='wg'; el.appendChild(g);
+    for(const id of ids){ const b=document.createElement('button'); b.className=id===MAP?'cur':''; b.innerHTML=id+'<small></small>'; g.appendChild(b);
+      briefRegion(id).then(j=>{ b.firstChild.textContent=j.name||id; b.querySelector('small').textContent=an==='試作'?id:(j.lv?('Lv'+j.lv[0]+'〜'+j.lv[1]):''); }).catch(()=>{ b.disabled=true; });
+      b.onclick=()=>{ $('warp').classList.remove('on'); PAUSED=false; LAST=performance.now(); goMap(id,null).catch(e=>console.error(e)); }; } }
+  $('warp').classList.add('on'); }
+$('btWarp').addEventListener('click',()=>{ warpOpen(); });
+$('wpX').addEventListener('click',()=>{ $('warp').classList.remove('on'); PAUSED=false; LAST=performance.now(); });
+$('wpReset').addEventListener('click',async()=>{ $('warp').classList.remove('on'); try{ localStorage.removeItem(SKEY_TEST); }catch(e){} PAUSED=true; await testGame(true); });
 function toTitle(){ btMapEl.style.display='none'; PAUSED=true; AUTO=null; STORY=false; TRANS=false; objEl.style.display='none'; fadeEl.classList.remove('on'); talkClose(); titleScreen(); }
 // タイトルの背景(2026-10-27 オーナー:「オープニングはテリオンが何体も出てないと。飛行船は意味不明」→「2Dでいい」)
 //  承認済みの2D絵を広場の地面に立たせて合成したキービジュアル(intro/title_keyart_p=縦 1080×1920・_l=横 1920×1080)。3D版は greece_town.html.bak_title3d_scene_20261027
 function titleBg(){ return 'intro/title_keyart_'+(innerWidth<innerHeight?'p':'l')+'.webp'; }
 function titleBgSet(){ ST.bg.style.backgroundImage=`url(${titleBg()})`; ST.bg.style.backgroundPosition=innerWidth<innerHeight?'center 60%':'center bottom'; }
 addEventListener('resize',()=>{ if(ST.title.style.display==='flex') titleBgSet(); });
-function titleScreen(){ for(const c of INTRO){ const im=new Image(); PIMG[c.bg]=im; im.src=bgUrl(c.bg); for(const m of c.mons||[]){ const j=new Image(); PIMG['m'+m[0]]=j; j.src='../battle/img/'+m[0]+'.webp'; } }
+function titleScreen(){ if(TESTMODE){ saveGame(); SAVE=null; } SKEY=SKEY_MAIN; TESTMODE=false; testHud();   // 全部ためすから戻った時: テストの記録はテストの鍵に書いてから外す(ふつうのセーブに混ぜない) for(const c of INTRO){ const im=new Image(); PIMG[c.bg]=im; im.src=bgUrl(c.bg); for(const m of c.mons||[]){ const j=new Image(); PIMG['m'+m[0]]=j; j.src='../battle/img/'+m[0]+'.webp'; } }
   stShow('full'); titleBgSet(); ST.bg.style.opacity=1; ST.el.classList.add('ttl'); ST.title.style.display='flex'; const sv=loadSave(); const bc=$('btCont'); bc.disabled=!sv;
   const off=()=>{ ST.el.classList.remove('ttl'); ST.bg.style.backgroundPosition=''; };
-  $('btNew').onclick=()=>{ off(); newGame().catch(e=>console.error(e)); }; bc.onclick=()=>{ if(sv){ off(); contGame(sv).catch(e=>console.error(e)); } }; }
+  $('btNew').onclick=()=>{ off(); newGame().catch(e=>console.error(e)); }; bc.onclick=()=>{ if(sv){ off(); contGame(sv).catch(e=>console.error(e)); } };
+  $('btTest').onclick=()=>{ off(); testGame().catch(e=>console.error(e)); }; }
 
 // ---------------------------------------------------------------- 起動
 const bar=document.querySelector('#bar i'); const READY={scene:false,hero:false};
