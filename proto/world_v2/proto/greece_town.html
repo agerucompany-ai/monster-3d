@@ -121,8 +121,9 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 .stBtn.sub{background:rgba(255,250,240,.95);color:var(--ink);border-color:rgba(44,62,102,.25)}
 .stBtn:disabled{opacity:.45;cursor:default}
 /* 2026-10-27 確認用: タイトルの小さいボタン(全部ためす・CPU対戦)・テストの印・ワープ */
-.stMini{display:flex;gap:10px;justify-content:center}
+.stMini{display:grid;grid-template-columns:1fr 1fr;gap:6px;justify-content:center;width:min(280px,76vw)}   /* 2026-10-27: 2×2(全部ためす・CPU対戦・テリオン表・融合表) */
 .stMini button,.stMini a{border:1px solid rgba(255,255,255,.7);border-radius:999px;background:rgba(20,30,60,.55);color:#fff;font:inherit;font-weight:800;font-size:13px;padding:9px 16px;min-height:40px;text-decoration:none;display:inline-flex;align-items:center;cursor:pointer}
+.stMini button,.stMini a{justify-content:center;padding:0 10px;white-space:nowrap;height:38px;min-height:0;font-size:12.5px;box-sizing:border-box}
 #testBadge{position:fixed;top:calc(12px + env(safe-area-inset-top));left:12px;padding:4px 12px;border-radius:999px;background:#c0392b;color:#fff;font-weight:900;font-size:13px;letter-spacing:.1em;z-index:5;display:none;pointer-events:none}
 #btWarp{position:fixed;top:calc(52px + env(safe-area-inset-top));left:12px;padding:6px 14px 6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--cream);color:var(--ink);font:inherit;font-weight:800;font-size:13px;box-shadow:0 2px 8px rgba(80,60,30,.12);cursor:pointer;display:none;z-index:4}
 #btWarp img.ui-ic{width:1.5em;height:1.5em;vertical-align:-.42em;margin-right:.2em}
@@ -171,7 +172,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
   <img class="stP off" id="stR2" alt=""><img class="stP off" id="stL" alt=""><img class="stP off" id="stR" alt=""><div id="stPh"><img alt=""></div>
   <div id="stPick"><canvas id="stPickCv"></canvas><div class="row"><button data-m="1001">エンジュ</button><button data-m="1022">ビリトラ</button><button data-m="178">クマッパ</button></div><button class="stBtn go">この子にする</button></div>
   <div id="stBox"><b></b><p></p><i></i></div>
-  <div id="stTitle"><h1><img src="ui/logo.webp" alt="テリオンモンスター"></h1><button class="stBtn" id="btNew">はじめから</button><button class="stBtn sub" id="btCont">つづきから</button><div class="stMini"><button id="btTest">全部ためす</button><a id="btVs" href="../battle/vs.html">CPU対戦</a></div></div>
+  <div id="stTitle"><h1><img src="ui/logo.webp" alt="テリオンモンスター"></h1><button class="stBtn" id="btNew">はじめから</button><button class="stBtn sub" id="btCont">つづきから</button><div class="stMini"><button id="btTest">全部ためす</button><a id="btVs" href="../battle/vs.html">CPU対戦</a><a id="btDex" href="../battle/dex.html">テリオン表</a><a id="btFuse" href="../battle/fusion.html">融合表</a></div></div>
   <button id="stSkip">スキップ</button>
 </div>
 <script src="../../three.min.js"></script>

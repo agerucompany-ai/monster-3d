@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>テリオン表</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="dex.css">
+</head>
+<body>
+<div id="load">…</div>
+<div id="top">
+  <div class="bar">
+    <a class="tb" id="bBack" href="../proto/greece_town.html"><img class="ic" src="img/ui/cancel.webp" alt="">タイトル</a>
+    <h1>テリオン表</h1>
+    <a class="tb" id="bFuse" href="fusion.html"><img class="ic" src="img/ui/fuse.webp" alt="">融合表</a>
+  </div>
+  <div class="flt" id="fArc"></div>
+  <div class="flt" id="fType"></div>
+</div>
+<main id="main"></main>
+<script src="dex_common.js"></script>
+<script>
+'use strict';
+const F={arc:'all', type:'all'};
+function chips(){
+  document.getElementById('fArc').innerHTML=[['all','全部']].concat(DX.ARCS).map(([k,v])=>`<button class="chip ${F.arc===k?'on':''}" data-arc="${k}">${v}</button>`).join('');
+  document.getElementById('fType').innerHTML=`<button class="chip ${F.type==='all'?'on':''}" data-ty="all">全タイプ</button>`+DX.TYPES.map(t=>`<button class="chip ${F.type===t?'on':''}" data-ty="${t}"><span class="dot" style="background:${DX.TYPE_COL[t]}"></span>${t}</button>`).join('');
+}
+function render(){
+  const okT=m=>F.type==='all'||DX.types(m).includes(F.type);
+  const okA=id=>F.arc==='all'||DX.arcOf(id)===F.arc;
+  // 系統(1段目から)
+  const bases=DX.list.filter(m=>!DX.isFusion(m) && m.level===1);
+  const lines=[]; for(const b of bases){ const ch=[]; let c=b.id; const seen={}; while(c!=null&&DX.M[c]&&!seen[c]){ seen[c]=1; ch.push(c); c=DX.M[c].evolves_to; } lines.push(ch); }
+  lines.sort((x,y)=>(DX.ARC_I[DX.arcOf(x[0])]??9)-(DX.ARC_I[DX.arcOf(y[0])]??9) || (DX.md.order[x[0]]??999)-(DX.md.order[y[0]]??999));
+  const arcs=F.arc==='all'?DX.ARCS.map(a=>a[0]):[F.arc];
+  let h='';
+  for(const a of arcs){
+    const ls=lines.filter(ch=>DX.arcOf(ch[0])===a && okT(DX.M[ch[0]]));
+    const fs=DX.fusions.filter(f=>DX.arcOf(f.id)===a && okT(DX.M[f.id]));
+    if(!ls.length && !fs.length) continue;
+    h+=`<section data-sec="${a}"><h2><img src="img/ui/evolve.webp" alt="">${DX.ARC_JP[a]}<span class="n">${ls.length}系統${fs.length?'・融合'+fs.length:''}</span></h2>`;
+    for(const ch of ls){ const m=DX.M[ch[0]]; const home=DX.md.home[ch[0]];
+      h+=`<div class="lnh">${DX.tyb(m.type)}${DX.esc(m.line_name||'')}${home?`<span class="mk arc">${DX.esc(home)}</span>`:''}</div><div class="ln">`+ch.map((id,i)=>(i?'<i class="ar"></i>':'')+DX.card(id)).join('')+'</div>'; }
+    if(fs.length){ h+=`<div class="lnh"><img class="ic" src="img/ui/fuse.webp" alt="">融合・いにしえ</div><div class="grid">`+fs.map(f=>DX.card(f.id)).join('')+'</div>'; }
+    h+='</section>';
+  }
+  document.getElementById('main').innerHTML=h||'<div class="empty">0</div>';
+}
+document.getElementById('top').addEventListener('click',ev=>{ const b=ev.target.closest('.chip'); if(!b) return;
+  if(b.dataset.arc) F.arc=b.dataset.arc; if(b.dataset.ty) F.type=b.dataset.ty; chips(); render(); window.scrollTo(0,0); });
+DX.load().then(()=>{ chips(); render(); DX.sheetInit(); document.getElementById('load').remove(); })
+  .catch(e=>{ console.error(e); document.getElementById('load').textContent='読みこめません'; });
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>融合表</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="dex.css">
+<style>
+#fPar .chip{min-height:44px;padding:0 6px 0 2px;font-size:11.5px}
+#fPar .chip img{width:36px;height:36px}
+.rcw{background:#10162f;border:1px solid var(--ln);border-radius:10px;padding:6px;margin:6px 0}
+.rcw:last-child{border-bottom:1px solid var(--ln)}
+.rcw .cd{min-height:0;padding:3px 2px 4px}
+.rcw .cd img.a{width:50px;height:50px}
+.rcw .cd .nm{font-size:11px}
+.rcw .rct{margin-top:3px}
+</style>
+</head>
+<body>
+<div id="load">…</div>
+<div id="top">
+  <div class="bar">
+    <a class="tb" id="bBack" href="../proto/greece_town.html"><img class="ic" src="img/ui/cancel.webp" alt="">タイトル</a>
+    <h1>融合表</h1>
+    <a class="tb" id="bDex" href="dex.html"><img class="ic" src="img/ui/evolve.webp" alt="">テリオン表</a>
+  </div>
+  <div class="flt" id="fArc"></div>
+  <div class="flt" id="fType"></div>
+  <div class="flt" id="fPar"></div>
+</div>
+<main id="main"></main>
+<script src="dex_common.js"></script>
+<script>
+'use strict';
+const F={arc:'all', type:'all', par:null, lost:false};
+function chips(){
+  document.getElementById('fArc').innerHTML=[['all','全部']].concat(DX.ARCS.filter(a=>a[0]!=='starter')).map(([k,v])=>`<button class="chip ${F.arc===k?'on':''}" data-arc="${k}">${v}</button>`).join('')
+    +`<button class="chip ${F.lost?'on':''}" data-lost="1"><span class="mk lost" style="margin:0">弱点が消える</span></button>`;
+  document.getElementById('fType').innerHTML=`<button class="chip ${F.type==='all'?'on':''}" data-ty="all">全タイプ</button>`+DX.TYPES.map(t=>`<button class="chip ${F.type===t?'on':''}" data-ty="${t}"><span class="dot" style="background:${DX.TYPE_COL[t]}"></span>${t}</button>`).join('');
+  const ps=Object.keys(DX.usedIn).map(Number).sort((a,b)=>(DX.ARC_I[DX.arcOf(a)]??9)-(DX.ARC_I[DX.arcOf(b)]??9)||(DX.md.order[a]??999)-(DX.md.order[b]??999));
+  document.getElementById('fPar').innerHTML=`<button class="chip ${F.par==null?'on':''}" data-par="">全員</button>`+ps.map(p=>`<button class="chip ${F.par===p?'on':''}" data-par="${p}"><img src="${DX.img(p)}" loading="lazy" alt="">${DX.esc(DX.M[p].name)}<span class="tx">${DX.usedIn[p].length}</span></button>`).join('');
+}
+function render(){
+  const list=DX.fusions.filter(f=>{ const m=DX.M[f.id];
+    if(F.arc!=='all' && DX.makeArc(f.id)!==F.arc && DX.arcOf(f.id)!==F.arc) return false;
+    if(F.type!=='all' && !DX.types(m).includes(F.type)) return false;
+    if(F.par!=null && !f.parents.includes(F.par)) return false;
+    if(F.lost && !DX.lostWeak(f).length) return false; return true; });
+  const tri=list.filter(f=>f.parents.length>2), two=list.filter(f=>f.parents.length<=2);
+  let h='';
+  if(tri.length) h+=`<section><h2><img src="img/ui/fuse3.webp" alt="">3体融合<span class="n">${tri.length}</span></h2>`+tri.map(row).join('')+'</section>';
+  h+=`<section><h2><img src="img/ui/fuse.webp" alt="">融合<span class="n">${two.length}</span></h2>`+(two.length?two.map(row).join(''):'<div class="empty">0</div>')+'</section>';
+  document.getElementById('main').innerHTML=h;
+}
+function row(f){ return `<div class="rcw" data-f="${f.id}">${DX.recipeHtml(f, F.par)}<div class="rct">${DX.fusionTags(f)}</div></div>`; }
+document.getElementById('top').addEventListener('click',ev=>{ const b=ev.target.closest('.chip'); if(!b) return;
+  if(b.dataset.arc) F.arc=b.dataset.arc; if(b.dataset.ty) F.type=b.dataset.ty; if(b.dataset.lost) F.lost=!F.lost;
+  if(b.dataset.par!=null) F.par=b.dataset.par===''?null:+b.dataset.par;
+  const sx=["fArc","fType","fPar"].map(k=>document.getElementById(k).scrollLeft); chips(); ["fArc","fType","fPar"].forEach((k,i)=>document.getElementById(k).scrollLeft=sx[i]); render(); window.scrollTo(0,0); });
+DX.load().then(()=>{ chips(); render(); DX.sheetInit(); document.getElementById('load').remove(); })
+  .catch(e=>{ console.error(e); document.getElementById('load').textContent='読みこめません'; });
+</script>
+</body>
+</html>
