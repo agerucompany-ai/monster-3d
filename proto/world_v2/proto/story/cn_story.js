@@ -144,7 +144,7 @@ sc(19,'c19_6',CA);
 // 第20話 都を守る(ランサム・リヴァイア＝セイリュ＋クロベク・メイリンの子を借りる)
 sc(20,'c20_1',CA,'*',{bg:'anime_cn_gate'});
 sc(20,'c20_2',CA);
-bt(20,'c20_b','c20_3',CA,{foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1061,lv:27,fixed:true},{mid:1060,lv:25},{mid:71,lv:25},{mid:1040,lv:25})}),R:{terrain:'ruins',guests:['partner',196,1012,1058],fuse:[2018],ai:{hpX:1.2,atkX:1.3}}});
+bt(20,'c20_b','c20_3',CA,{foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1067,lv:27,fixed:true},{mid:1060,lv:25},{mid:71,lv:25},{mid:1040,lv:25})}),R:{terrain:'ruins',guests:['partner',196,1012,1058],fuse:[2018],ai:{hpX:1.2,atkX:1.3}}});
 sc(20,'c20_4',CA,'*',{bg:'anime_cn_wall'});
 // 第21話 雪の高原
 sc(21,'c21_1',KU,'*',{bg:'anime_cn_gate',objAway:'都の北門から、雪の高原へ'});
@@ -186,12 +186,12 @@ sc(27,'c27_4',SE,'*',{bg:'anime_cn_sea_dawn',post:()=>setTime('morning')});
 // 第28話 呼ばれる(連戦。二戦目はスレイプニア＝グリフォ＋ユキマダラ)
 sc(28,'c28_1',SE,'岩の島',{obj:'分かれた海の石の道を、岩の島へ'});
 sc(28,'c28_2',SE);
-bt(28,'c28_b1','c28_3',SE,{foe:()=>cnFoe({n:'ゼロデイの船の見張り',zeroday:1,party:P(1061,1060)}),R:{terrain:'rocky'}});
+bt(28,'c28_b1','c28_3',SE,{foe:()=>cnFoe({n:'ゼロデイの船の見張り',zeroday:1,party:P(1060,1063)}),R:{terrain:'rocky'}});
 sc(28,'c28_4',SE);
 bt(28,'c28_b2','c28_5',SE,{foe:()=>cnFoe({n:'レン',party:P({mid:1069,lv:30,fixed:true},{mid:1034,lv:28})}),R:{terrain:'rocky',guests:['partner',1054,1046],fuse:[2065],ai:{hpX:1.3,atkX:1.2}}});
 // 第29話 自分で立つ(セイリュウ＝三段目・ヘラツノと朱雀も味方)
 sc(29,'c29_1',SE); sc(29,'c29_2',SE); sc(29,'c29_3',SE); sc(29,'c29_4',SE);
-bt(29,'c29_b','c29_5',SE,{foe:()=>cnFoe({n:'ゼロデイの船の子',zeroday:1,party:P(1061,1060,1069,1040)}),R:{terrain:'rocky',guests:['partner',291,1034,2004]}});
+bt(29,'c29_b','c29_5',SE,{foe:()=>cnFoe({n:'ゼロデイの船の子',zeroday:1,party:P(1064,1060,1069,1040)}),R:{terrain:'rocky',guests:['partner',291,1034,2004]}});
 sc(29,'c29_6',SE);
 // 第30話 青龍の岩(年寄りのセイリュウ・セイリュがヤマトの仲間に・ハオとリーファと別れる・エジプトへの絵)
 sc(30,'c30_1',SE,'青龍の岩',{obj:'石の道の先、青龍の岩へ'});

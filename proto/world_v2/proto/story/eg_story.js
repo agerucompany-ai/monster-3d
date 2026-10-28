@@ -234,7 +234,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(14,'e14_1',AS,'*',{bg:'anime_eg_dam'});
   sc(14,'e14_2',AS,'石切り場',{obj:'石切り場の下の、砂にうもれた崖へ'});
   sc(14,'e14_3',AS,'*',{bg:'anime_eg_tunnel'});
-  bt(14,'e14_b','e14_4',AS,{bg:'anime_eg_tunnel',foe:()=>cnFoe({n:'ゼロデイの見張りの機械',zeroday:1,party:P(1059,1060)}),R:{terrain:'stream'}});
+  bt(14,'e14_b','e14_4',AS,{bg:'anime_eg_tunnel',foe:()=>cnFoe({n:'ゼロデイの見張りの機械',zeroday:1,party:P(1064,1067)}),R:{terrain:'stream'}});
   sc(14,'e14_5',AS,'*',{bg:'anime_eg_tunnel',tod:'evening'});
   // 第15〜18話 ダムの中(地図は作らず全画面＋仮の相手)
   const DI='anime_eg_dam_in';

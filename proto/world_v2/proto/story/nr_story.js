@@ -67,7 +67,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   // 第11話 同じ時刻(四つの場所で歌う・全員戻る)
   sc(11,'n11_1',FJ,'*',{bg:CN,tod:'dawn'}); sc(11,'n11_2',FJ,'*',{bg:CN}); sc(11,'n11_3',FJ,'*',{bg:CN}); sc(11,'n11_4',FJ,'*',{bg:CH});
   sc(11,'n11_5a',FJ,'*',{bg:'anime_nr_square_dawn'});
-  bt(11,'n11_b','n11_5',FJ,{bg:'anime_nr_square_dawn',foe:()=>cnFoe({n:'赤い目の子たちと見回りの機械',zeroday:1,party:P(1050,1052,1049,1059)}),R:{terrain:'snowfield',guests:['partner','own2','own3',71,1012]}});
+  bt(11,'n11_b','n11_5',FJ,{bg:'anime_nr_square_dawn',foe:()=>cnFoe({n:'赤い目の子たちと見回りの機械',zeroday:1,party:P(1050,1052,1049,1064)}),R:{terrain:'snowfield',guests:['partner','own2','own3',71,1012]}});
   sc(11,'n11_6',FJ,'*',{bg:'anime_nr_square_dawn',tod:'morning'});
   // 第12話 四つの一行(並べる謎)
   sc(12,'n12_1',FJ,'*',{bg:CH,tod:'noon'}); sc(12,'n12_2',FJ,'*',{bg:CH}); sc(12,'n12_3a',FJ,'*',{bg:CH});
@@ -77,7 +77,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   sc(13,'n13_1',FJ,'*',{bg:'anime_nr_town_morning',tod:'morning'});
   go(13,'n13_g',FJ,GL,'from_svalbard',{tod:'morning'});
   sc(13,'n13_2',GL); sc(13,'n13_3a',GL);
-  bt(13,'n13_b','n13_3',GL,{foe:()=>cnFoe({n:'氷原の見張り',zeroday:1,party:P(1050,1052,1049,1060)}),R:{terrain:'snowfield',size:11}});
+  bt(13,'n13_b','n13_3',GL,{foe:()=>cnFoe({n:'氷原の見張り',zeroday:1,party:P(1050,1052,1049,1064)}),R:{terrain:'snowfield',size:11}});
   sc(13,'n13_4',GL,'研究所の入口',{obj:'研究所の黒い壁へ',tod:'noon'});
   // 第14話 問題が、あります(外壁・ユキ＆ハル)
   sc(14,'n14_1',GL); sc(14,'n14_2',GL); sc(14,'n14_3a',GL);
@@ -89,7 +89,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   bt(15,'n15_b','n15_4',GL,{bg:TE,anc:{id:2069,tier:5,lv:59,flag:'nr_odin_s',tune:{hp:1.4,atk:1.82}},R:{terrain:'ruins',guests:['partner',199,'own2','own3'],fuse:[2020]}});
   sc(15,'n15_5',GL,'*',{bg:TE}); sc(15,'n15_6',GL,'*',{bg:TE});
   sc(16,'n16_1',GL,'*',{bg:TE}); sc(16,'n16_2a',GL,'*',{bg:TE});
-  bt(16,'n16_b','n16_2',GL,{bg:TE,foe:()=>cnFoe({n:'ゼロデイの大人たち',zeroday:1,party:P(1060,1059,1061,1050)}),R:{terrain:'ruins',guests:['partner',199,1037,'own2'],fuse:[2055]}});
+  bt(16,'n16_b','n16_2',GL,{bg:TE,foe:()=>cnFoe({n:'ゼロデイの大人たち',zeroday:1,party:P(1064,1067,1064,1050)}),R:{terrain:'ruins',guests:['partner',199,1037,'own2'],fuse:[2055]}});
   sc(16,'n16_3',GL,'*',{bg:TE}); sc(16,'n16_4',GL,'*',{bg:TE}); sc(16,'n16_5',GL,'*',{bg:TE});
   // 第17話 最後の守り(研究所の門からアークの中心へ・ボット。アラシドラ=リュバーン＋ソヨモモ)
   sc(17,'n17_1',CO,'*',{objAway:'研究所の門から、アークの中心へ',tod:'night'});
@@ -102,7 +102,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   bt(19,'n19_b',null,CO,{anc:()=>NR_RAGNA({tune:{hp:1.6,atk:1.4,escort:0}}),R:{terrain:'arkcore',guests:['partner']}});
   sc(19,'n19_2b',CO); sc(19,'n19_3',CO); sc(19,'n19_4',CO); sc(19,'n19_5',CO,'*',{br:'n19_b_b'}); sc(19,'n19_6',CO);
   sc(20,'n20_1',CO,'*',{tod:'noon'}); sc(20,'n20_2',CO); sc(20,'n20_3',CO); sc(20,'n20_4a',CO);
-  bt(20,'n20_b','n20_4',CO,{foe:()=>cnFoe({n:'見回りの機械',zeroday:1,party:P(1060,1059)}),R:{terrain:'arkcore',guests:['partner']}});
+  bt(20,'n20_b','n20_4',CO,{foe:()=>cnFoe({n:'見回りの機械',zeroday:1,party:P(1064,1067)}),R:{terrain:'arkcore',guests:['partner']}});
   sc(20,'n20_5',CO);
   sc(21,'n21_1',CO,'*',{tod:'evening'});
   bt(21,'n21_b',null,CO,{anc:()=>NR_RAGNA({tune:{hp:1.6,atk:1.6,escort:0}}),R:{terrain:'arkcore',guests:['partner']}});

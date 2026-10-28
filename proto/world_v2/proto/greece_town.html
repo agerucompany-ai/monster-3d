@@ -6030,7 +6030,7 @@ sc(19,'c19_6',CA);
 // 第20話 都を守る(ランサム・リヴァイア＝セイリュ＋クロベク・メイリンの子を借りる)
 sc(20,'c20_1',CA,'*',{bg:'anime_cn_gate'});
 sc(20,'c20_2',CA);
-bt(20,'c20_b','c20_3',CA,{foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1061,lv:27,fixed:true},{mid:1060,lv:25},{mid:71,lv:25},{mid:1040,lv:25})}),R:{terrain:'ruins',guests:['partner',196,1012,1058],fuse:[2018],ai:{hpX:1.2,atkX:1.3}}});
+bt(20,'c20_b','c20_3',CA,{foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1067,lv:27,fixed:true},{mid:1060,lv:25},{mid:71,lv:25},{mid:1040,lv:25})}),R:{terrain:'ruins',guests:['partner',196,1012,1058],fuse:[2018],ai:{hpX:1.2,atkX:1.3}}});
 sc(20,'c20_4',CA,'*',{bg:'anime_cn_wall'});
 // 第21話 雪の高原
 sc(21,'c21_1',KU,'*',{bg:'anime_cn_gate',objAway:'都の北門から、雪の高原へ'});
@@ -6072,12 +6072,12 @@ sc(27,'c27_4',SE,'*',{bg:'anime_cn_sea_dawn',post:()=>setTime('morning')});
 // 第28話 呼ばれる(連戦。二戦目はスレイプニア＝グリフォ＋ユキマダラ)
 sc(28,'c28_1',SE,'岩の島',{obj:'分かれた海の石の道を、岩の島へ'});
 sc(28,'c28_2',SE);
-bt(28,'c28_b1','c28_3',SE,{foe:()=>cnFoe({n:'ゼロデイの船の見張り',zeroday:1,party:P(1061,1060)}),R:{terrain:'rocky'}});
+bt(28,'c28_b1','c28_3',SE,{foe:()=>cnFoe({n:'ゼロデイの船の見張り',zeroday:1,party:P(1060,1063)}),R:{terrain:'rocky'}});
 sc(28,'c28_4',SE);
 bt(28,'c28_b2','c28_5',SE,{foe:()=>cnFoe({n:'レン',party:P({mid:1069,lv:30,fixed:true},{mid:1034,lv:28})}),R:{terrain:'rocky',guests:['partner',1054,1046],fuse:[2065],ai:{hpX:1.3,atkX:1.2}}});
 // 第29話 自分で立つ(セイリュウ＝三段目・ヘラツノと朱雀も味方)
 sc(29,'c29_1',SE); sc(29,'c29_2',SE); sc(29,'c29_3',SE); sc(29,'c29_4',SE);
-bt(29,'c29_b','c29_5',SE,{foe:()=>cnFoe({n:'ゼロデイの船の子',zeroday:1,party:P(1061,1060,1069,1040)}),R:{terrain:'rocky',guests:['partner',291,1034,2004]}});
+bt(29,'c29_b','c29_5',SE,{foe:()=>cnFoe({n:'ゼロデイの船の子',zeroday:1,party:P(1064,1060,1069,1040)}),R:{terrain:'rocky',guests:['partner',291,1034,2004]}});
 sc(29,'c29_6',SE);
 // 第30話 青龍の岩(年寄りのセイリュウ・セイリュがヤマトの仲間に・ハオとリーファと別れる・エジプトへの絵)
 sc(30,'c30_1',SE,'青龍の岩',{obj:'石の道の先、青龍の岩へ'});
@@ -7008,7 +7008,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(14,'e14_1',AS,'*',{bg:'anime_eg_dam'});
   sc(14,'e14_2',AS,'石切り場',{obj:'石切り場の下の、砂にうもれた崖へ'});
   sc(14,'e14_3',AS,'*',{bg:'anime_eg_tunnel'});
-  bt(14,'e14_b','e14_4',AS,{bg:'anime_eg_tunnel',foe:()=>cnFoe({n:'ゼロデイの見張りの機械',zeroday:1,party:P(1059,1060)}),R:{terrain:'stream'}});
+  bt(14,'e14_b','e14_4',AS,{bg:'anime_eg_tunnel',foe:()=>cnFoe({n:'ゼロデイの見張りの機械',zeroday:1,party:P(1064,1067)}),R:{terrain:'stream'}});
   sc(14,'e14_5',AS,'*',{bg:'anime_eg_tunnel',tod:'evening'});
   // 第15〜18話 ダムの中(地図は作らず全画面＋仮の相手)
   const DI='anime_eg_dam_in';
@@ -7157,7 +7157,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   // 第11話 同じ時刻(四つの場所で歌う・全員戻る)
   sc(11,'n11_1',FJ,'*',{bg:CN,tod:'dawn'}); sc(11,'n11_2',FJ,'*',{bg:CN}); sc(11,'n11_3',FJ,'*',{bg:CN}); sc(11,'n11_4',FJ,'*',{bg:CH});
   sc(11,'n11_5a',FJ,'*',{bg:'anime_nr_square_dawn'});
-  bt(11,'n11_b','n11_5',FJ,{bg:'anime_nr_square_dawn',foe:()=>cnFoe({n:'赤い目の子たちと見回りの機械',zeroday:1,party:P(1050,1052,1049,1059)}),R:{terrain:'snowfield',guests:['partner','own2','own3',71,1012]}});
+  bt(11,'n11_b','n11_5',FJ,{bg:'anime_nr_square_dawn',foe:()=>cnFoe({n:'赤い目の子たちと見回りの機械',zeroday:1,party:P(1050,1052,1049,1064)}),R:{terrain:'snowfield',guests:['partner','own2','own3',71,1012]}});
   sc(11,'n11_6',FJ,'*',{bg:'anime_nr_square_dawn',tod:'morning'});
   // 第12話 四つの一行(並べる謎)
   sc(12,'n12_1',FJ,'*',{bg:CH,tod:'noon'}); sc(12,'n12_2',FJ,'*',{bg:CH}); sc(12,'n12_3a',FJ,'*',{bg:CH});
@@ -7167,7 +7167,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   sc(13,'n13_1',FJ,'*',{bg:'anime_nr_town_morning',tod:'morning'});
   go(13,'n13_g',FJ,GL,'from_svalbard',{tod:'morning'});
   sc(13,'n13_2',GL); sc(13,'n13_3a',GL);
-  bt(13,'n13_b','n13_3',GL,{foe:()=>cnFoe({n:'氷原の見張り',zeroday:1,party:P(1050,1052,1049,1060)}),R:{terrain:'snowfield',size:11}});
+  bt(13,'n13_b','n13_3',GL,{foe:()=>cnFoe({n:'氷原の見張り',zeroday:1,party:P(1050,1052,1049,1064)}),R:{terrain:'snowfield',size:11}});
   sc(13,'n13_4',GL,'研究所の入口',{obj:'研究所の黒い壁へ',tod:'noon'});
   // 第14話 問題が、あります(外壁・ユキ＆ハル)
   sc(14,'n14_1',GL); sc(14,'n14_2',GL); sc(14,'n14_3a',GL);
@@ -7179,7 +7179,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   bt(15,'n15_b','n15_4',GL,{bg:TE,anc:{id:2069,tier:5,lv:59,flag:'nr_odin_s',tune:{hp:1.4,atk:1.82}},R:{terrain:'ruins',guests:['partner',199,'own2','own3'],fuse:[2020]}});
   sc(15,'n15_5',GL,'*',{bg:TE}); sc(15,'n15_6',GL,'*',{bg:TE});
   sc(16,'n16_1',GL,'*',{bg:TE}); sc(16,'n16_2a',GL,'*',{bg:TE});
-  bt(16,'n16_b','n16_2',GL,{bg:TE,foe:()=>cnFoe({n:'ゼロデイの大人たち',zeroday:1,party:P(1060,1059,1061,1050)}),R:{terrain:'ruins',guests:['partner',199,1037,'own2'],fuse:[2055]}});
+  bt(16,'n16_b','n16_2',GL,{bg:TE,foe:()=>cnFoe({n:'ゼロデイの大人たち',zeroday:1,party:P(1064,1067,1064,1050)}),R:{terrain:'ruins',guests:['partner',199,1037,'own2'],fuse:[2055]}});
   sc(16,'n16_3',GL,'*',{bg:TE}); sc(16,'n16_4',GL,'*',{bg:TE}); sc(16,'n16_5',GL,'*',{bg:TE});
   // 第17話 最後の守り(研究所の門からアークの中心へ・ボット。アラシドラ=リュバーン＋ソヨモモ)
   sc(17,'n17_1',CO,'*',{objAway:'研究所の門から、アークの中心へ',tod:'night'});
@@ -7192,7 +7192,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   bt(19,'n19_b',null,CO,{anc:()=>NR_RAGNA({tune:{hp:1.6,atk:1.4,escort:0}}),R:{terrain:'arkcore',guests:['partner']}});
   sc(19,'n19_2b',CO); sc(19,'n19_3',CO); sc(19,'n19_4',CO); sc(19,'n19_5',CO,'*',{br:'n19_b_b'}); sc(19,'n19_6',CO);
   sc(20,'n20_1',CO,'*',{tod:'noon'}); sc(20,'n20_2',CO); sc(20,'n20_3',CO); sc(20,'n20_4a',CO);
-  bt(20,'n20_b','n20_4',CO,{foe:()=>cnFoe({n:'見回りの機械',zeroday:1,party:P(1060,1059)}),R:{terrain:'arkcore',guests:['partner']}});
+  bt(20,'n20_b','n20_4',CO,{foe:()=>cnFoe({n:'見回りの機械',zeroday:1,party:P(1064,1067)}),R:{terrain:'arkcore',guests:['partner']}});
   sc(20,'n20_5',CO);
   sc(21,'n21_1',CO,'*',{tod:'evening'});
   bt(21,'n21_b',null,CO,{anc:()=>NR_RAGNA({tune:{hp:1.6,atk:1.6,escort:0}}),R:{terrain:'arkcore',guests:['partner']}});
