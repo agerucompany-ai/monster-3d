@@ -10,7 +10,7 @@ const NR_Q10=[['教会の線',['七番の穴','十二番の穴','二十一番の
 const NR_LINES=['眠る者よ','地の下で鳴れ','おまえの音のある所で','子らは生きる'];
 const NR_BOT=()=>P({mid:1050,lv:62,fixed:true,leader:true},{mid:290,lv:60,fixed:true},{mid:2049,lv:60,fixed:true},{mid:1052,lv:60,fixed:true});
 const NR_RAGNA=o=>Object.assign({id:2071,tier:6,lv:73,size:13,flag:'nr_ragna_s',tune:{hp:0.64,atk:0.4,escort:5}},o||{});
-// 新4(三体融合・ゴルドオウ)が生まれた: 旗 nr_trio・融合の仕方を覚える
+// 新4(三体融合・ゴルドレクス)が生まれた: 旗 nr_trio・融合の仕方を覚える
 function nrTrio(){ flag('nr_trio'); const pg=window.Progress&&Progress.state(); if(pg){ pg.fusions=pg.fusions||{}; pg.fusions[LOKI_ID]=1; } }
 xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   const CA='eg_cairo', LO='nr_lofoten', FJ='nr_fjord', GL='nr_glacier', CO='nr_core';
@@ -111,7 +111,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   bt(22,'n22_b',null,CO,{anc:()=>NR_RAGNA({tune:{hp:1.6,atk:1.6,escort:0}}),R:{terrain:'arkcore',guests:['partner']}});
   sc(22,'n22_2b',CO); sc(22,'n22_3',CO); sc(22,'n22_4',CO); sc(22,'n22_5',CO);
   sc(23,'n23_1',CO,'*',{tod:'dawn'}); sc(23,'n23_2',CO,'*',{bg:'anime_nr_stairs'}); sc(23,'n23_3',CO,'*',{bg:'anime_nr_stairs'}); sc(23,'n23_4',CO); sc(23,'n23_5',CO);
-  // 第24話 予備の装置(研究所の外の黒い塔・最後の総力戦・新4ゴルドオウ=エンオウ＋ナルカミ＋クロコドンの三体融合。2026-10-28 オーナー: 3体融合は3体とも3段目)
+  // 第24話 予備の装置(研究所の外の黒い塔・最後の総力戦・新4ゴルドレクス=エンオウ＋ナルカミ＋クロコドンの三体融合。2026-10-28 オーナー: 3体融合は3体とも3段目)
   sc(24,'n24_1',CO,'*',{tod:'morning'});
   go(24,'n24_g',CO,GL,'from_core',{tod:'morning'});
   const IC='anime_nr_slope';   // 研究所の外の氷の上(全画面)
