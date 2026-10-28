@@ -2506,7 +2506,7 @@ function syncUnits(){ if(BT.headless) return;
       // 足元バー(常時)と詳細ラベル(選択中/被弾直後だけ)
       const bcv=document.createElement('canvas'); bcv.width=256; bcv.height=80; const btex=new THREE.CanvasTexture(bcv);
       const bmat=new THREE.SpriteMaterial({map:btex,transparent:true,depthWrite:false}); bmat.toneMapped=false;
-      const bar=new THREE.Sprite(bmat); bar.center.set(0.5,0); bar.scale.set(0.98,0.31,1); bar.position.set(0,0.015,0.47); bar.renderOrder=8; grp.add(bar);
+      bmat.depthTest=false; const bar=new THREE.Sprite(bmat); bar.center.set(0.5,0); bar.scale.set(0.98,0.31,1); bar.position.set(0,0.015,0.47); bar.renderOrder=8; grp.add(bar);
       const lcv=makeLabelCanvas(u); const ltex=new THREE.CanvasTexture(lcv);
       const lmat=new THREE.SpriteMaterial({map:ltex,transparent:true,depthTest:false}); lmat.toneMapped=false;
       const lsp=new THREE.Sprite(lmat); lsp.scale.set(1.78,0.78,1); lsp.position.y=1.56; lsp.renderOrder=30; lsp.visible=false; grp.add(lsp);
@@ -2531,15 +2531,15 @@ function syncUnits(){ if(BT.headless) return;
     if(s.tgt.r!==u.r||s.tgt.c!==u.c){ const d=cheby(s.tgt,u); fx2Land(s.tgt.r,s.tgt.c,0.45); s.move={t0:now,dur:160+d*120,fx:s.grp.position.x,fz:s.grp.position.z,fy:s.grp.position.y,tx:w.x,tz:w.z,ty:cellH(u.r,u.c)}; s.tgt={x:w.x,z:w.z,r:u.r,c:u.c}; }
     else if(!s.move){ s.grp.position.set(w.x,cellH(u.r,u.c),w.z); }
     s.dugY = u.dug>0 ? -1.35 : 0;
-    const lv=mon(u).level; const big=mon(u).role==='fusion'||u.isBoss; const sc=big?1.28:({1:1.1,2:1.17,3:1.23}[lv]||1.17);   /* 絵のまわりの余白(約2割)を入れて、体がマスの8割に */   // 2026-10-28 オーナー「重なってごちゃごちゃ」: 絵はマスの中に(前 1.31〜1.83)
-    s.sc=sc; s.spBaseY=sc*0.5+0.03; s.sp.scale.set(sc,sc,1); s.sp.position.y=s.spBaseY;
+    const lv=mon(u).level; const sk=unitSizeK(u); const big=sk>=1.3; const sc=1.17*sk;   // 2026-10-28 オーナー: 2段目=今の大きさ・1段目は少し小さく・3段目/融合は大きく・古代/ボス/3体融合はいちばん大きく(体はマスの中心)
+    s.scT=sc; if(s.sc==null) s.sc=sc; s.spBaseY=s.sc*0.5+0.03;   // 大きさは updateSpriteIdle でなめらかに(進化・融合で育つ)
     s.lsp.position.y=sc+0.72; s.crown.visible=false; s.crownY=sc+0.3; s.lring.visible=!!u.leader;
     s.wm.visible = u.owner===1 && state.phase==='battle' && alive(0).some(a=>typeBonusM(mon(a),mon(u))>0);
     { const tb=terrBonusM(mon(u), state.terrain[u.r][u.c]); s.terr=tb; s.tglow.visible=tb!==0 && !(u.dug>0);
       if(tb>0){ s.tglow.material.color.setHex(0xffe060); s.tglow.material.blending=THREE.AdditiveBlending; } else if(tb<0){ s.tglow.material.color.setHex(0x1a1030); s.tglow.material.blending=THREE.NormalBlending; } s.tglow.material.needsUpdate=true; }
-    m3dSync(s,u); if(s.m3d){ s.m3d.h=m3dHeight(u); s.m3d.root.scale.setScalar(s.m3d.h); s.crownY=s.m3d.h+0.32; s.lsp.position.y=s.m3d.h+0.9; m3dFace(s,u,false); }
+    m3dSync(s,u); if(s.m3d){ s.m3d.h=m3dHeight(u); if(s.m3d.hc==null) s.m3d.hc=s.m3d.h; s.m3d.root.scale.setScalar(s.m3d.hc); s.crownY=s.m3d.h+0.32; s.lsp.position.y=s.m3d.h+0.9; m3dFace(s,u,false); }
     s.glowMat.color.setHex(TYPE_HEX[mon(u).type]||0xffffff); s.glow.scale.set(sc*1.3,sc*1.0,1);
-    const rs=big?0.92:0.74+0.05*lv; s.lring.scale.set(rs,rs,1); s.tglow.scale.set(rs*1.9,rs*1.9,1); s.ring.scale.set(rs*1.08,rs*1.08,1); s.disc.scale.set(rs*1.5,rs*1.5,1); s.aura.scale.set(rs,rs,1); s.shBase=rs*1.15; s.sh.scale.set(s.shBase,s.shBase*0.8,1);
+    const rs=Math.min(1.3,0.84*sk); s.lring.scale.set(rs,rs,1); s.tglow.scale.set(rs*1.9,rs*1.9,1); s.ring.scale.set(rs*1.08,rs*1.08,1); s.disc.scale.set(rs*1.5,rs*1.5,1); s.aura.scale.set(rs,rs,1); s.shBase=rs*1.15; s.sh.scale.set(s.shBase,s.shBase*0.8,1);
     s.aura.material.opacity = lv===3?0.85:0;
     s.bar.position.z=0.33+rs*0.16;
     const fullBar = !V2ON() || (sel && sel.uid===u.uid) || (selAtks && selAtks.some(e=>e.uid===u.uid));
@@ -2561,6 +2561,8 @@ let _m3dLast=0;
 function updateSpriteIdle(){
   const now=performance.now(), t=now*0.002; const _dt=Math.min(0.1,(now-(_m3dLast||now))/1000); _m3dLast=now;
   for(const uid in sprites){ const s=sprites[uid]; if(s.spBaseY==null) continue;
+    if(s.scT!=null && Math.abs(s.scT-s.sc)>0.002){ s.sc+=(s.scT-s.sc)*Math.min(1,_dt*5); s.spBaseY=s.sc*0.5+0.03; }   // 進化・融合で大きくなる(なめらかに)
+    if(s.m3d && s.m3d.hc!=null && Math.abs(s.m3d.h-s.m3d.hc)>0.002){ s.m3d.hc+=(s.m3d.h-s.m3d.hc)*Math.min(1,_dt*5); s.m3d.root.scale.setScalar(s.m3d.hc); }
     const ph=(uid%13)*0.5; let bob=Math.sin(t+ph)*0.035, sx=1, sy=1+0.012*Math.sin(t*1.6+ph), ox=0, oz=0, tilt=0.012*Math.sin(t*0.9+ph);
     // 移動の補間(跳ねる)
     if(s.move){ const m=s.move; const k=Math.min(1,(now-m.t0)/m.dur); const e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2; s.grp.position.set(m.fx+(m.tx-m.fx)*e, m.fy+(m.ty-m.fy)*e+Math.sin(k*Math.PI)*0.35, m.fz+(m.tz-m.fz)*e); if(k>=1){ s.grp.position.set(m.tx,m.ty,m.tz); s.move=null; fx2Land(s.tgt.r,s.tgt.c,0.8); } }
@@ -2712,8 +2714,10 @@ function m3dGrad(){ if(_m3dGrad) return _m3dGrad; const d=new Uint8Array([120,12
 function m3dPlay(inst,name,fade){ const to=inst.act[name]; if(!to) return; const from=inst.act[inst.cur];
   if(name!=='Idle'||inst.cur!=='Idle'){ to.reset(); to.play(); if(from&&from!==to) from.crossFadeTo(to, fade==null?0.12:fade, false); }
   inst.cur=name; }
-function m3dHeight(u){ const m=mon(u); const big=m.role==='fusion'||u.isBoss; let h=big?1.45:({1:1.1,2:1.25,3:1.38}[m.level]||1.25);
-  const e=ci3Ext(u.mid); if(e){ const foot=Math.max(e.w,e.d)/Math.max(0.01,e.h); const lim=(big?0.95:0.8)/Math.max(0.01,foot); if(h>lim) h=Math.max(lim, big?0.9:0.8); }   // 2026-10-28: 体の幅・奥行きがマスの 80%(大きい子 95%)に収まる高さに
+// 体の大きさの段(2026-10-28): 1段目0.9・2段目1.0(今の大きさ)・3段目/融合1.35・古代テリオン/ボス/3体融合1.75
+function unitSizeK(u){ const m=mon(u); if(u.anc||u.isBoss||(m.recipe3&&m.recipe3.length)) return 1.75; if(m.role==='fusion'||m.level===3) return 1.35; return m.level===2?1.0:0.9; }
+function m3dHeight(u){ const m=mon(u); const k=unitSizeK(u); let h=1.25*k;
+  const e=ci3Ext(u.mid); if(e){ const foot=Math.max(e.w,e.d)/Math.max(0.01,e.h); const lim=0.8*k/Math.max(0.01,foot); if(h>lim) h=Math.max(lim, 0.8*k); }   // 体の幅・奥行き = マスの 0.8×段(大きい子はマスをこえてよい・中心はマス)   // 2026-10-28: 体の幅・奥行きがマスの 80%(大きい子 95%)に収まる高さに
   return h; }
 function m3dDetach(s){ if(!s) return; if(s.m3d){ s.grp.remove(s.m3d.root); try{ s.m3d.mixer.stopAllAction(); s.m3d.mats.forEach(m=>m.dispose()); }catch(e){} s.m3d=null; }
   s.m3dWant=null; s.sp.visible=true; s.rim.visible=true; s.glow.visible=true; }
