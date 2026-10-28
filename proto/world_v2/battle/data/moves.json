@@ -5058,8 +5058,8 @@
    "yomi": "いかづちあぎと"
   },
   "fsig_2075": {
-   "name": "ミツクビブレス",
-   "type": "炎",
+   "name": "イカヅチハンマー",
+   "type": "雷",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -5074,13 +5074,13 @@
    "hit": 100,
    "crit": 10,
    "effect": {
-    "ail": "burn",
+    "ail": "para",
     "chance": 0.5
    },
-   "desc": "三つの首が炎と雷と水をいっしょに吐き、射程3の敵みんなを打つ",
+   "desc": "雷の大きなハンマーをふり下ろし、射程3の敵みんなを打つ",
    "range_class": "far",
    "cost": "few",
-   "yomi": "みつくびぶれす"
+   "yomi": "いかづちはんまー"
   }
  }
 }
