@@ -441,14 +441,14 @@ function tripleThird(a,b){   // a,bユニットに対し、3体目素材が bの
   const need=rest[0];
   for(const u of Object.values(state.units)){
     if(u.owner!==a.owner||u.uid===a.uid||u.uid===b.uid||u.hp<=0) continue;
-    if(u.mid===need && Math.max(Math.abs(u.r-b.r),Math.abs(u.c-b.c))<=1) return u;
+    if(u.mid===need && (mon(u)||{}).level===3 && Math.max(Math.abs(u.r-b.r),Math.abs(u.c-b.c))<=1) return u;
   }
   return null;
 }
 // 3体融合: a が b のマスに重なる時、recipe3 の3体目 c が b に隣接していれば {id, c}。tripleUnlocked の時だけ
 function tripleResult(a,b){
   if(!BT.tripleOn||!state||!a||!b||a.uid===b.uid||a.owner!==b.owner) return null;
-  const A=mon(a), B=mon(b); if(!A||!B||A.level!==2||B.level!==2||A.role==='fusion'||B.role==='fusion') return null;
+  const A=mon(a), B=mon(b); if(!A||!B||A.level!==3||B.level!==3||A.role==='fusion'||B.role==='fusion') return null;   // 2026-10-28 オーナー: 3体融合は3体とも3段目(recipe3 は3段目のid)
   const f=tripleRecipe(a.mid,b.mid); if(!f||!fuseKnownOk(a.owner,f.id)) return null; const c=tripleThird(a,b); return c?{id:f.id, c}:null; }
 
 // ==== [template 785-799] 盤の地形テーマ ====
@@ -4055,7 +4055,7 @@ function showMonsterDetail(id, u){
   { const mats=m.recipe3||m.recipe||m.fusion_from||[];   // v3: レシピは「A＋B」(3体融合は「A＋B＋C」)
     if(isFusion && mats.length>=2){
       const names=mats.map(f2=>{ const x=MID[f2]; return x?`<b>${x.name}</b>(${x.type}/Lv${x.level})`:'?'; }).join(' ＋ ');
-      recipeHtml=`<div class="sec">${m.recipe3?'3体融合レシピ':'融合レシピ（2段目か3段目どうし・中央のマスで）'}</div><div class="chain">${names} → <b>${m.name}</b></div>`; } }
+      recipeHtml=`<div class="sec">${m.recipe3?'3体融合レシピ（3体とも3段目・隣どうしで）':'融合レシピ（2段目か3段目どうし・中央のマスで）'}</div><div class="chain">${names} → <b>${m.name}</b></div>`; } }
   let fuseHtml='';
   // この個体が素材になる融合
   const asMat=[]; for(const k in FUSE_IDX){ const [xa,xb]=k.split(',').map(Number); if(xa===id||xb===id) asMat.push({others:[xa===id?xb:xa], f:FUSE_IDX[k]}); }

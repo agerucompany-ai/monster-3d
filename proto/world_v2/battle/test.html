@@ -45,9 +45,9 @@ const CASES = {
   bWild:    { kind:'wild',    size:7,  terrainTheme:'stream',  backdrop:'olive', enemy:{ party:[{mid:49, rank:3}] } },
   bTrainer: { kind:'trainer', size:9,  terrainTheme:'olive',   backdrop:'olive', enemy:{ name:'ニコス', party:[{mid:1059, rank:4}, {mid:166, rank:4}, {mid:1037, rank:3}, {mid:1053, rank:3}] } },   // オバケロ・ニジッコ・アルマガネ・コグリフ
   bMaster:  { kind:'master',  size:11, terrainTheme:'stadium', backdrop:'agora', enemy:{ name:'ヤニス', order:0, party:[{mid:185, rank:6, leader:true}, {mid:49, rank:6}, {mid:1037, rank:6}, {mid:16, rank:6}] } },   // アロガルド・ソヨカ・アルマガネ・ポチャラシ
-  // 3体融合の確認: 相手がリュバーン(199)・トールジン(1027)・オキヤモ(1008)を持つ → tripleUnlocked なら ラグナディオ(2071)。自分も同じ3体＋相棒
-  bRagna:   { kind:'master',  size:11, terrainTheme:'stadium', backdrop:'agora', party:[{mid:1001, rank:6}, {mid:199, rank:6}, {mid:1027, rank:6}, {mid:1008, rank:6}],
-              enemy:{ name:'フィンブル団', order:3, party:[{mid:199, rank:6, leader:true}, {mid:1027, rank:6}, {mid:1008, rank:6}] } },
+  // 3体融合の確認: 相手がリンドヴルム(290)・トールガ(1028)・マグヤモラ(1009)を持つ(2026-10-28 3体融合は3体とも3段目) → tripleUnlocked なら ラグナディオ(2071)。自分も同じ3体＋相棒
+  bRagna:   { kind:'master',  size:11, terrainTheme:'stadium', backdrop:'agora', party:[{mid:1001, rank:6}, {mid:290, rank:6}, {mid:1028, rank:6}, {mid:1009, rank:6}],
+              enemy:{ name:'フィンブル団', order:3, party:[{mid:290, rank:6, leader:true}, {mid:1028, rank:6}, {mid:1009, rank:6}] } },
 };
 const out = document.getElementById('res');
 // 進化先を持っているか(自分=player.owned / 相手=party の evo:true)。切り替えで両方を試せる

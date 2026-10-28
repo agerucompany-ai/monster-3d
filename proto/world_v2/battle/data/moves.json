@@ -5006,6 +5006,81 @@
    "range_class": "far",
    "cost": "once",
    "yomi": "らぐないんふぇるの"
+  },
+  "fsig_2073": {
+   "name": "ホムラアギト",
+   "type": "炎",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "炎のたてがみの竜が、燃える顎でかみつく",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ほむらあぎと"
+  },
+  "fsig_2074": {
+   "name": "イカヅチアギト",
+   "type": "雷",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 110,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "para",
+    "chance": 0.5
+   },
+   "desc": "雷の竜が、稲妻の顎でかみつく",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "いかづちあぎと"
+  },
+  "fsig_2075": {
+   "name": "ミツクビブレス",
+   "type": "炎",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    3
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 140,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": 0.5
+   },
+   "desc": "三つの首が炎と雷と水をいっしょに吐き、射程3の敵みんなを打つ",
+   "range_class": "far",
+   "cost": "few",
+   "yomi": "みつくびぶれす"
   }
  }
 }

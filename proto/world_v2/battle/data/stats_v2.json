@@ -6739,7 +6739,7 @@
    "placeholder": "ホムライジュ(2024)の写し・TODO"
   },
   "2073": {
-   "name": "アマカガリ",
+   "name": "エンロン",
    "type": "炎",
    "type2": "水",
    "stage": 3,
@@ -6764,15 +6764,15 @@
      "lv": 1
     },
     {
-     "move": "fsig_2022",
+     "move": "fsig_2073",
      "lv": 1
     }
    ],
    "fixed": true,
-   "placeholder": "2022の写し・TODO"
+   "placeholder": "2022の写し(数)・決め技は2026-10-28に自分の技・TODO"
   },
   "2074": {
-   "name": "ナルミズチ",
+   "name": "ライオウ",
    "type": "雷",
    "type2": "水",
    "stage": 3,
@@ -6797,15 +6797,15 @@
      "lv": 1
     },
     {
-     "move": "fsig_2024",
+     "move": "fsig_2074",
      "lv": 1
     }
    ],
    "fixed": true,
-   "placeholder": "2022の写し・TODO"
+   "placeholder": "2022の写し(数)・決め技は2026-10-28に自分の技・TODO"
   },
   "2075": {
-   "name": "ロキアス",
+   "name": "キングロキ",
    "type": "炎",
    "type2": "雷",
    "stage": 3,
@@ -6830,12 +6830,12 @@
      "lv": 1
     },
     {
-     "move": "fsig_2071",
+     "move": "fsig_2075",
      "lv": 1
     }
    ],
    "fixed": true,
-   "placeholder": "2071の写し・TODO"
+   "placeholder": "2071の写し(数)・決め技は2026-10-28に自分の技・TODO"
   }
  }
 }

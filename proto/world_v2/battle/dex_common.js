@@ -116,7 +116,7 @@ DX.recipeHtml=(f, hi)=>{ const r3=f.parents.length>2; let s=`<div class="rc ${r3
   s+='<span class="op">=</span>'+DX.card(f.id, f.id===hi?'in':'')+'</div>'; return s; };
 DX.fusionTags=f=>{ const id=f.id; let s=''; const a=DX.arcOf(id), mk=DX.md.make[id];
   if(a) s+=`<span class="mk arc">${DX.ARC_JP[a]}</span>`; if(mk && mk!==a) s+=`<span class="mk arc"><img class="ic" src="img/ui/fuse.webp" alt="" style="width:12px;height:12px;vertical-align:-2px">${DX.ARC_JP[mk]}から</span>`;
-  if(f.parents.length>2) s+=`<span class="mk role">3体融合</span>`;
+  if(f.parents.length>2) s+=`<span class="mk role">3体融合・3体とも3段目</span>`;
   const r=DX.roleTag(id); if(r) s+=`<span class="mk role">${DX.esc(r)}</span>`;
   if(DX.god(id)) s+='<span class="mk god">神</span>'; if(DX.ancientArcs(id).length) s+='<span class="mk anc">いにしえ</span>';
   const lw=DX.lostWeak(f); if(lw.length) s+=`<span class="mk lost">弱点が消える</span>${lw.map(DX.tyb).join('')}`;
