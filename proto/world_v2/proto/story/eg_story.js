@@ -11,7 +11,7 @@
 //   R: terrain=盤 size=盤の大きさ ai=強さ guests=こちらの盤('partner'=エンジュ・'own2'=コグリフ系・'own3'=セイリュ系・数=借りる子) fuse=覚えている融合(借りる子との融合)
 //      triple=3体融合 keep2=その子の先の姿を持たない扱い(2段目のまま) maxTurn=手数(時間切れ=引き分け・draw:1 の段)
 // ============================================================================
-const AMAKA_ID=2073, NARUMI_ID=2074, LOKI_ID=2075;   // 新2エンロン・新3ライオウ・新4ゴルドレクス(2026-10-28 オーナー決定で改名・絵と3Dあり)
+const AMAKA_ID=2073, NARUMI_ID=2074, LOKI_ID=2075;   // 新2グレンカイザー・新3ライゼンギガス・新4ゴルドレクス(2026-10-28 オーナー決定で改名・絵と3Dあり)
 for(const id of [AMAKA_ID,NARUMI_ID,LOKI_ID]) NO_ART.add(id);   // 場面では絵を出さない(生まれた場では名前も出さない決まり)
 const OWN3=[195,196,291];   // ヤマトの3体目(セイリュ系)
 const X_ARCS=[];
@@ -178,7 +178,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(5,'e05_2',VA,'王家の谷',{obj:'西の谷の、明かりのついた墓の穴へ',tod:'night'});
   bt(5,'e05_b','e05_3',VA,{foe:()=>cnFoe({n:'墓の番の子たち',party:P(1037,1043)}),R:{terrain:'kingsvalley'}});
   sc(5,'e05_4',VA,'*',{bg:'anime_eg_tomb'});
-  // 第6話 本当のこと(扉の前・全画面→王の墓の玄室で守り①アヌビド。新2エンロン=エンレオ＋アレクのクロベク)
+  // 第6話 本当のこと(扉の前・全画面→王の墓の玄室で守り①アヌビド。新2グレンカイザー=エンレオ＋アレクのクロベク)
   sc(6,'e06_1',VA,'*',{bg:'anime_eg_tomb'}); sc(6,'e06_2',VA,'*',{bg:'anime_eg_tomb'}); sc(6,'e06_3',VA,'*',{bg:'anime_eg_tomb'});
   go(6,'e06_g',VA,TB,'from_valley');
   sc(6,'e06_4',TB,'玄室',{obj:'墓の奥、星の天井の部屋へ'});
@@ -224,7 +224,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(12,'e12_2b',AB,'*',{bg:'anime_eg_temple_in'}); sc(12,'e12_3',AB,'*',{bg:'anime_eg_temple_in'});
   bt(12,'e12_b','e12_4',AB,{bg:'anime_eg_temple_in',wild:2059,must:1,R:{terrain:'ruins',own:[1054],fuse:[2014]}});
   sc(12,'e12_5',AB,'*',{tod:'morning'});
-  // 第13話 上がる水(空の船で下流の町=ルクソールの川岸へ・水と時間の盤の代わりにふつうの勝負。新3ライオウ=ピリムサ＋クロベク)
+  // 第13話 上がる水(空の船で下流の町=ルクソールの川岸へ・水と時間の盤の代わりにふつうの勝負。新3ライゼンギガス=ピリムサ＋クロベク)
   go(13,'e13_g',AB,LU,'from_cairo',{tod:'noon'});
   sc(13,'e13_1',LU,'*',{bg:'anime_eg_sky'}); sc(13,'e13_2',LU,'*',{bg:'anime_eg_flood'}); sc(13,'e13_3',LU,'*',{bg:'anime_eg_flood'}); sc(13,'e13_4',LU,'*',{bg:'anime_eg_flood',tod:'evening'});
   bt(13,'e13_b','e13_5',LU,{bg:'anime_eg_flood',foe:()=>cnFoe({n:'ログ＆パッチとミラ＆ジョー',zeroday:1,party:P(1007,1062,1005,1043)}),R:{terrain:'stream',guests:['partner',71,1012,'own2'],fuse:[NARUMI_ID]}});
