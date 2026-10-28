@@ -2151,7 +2151,7 @@ async function startEncounter(e){ ENC=e; AUTO=null; IN.active=false; IN.sx=IN.sy
   const lvOf=(x,dflt)=>x.lv!=null?+x.lv:(x.rank!=null?Progress.rankLv(x.rank):dflt);
   let enemy;
   if(e.m){ const o=e.m.o; enemy={ party:[(anc||boss)?{mid:o.id, lv:lvOf(o,Progress.wildLv(area)+6), fixed:true}:Progress.wildEnemy(o.id,area)], name:anc?'古代テリオン '+monName(o.id):(boss?monName(o.id):undefined) }; if(anc||boss){ enemy.ancient={tier:+o.tier||1, minions:[...new Set((D.wild||[]).filter(w=>!w.ancient&&!w.boss).map(w=>+w.id))]}; if(o.tune) enemy.ancient.tune=o.tune; enemy.catchable=!!(boss&&!anc); } }   // tune=中国編(2026-10-26)の tier の上書き(マップの wild[].tune)   // 古代テリオン・ボス=kind:'ancient'(battle.js の ANCIENT・tier はマップの wild[].tier・子分はそのマップの野生)。野生のボス(トールガ)だけ仲間の判定あり
-  else { const o=e.n.o, bump=o.master?3:1; enemy={ name:o.n, zeroday:!!o.zeroday, party:(o.party||[{mid:1059},{mid:1037}]).map(x=>{ const c={mid:+x.mid, lv:lvOf(x,Progress.wildLv(area)+bump)}; if(x.fixed||x.stage!=null) c.fixed=true; if(x.evo) c.evo=true; if(x.leader) c.leader=true; return c; }) }; }   // evo=その子は戦いの中で進化できる(町いちばんの使い手)・leader=先頭でなくてもリーダー
+  else { const o=e.n.o, bump=o.master?3:1; enemy={ name:o.n, zeroday:!!o.zeroday, party:(o.party||[{mid:1059},{mid:1037}]).map(x=>{ const c={mid:+x.mid, lv:lvOf(x,Progress.wildLv(area)+bump)}; if(x.fixed||x.stage!=null) c.fixed=true; if(x.evo) c.evo=true; if(x.leader) c.leader=true; if(x.boss){ c.boss=true; c.fixed=true; } if(x.circle) c.circle=true; return c; }) }; }   // evo=その子は戦いの中で進化できる(町いちばんの使い手)・leader=先頭でなくてもリーダー
   if(e.m&&!(anc||boss)) enemy.pack=[...new Set((D.wild||[]).filter(w=>!w.ancient&&!w.boss).map(w=>+w.id))];   // 野生の群れ(2026-10-27): 触った子がリーダー+このマップの野生から。数は progress.js(編の pack と自分の出せる数)
   const opt={ kind:e.m?((anc||boss)?'ancient':'wild'):(e.n.o.master?'master':'trainer'), size:e.m?((anc||boss)?(+e.m.o.size||9):7):(+e.n.o.size||(e.n.o.master?11:9)), terrainTheme:place, backdrop:place==='seaside'?'aegean':'olive', player:{items:ITEMS}, enemy };
   try{ Progress.prepare(opt,{area, zeroday:enemy.zeroday}); }catch(err){ console.warn('progress.prepare',err&&err.message); opt.player={party:PARTY,items:ITEMS,box:BOX,rankCap:10,owned:ownedList()}; }
@@ -2169,6 +2169,8 @@ function endEncounter(e,res){ if(res&&res.result==='quit'){ WORLD.lastBattle=res
   PAUSED=false; LAST=performance.now(); WORLD.lastBattle=res; if(res&&res.items) ITEMS=res.items;
   // 仲間・EXP・レベル・ジェムは progress.js が decorate の中で済ませ、結果画面にも出している。ここでは旗と連れ歩きの更新だけ
   const pg=res&&res.progress; if(pg){ if(pg.recruit&&pg.recruit.isNew){ if(pg.recruit.uid) flag('caught'); toast(pg.recruit.tag||(monName(pg.recruit.mid)+'が仲間になった！')); } else if(pg.lvup&&pg.lvup.length){ const l=pg.lvup[0]; toast(monName(l.mid)+'が Lv'+l.after+'になった！'); } }
+  { const bl=e.n&&res&&res.result==='win'&&(e.n.o.party||[]).find(x=>x&&typeof x==='object'&&x.boss);   // 2026-10-28 物語の人の切り札(ボス・Progress の trumpForms)を倒した → bossLearn(だいたい33%)でその進化の仕方を覚える
+    if(bl&&window.Progress&&Progress.learnBoss){ try{ const r=Progress.learnBoss({mid:+bl.mid, lv:+bl.lv||1}); if(r&&r.isNew&&r.uid) flag('caught'); if(r&&r.tag) setTimeout(()=>toast(r.tag),1200); }catch(err){ console.warn('learnBoss',err&&err.message); } } }
   followersSet();
   let after=null; const win=!!(res&&res.result==='win'); const gr=grAfterBattle(e,win);   // ---- 物語(gr_story.js): after/lose/next/keep
     // 勝ったあとの場面(ログ＆パッチの撤収・アレクが道をあける・守りに認められる)
@@ -7017,7 +7019,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   bt(16,'e16_b','e16_4',AS,{bg:DI,mid:'e16_3',foe:()=>cnFoe({n:'ミラ＆ジョー',zeroday:1,party:P(1005,1006,1038)}),R:{terrain:'ruins'}});
   sc(16,'e16_5',AS,'*',{bg:DI});
   sc(17,'e17_1',AS,'*',{bg:'anime_eg_control'}); sc(17,'e17_2',AS,'*',{bg:'anime_eg_control'});
-  bt(17,'e17_b','e17_3',AS,{bg:'anime_eg_control',foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1005,lv:39,stage:2,evo:true,leader:true},{mid:1006,lv:39,fixed:true},{mid:1013,lv:39,fixed:true},{mid:1012,lv:38,stage:2,evo:true},{mid:1043,lv:38,stage:2,evo:true})},'ランサム'),R:{terrain:'ruins',guests:['partner',1046,'own2','own3'],fuse:[2026],ai:{hpX:1.2,atkX:1.2}}});
+  bt(17,'e17_b','e17_3',AS,{bg:'anime_eg_control',foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1061,lv:40,fixed:true,leader:true,boss:true,circle:true},{mid:1005,lv:39,stage:2,evo:true},{mid:1006,lv:39,fixed:true},{mid:1013,lv:39,fixed:true},{mid:1012,lv:38,stage:2,evo:true})},'ランサム'),R:{terrain:'ruins',guests:['partner',1046,'own2','own3'],fuse:[2026],ai:{hpX:0.55,atkX:0.6}}});   // 2026-10-28 切り札ディアボーグ(ボス・1.75倍・魔法陣から出る)。シム sim/sim_e17.js 150戦: 勝率66%(前の hpX/atkX 1.2 では3%)
   sc(17,'e17_4',AS,'*',{bg:'anime_eg_control',post:()=>flag('eg_ransom')});
   sc(18,'e18_1',AS,'*',{bg:'anime_eg_control',tod:'dawn'}); sc(18,'e18_2a',AS,'*',{bg:'anime_eg_control'});
   fn(18,'e18_q',AS,()=>xQuiz(EG_Q18,'anime_eg_control'));

@@ -44,11 +44,12 @@ const STARTERS=[1001,70,1011];   // 御三家(2026-10-28 決定54: エンジュ�
 //   ボスの姿(セイリュウ・ボルケン・トールガ)は野生・群れ・生み出すに出ない。倒す → bossLearn の確率でその進化の仕方を覚える
 const ANCIENT_FUSIONS=[2066,2017,2045,2067,2061,2028,2004,2053,2046,2048,2022,2058,2016,2032,2010,2068,2030,2012,2011,2059,2018,2027,2008,2035,2070,2069,2065,2044,2064,2062,2056,2013,2033,2071];   // proto/regions の wild[].ancient の融合体(2071 ラグナディオ=3体融合)
 const BOSS_FORMS=[291,1024,1028];
+const TRUMP_FORMS=[1061];   // 2026-10-28 オーナー: 物語の人の切り札(ボス)の姿。ディアボーグ=エジプト編第17話ランサムの切り札。野生・群れ・生み出すに出ない(野生は手前の姿で止まる)・倒すと bossLearn で覚える(greece_town の endEncounter)
 // 地方(編)ごとの野生のレベル帯と開始の段(オーナー 10/26: 後半は2段目/3段目から)。マップごとの上書きは P.config.areas[キー]={lv:[a,b], startStage:n}
 // pack = 野生の群れの数(リーダー含む・2026-10-27 オーナー「敵が1体はおかしい」→「野生戦は絞る」: 2〜3体)。自分が盤に出せる数も同じ(battle.js が群れの数に合わせる)
 const ARC_RULE={ greece:{lv:[2,4],startStage:1,pack:2}, china:{lv:[18,24],startStage:2,pack:2}, egypt:{lv:[30,38],startStage:2,pack:2}, norse:{lv:[47,68],startStage:3,pack:3} };   // 北欧の帯は 2026-10-27 に後ろほど上げた(マップの D.lv が優先・コア 66〜68)
 const AREA_RULE={ oliva_hill:{lv:[2,4]}, oliva_maze:{lv:[4,6]}, arcadia:{lv:[5,8]}, athens:{lv:[7,10]}, crete:{lv:[9,12]}, egypt_late:{lv:[38,44],startStage:3} };
-P.config={cfg:CFG, areas:AREA_RULE, arcs:ARC_RULE, pools:ARC_POOL, starters:STARTERS, ancientFusions:ANCIENT_FUSIONS, bossForms:BOSS_FORMS};
+P.config={cfg:CFG, areas:AREA_RULE, arcs:ARC_RULE, pools:ARC_POOL, starters:STARTERS, ancientFusions:ANCIENT_FUSIONS, bossForms:BOSS_FORMS, trumpForms:TRUMP_FORMS};
 
 // ---------------------------------------------------------------- モンスターの表(名前・段・進化先)
 let MON={}, BASE='', IMG=(mid)=>BASE+'img/'+mid+'.webp';
@@ -138,7 +139,7 @@ P.setPartyMax=(n)=>{ const pg=prog(); if(!pg) return; pg.partyMax=Math.max(1,Mat
 P.unlockLate=()=>P.setPartyMax(CFG.partyMaxLate);
 P.followers=()=>P.party().slice(0,CFG.followMax).map(c=>c.mid);   // 画面でついて歩く子(3体まで)
 P.leader=()=>P.party()[0]||null;
-P.isBossForm=(mid)=>BOSS_FORMS.includes(+mid);
+P.isBossForm=(mid)=>BOSS_FORMS.includes(+mid)||TRUMP_FORMS.includes(+mid);
 P.isAncientFusion=(mid)=>ANCIENT_FUSIONS.includes(+mid);
 // ---------------------------------------------------------------- 覚える(2026-10-28): 進化の仕方(prog.forms)・融合の仕方(prog.fusions)
 function learnForm(mid){ const pg=prog(); if(!pg) return []; pg.forms=pg.forms||{}; const ln=lineOf(mid), i=ln.indexOf(+mid), out=[];   // その姿まで(3段目を覚えたら2段目も)
@@ -222,7 +223,7 @@ P.wildPack=function(lead, area, pool, n){ const L=Object.assign({}, lead, {leade
 
 // ---------------------------------------------------------------- バトル(battle.js の startBattle に渡す物を作り、結果を反映)
 // 倒して仲間(G1): その系統を初めて → 段ごとの確率で仲間に / すでに持っている系統 → 何も起きない(null)
-P.recruitRoll=function(lead){ if(!mon(lead.mid)) return null; if(P.knowsForm(lead.mid)&&P.hasLine(lead.mid)) return null; if(BOSS_FORMS.includes(+lead.mid)||mon(lead.mid).role==='fusion') return null;   // 2026-10-28: 1段目=仲間 / 2段目以上=進化の仕方を覚える(系統の子がいなければ1段目の子も)
+P.recruitRoll=function(lead){ if(!mon(lead.mid)) return null; if(P.knowsForm(lead.mid)&&P.hasLine(lead.mid)) return null; if(BOSS_FORMS.includes(+lead.mid)||TRUMP_FORMS.includes(+lead.mid)||mon(lead.mid).role==='fusion') return null;   // 2026-10-28: 1段目=仲間 / 2段目以上=進化の仕方を覚える(系統の子がいなければ1段目の子も)
   const st=stageOf(lead.mid); const m=mon(lead.mid); const ty=[].concat(m.type||[],m.type2||[]); let p;
   if(ty.some(t=>String(t).indexOf('竜')>=0)) p=CFG.recruitDragon;
   else { p=(CFG.recruit[st]!=null?CFG.recruit[st]:0.3)*((CFG.recruitArc||{})[P.arc()]||1); }
@@ -234,6 +235,7 @@ P.prepare=function(opt, ctx){ opt=opt||{}; ctx=ctx||{}; const pl=opt.player||{};
   const party=P.battleParty(); if(!party.length) throw new Error('progress: パーティが空');
   opt.player=Object.assign({}, pl, {party, box:P.legacyBox(), owned:pl.owned||P.ownedList(), fusionKnown:pl.fusionKnown||P.fusionKnownList(), rankCap:20, items:pl.items||(SAVE&&SAVE.items)||{heal:0}});
   if(opt.startStage==null) opt.startStage=P.startStage(ctx.area);
+  opt.noWildForms=TRUMP_FORMS.slice();   // battle.js: 野生・古代テリオン戦では切り札の姿まで上げない
   if((opt.kind||'wild')==='wild' && opt.enemy && Array.isArray(opt.enemy.pack) && opt.enemy.party && opt.enemy.party.length===1){   // 野生の群れ(呼ぶ側が enemy.pack=そのマップの野生の種類 を渡した時)
     const n=P.packSize(ctx.area, party, opt.player.owned); opt.enemy=Object.assign({}, opt.enemy, {party:P.wildPack(opt.enemy.party[0], ctx.area, opt.enemy.pack, n)}); delete opt.enemy.pack; }
   P.markSeen(((opt.enemy&&opt.enemy.party)||[]).map(e=>e.mid), opt.startStage);   // ずかんの「見た」(2026-10-27)
@@ -265,7 +267,7 @@ P.cradle={
   pool(){ const arc=P.arc(); const ids=[]; for(const a of ARC_ORDER){ for(const id of ARC_POOL[a]) if(mon(id)&&!STARTERS.includes(id)&&!ids.includes(id)) ids.push(id); if(a===arc) break; }
     // 2026-10-28 オーナー「ジェムで2段目以降も集められるように」: 系統の上の段も出る。出せる段は 今の編の開始の段+1 まで(ギリシャ=2段目まで・中国から3段目まで)。段ごとの重み CFG.cradleW
     const maxSt=Math.min(3,(ARC_RULE[arc]&&ARC_RULE[arc].startStage||1)+1), W=CFG.cradleW, rows=[];
-    for(const b of ids) for(const id of lineOf(b)){ const st=stageOf(id); if(st<=maxSt&&mon(id)&&!BOSS_FORMS.includes(id)) rows.push({mid:id, st, w:W[st]||0}); }
+    for(const b of ids) for(const id of lineOf(b)){ const st=stageOf(id); if(st<=maxSt&&mon(id)&&!BOSS_FORMS.includes(id)&&!TRUMP_FORMS.includes(id)) rows.push({mid:id, st, w:W[st]||0}); }
     const tot=rows.reduce((a,r)=>a+r.w,0)||1;
     return rows.map(r=>({mid:r.mid, name:nameOf(r.mid), stage:r.st, w:r.w, pct:+(100*r.w/tot).toFixed(1), owned:r.st<=1?P.hasLine(r.mid):P.knowsForm(r.mid), learn:r.st>=2})); },   // learn=2段目以上(出たら進化の仕方を覚える)   // 確率はそのまま画面に出す
   canPull(){ return P.totalGems()>=CFG.cradlePrice && this.pool().length>0; },

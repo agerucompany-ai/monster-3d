@@ -2785,6 +2785,23 @@ function fxRing(r,c,color,o){ o=o||{}; const w=cell2world(r,c), h=cellH(r,c)+(o.
   const m=new THREE.Mesh(new THREE.RingGeometry(0.42,0.62,40),mat); m.rotation.x=-Math.PI/2; m.position.set(w.x,h,w.z); fxGroup.add(m);
   effects.push({t0:performance.now(),dur:(o.dur||520)*1.2,update:t=>{const s=0.3+t*(o.max||2.4)*1.7;m.scale.set(s,s,s);mat.opacity=0.95*(1-t)*(1-t);},cleanup:()=>fxGroup.remove(m)});
 }
+let _mcTex=null;
+function magicCircleTex(){ if(_mcTex) return _mcTex; const S=256, cv=document.createElement('canvas'); cv.width=cv.height=S; const g=cv.getContext('2d'); g.translate(S/2,S/2); g.strokeStyle='#fff'; g.fillStyle='#fff'; g.lineCap='round';
+  const ring=(rr,lw)=>{ g.lineWidth=lw; g.beginPath(); g.arc(0,0,rr,0,Math.PI*2); g.stroke(); };
+  ring(122,5); ring(110,2.5); ring(70,3); ring(58,1.5);
+  const star=(rr,k,off)=>{ g.lineWidth=3; g.beginPath(); for(let i=0;i<=k;i++){ const a=off+i*Math.PI*2/k*2; const x=Math.cos(a)*rr, y=Math.sin(a)*rr; i?g.lineTo(x,y):g.moveTo(x,y); } g.stroke(); };
+  star(108,5,-Math.PI/2);   // 五芒星
+  for(let i=0;i<24;i++){ const a=i*Math.PI/12; g.save(); g.rotate(a); g.fillRect(-1.5,-120,3,i%2?6:10); g.restore(); }   // 外の目盛り(文字の代わり)
+  for(let i=0;i<8;i++){ const a=i*Math.PI/4+Math.PI/8; g.beginPath(); g.arc(Math.cos(a)*90,Math.sin(a)*90,5,0,Math.PI*2); g.fill(); }
+  _mcTex=new THREE.CanvasTexture(cv); return _mcTex; }
+function fxMagicCircle(r,c,color,dur){ const w=cell2world(r,c), h=cellH(r,c)+0.05;
+  const mat=new THREE.MeshBasicMaterial({map:magicCircleTex(),color,transparent:true,opacity:0,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false}); mat.toneMapped=false;
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(2.8,2.8),mat); m.rotation.x=-Math.PI/2; m.position.set(w.x,h,w.z); fxGroup.add(m);
+  const m2=m.clone(); m2.material=mat.clone(); m2.material.color=new THREE.Color(0xffffff); m2.scale.setScalar(0.62); m2.position.y=h+0.01; fxGroup.add(m2);
+  effects.push({t0:performance.now(),dur,update:t=>{ const a=t<0.25?t/0.25:(t>0.7?Math.max(0,(1-t)/0.3):1); const s=0.35+0.65*Math.min(1,t/0.3);
+    m.scale.set(s,s,s); m.rotation.z=t*2.2; mat.opacity=0.95*a; m2.scale.setScalar(s*0.62); m2.rotation.z=-t*3.4; m2.material.opacity=0.7*a; },
+    cleanup:()=>{ fxGroup.remove(m); fxGroup.remove(m2); mat.dispose(); m2.material.dispose(); }});
+}
 function fxBurst(r,c,color,n,o){ o=o||{}; const w=WP(r,c,o.y!=null?o.y:0.45);
   fxP({x:w.x,y:w.y,z:w.z,n:n||10,kind:o.kind||'glow',color,color2:o.color2,size:(o.size||0.07)*2.6,sizeEnd:0.2,life:o.dur||640,grav:o.gravity!=null?o.gravity:1.9,vel:radial(1.4,(o.up!=null?o.up:0.9)*1.2,1.0),spin:o.spin||0});
 }
@@ -3219,6 +3236,9 @@ function bossIntro(){ if(BT.headless||!state||!ROOT) return; fx2InjectCss(); con
   const ty=(MID[L.mid]||{}).type; const tc=TYPE_HEX[ty]||0xff5a48;
   const el=document.createElement('div'); el.className='bossIntro'; el.innerHTML=`<div class="bv"></div><div class="bb"><div class="bt1">${name}</div><div class="bt2">${mn!==name?mn:'BOSS'}</div></div>`; el.style.setProperty('--tc',TYPE_COL[ty]||'#ff5a48'); ROOT.appendChild(el); setTimeout(()=>el.remove(),2300/SPD());
   const r=L.r,c=L.c; const w=cell2world(r,c), h=cellH(r,c);
+  // 2026-10-28 魔法陣から出てくる(party の leader に circle:true): 先に足元に魔法陣が開き、光の柱と一緒に姿が現れる
+  const circ=(BT.enemyParty||[]).some(e=>e.circle&&e.leader&&+e.mid===+(L.mid0||L.mid)); const cs=circ&&sprites[L.uid];
+  if(cs){ cs.grp.visible=false; fxMagicCircle(r,c,tc,2600/SPD()); setTimeout(()=>{ if(sprites[L.uid]===cs) cs.grp.visible=true; }, 900/SPD()); }
   setTimeout(()=>{ if(!state||state.phase!=='battle') return; fxBeam(r,c,0xffffff,{rad:0.28,grow:1.6,rays:true,dur:1100}); fxRing(r,c,tc,{max:6,dur:900,y:0.06}); fxRing(r,c,0xffffff,{max:4,dur:700,y:0.05});
     fxP({x:w.x,y:h+0.2,z:w.z,n:18,kind:'star',color:tc,color2:0xffffff,size:0.16,sizeEnd:0.3,life:1100,grav:-0.8,vel:radial(0.9,1.2,1),jit:0.8,spin:2,stagger:500}); camPunch(r,c,0.9,700); SFX.play('boss'); }, 260/SPD());
   setTimeout(()=>{ if(!state||state.phase!=='battle') return; addShake(0.32); screenFlash(TYPE_COL[ty]||'#ff5a48',0.3); fxShock(r,c,0xffffff,{max:6,dur:600,y:0.9}); fxShock(r,c,tc,{max:4.2,dur:520,y:0.9}); hitStop(60); fxTerrain(r,c,1.5,false); if(state.units[L.uid]) animUnit(L.uid,'cast',{dur:700,flash:true}); }, 900/SPD());
@@ -4447,7 +4467,7 @@ function ancientEscort(){ const A=BT.anc; if(!A) return; const n=+(A.T.escort||0
   const cfg=(BT.opts&&BT.opts.enemy&&BT.opts.enemy.ancient)||{}; const pool=(cfg.escortMids||cfg.minions||[]).map(Number).filter(m=>MID[m]); if(!pool.length) return;
   const cells=[]; for(const r of START_ROWS[1]) for(let c=0;c<N;c++) if(!unitAt(r,c)) cells.push([r,c]); cells.sort((p,q)=>(Math.abs(p[0]-b.r)+Math.abs(p[1]-b.c))-(Math.abs(q[0]-b.r)+Math.abs(q[1]-b.c)));
   const lv=Math.max(1,(b.lv||1)-ANCIENT.minionLvDown);
-  for(let k=0;k<n&&k<cells.length;k++){ const [r,c]=cells[k]; const mid=stageForm(pool[k%pool.length], BT.startStage, null); const nu=addUnit(1,mid,r,c); unitMul(nu, lvRank(lv), A.T.escortX||1, A.T.escortX||1); nu.lv=lv; nu.src=[]; nu.mid0=mid; nu.summoned=true; nu.hmp=0; nu.hmpMax=0; nu.hg=0; } }
+  for(let k=0;k<n&&k<cells.length;k++){ const [r,c]=cells[k]; const mid=enemyStageForm(pool[k%pool.length], BT.startStage); const nu=addUnit(1,mid,r,c); unitMul(nu, lvRank(lv), A.T.escortX||1, A.T.escortX||1); nu.lv=lv; nu.src=[]; nu.mid0=mid; nu.summoned=true; nu.hmp=0; nu.hmpMax=0; nu.hg=0; } }
 // 2026-10-27 野生は群れの数まで(自分が出せる数=群れの数・盤の budget が上限)。人は今まで(budget×段)
 function baseBudget(){ const n=BT.kind==='wild'?Math.max(1,Math.min(BT.rules.budget, BT.enemyParty.length)):BT.rules.budget; return n*BT.startStage; }
 function ancientBudget(){ return Math.max(1, BT.party.reduce((s,p)=>s+((MID[playerStartMid(p.mid)]||{}).level||1),0)); }   // 全パーティがその段で出せる
@@ -4525,7 +4545,9 @@ function applyStartStage(opts){ BT.startStage=Math.max(1,Math.min(3,+(opts&&opts
   BT.sh=null; if((BT.kind==='trainer'||BT.kind==='master') && BT.size!==7 && STAGE_HUMAN[BT.startStage] && !(opts&&opts.stageHuman===false)){
     BT.sh=Object.assign({}, STAGE_HUMAN[BT.startStage], (opts&&typeof opts.stageHuman==='object')?opts.stageHuman:{});
     const dx=BT.sh.dmgX; if(!(opts&&opts.rules&&opts.rules.dmgX!=null)) BT.dmgX=BT.rules.dmgX*((dx&&typeof dx==='object')?(dx[BT.size]||1):(dx||1)); }
-  if(BT.startStage>1) for(const e of BT.enemyParty){ if(e.fixed||e.stage!=null) continue; e.mid=stageForm(e.mid, BT.startStage, null); } }   // 敵: fixed:true か stage: を持つ札はそのまま。下げることはしない
+  BT.noWild=new Set(((opts&&opts.noWildForms)||[]).map(Number));   // 2026-10-28 物語の人の切り札の姿(ディアボーグ等)は野生・古代テリオンの子分には出ない(その手前の姿で止める)
+  if(BT.startStage>1) for(const e of BT.enemyParty){ if(e.fixed||e.stage!=null) continue; e.mid=enemyStageForm(e.mid, BT.startStage); } }   // 敵: fixed:true か stage: を持つ札はそのまま。下げることはしない
+function enemyStageForm(mid, st){ let id=stageForm(mid, st, null); if(BT.noWild&&BT.noWild.size&&(BT.kind==='wild'||BT.kind==='ancient')){ let g=0; while(BT.noWild.has(id)&&g++<4){ const pv=Object.values(MID).find(m=>m.evolves_to===id); if(!pv) break; id=pv.id; } } return id; }
 // 2026-10-27 野生の群れ: 自分が盤に出せる数(先頭から順に、その段の姿で出せるLv合計 SIZE_RULES.budget×startStage まで)。呼ぶ側(progress.js)が群れの数をこれに合わせる
 function packCount(mids, stage, owned, size){ const R=SIZE_RULES[+size||7]||SIZE_RULES[7]; const st=Math.max(1,Math.min(3,+stage||1)); const cap=R.budget*st; let used=0, n=0;
   for(const mid of (mids||[])){ const m=MID[stageForm(+mid, st, owned||null)]; if(!m) continue; const lv=m.level||1; if(n>0 && used+lv>cap) continue; used+=lv; n++; } return Math.max(1,n); }
