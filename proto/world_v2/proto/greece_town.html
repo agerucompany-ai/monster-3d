@@ -2412,7 +2412,7 @@ function saveGame(){ if(!SAVE||NOSAVE) return; if(D&&MAP&&READY.scene) Object.as
 function flag(k){ if(SAVE&&!SAVE.flags[k]){ SAVE.flags[k]=1; onFlag(k); objUpdate(); } }
 // 旗が立った時の解禁とクエストのジェム(progress.js: 同じ id は1回だけ)。ミッション120・守り150・王300・雷のボス120・古印100・新しい土地40
 const QUEST_GEMS={mission:120,guard1:150,guard2:150,guard3:150,guard4:150,king:300,thunder:120,stavros:100,mihalis:100,sophia:100,bella:150,bridge:60,arcadia:40,corinth:40,cloudroad:40,delphi:40,stadium_under:40,
-  cn_bund:60,cn_bamboo:40,cn_plateau:40,cn_fossil:40,cn_karst:40,cn_pillars:40,cn_gorges:40,cn_thunder:40,cn_capital:40,cn_kunlun:40,cn_sea:40, cn_dojo:100,guard_w:150,cn_kagu:120,guard_s:150,dimi4:60,guard_n:150,cn_nue:120,cn_sajin:200,cn_lion:150,cn_champ:100,dimi5:60,cn_setsu:150,cn_ransom:150,cn_dragon:300,
+  cn_bund:60,cn_bamboo:40,cn_plateau:40,cn_fossil:40,cn_karst:40,cn_pillars:40,cn_gorges:40,cn_thunder:40,cn_capital:40,cn_kunlun:40,cn_sea:40, cn_dojo:100,guard_w:150,cn_kagu:120,guard_s:150,dimi4:60,guard_n:150,cn_nue:120,cn_sajin:200,cn_kirin:120,cn_champ:100,dimi5:60,cn_setsu:150,cn_ransom:150,cn_dragon:300,
   eg_cairo:60,eg_giza:40,eg_delta:40,eg_luxor:40,eg_valley:40,eg_tomb:40,eg_aswan:40,eg_abusimbel:40,eg_white:40,eg_redsea:40, eg_champ0:100,eg_sphinga:150,eg_doroka:150,eg_champ1:100,eg_osira:150,eg_anubid:150,eg_champ2:100,eg_ransom:150,eg_eleki:150,eg_oberi:120,eg_raga:200,eg_ekuri:150,eg_levia:300,
   nr_oslo:60,nr_fjord:40,nr_lofoten:40,nr_iceland:40,nr_uppsala:40,nr_lapland:40,nr_ygg:40,nr_svalbard:40,nr_glacier:40,nr_core:40, nr_champ0:100,nr_champ1:100,nr_champ2:100,nr_mitsu:150,nr_kubi:120,nr_kraken:150,nr_surtr:150,nr_odin:150,nr_sleip:150,nr_aurora:150,nr_fenrir:150,nr_nidhogg:200,nr_unicorn:120,nr_mammoth:120,nr_narwhal:150,nr_ransom3:150,nr_bot:200,nr_bella3:200,nr_adrian:300,nr_ragna:500};   // 北欧編(2026-10-27): 新しい土地40・古印100・古代テリオン150・幹部200・アドリアン300・ラグナディオ500   // 中国編(2026-10-26): 新しい土地40・守り150・八つ首200・青龍300 / エジプト編(2026-10-26): 新しい土地40・古印100・古代テリオン150・ラーガ200・リヴァイア300
 function onFlag(k){ if(!(window.Progress&&Progress.state())) return;
@@ -2462,7 +2462,7 @@ function objText(){ const f=SAVE?SAVE.flags:{}; if(!f.arrived||TESTMODE) return 
   if(!f.cn_plateau) return '村の西の道から、西の高原へ'; if(!f.guard_w) return '白虎の岩で、西の守り・ボルケンに会う'; if(!f.cn_fossil) return '高原の北の道から、化石の谷へ'; if(!f.cn_kagu) return '火の山の火口で、カグヅチをしずめる';
   if(!f.cn_karst) return '谷の東の道から、南の山(漓江)へ'; if(!f.guard_s) return '月の峰で、南の守り・フェニクに会う'; if(!f.cn_pillars) return 'リニアの駅から、雲海の石柱へ'; if(!f.cn_gorges) return 'ガラスの橋をわたり、北の大河へ';
   if(!f.guard_n) return '大河の岩の上で、北の守り・ヒョウガイアに会う'; if(!f.cn_thunder) return '大河の東の船着き場から、東の島へ'; if(!f.cn_nue) return '夜の竹の森で、ヌエガミをしずめる'; if(!f.cn_sajin) return '雷の社で、八つ首の竜サジンオロチを止める';
-  if(!f.cn_capital) return '島の北の船着き場から、古い都へ'; if(!f.cn_lion) return '都の南門で、唐獅子ライエンオウに認められる'; if(!f.cn_champ) return '鐘楼の前のメイリンと勝負して、古印をもらう'; if(!f.cn_kunlun) return '都の北門から、雪の高原へ';
+  if(!f.cn_capital) return '島の北の船着き場から、古い都へ'; if(!f.cn_champ) return '鐘楼の前のメイリンと勝負して、古印をもらう'; if(!f.cn_kunlun) return '都の北門から、雪の高原へ';
   if(!f.cn_setsu) return '氷河の奥で、雪の竜セツリュウをしずめる'; if(!f.cn_sea) return '空の船で都市へ戻り、外灘の船着き場から東の海へ'; if(!f.cn_ransom) return '海の上の台で、ランサムを止める'; if(!f.cn_dragon) return '青龍の眠る岩で、セイリュと青龍の前に立つ';
   // 第3期 エジプト編(2026-10-26 regions/make_egypt_arc.py)
   if(!f.eg_cairo) return '青龍の岩の北の桟橋から、空の船でカイロへ'; if(!f.eg_giza) return 'ナイルの橋を西へ渡り、ギザの台地へ'; if(!f.eg_sphinga) return 'スフィンクスの前で、スフィンガに会う';
@@ -2653,9 +2653,9 @@ const SC={
  nue_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'hao',t:''} ],
  sajin:[ {todo:'story'}, {w:'log',t:''},{w:'patch',t:''},{w:null,t:''},{w:'x',n:'サジンオロチ',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'angry',t:''},{w:'partner',t:''} ],
  sajin_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'サジンオロチ',t:''},{w:'hero',f:'serious',t:''},{w:'elly',t:''},{w:'alek',t:''} ],
- // 第21〜23話: 古い都。唐獅子ライエンオウ(門の守り)・麒麟ジョウキリン・都の使い手メイリン・レンの父の真相
- lion:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ライエンオウ',t:''},{w:'hero',f:'surprised',t:''},{w:'elly',f:'serious',t:''},{w:'partner',t:''} ],
- lion_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ジョウキリン',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
+ // 第21〜23話: 古い都。門の外の麒麟ジョウキリン(寄り道の古代テリオン・2026-10-28 唐獅子ライエンオウは削除)・都の使い手メイリン・レンの父の真相
+ kirin:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ジョウキリン',t:''},{w:'hero',f:'surprised',t:''},{w:'elly',f:'serious',t:''},{w:'partner',t:''} ],
+ kirin_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ジョウキリン',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
  meiling:[ {todo:'story'}, {w:'x',n:'メイリン',t:''},{w:'hero',f:'serious',t:''},{w:'elly',t:''} ],
  dimi5:[ {todo:'story'}, {w:'dimi',f:'serious',t:''},{w:'hero',t:''},{w:'dimi',f:'sad',t:''},{w:'elly',t:''} ],
  dimi5_win:[ {todo:'story'}, {w:'dimi',f:'sad',t:''},{w:'hero',f:'serious',t:''},{w:'dimi',t:''},{w:null,t:''} ],
@@ -2767,7 +2767,7 @@ const SC={
 //  本体の中の接続点は「// ---- 物語(gr_story.js)」の印。
 // ============================================================================
 const GR_SC={};
-const NARU_ID=2072;   // 新1ナルレオン(仮の番号。絵と3Dは未作成=TODO)。台本の 'N1'
+const NARU_ID=2072;   // 新1エルレオン(仮の番号。絵と3Dは未作成=TODO)。台本の 'N1'
 const NO_ART=new Set([NARU_ID]);
 
 // ---- 2Dのテリオンを会話の場面に出す(第1話 2-1) ----
@@ -2775,7 +2775,7 @@ function monImg(id){ return '../battle/img/'+(id==='N1'?NARU_ID:id)+'.webp'; }
 function monShow(id,o){ o=o||{}; let im=document.getElementById('stMon');
   if(!im){ im=document.createElement('img'); im.id='stMon'; im.alt=''; im.style.cssText='position:absolute;z-index:2;pointer-events:none;transition:left .35s,bottom .35s,opacity .3s,transform .25s;filter:drop-shadow(0 6px 10px rgba(0,0,0,.3))';
     im.onerror=()=>{ im.dataset.bad=im.getAttribute('src')||''; im.style.display='none'; }; ST.el.insertBefore(im,ST.box); }
-  if(NO_ART.has(id==='N1'?NARU_ID:+id)){ im.style.display='none'; return; }   // 絵がまだ無い子(新1ナルレオン)は出さない(語りで見せる)
+  if(NO_ART.has(id==='N1'?NARU_ID:+id)){ im.style.display='none'; return; }   // 絵がまだ無い子(新1エルレオン)は出さない(語りで見せる)
   const src=monImg(id); if(im.getAttribute('src')!==src) im.src=src;
   im.style.width=(o.w||22)+'vmin'; im.style.left=(o.x!=null?o.x:58)+'%'; im.style.bottom='calc(118px + env(safe-area-inset-bottom) + '+(o.y!=null?o.y:16)*0.8+'%)';   // 0 = 台詞の箱のすぐ上(箱にかくれない) im.style.marginLeft=(-(o.w||22)/2)+'vmin';
   im.style.transform=o.flip?'scaleX(-1)':''; im.style.opacity=o.op!=null?o.op:1;
@@ -5535,7 +5535,7 @@ GR_SC.bella26_after=[
  {fn:async()=>monShow(71,{x:50,y:16,w:14})},
  {w:null,t:'獅子の姿のエンジュと、ピリムサの姿のピリポンが、同じ方へ跳んだ。'},
  {w:null,t:'二体が、ぶつかるように重なった。'},
- {fn:async()=>monShow('N1',{x:48,y:6,w:26})},   // 新1ナルレオンの番号はWindowsが決める
+ {fn:async()=>monShow('N1',{x:48,y:6,w:26})},   // 新1エルレオンの番号はWindowsが決める
  {w:null,t:'そこにいたのは、たてがみに雷の走る、燃える獅子だった。'},
  {w:null,t:'一声ほえると、にらみの光が、ガラスのように割れた。'},
  {w:'bella',t:'……命令も、なしに？'},
@@ -5697,7 +5697,7 @@ GR_SC.spar28_after=[
  {w:'hero',f:'serious',t:'……行くぞ。'},
  {fn:async()=>{ monShow(1002,{x:34,y:6,w:18}); }},
  {w:null,t:'火と雷が、同じ時に、二人の前から立ちのぼった。'},
- {fn:async()=>monShow('N1',{x:48,y:6,w:26})},   // 新1ナルレオン
+ {fn:async()=>monShow('N1',{x:48,y:6,w:26})},   // 新1エルレオン
  {w:null,t:'たてがみに雷の走る獅子が、広場の上で、一声ほえた。'},
  {w:'elly',f:'smile',t:'呼べた……！'},
  {w:'alek',t:'レンに、見せてやれ。'},
@@ -6011,12 +6011,9 @@ sc(16,'c16_1',GO,'*',{bg:'anime_cn_frozen'}); sc(16,'c16_2',GO,'*',{bg:'anime_cn
 bt(16,'c16_b','c16_3',GO,{bg:'anime_cn_frozen',foe:()=>cnFoe({n:ZD,zeroday:1,party:P(1014,1059)}),R:{terrain:'stream'}});
 sc(16,'c16_4',GO,'*',{bg:'anime_cn_frozen'}); sc(16,'c16_5',GO,'*',{bg:'anime_cn_river_dusk'});
 sc(16,'c16_6',GO,'*',{bg:'anime_cn_wall',post:()=>flag('guard_n')});
-// 第17話 古い都の門(唐獅子の記憶の問い)
+// 第17話 古い都の門(2026-10-28 唐獅子の記憶の問い c17_2a/c17_q/c17_2b はオーナー判断で削除=白虎と被る。門の外の麒麟ジョウキリンは寄り道の古代テリオン)
 go(17,'c17_g',GO,CA,'from_gorges',{tod:'morning'});
 sc(17,'c17_1',CA);
-sc(17,'c17_2a',CA,'南門',{obj:'南門へ'});
-fn(17,'c17_q',CA,()=>cnQuiz(CN_Q17));
-sc(17,'c17_2b',CA,'*',{post:()=>flag('cn_lion')});
 sc(17,'c17_3',CA,'鐘楼の広場',{obj:'鐘楼の広場へ'});
 sc(17,'c17_4',CA);
 // 第18話 記録庫(全画面・ルーペで調べる)
@@ -6088,9 +6085,6 @@ sc(30,'c30_4',SE,'*',{bg:'anime_cn_sea_dusk',post:()=>flag('cn_dragon')});
 CN_STEPS.forEach((s,i)=>{ const n=CN_STEPS[i+1]; s.last=!n||n.ep!==s.ep; });
 
 // ---- 記憶の問い・かけらの謎(選ぶだけ。まちがえても選び直せる) ----
-const CN_Q17=[['西のかけら',['虎は、朝の来る方へ吠える','虎は、夜の来る方へ吠える','虎は、山の上で眠る'],0],
-              ['南のかけら',['鳥は、山の上で輪を描く','鳥は、海の上で輪を描く','鳥は、火の中で目をあける'],1],
-              ['北のかけら',['亀は、氷の上で目をとじる','亀は、水の底で眠る','亀は、水の底で目をあける'],2]];
 const CN_Q27=[['方角',['西（日の入り）','東（夜明け）','北（真夜中）'],1],
               ['場所',['海の上の、鳥の輪の下','レンの上の、火の鳥の下','岩の島の、てっぺん'],0],
               ['開け方',['虎が、朝に吠える','亀が、水の底で眠る','水の底の目が、あく'],2]];
@@ -6138,16 +6132,16 @@ async function cnStep(s){ const f=GF();
 async function cnTp(x,z,yaw){ TRANS=true; fadeEl.classList.add('on'); await sleep(260);
   HERO.x=x; HERO.z=z; if(yaw!=null) HERO.yaw=yaw; HERO.speed=0; HERO.dir=null; CAM.tx=x; CAM.tz=z; HERO.y=groundAt(x,z); CAM.ty=HERO.y; partnerPlace();
   await settleMap(2500); LAST=performance.now(); fadeEl.classList.remove('on'); await sleep(260); TRANS=false; AREA=zoneAt(HERO.x,HERO.z)||D.name; saveGame(); }
-// 古代テリオンの「試し」(物語では戦わない白虎・朱雀・玄武・唐獅子・青龍と、物語のあとのサジンオロチ): 地図の wild[].trial の旗のあとは、近づいても始まらず「再戦」のボタンから
+// 古代テリオンの「試し」(物語では戦わない白虎・朱雀・玄武・青龍と、物語のあとのサジンオロチ・寄り道の麒麟ジョウキリン): 地図の wild[].trial の旗のあとは、近づいても始まらず「再戦」のボタンから
 function cnTrials(){ if(!cnOn()||!MONS) return; const f=GF(); for(const m of MONS){ if(m.o.trial&&f[m.o.trial]) m.rematch=true; } }
 
 // ---- 目的の表示 ----
 const CN_MAPJ={cn_bund:'上海',cn_bamboo:'竹海の村',cn_plateau:'西の高原',cn_fossil:'化石の谷',cn_karst:'南の山',cn_gorges:'北の大河',cn_capital:'古い都',cn_kunlun:'雪の高原',cn_sea:'東の海',cn_thunder:'東の島'};
 function cnObjText(f){ const s=cnCur(); if(!s) return null; if(MAP!==s.map) return s.objAway||(CN_MAPJ[s.map]+'へ'); return s.obj||''; }
-const CN_OLD=['cn_bund','cn_bamboo','cn_dojo','cn_plateau','guard_w','cn_fossil','cn_kagu','cn_karst','guard_s','cn_pillars','cn_gorges','guard_n','cn_thunder','cn_nue','cn_sajin','cn_capital','cn_lion','cn_champ','cn_kunlun','cn_setsu','cn_sea','cn_ransom','cn_dragon'];
+const CN_OLD=['cn_bund','cn_bamboo','cn_dojo','cn_plateau','guard_w','cn_fossil','cn_kagu','cn_karst','guard_s','cn_pillars','cn_gorges','guard_n','cn_thunder','cn_nue','cn_sajin','cn_capital','cn_champ','cn_kunlun','cn_setsu','cn_sea','cn_ransom','cn_dragon'];
 
 // ---- 古いセーブ(中国編のしかけの前に中国を進めていたもの): 古い旗から、背骨の順のどの話まで済んだかを決める(一度だけ) ----
-const CN_OLD_EP={cn_dojo:4, guard_w:7, cn_fossil:8, cn_kagu:9, guard_s:10, cn_pillars:14, cn_gorges:14, guard_n:16, cn_thunder:16, cn_nue:16, cn_sajin:16, cn_capital:16, cn_lion:17, cn_champ:17, cn_kunlun:20, cn_setsu:22, cn_sea:22, cn_ransom:22, cn_dragon:30};
+const CN_OLD_EP={cn_dojo:4, guard_w:7, cn_fossil:8, cn_kagu:9, guard_s:10, cn_pillars:14, cn_gorges:14, guard_n:16, cn_thunder:16, cn_nue:16, cn_sajin:16, cn_capital:16, cn_champ:17, cn_kunlun:20, cn_setsu:22, cn_sea:22, cn_ransom:22, cn_dragon:30};
 function cnMigrate(){ const f=SAVE&&SAVE.flags; if(!f||f.cnMig) return; f.cnMig=1; if(!f.ep30||f.c01_1) return;
   let n=0; for(const k in CN_OLD_EP) if(f[k]) n=Math.max(n,CN_OLD_EP[k]); if(!n) return;
   for(const s of CN_STEPS){ if(s.ep>n) break; f[s.id]=1; if(s.last) f['c'+pad2(s.ep)]=1; } }
@@ -6156,7 +6150,7 @@ function cnMigrate(){ const f=SAVE&&SAVE.flags; if(!f||f.cnMig) return; f.cnMig=
 // 場面の中で2Dのテリオンを見せる所(その文の行の前に出す。場面が終わると消える)
 const CN_MON=[['c02_1','白い、小さな子がうずくまっていた',196,{x:60,y:4,w:16}],['c04_2','セイリュは、片目をあけて',196,{x:60,y:4,w:16}],['c06_4','稲妻の模様のトラが',1023,{x:60,y:6,w:24}],['c06_4','小さなビリトラが一体',1022,{x:40,y:4,w:15}],
   ['c07_1','体を丸めた、大きな白い虎',3024,{x:58,y:8,w:34,op:.85}],['c07_2','虎が、ゆっくり頭を上げた',3024,{x:58,y:8,w:34}],['c07_5','南の空を見上げて',3024,{x:58,y:8,w:34}],
-  ['c10_4','大きな火の鳥が',2004,{x:56,y:12,w:34}],['c13_1','黒い角の子が一体',1069,{x:60,y:6,w:22}],['c16_1','長い首がのびた',2053,{x:56,y:8,w:38}],['c17_1','金色の角の子が',2022,{x:64,y:14,w:20,op:.6}],['c17_2a','片方が、大きなあくびをした',2001,{x:58,y:8,w:30}],
+  ['c10_4','大きな火の鳥が',2004,{x:56,y:12,w:34}],['c13_1','黒い角の子が一体',1069,{x:60,y:6,w:22}],['c16_1','長い首がのびた',2053,{x:56,y:8,w:38}],['c17_1','金色の角の子が',2022,{x:64,y:14,w:20,op:.6}],
   ['c21_4','大きな豹が',1047,{x:58,y:6,w:30}],['c24_2','光る小さな虫の子が',1057,{x:62,y:20,w:12}],['c25_3','八本の首が',2048,{x:56,y:10,w:42}],['c26_2','カブトムシの子が飛びこんで',1034,{x:62,y:6,w:20}],
   ['c29_2','海の色の大きな竜',291,{x:56,y:8,w:34}],['c30_1','とぐろを巻いて眠る',3291,{x:56,y:10,w:44}],['c30_2','セイリュが、もう一度',196,{x:40,y:4,w:16}]];
 function cnInit(){ Object.assign(SC,CN_SC); toastEl.style.zIndex=40;
@@ -6310,9 +6304,6 @@ CN_SC.c16_4=[{w:null,t:"向こう岸に着くと、亀は、五人をこうら�
 CN_SC.c16_5=[{w:null,t:"夜。岸の岩かげで、たき火をした。"},{w:null,t:"セイリュは、ヤマトのひざの上で、丸くなって眠っていた。地面には、おりていない。"},{w:"partner",t:"……寝相、よくなったな。"},{w:"hero",f:"normal",t:"……ほんとだ。"},{w:"lifa",f:"normal",t:"熱も、少し下がってる。"}];
 CN_SC.c16_6=[{w:null,t:"夜明け。川霧が晴れると、対岸の丘の上に、長い灰色の壁が見えた。"},{w:"hao",f:"surprised",t:"……古い都の城壁だ。"},{w:"alek",f:"normal",t:"思ったより、近いな。"},{w:null,t:"第16話　おわり"}];
 CN_SC.c17_1=[{w:null,t:"第17話　古い都の門"},{w:null,t:"朝。五人で、灰色の城壁の下まで歩いた。南の門は、閉じている。"},{w:null,t:"門の前の霧の中を、金色の角の子が、ふわりと横切った。"},{w:"hero",f:"surprised",t:"……今の、何？　鹿？"},{w:"hao",f:"surprised",t:"麒麟だ。いいことの前に出るって、師匠が言ってた。"},{w:"partner",t:"……もう、いない。"},{w:"lifa",f:"normal",t:"写真、撮れなかった……。"},{w:"alek",f:"normal",t:"またか。"}];
-CN_SC.c17_2a=[{w:null,t:"門の両わきに、石の獅子が二体。片方が、大きなあくびをした。"},{w:"elly",f:"surprised",t:"……石じゃない！"},{w:null,t:"獅子は、のそりと門の前に寝そべった。五人の前で、低く一言。"},{w:"hao",f:"normal",t:"……「集めた話を、言え」。……たぶん。"},{w:"hero",f:"normal",t:"集めた話？"},{w:"alek",f:"normal",t:"かけらだ。西と、南と、北。"},{w:null,t:"獅子が、ひとつずつ、こちらの顔を見る。"}];
-CN_SC.c17_2b=[{w:"elly",f:"normal",t:"西は、「虎は、朝の来る方へ吠える」。"},{w:"alek",f:"normal",t:"南は、「鳥は、海の上で輪を描く」。"},{w:"hao",f:"normal",t:"北は、「亀は、水の底で目をあける」。"},{w:null,t:"獅子は、目を細めて、門の前から体をずらした。"},{w:"partner",t:"……通っていいらしい。"}];
-CN_DIR.c17_2={"k": "問い", "t": "唐獅子の記憶の問い・西のかけら／南のかけら／北のかけらを、それぞれ三つの中から選んで答える・覚えること＝旅で聞いた言葉を思い出す。まちがえても、もう一度選べる。"};
 CN_SC.c17_3=[{w:null,t:"門をくぐると、碁盤の目の通り。古い屋根の家が、どこまでも並んでいた。"},{w:null,t:"鐘楼の広場のすみに、古い書庫の建物があった。戸の前に、老人が一人。"},{w:"x",n:"老人",t:"……若い客は、めずらしい。"},{w:null,t:"老人は、ヤマトのポケットからのぞいているルーペに目をとめた。"},{w:"x",n:"老人",t:"そのルーペ。……ゲンイチのか。"},{w:"hero",f:"surprised",t:"じいちゃんの！　知り合い？"},{w:"x",n:"老人",t:"昔、いっしょに土を掘った。……あいつは、元気か。"},{w:"hero",f:"normal",t:"この前、電話、いきなり切られた。"},{w:"x",n:"老人",t:"……変わらんな。"}];
 CN_SC.c17_4=[{w:"lifa",f:"serious",t:"ここ、昔の記録が残ってるんですか。三年前のも。"},{w:"x",n:"老人",t:"紙の記録だけはな。機械の記録は、すぐ消されるが。"},{w:"lifa",f:"surprised",t:"……消される。"},{w:"x",n:"老人",t:"見たいなら、あしたの朝、開ける。今日は、もう鍵を閉めた。"},{w:"hero",f:"normal",t:"今、開けてよ。"},{w:"x",n:"老人",t:"鍵は、ゲンイチと同じで、気まぐれでな。"},{w:null,t:"書庫の奥の、重い扉。その向こうに、記録の棚が、暗く並んでいた。"},{w:null,t:"第17話　おわり"}];
 CN_SC.c18_1=[{w:null,t:"第18話　記録庫"},{w:null,t:"朝。老人が、重い扉の鍵を、三回まちがえてから開けた。"},{w:"x",n:"老人",t:"……ほらな。気まぐれだ。"},{w:null,t:"中は、紙のにおい。天井まで、記録の箱が積まれている。"},{w:"lifa",f:"serious",t:"三年前の、大停電の箱は……。"},{w:"x",n:"老人",t:"奥から三番目の棚。上から二段目。"},{w:"hao",f:"surprised",t:"覚えてるのかよ。"},{w:"x",n:"老人",t:"ほかに、することがないからな。"}];
@@ -6330,7 +6321,7 @@ CN_SC.c19_5w=[{w:null,t:"手下の子たちが、次々に石畳に倒れた。"
 CN_SC.c19_5l=[{w:"x",n:"ゼロデイの手下",t:"よし、箱をよこせ！"},{w:null,t:"手下が手をのばした時、手下の子が一体、石畳に倒れたまま動けなくなっていた。"},{w:"x",n:"ゼロデイの手下",t:"おい！　黒いの！　うちの子、起こすの手伝え！"},{w:null,t:"黒い角の子は、倒れた子の上を、またいで通った。ふり返らなかった。"},{w:"x",n:"ゼロデイの手下",t:"……おい。"},{w:null,t:"レンの足が、一度だけ止まった。"},{w:"x",n:"ゼロデイの手下",t:"……撤収だ。箱は、また今度。"},{w:null,t:"手下は、倒れた子を自分で抱えて、門の方へ走っていった。"}];
 CN_SC.c19_6=[{w:null,t:"ヤマトは、書類の紙を一枚持って、レンの前に立った。"},{w:"hero",f:"normal",t:"これ。"},{w:null,t:"レンは、紙を受け取った。署名の所で、目が止まった。"},{w:null,t:"レンは、紙を四つにたたんで、ポケットに入れた。"},{w:null,t:"ヤマトは、まだ、レンの顔を見ていた。"},{w:"dimi",t:"……こっち見んな。"},{w:null,t:"レンは、黒い角の子をつれて、門の外へ歩いていった。"},{w:null,t:"第19話　おわり"}];
 CN_SC.c20_1=[{w:null,t:"第20話　都を守る"},{w:null,t:"昼。都の南門の外に、ゼロデイの車が二十台。空には、飛ぶ機械の群れ。"},{w:null,t:"まん中の車の上に、ランサムが立っていた。"},{w:"ransom",t:"記録庫を燃やせ。竜も取る。……全部、おれがやる。"},{w:"patch",t:"ランサム様、わたしたちも手伝い——"},{w:"ransom",t:"いらん。おまえらは見てろ。"},{w:"log",t:"見てるのは、得意だ。"},{w:null,t:"ランサムは、一人で、子を何体も出して、門へ向かってきた。"}];
-CN_SC.c20_2=[{w:null,t:"都の通りに、鐘の音が鳴りひびいた。"},{w:"x",n:"都の衛兵",t:"門を閉めろ！　子どもたちは、中へ！"},{w:"hero",f:"serious",t:"おれたちも出る。"},{w:"x",n:"都の衛兵",t:"ばか言うな。"},{w:"x",n:"メイリン",t:"出してあげて。あの子たち、門の唐獅子が通した子よ。"},{w:"hao",f:"surprised",t:"……メイリンさん。都でいちばん強い人だ。"},{w:"x",n:"メイリン",t:"衛兵は右。わたしは左。子どもたちは、まん中。"},{w:"alek",f:"normal",t:"まん中、いちばん大変な所だな。"},{w:"x",n:"メイリン",t:"でしょうね。"},{w:null,t:"セイリュが、アレクのクロッコの横に、すべりこんだ。"},{w:"alek",f:"normal",t:"……おまえ、乗る気か。"},{w:null,t:"二体が、水しぶきの中で重なった。長い、水の竜。"},{w:"lifa",f:"serious",t:"……セイリュ、熱が上がる。早く終わらせて。"}];
+CN_SC.c20_2=[{w:null,t:"都の通りに、鐘の音が鳴りひびいた。"},{w:"x",n:"都の衛兵",t:"門を閉めろ！　子どもたちは、中へ！"},{w:"hero",f:"serious",t:"おれたちも出る。"},{w:"x",n:"都の衛兵",t:"ばか言うな。"},{w:"x",n:"メイリン",t:"出してあげて。あの子たち、門の前で麒麟を見た子よ。"},{w:"hao",f:"surprised",t:"……メイリンさん。都でいちばん強い人だ。"},{w:"x",n:"メイリン",t:"衛兵は右。わたしは左。子どもたちは、まん中。"},{w:"alek",f:"normal",t:"まん中、いちばん大変な所だな。"},{w:"x",n:"メイリン",t:"でしょうね。"},{w:null,t:"セイリュが、アレクのクロッコの横に、すべりこんだ。"},{w:"alek",f:"normal",t:"……おまえ、乗る気か。"},{w:null,t:"二体が、水しぶきの中で重なった。長い、水の竜。"},{w:"lifa",f:"serious",t:"……セイリュ、熱が上がる。早く終わらせて。"}];
 CN_DIR.c20_2={"k": "勝負", "t": "ランサム（何体も同時に出してくる）・盤＝古い都の通り（遺跡・石畳）・覚えること＝町の人と組む盤。衛兵とメイリンの子が、こちらの味方として盤に入る。一体ずつ相手をせず、味方と相手を分けあう。融合は、ヤマトのセイリュとアレクのクロッコ（クロベク）でリヴァイア（竜）。"};
 CN_SC.c20_3w=[{w:"ransom",t:"……右も、左も、まん中も。……なんで全部、手が足りない。"},{w:"patch",t:"だから、手伝うって言ったのに！"},{w:null,t:"門の外で、ランサムの子たちが、ばらばらに下がりはじめた。"},{w:"ransom",t:"……撤収。……おれが決めた撤収だ。"},{w:null,t:"ランサムの車が、土ぼこりを上げて、西へ走りだした。"}];
 CN_SC.c20_3l=[{w:"ransom",t:"ほらな。おれ一人で十分だ。"},{w:null,t:"その時、ランサムの左右の子が、衛兵とメイリンの子に押し返されて、下がった。"},{w:"ransom",t:"……おい、右！　左も！　……だれか！"},{w:"log",t:"さっき、いらんって。"},{w:null,t:"門の外で、ランサムの子たちが、ばらばらに下がりはじめた。"},{w:"ransom",t:"……撤収。……おれが決めた撤収だ。"},{w:null,t:"ランサムの車が、土ぼこりを上げて、西へ走りだした。"}];
@@ -6917,7 +6908,7 @@ function xHud(){ let h=document.getElementById('xDay'); const t=(!TESTMODE&&SAVE
   h.textContent=t; const ob=document.getElementById('obj'); h.style.display=t&&ob&&ob.style.display!=='none'?'block':'none';
   if(ob&&h.style.display==='block'){ const r=ob.getBoundingClientRect(); h.style.top=(r.bottom+6)+'px'; } }
 
-// ---- 融合の解禁を二つに分ける(受け渡し: ギリシャの守り④のあとはブレイグリオ・ナルレオンだけ。エジプト11のあとで、ほかの組み合わせ・敵の融合・融合工房) ----
+// ---- 融合の解禁を二つに分ける(受け渡し: ギリシャの守り④のあとはブレイグリオ・エルレオンだけ。エジプト11のあとで、ほかの組み合わせ・敵の融合・融合工房) ----
 function xFuse1(){ if(!SAVE||!SAVE.unlock) return; const f=GF(); if(f.e11_3) return; SAVE.unlock.fusion=false; SAVE.unlock.fusion1=true;
   const pg=window.Progress&&Progress.state(); if(pg){ pg.fusions=pg.fusions||{}; pg.fusions[2014]=1; pg.fusions[NARU_ID]=1; } }
 function xFuseAll(){ if(!SAVE||!SAVE.unlock) return; SAVE.unlock.fusion=true; SAVE.unlock.workshop=true; delete SAVE.unlock.fusion1;

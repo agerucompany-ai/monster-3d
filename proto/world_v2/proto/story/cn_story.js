@@ -127,12 +127,9 @@ sc(16,'c16_1',GO,'*',{bg:'anime_cn_frozen'}); sc(16,'c16_2',GO,'*',{bg:'anime_cn
 bt(16,'c16_b','c16_3',GO,{bg:'anime_cn_frozen',foe:()=>cnFoe({n:ZD,zeroday:1,party:P(1014,1059)}),R:{terrain:'stream'}});
 sc(16,'c16_4',GO,'*',{bg:'anime_cn_frozen'}); sc(16,'c16_5',GO,'*',{bg:'anime_cn_river_dusk'});
 sc(16,'c16_6',GO,'*',{bg:'anime_cn_wall',post:()=>flag('guard_n')});
-// 第17話 古い都の門(唐獅子の記憶の問い)
+// 第17話 古い都の門(2026-10-28 唐獅子の記憶の問い c17_2a/c17_q/c17_2b はオーナー判断で削除=白虎と被る。門の外の麒麟ジョウキリンは寄り道の古代テリオン)
 go(17,'c17_g',GO,CA,'from_gorges',{tod:'morning'});
 sc(17,'c17_1',CA);
-sc(17,'c17_2a',CA,'南門',{obj:'南門へ'});
-fn(17,'c17_q',CA,()=>cnQuiz(CN_Q17));
-sc(17,'c17_2b',CA,'*',{post:()=>flag('cn_lion')});
 sc(17,'c17_3',CA,'鐘楼の広場',{obj:'鐘楼の広場へ'});
 sc(17,'c17_4',CA);
 // 第18話 記録庫(全画面・ルーペで調べる)
@@ -204,9 +201,6 @@ sc(30,'c30_4',SE,'*',{bg:'anime_cn_sea_dusk',post:()=>flag('cn_dragon')});
 CN_STEPS.forEach((s,i)=>{ const n=CN_STEPS[i+1]; s.last=!n||n.ep!==s.ep; });
 
 // ---- 記憶の問い・かけらの謎(選ぶだけ。まちがえても選び直せる) ----
-const CN_Q17=[['西のかけら',['虎は、朝の来る方へ吠える','虎は、夜の来る方へ吠える','虎は、山の上で眠る'],0],
-              ['南のかけら',['鳥は、山の上で輪を描く','鳥は、海の上で輪を描く','鳥は、火の中で目をあける'],1],
-              ['北のかけら',['亀は、氷の上で目をとじる','亀は、水の底で眠る','亀は、水の底で目をあける'],2]];
 const CN_Q27=[['方角',['西（日の入り）','東（夜明け）','北（真夜中）'],1],
               ['場所',['海の上の、鳥の輪の下','レンの上の、火の鳥の下','岩の島の、てっぺん'],0],
               ['開け方',['虎が、朝に吠える','亀が、水の底で眠る','水の底の目が、あく'],2]];
@@ -254,16 +248,16 @@ async function cnStep(s){ const f=GF();
 async function cnTp(x,z,yaw){ TRANS=true; fadeEl.classList.add('on'); await sleep(260);
   HERO.x=x; HERO.z=z; if(yaw!=null) HERO.yaw=yaw; HERO.speed=0; HERO.dir=null; CAM.tx=x; CAM.tz=z; HERO.y=groundAt(x,z); CAM.ty=HERO.y; partnerPlace();
   await settleMap(2500); LAST=performance.now(); fadeEl.classList.remove('on'); await sleep(260); TRANS=false; AREA=zoneAt(HERO.x,HERO.z)||D.name; saveGame(); }
-// 古代テリオンの「試し」(物語では戦わない白虎・朱雀・玄武・唐獅子・青龍と、物語のあとのサジンオロチ): 地図の wild[].trial の旗のあとは、近づいても始まらず「再戦」のボタンから
+// 古代テリオンの「試し」(物語では戦わない白虎・朱雀・玄武・青龍と、物語のあとのサジンオロチ・寄り道の麒麟ジョウキリン): 地図の wild[].trial の旗のあとは、近づいても始まらず「再戦」のボタンから
 function cnTrials(){ if(!cnOn()||!MONS) return; const f=GF(); for(const m of MONS){ if(m.o.trial&&f[m.o.trial]) m.rematch=true; } }
 
 // ---- 目的の表示 ----
 const CN_MAPJ={cn_bund:'上海',cn_bamboo:'竹海の村',cn_plateau:'西の高原',cn_fossil:'化石の谷',cn_karst:'南の山',cn_gorges:'北の大河',cn_capital:'古い都',cn_kunlun:'雪の高原',cn_sea:'東の海',cn_thunder:'東の島'};
 function cnObjText(f){ const s=cnCur(); if(!s) return null; if(MAP!==s.map) return s.objAway||(CN_MAPJ[s.map]+'へ'); return s.obj||''; }
-const CN_OLD=['cn_bund','cn_bamboo','cn_dojo','cn_plateau','guard_w','cn_fossil','cn_kagu','cn_karst','guard_s','cn_pillars','cn_gorges','guard_n','cn_thunder','cn_nue','cn_sajin','cn_capital','cn_lion','cn_champ','cn_kunlun','cn_setsu','cn_sea','cn_ransom','cn_dragon'];
+const CN_OLD=['cn_bund','cn_bamboo','cn_dojo','cn_plateau','guard_w','cn_fossil','cn_kagu','cn_karst','guard_s','cn_pillars','cn_gorges','guard_n','cn_thunder','cn_nue','cn_sajin','cn_capital','cn_champ','cn_kunlun','cn_setsu','cn_sea','cn_ransom','cn_dragon'];
 
 // ---- 古いセーブ(中国編のしかけの前に中国を進めていたもの): 古い旗から、背骨の順のどの話まで済んだかを決める(一度だけ) ----
-const CN_OLD_EP={cn_dojo:4, guard_w:7, cn_fossil:8, cn_kagu:9, guard_s:10, cn_pillars:14, cn_gorges:14, guard_n:16, cn_thunder:16, cn_nue:16, cn_sajin:16, cn_capital:16, cn_lion:17, cn_champ:17, cn_kunlun:20, cn_setsu:22, cn_sea:22, cn_ransom:22, cn_dragon:30};
+const CN_OLD_EP={cn_dojo:4, guard_w:7, cn_fossil:8, cn_kagu:9, guard_s:10, cn_pillars:14, cn_gorges:14, guard_n:16, cn_thunder:16, cn_nue:16, cn_sajin:16, cn_capital:16, cn_champ:17, cn_kunlun:20, cn_setsu:22, cn_sea:22, cn_ransom:22, cn_dragon:30};
 function cnMigrate(){ const f=SAVE&&SAVE.flags; if(!f||f.cnMig) return; f.cnMig=1; if(!f.ep30||f.c01_1) return;
   let n=0; for(const k in CN_OLD_EP) if(f[k]) n=Math.max(n,CN_OLD_EP[k]); if(!n) return;
   for(const s of CN_STEPS){ if(s.ep>n) break; f[s.id]=1; if(s.last) f['c'+pad2(s.ep)]=1; } }
@@ -272,7 +266,7 @@ function cnMigrate(){ const f=SAVE&&SAVE.flags; if(!f||f.cnMig) return; f.cnMig=
 // 場面の中で2Dのテリオンを見せる所(その文の行の前に出す。場面が終わると消える)
 const CN_MON=[['c02_1','白い、小さな子がうずくまっていた',196,{x:60,y:4,w:16}],['c04_2','セイリュは、片目をあけて',196,{x:60,y:4,w:16}],['c06_4','稲妻の模様のトラが',1023,{x:60,y:6,w:24}],['c06_4','小さなビリトラが一体',1022,{x:40,y:4,w:15}],
   ['c07_1','体を丸めた、大きな白い虎',3024,{x:58,y:8,w:34,op:.85}],['c07_2','虎が、ゆっくり頭を上げた',3024,{x:58,y:8,w:34}],['c07_5','南の空を見上げて',3024,{x:58,y:8,w:34}],
-  ['c10_4','大きな火の鳥が',2004,{x:56,y:12,w:34}],['c13_1','黒い角の子が一体',1069,{x:60,y:6,w:22}],['c16_1','長い首がのびた',2053,{x:56,y:8,w:38}],['c17_1','金色の角の子が',2022,{x:64,y:14,w:20,op:.6}],['c17_2a','片方が、大きなあくびをした',2001,{x:58,y:8,w:30}],
+  ['c10_4','大きな火の鳥が',2004,{x:56,y:12,w:34}],['c13_1','黒い角の子が一体',1069,{x:60,y:6,w:22}],['c16_1','長い首がのびた',2053,{x:56,y:8,w:38}],['c17_1','金色の角の子が',2022,{x:64,y:14,w:20,op:.6}],
   ['c21_4','大きな豹が',1047,{x:58,y:6,w:30}],['c24_2','光る小さな虫の子が',1057,{x:62,y:20,w:12}],['c25_3','八本の首が',2048,{x:56,y:10,w:42}],['c26_2','カブトムシの子が飛びこんで',1034,{x:62,y:6,w:20}],
   ['c29_2','海の色の大きな竜',291,{x:56,y:8,w:34}],['c30_1','とぐろを巻いて眠る',3291,{x:56,y:10,w:44}],['c30_2','セイリュが、もう一度',196,{x:40,y:4,w:16}]];
 function cnInit(){ Object.assign(SC,CN_SC); toastEl.style.zIndex=40;

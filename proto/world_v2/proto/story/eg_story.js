@@ -136,7 +136,7 @@ function xHud(){ let h=document.getElementById('xDay'); const t=(!TESTMODE&&SAVE
   h.textContent=t; const ob=document.getElementById('obj'); h.style.display=t&&ob&&ob.style.display!=='none'?'block':'none';
   if(ob&&h.style.display==='block'){ const r=ob.getBoundingClientRect(); h.style.top=(r.bottom+6)+'px'; } }
 
-// ---- 融合の解禁を二つに分ける(受け渡し: ギリシャの守り④のあとはブレイグリオ・ナルレオンだけ。エジプト11のあとで、ほかの組み合わせ・敵の融合・融合工房) ----
+// ---- 融合の解禁を二つに分ける(受け渡し: ギリシャの守り④のあとはブレイグリオ・エルレオンだけ。エジプト11のあとで、ほかの組み合わせ・敵の融合・融合工房) ----
 function xFuse1(){ if(!SAVE||!SAVE.unlock) return; const f=GF(); if(f.e11_3) return; SAVE.unlock.fusion=false; SAVE.unlock.fusion1=true;
   const pg=window.Progress&&Progress.state(); if(pg){ pg.fusions=pg.fusions||{}; pg.fusions[2014]=1; pg.fusions[NARU_ID]=1; } }
 function xFuseAll(){ if(!SAVE||!SAVE.unlock) return; SAVE.unlock.fusion=true; SAVE.unlock.workshop=true; delete SAVE.unlock.fusion1;

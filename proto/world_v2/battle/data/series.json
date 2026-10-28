@@ -39,11 +39,10 @@
     {"id":"ragnahorn", "name":"ラグナロクホルン", "n":3, "range":3, "area":1, "mult":1.35, "fx":{}, "tx":"世界の終わりを告げる角笛"}
    ]},
   {"id":"china", "name":"中国・四神", "icon":"s_china", "color":"#e05a48",
-   "lines":[1022,195,1019,1045,1068], "fusions":[2004,2053,2001,2022,2025,2007,2009,2026,2049,2052,2058],
+   "lines":[1022,195,1019,1045,1068], "fusions":[2004,2053,2022,2025,2007,2009,2026,2049,2052,2058],
    "combos":[
     {"id":"ryukocross", "name":"リュウコクロス", "n":2, "need":[1022,195], "range":3, "area":0, "mult":1.3, "fx":{"pierce":0.4}, "tx":"白虎と青龍が 十字にかける"},
     {"id":"shishin", "name":"シシンノジン", "n":3, "needAny":{"ids":[1022,195,2004,2053],"k":2}, "range":3, "area":1, "mult":1.4, "fx":{"buff":{"stat":"def","x":0.2,"turns":2}}, "tx":"東西南北の四神の じん"},
-    {"id":"karajishi", "name":"カラジシマイ", "n":2, "need":[2001], "range":2, "area":1, "mult":1.15, "fx":{"ail":"burn","chance":0.5}, "tx":"唐獅子の まい"},
     {"id":"tourouken", "name":"トウロウケン", "n":2, "need":[1019], "range":2, "area":0, "mult":1.2, "fx":{"debuff":{"stat":"def","x":-0.25,"turns":2}}, "tx":"かまきり拳の 型"},
     {"id":"kunlun", "name":"コンロンブリザード", "n":2, "need":[1045], "range":3, "area":1, "mult":1.1, "fx":{"ail":"freeze","chance":0.4}, "tx":"雪の山の ふぶき"}
    ]},

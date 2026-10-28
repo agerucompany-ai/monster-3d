@@ -4301,41 +4301,6 @@
     "stadium_under"
    ]
   },
-  "2001": {
-   "name": "ライエンオウ",
-   "type": "炎",
-   "type2": "雷",
-   "stage": 3,
-   "line": null,
-   "archetype": "神格型",
-   "hp": 1515,
-   "atk": 206,
-   "def": 59,
-   "mob": 2,
-   "spd": 57,
-   "red": 0.371,
-   "src_hp": 1510,
-   "src_atk": 179,
-   "src_move": 2,
-   "learnset": [
-    {
-     "move": "fire_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "thunder_ring",
-     "lv": 1
-    },
-    {
-     "move": "fsig_2001",
-     "lv": 1
-    }
-   ],
-   "fixed": true,
-   "ancient": [
-    "cn_capital"
-   ]
-  },
   "2004": {
    "name": "フェニク",
    "type": "風",
@@ -6741,7 +6706,7 @@
    ]
   },
   "2072": {
-   "name": "ナルレオン",
+   "name": "エルレオン",
    "type": "炎",
    "type2": "雷",
    "stage": 3,
@@ -6865,7 +6830,7 @@
      "lv": 1
     },
     {
-     "move": "fsig_2001",
+     "move": "fsig_2071",
      "lv": 1
     }
    ],

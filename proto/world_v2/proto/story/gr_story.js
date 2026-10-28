@@ -6,7 +6,7 @@
 //  本体の中の接続点は「// ---- 物語(gr_story.js)」の印。
 // ============================================================================
 const GR_SC={};
-const NARU_ID=2072;   // 新1ナルレオン(仮の番号。絵と3Dは未作成=TODO)。台本の 'N1'
+const NARU_ID=2072;   // 新1エルレオン(仮の番号。絵と3Dは未作成=TODO)。台本の 'N1'
 const NO_ART=new Set([NARU_ID]);
 
 // ---- 2Dのテリオンを会話の場面に出す(第1話 2-1) ----
@@ -14,7 +14,7 @@ function monImg(id){ return '../battle/img/'+(id==='N1'?NARU_ID:id)+'.webp'; }
 function monShow(id,o){ o=o||{}; let im=document.getElementById('stMon');
   if(!im){ im=document.createElement('img'); im.id='stMon'; im.alt=''; im.style.cssText='position:absolute;z-index:2;pointer-events:none;transition:left .35s,bottom .35s,opacity .3s,transform .25s;filter:drop-shadow(0 6px 10px rgba(0,0,0,.3))';
     im.onerror=()=>{ im.dataset.bad=im.getAttribute('src')||''; im.style.display='none'; }; ST.el.insertBefore(im,ST.box); }
-  if(NO_ART.has(id==='N1'?NARU_ID:+id)){ im.style.display='none'; return; }   // 絵がまだ無い子(新1ナルレオン)は出さない(語りで見せる)
+  if(NO_ART.has(id==='N1'?NARU_ID:+id)){ im.style.display='none'; return; }   // 絵がまだ無い子(新1エルレオン)は出さない(語りで見せる)
   const src=monImg(id); if(im.getAttribute('src')!==src) im.src=src;
   im.style.width=(o.w||22)+'vmin'; im.style.left=(o.x!=null?o.x:58)+'%'; im.style.bottom='calc(118px + env(safe-area-inset-bottom) + '+(o.y!=null?o.y:16)*0.8+'%)';   // 0 = 台詞の箱のすぐ上(箱にかくれない) im.style.marginLeft=(-(o.w||22)/2)+'vmin';
   im.style.transform=o.flip?'scaleX(-1)':''; im.style.opacity=o.op!=null?o.op:1;

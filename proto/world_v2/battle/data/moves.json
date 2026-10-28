@@ -3449,31 +3449,6 @@
    "cost": "few",
    "yomi": "おうじゃくろす"
   },
-  "fsig_2001": {
-   "name": "カラジシバーニング",
-   "type": "炎",
-   "category": "attack",
-   "role": "sig_fusion",
-   "rank": null,
-   "target": "area",
-   "range": [
-    1,
-    2
-   ],
-   "p": true,
-   "mp": 3,
-   "power": 110,
-   "hit": 100,
-   "crit": 10,
-   "effect": {
-    "ail": "burn",
-    "chance": 0.5
-   },
-   "desc": "雷と炎をまとう獅子",
-   "range_class": "mid",
-   "cost": "few",
-   "yomi": "からじしばーにんぐ"
-  },
   "fsig_2004": {
    "name": "スザクストーム",
    "type": "風",
