@@ -27,7 +27,7 @@
  },
  "moves": {
   "fire_ladder1": {
-   "name": "ボルカ",
+   "name": "フレイ",
    "type": "炎",
    "category": "attack",
    "role": "ladder",
@@ -49,10 +49,10 @@
    "desc": "炎の力で たたく。何回でも使える",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ぼるか"
+   "yomi": "ふれい"
   },
   "fire_ladder2": {
-   "name": "ボルカラ",
+   "name": "フレイガ",
    "type": "炎",
    "category": "attack",
    "role": "ladder",
@@ -74,10 +74,10 @@
    "desc": "炎の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ぼるから"
+   "yomi": "ふれいが"
   },
   "fire_ladder3": {
-   "name": "ボルカドン",
+   "name": "フレイバースト",
    "type": "炎",
    "category": "attack",
    "role": "ladder",
@@ -99,10 +99,10 @@
    "desc": "大きな炎の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ぼるかどん"
+   "yomi": "ふれいばーすと"
   },
   "fire_ladder4": {
-   "name": "ボルカドーン",
+   "name": "フレイノヴァ",
    "type": "炎",
    "category": "attack",
    "role": "ladder",
@@ -124,10 +124,10 @@
    "desc": "いちばん大きな炎の力。移動したら使えない",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ぼるかどーん"
+   "yomi": "ふれいのゔぁ"
   },
   "fire_toss": {
-   "name": "ボウボウショット",
+   "name": "ブレイズショット",
    "type": "炎",
    "category": "attack",
    "role": "toss",
@@ -149,10 +149,10 @@
    "desc": "炎を飛ばす。2マス先までとどく",
    "range_class": "mid",
    "cost": "free",
-   "yomi": "ぼうぼうしょっと"
+   "yomi": "ぶれいずしょっと"
   },
   "fire_arrow": {
-   "name": "ボウボウアロー",
+   "name": "ブレイズアロー",
    "type": "炎",
    "category": "attack",
    "role": "arrow",
@@ -175,10 +175,10 @@
    "range_class": "far",
    "cost": "some",
    "enabled": false,
-   "yomi": "ぼうぼうあろー"
+   "yomi": "ぶれいずあろー"
   },
   "fire_ring": {
-   "name": "ボウボウリング",
+   "name": "ブレイズリング",
    "type": "炎",
    "category": "attack",
    "role": "ring",
@@ -200,10 +200,10 @@
    "desc": "射程内の敵みんなに当たる",
    "range_class": "mid",
    "cost": "many",
-   "yomi": "ぼうぼうりんぐ"
+   "yomi": "ぶれいずりんぐ"
   },
   "fire_map": {
-   "name": "ボウボウレイン",
+   "name": "ブレイズレイン",
    "type": "炎",
    "category": "attack",
    "role": "map",
@@ -232,10 +232,10 @@
    "range_class": "shape",
    "cost": "few",
    "enabled": false,
-   "yomi": "ぼうぼうれいん"
+   "yomi": "ぶれいずれいん"
   },
   "fire_ail": {
-   "name": "ボウボウバーン",
+   "name": "ブレイズバーン",
    "type": "炎",
    "category": "ailment",
    "role": "ail",
@@ -257,10 +257,10 @@
    "desc": "やけどにしやすい",
    "range_class": "near",
    "cost": "some",
-   "yomi": "ぼうぼうばーん"
+   "yomi": "ぶれいずばーん"
   },
   "fire_buff": {
-   "name": "ボウボウパワー",
+   "name": "ブレイズオーラ",
    "type": "炎",
    "category": "buff",
    "role": "buff",
@@ -286,10 +286,10 @@
    "enabled": false,
    "range_class": "self",
    "cost": "few",
-   "yomi": "ぼうぼうぱわー"
+   "yomi": "ぶれいずおーら"
   },
   "water_ladder1": {
-   "name": "ザッパ",
+   "name": "アクア",
    "type": "水",
    "category": "attack",
    "role": "ladder",
@@ -308,10 +308,10 @@
    "desc": "水の力で たたく。何回でも使える",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ざっぱ"
+   "yomi": "あくあ"
   },
   "water_ladder2": {
-   "name": "ザッパラ",
+   "name": "アクアガ",
    "type": "水",
    "category": "attack",
    "role": "ladder",
@@ -330,10 +330,10 @@
    "desc": "水の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ざっぱら"
+   "yomi": "あくあが"
   },
   "water_ladder3": {
-   "name": "ザッパドン",
+   "name": "アクアバースト",
    "type": "水",
    "category": "attack",
    "role": "ladder",
@@ -352,10 +352,10 @@
    "desc": "大きな水の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ざっぱどん"
+   "yomi": "あくあばーすと"
   },
   "water_ladder4": {
-   "name": "ザッパドーン",
+   "name": "アクアノヴァ",
    "type": "水",
    "category": "attack",
    "role": "ladder",
@@ -374,10 +374,10 @@
    "desc": "いちばん大きな水の力。移動したら使えない",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ざっぱどーん"
+   "yomi": "あくあのゔぁ"
   },
   "water_spear": {
-   "name": "ジャブジャブランス",
+   "name": "タイダルランス",
    "type": "水",
    "category": "attack",
    "role": "spear",
@@ -396,10 +396,10 @@
    "desc": "2マス先までつく",
    "range_class": "mid",
    "cost": "free",
-   "yomi": "じゃぶじゃぶらんす"
+   "yomi": "たいだるらんす"
   },
   "water_pierce": {
-   "name": "ジャブジャブドリル",
+   "name": "タイダルドリル",
    "type": "水",
    "category": "attack",
    "role": "pierce",
@@ -421,10 +421,10 @@
    "range_class": "near",
    "cost": "some",
    "enabled": false,
-   "yomi": "じゃぶじゃぶどりる"
+   "yomi": "たいだるどりる"
   },
   "water_ring": {
-   "name": "ジャブジャブリング",
+   "name": "タイダルリング",
    "type": "水",
    "category": "attack",
    "role": "ring",
@@ -443,10 +443,10 @@
    "desc": "射程内の敵みんなに当たる",
    "range_class": "near",
    "cost": "many",
-   "yomi": "じゃぶじゃぶりんぐ"
+   "yomi": "たいだるりんぐ"
   },
   "water_map": {
-   "name": "ジャブジャブライン",
+   "name": "タイダルライン",
    "type": "水",
    "category": "attack",
    "role": "map",
@@ -471,10 +471,10 @@
    "range_class": "shape",
    "cost": "few",
    "enabled": false,
-   "yomi": "じゃぶじゃぶらいん"
+   "yomi": "たいだるらいん"
   },
   "water_debuff": {
-   "name": "ジャブジャブスロウ",
+   "name": "タイダルスロウ",
    "type": "水",
    "category": "debuff",
    "role": "debuff",
@@ -500,10 +500,10 @@
    "enabled": false,
    "range_class": "mid",
    "cost": "few",
-   "yomi": "じゃぶじゃぶすろう"
+   "yomi": "たいだるすろう"
   },
   "water_cure": {
-   "name": "ジャブジャブウォッシュ",
+   "name": "タイダルクレンズ",
    "type": "水",
    "category": "cure",
    "role": "cure",
@@ -528,10 +528,10 @@
    "enabled": false,
    "range_class": "support",
    "cost": "few",
-   "yomi": "じゃぶじゃぶうぉっしゅ"
+   "yomi": "たいだるくれんず"
   },
   "forest_ladder1": {
-   "name": "モリダ",
+   "name": "リーフ",
    "type": "森",
    "category": "attack",
    "role": "ladder",
@@ -554,10 +554,10 @@
    "desc": "森の力で たたく。何回でも使える",
    "range_class": "near",
    "cost": "free",
-   "yomi": "もりだ"
+   "yomi": "りーふ"
   },
   "forest_ladder2": {
-   "name": "モリダラ",
+   "name": "リーフガ",
    "type": "森",
    "category": "attack",
    "role": "ladder",
@@ -580,10 +580,10 @@
    "desc": "森の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "もりだら"
+   "yomi": "りーふが"
   },
   "forest_ladder3": {
-   "name": "モリダドン",
+   "name": "リーフバースト",
    "type": "森",
    "category": "attack",
    "role": "ladder",
@@ -606,10 +606,10 @@
    "desc": "大きな森の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "もりだどん"
+   "yomi": "りーふばーすと"
   },
   "forest_ladder4": {
-   "name": "モリダドーン",
+   "name": "リーフノヴァ",
    "type": "森",
    "category": "attack",
    "role": "ladder",
@@ -632,10 +632,10 @@
    "desc": "いちばん大きな森の力。移動したら使えない",
    "range_class": "near",
    "cost": "free",
-   "yomi": "もりだどーん"
+   "yomi": "りーふのゔぁ"
   },
   "forest_toss": {
-   "name": "ワサワサショット",
+   "name": "ヴァインショット",
    "type": "森",
    "category": "attack",
    "role": "toss",
@@ -658,10 +658,10 @@
    "desc": "森を飛ばす。2マス先までとどく",
    "range_class": "mid",
    "cost": "free",
-   "yomi": "わさわさしょっと"
+   "yomi": "ゔぁいんしょっと"
   },
   "forest_arrow": {
-   "name": "ワサワサアロー",
+   "name": "ヴァインアロー",
    "type": "森",
    "category": "attack",
    "role": "arrow",
@@ -685,10 +685,10 @@
    "range_class": "far",
    "cost": "some",
    "enabled": false,
-   "yomi": "わさわさあろー"
+   "yomi": "ゔぁいんあろー"
   },
   "forest_ring": {
-   "name": "ワサワサリング",
+   "name": "ヴァインリング",
    "type": "森",
    "category": "attack",
    "role": "ring",
@@ -711,10 +711,10 @@
    "desc": "射程内の敵みんなに当たる",
    "range_class": "mid",
    "cost": "many",
-   "yomi": "わさわさりんぐ"
+   "yomi": "ゔぁいんりんぐ"
   },
   "forest_map": {
-   "name": "ワサワサスパイラル",
+   "name": "ヴァインスパイラル",
    "type": "森",
    "category": "attack",
    "role": "map",
@@ -743,10 +743,10 @@
    "range_class": "shape",
    "cost": "few",
    "enabled": false,
-   "yomi": "わさわさすぱいらる"
+   "yomi": "ゔぁいんすぱいらる"
   },
   "forest_ail": {
-   "name": "ワサワサポイズン",
+   "name": "ヴァインポイズン",
    "type": "森",
    "category": "ailment",
    "role": "ail",
@@ -768,10 +768,10 @@
    "desc": "どくにしやすい",
    "range_class": "near",
    "cost": "some",
-   "yomi": "わさわさぽいずん"
+   "yomi": "ゔぁいんぽいずん"
   },
   "forest_regen": {
-   "name": "ワサワサグロウ",
+   "name": "ヴァイングロウ",
    "type": "森",
    "category": "heal",
    "role": "heal",
@@ -796,10 +796,10 @@
    "enabled": false,
    "range_class": "self",
    "cost": "few",
-   "yomi": "わさわさぐろう"
+   "yomi": "ゔぁいんぐろう"
   },
   "thunder_ladder1": {
-   "name": "ピシャ",
+   "name": "ボルト",
    "type": "雷",
    "category": "attack",
    "role": "ladder",
@@ -821,10 +821,10 @@
    "desc": "雷の力で たたく。何回でも使える",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ぴしゃ"
+   "yomi": "ぼると"
   },
   "thunder_ladder2": {
-   "name": "ピシャラ",
+   "name": "ボルトガ",
    "type": "雷",
    "category": "attack",
    "role": "ladder",
@@ -846,10 +846,10 @@
    "desc": "雷の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ぴしゃら"
+   "yomi": "ぼるとが"
   },
   "thunder_ladder3": {
-   "name": "ピシャドン",
+   "name": "ボルトバースト",
    "type": "雷",
    "category": "attack",
    "role": "ladder",
@@ -871,10 +871,10 @@
    "desc": "大きな雷の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ぴしゃどん"
+   "yomi": "ぼるとばーすと"
   },
   "thunder_ladder4": {
-   "name": "ピシャドーン",
+   "name": "ボルトノヴァ",
    "type": "雷",
    "category": "attack",
    "role": "ladder",
@@ -896,10 +896,10 @@
    "desc": "いちばん大きな雷の力。移動したら使えない",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ぴしゃどーん"
+   "yomi": "ぼるとのゔぁ"
   },
   "thunder_toss": {
-   "name": "バリバリショット",
+   "name": "スパークショット",
    "type": "雷",
    "category": "attack",
    "role": "toss",
@@ -921,10 +921,10 @@
    "desc": "雷を飛ばす。2マス先までとどく",
    "range_class": "mid",
    "cost": "free",
-   "yomi": "ばりばりしょっと"
+   "yomi": "すぱーくしょっと"
   },
   "thunder_arrow": {
-   "name": "バリバリアロー",
+   "name": "スパークアロー",
    "type": "雷",
    "category": "attack",
    "role": "arrow",
@@ -947,10 +947,10 @@
    "range_class": "far",
    "cost": "some",
    "enabled": false,
-   "yomi": "ばりばりあろー"
+   "yomi": "すぱーくあろー"
   },
   "thunder_ring": {
-   "name": "バリバリリング",
+   "name": "スパークリング",
    "type": "雷",
    "category": "attack",
    "role": "ring",
@@ -972,10 +972,10 @@
    "desc": "射程内の敵みんなに当たる",
    "range_class": "mid",
    "cost": "many",
-   "yomi": "ばりばりりんぐ"
+   "yomi": "すぱーくりんぐ"
   },
   "thunder_map": {
-   "name": "バリバリライン",
+   "name": "スパークライン",
    "type": "雷",
    "category": "attack",
    "role": "map",
@@ -1003,10 +1003,10 @@
    "range_class": "shape",
    "cost": "few",
    "enabled": false,
-   "yomi": "ばりばりらいん"
+   "yomi": "すぱーくらいん"
   },
   "thunder_ail": {
-   "name": "バリバリショック",
+   "name": "スパークショック",
    "type": "雷",
    "category": "ailment",
    "role": "ail",
@@ -1028,10 +1028,10 @@
    "desc": "マヒにしやすい",
    "range_class": "near",
    "cost": "some",
-   "yomi": "ばりばりしょっく"
+   "yomi": "すぱーくしょっく"
   },
   "thunder_buff": {
-   "name": "バリバリチャージ",
+   "name": "スパークチャージ",
    "type": "雷",
    "category": "buff",
    "role": "buff",
@@ -1057,10 +1057,10 @@
    "enabled": false,
    "range_class": "self",
    "cost": "few",
-   "yomi": "ばりばりちゃーじ"
+   "yomi": "すぱーくちゃーじ"
   },
   "wind_ladder1": {
-   "name": "ヒュル",
+   "name": "ゲイル",
    "type": "風",
    "category": "attack",
    "role": "ladder",
@@ -1079,10 +1079,10 @@
    "desc": "風の力で たたく。何回でも使える",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ひゅる"
+   "yomi": "げいる"
   },
   "wind_ladder2": {
-   "name": "ヒュルラ",
+   "name": "ゲイルガ",
    "type": "風",
    "category": "attack",
    "role": "ladder",
@@ -1101,10 +1101,10 @@
    "desc": "風の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ひゅるら"
+   "yomi": "げいるが"
   },
   "wind_ladder3": {
-   "name": "ヒュルドン",
+   "name": "ゲイルバースト",
    "type": "風",
    "category": "attack",
    "role": "ladder",
@@ -1123,10 +1123,10 @@
    "desc": "大きな風の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ひゅるどん"
+   "yomi": "げいるばーすと"
   },
   "wind_ladder4": {
-   "name": "ヒュルドーン",
+   "name": "ゲイルノヴァ",
    "type": "風",
    "category": "attack",
    "role": "ladder",
@@ -1145,10 +1145,10 @@
    "desc": "いちばん大きな風の力。移動したら使えない",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ひゅるどーん"
+   "yomi": "げいるのゔぁ"
   },
   "wind_combo": {
-   "name": "ビュンビュンダブル",
+   "name": "エアロツイン",
    "type": "風",
    "category": "attack",
    "role": "combo",
@@ -1169,10 +1169,10 @@
    "desc": "2回つづけて たたき、相手を1マスおしだす",
    "range_class": "near",
    "cost": "free",
-   "yomi": "びゅんびゅんだぶる"
+   "yomi": "えあろついん"
   },
   "wind_pierce": {
-   "name": "ビュンビュンドリル",
+   "name": "エアロドリル",
    "type": "風",
    "category": "attack",
    "role": "pierce",
@@ -1194,10 +1194,10 @@
    "range_class": "near",
    "cost": "some",
    "enabled": false,
-   "yomi": "びゅんびゅんどりる"
+   "yomi": "えあろどりる"
   },
   "wind_ring": {
-   "name": "ビュンビュンリング",
+   "name": "エアロリング",
    "type": "風",
    "category": "attack",
    "role": "ring",
@@ -1216,10 +1216,10 @@
    "desc": "射程内の敵みんなに当たる",
    "range_class": "near",
    "cost": "many",
-   "yomi": "びゅんびゅんりんぐ"
+   "yomi": "えあろりんぐ"
   },
   "wind_map": {
-   "name": "ビュンビュンクロス",
+   "name": "エアロクロス",
    "type": "風",
    "category": "attack",
    "role": "map",
@@ -1244,10 +1244,10 @@
    "range_class": "shape",
    "cost": "few",
    "enabled": false,
-   "yomi": "びゅんびゅんくろす"
+   "yomi": "えあろくろす"
   },
   "wind_buff": {
-   "name": "ビュンビュンステップ",
+   "name": "エアロステップ",
    "type": "風",
    "category": "buff",
    "role": "buff",
@@ -1273,10 +1273,10 @@
    "enabled": false,
    "range_class": "support",
    "cost": "few",
-   "yomi": "びゅんびゅんすてっぷ"
+   "yomi": "えあろすてっぷ"
   },
   "wind_move": {
-   "name": "ビュンビュンジャンプ",
+   "name": "エアロジャンプ",
    "type": "風",
    "category": "move",
    "role": "move",
@@ -1298,10 +1298,10 @@
    "enabled": false,
    "range_class": "support",
    "cost": "few",
-   "yomi": "びゅんびゅんじゃんぷ"
+   "yomi": "えあろじゃんぷ"
   },
   "earth_ladder1": {
-   "name": "ゴロ",
+   "name": "ガイア",
    "type": "地",
    "category": "attack",
    "role": "ladder",
@@ -1320,10 +1320,10 @@
    "desc": "大地の力で たたく。何回でも使える",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ごろ"
+   "yomi": "がいあ"
   },
   "earth_ladder2": {
-   "name": "ゴロラ",
+   "name": "ガイアガ",
    "type": "地",
    "category": "attack",
    "role": "ladder",
@@ -1342,10 +1342,10 @@
    "desc": "大地の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ごろら"
+   "yomi": "がいあが"
   },
   "earth_ladder3": {
-   "name": "ゴロドン",
+   "name": "ガイアバースト",
    "type": "地",
    "category": "attack",
    "role": "ladder",
@@ -1364,10 +1364,10 @@
    "desc": "大きな大地の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ごろどん"
+   "yomi": "がいあばーすと"
   },
   "earth_ladder4": {
-   "name": "ゴロドーン",
+   "name": "ガイアノヴァ",
    "type": "地",
    "category": "attack",
    "role": "ladder",
@@ -1386,10 +1386,10 @@
    "desc": "いちばん大きな大地の力。移動したら使えない",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ごろどーん"
+   "yomi": "がいあのゔぁ"
   },
   "earth_spear": {
-   "name": "グラグラランス",
+   "name": "グランドランス",
    "type": "地",
    "category": "attack",
    "role": "spear",
@@ -1408,10 +1408,10 @@
    "desc": "2マス先までつく",
    "range_class": "mid",
    "cost": "free",
-   "yomi": "ぐらぐららんす"
+   "yomi": "ぐらんどらんす"
   },
   "earth_pierce": {
-   "name": "グラグラドリル",
+   "name": "グランドドリル",
    "type": "地",
    "category": "attack",
    "role": "pierce",
@@ -1433,10 +1433,10 @@
    "range_class": "near",
    "cost": "some",
    "enabled": false,
-   "yomi": "ぐらぐらどりる"
+   "yomi": "ぐらんどどりる"
   },
   "earth_ring": {
-   "name": "グラグラリング",
+   "name": "グランドリング",
    "type": "地",
    "category": "attack",
    "role": "ring",
@@ -1455,10 +1455,10 @@
    "desc": "射程内の敵みんなに当たる",
    "range_class": "near",
    "cost": "many",
-   "yomi": "ぐらぐらりんぐ"
+   "yomi": "ぐらんどりんぐ"
   },
   "earth_map": {
-   "name": "グラグラスパイラル",
+   "name": "グランドスパイラル",
    "type": "地",
    "category": "attack",
    "role": "map",
@@ -1483,10 +1483,10 @@
    "range_class": "shape",
    "cost": "few",
    "enabled": false,
-   "yomi": "ぐらぐらすぱいらる"
+   "yomi": "ぐらんどすぱいらる"
   },
   "earth_dig": {
-   "name": "グラグラモグラ",
+   "name": "グランドダイブ",
    "type": "地",
    "category": "move",
    "role": "move",
@@ -1507,10 +1507,10 @@
    "desc": "地面にもぐって2ターン無敵(攻撃はできない)",
    "range_class": "self",
    "cost": "few",
-   "yomi": "ぐらぐらもぐら"
+   "yomi": "ぐらんどだいぶ"
   },
   "earth_buff": {
-   "name": "グラグラガード",
+   "name": "グランドガード",
    "type": "地",
    "category": "buff",
    "role": "buff",
@@ -1536,10 +1536,10 @@
    "enabled": false,
    "range_class": "self",
    "cost": "few",
-   "yomi": "ぐらぐらがーど"
+   "yomi": "ぐらんどがーど"
   },
   "ice_ladder1": {
-   "name": "ヒエ",
+   "name": "フロス",
    "type": "氷",
    "category": "attack",
    "role": "ladder",
@@ -1561,10 +1561,10 @@
    "desc": "氷の力で たたく。何回でも使える",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ひえ"
+   "yomi": "ふろす"
   },
   "ice_ladder2": {
-   "name": "ヒエラ",
+   "name": "フロスガ",
    "type": "氷",
    "category": "attack",
    "role": "ladder",
@@ -1586,10 +1586,10 @@
    "desc": "氷の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ひえら"
+   "yomi": "ふろすが"
   },
   "ice_ladder3": {
-   "name": "ヒエドン",
+   "name": "フロスバースト",
    "type": "氷",
    "category": "attack",
    "role": "ladder",
@@ -1611,10 +1611,10 @@
    "desc": "大きな氷の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ひえどん"
+   "yomi": "ふろすばーすと"
   },
   "ice_ladder4": {
-   "name": "ヒエドーン",
+   "name": "フロスノヴァ",
    "type": "氷",
    "category": "attack",
    "role": "ladder",
@@ -1636,10 +1636,10 @@
    "desc": "いちばん大きな氷の力。移動したら使えない",
    "range_class": "near",
    "cost": "free",
-   "yomi": "ひえどーん"
+   "yomi": "ふろすのゔぁ"
   },
   "ice_spear": {
-   "name": "カチコチランス",
+   "name": "ブリザードランス",
    "type": "氷",
    "category": "attack",
    "role": "spear",
@@ -1661,10 +1661,10 @@
    "desc": "2マス先までつく",
    "range_class": "mid",
    "cost": "free",
-   "yomi": "かちこちらんす"
+   "yomi": "ぶりざーどらんす"
   },
   "ice_pierce": {
-   "name": "カチコチドリル",
+   "name": "ブリザードドリル",
    "type": "氷",
    "category": "attack",
    "role": "pierce",
@@ -1688,10 +1688,10 @@
    "range_class": "near",
    "cost": "some",
    "enabled": false,
-   "yomi": "かちこちどりる"
+   "yomi": "ぶりざーどどりる"
   },
   "ice_ring": {
-   "name": "カチコチリング",
+   "name": "ブリザードリング",
    "type": "氷",
    "category": "attack",
    "role": "ring",
@@ -1713,10 +1713,10 @@
    "desc": "射程内の敵みんなに当たる",
    "range_class": "near",
    "cost": "many",
-   "yomi": "かちこちりんぐ"
+   "yomi": "ぶりざーどりんぐ"
   },
   "ice_map": {
-   "name": "カチコチクロス",
+   "name": "ブリザードクロス",
    "type": "氷",
    "category": "attack",
    "role": "map",
@@ -1744,10 +1744,10 @@
    "range_class": "shape",
    "cost": "few",
    "enabled": false,
-   "yomi": "かちこちくろす"
+   "yomi": "ぶりざーどくろす"
   },
   "ice_ail": {
-   "name": "カチコチフリーズ",
+   "name": "ブリザードバインド",
    "type": "氷",
    "category": "ailment",
    "role": "ail",
@@ -1769,10 +1769,10 @@
    "desc": "こおらせやすい",
    "range_class": "near",
    "cost": "some",
-   "yomi": "かちこちふりーず"
+   "yomi": "ぶりざーどばいんど"
   },
   "ice_debuff": {
-   "name": "カチコチウィーク",
+   "name": "ブリザードシール",
    "type": "氷",
    "category": "debuff",
    "role": "debuff",
@@ -1798,10 +1798,10 @@
    "enabled": false,
    "range_class": "mid",
    "cost": "few",
-   "yomi": "かちこちうぃーく"
+   "yomi": "ぶりざーどしーる"
   },
   "light_ladder1": {
-   "name": "キラ",
+   "name": "ルクス",
    "type": "光",
    "category": "attack",
    "role": "ladder",
@@ -1820,10 +1820,10 @@
    "desc": "光の力で たたく。何回でも使える",
    "range_class": "near",
    "cost": "free",
-   "yomi": "きら"
+   "yomi": "るくす"
   },
   "light_ladder2": {
-   "name": "キララ",
+   "name": "ルクスガ",
    "type": "光",
    "category": "attack",
    "role": "ladder",
@@ -1842,10 +1842,10 @@
    "desc": "光の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "きらら"
+   "yomi": "るくすが"
   },
   "light_ladder3": {
-   "name": "キラドン",
+   "name": "ルクスバースト",
    "type": "光",
    "category": "attack",
    "role": "ladder",
@@ -1864,10 +1864,10 @@
    "desc": "大きな光の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "きらどん"
+   "yomi": "るくすばーすと"
   },
   "light_ladder4": {
-   "name": "キラドーン",
+   "name": "ルクスノヴァ",
    "type": "光",
    "category": "attack",
    "role": "ladder",
@@ -1886,10 +1886,10 @@
    "desc": "いちばん大きな光の力。移動したら使えない",
    "range_class": "near",
    "cost": "free",
-   "yomi": "きらどーん"
+   "yomi": "るくすのゔぁ"
   },
   "light_toss": {
-   "name": "ピカピカショット",
+   "name": "シャインショット",
    "type": "光",
    "category": "attack",
    "role": "toss",
@@ -1908,10 +1908,10 @@
    "desc": "光を飛ばす。2マス先までとどく",
    "range_class": "mid",
    "cost": "free",
-   "yomi": "ぴかぴかしょっと"
+   "yomi": "しゃいんしょっと"
   },
   "light_arrow": {
-   "name": "ピカピカアロー",
+   "name": "シャインアロー",
    "type": "光",
    "category": "attack",
    "role": "arrow",
@@ -1931,10 +1931,10 @@
    "range_class": "far",
    "cost": "some",
    "enabled": false,
-   "yomi": "ぴかぴかあろー"
+   "yomi": "しゃいんあろー"
   },
   "light_ring": {
-   "name": "ピカピカリング",
+   "name": "シャインリング",
    "type": "光",
    "category": "attack",
    "role": "ring",
@@ -1953,10 +1953,10 @@
    "desc": "射程内の敵みんなに当たる",
    "range_class": "mid",
    "cost": "many",
-   "yomi": "ぴかぴかりんぐ"
+   "yomi": "しゃいんりんぐ"
   },
   "light_map": {
-   "name": "ピカピカレイン",
+   "name": "シャインレイン",
    "type": "光",
    "category": "attack",
    "role": "map",
@@ -1982,10 +1982,10 @@
    "range_class": "shape",
    "cost": "few",
    "enabled": false,
-   "yomi": "ぴかぴかれいん"
+   "yomi": "しゃいんれいん"
   },
   "light_heal1": {
-   "name": "ピカピカヒール",
+   "name": "シャインヒール",
    "type": "光",
    "category": "heal",
    "role": "heal",
@@ -2016,10 +2016,10 @@
    "noWild": true,
    "range_class": "support",
    "cost": "few",
-   "yomi": "ぴかぴかひーる"
+   "yomi": "しゃいんひーる"
   },
   "light_cure": {
-   "name": "ピカピカクリア",
+   "name": "シャインクリア",
    "type": "光",
    "category": "cure",
    "role": "cure",
@@ -2048,10 +2048,10 @@
    "enabled": false,
    "range_class": "support",
    "cost": "few",
-   "yomi": "ぴかぴかくりあ"
+   "yomi": "しゃいんくりあ"
   },
   "light_heal_all": {
-   "name": "ピカピカシャワー",
+   "name": "シャインシャワー",
    "type": "光",
    "category": "heal",
    "role": "heal",
@@ -2075,10 +2075,10 @@
    "noWild": true,
    "range_class": "support",
    "cost": "few",
-   "yomi": "ぴかぴかしゃわー"
+   "yomi": "しゃいんしゃわー"
   },
   "light_revive": {
-   "name": "ピカピカリバイブ",
+   "name": "シャインリバイブ",
    "type": "光",
    "category": "revive",
    "role": "revive",
@@ -2103,10 +2103,10 @@
    "noWild": true,
    "range_class": "self",
    "cost": "once",
-   "yomi": "ぴかぴかりばいぶ"
+   "yomi": "しゃいんりばいぶ"
   },
   "dark_ladder1": {
-   "name": "ヨミ",
+   "name": "ノクス",
    "type": "闇",
    "category": "attack",
    "role": "ladder",
@@ -2128,10 +2128,10 @@
    "desc": "闇の力で たたく。何回でも使える",
    "range_class": "near",
    "cost": "free",
-   "yomi": "よみ"
+   "yomi": "のくす"
   },
   "dark_ladder2": {
-   "name": "ヨミラ",
+   "name": "ノクスガ",
    "type": "闇",
    "category": "attack",
    "role": "ladder",
@@ -2153,10 +2153,10 @@
    "desc": "闇の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "よみら"
+   "yomi": "のくすが"
   },
   "dark_ladder3": {
-   "name": "ヨミドン",
+   "name": "ノクスバースト",
    "type": "闇",
    "category": "attack",
    "role": "ladder",
@@ -2178,10 +2178,10 @@
    "desc": "大きな闇の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "よみどん"
+   "yomi": "のくすばーすと"
   },
   "dark_ladder4": {
-   "name": "ヨミドーン",
+   "name": "ノクスノヴァ",
    "type": "闇",
    "category": "attack",
    "role": "ladder",
@@ -2203,10 +2203,10 @@
    "desc": "いちばん大きな闇の力。移動したら使えない",
    "range_class": "near",
    "cost": "free",
-   "yomi": "よみどーん"
+   "yomi": "のくすのゔぁ"
   },
   "dark_spear": {
-   "name": "ゾクゾクランス",
+   "name": "ヴォイドランス",
    "type": "闇",
    "category": "attack",
    "role": "spear",
@@ -2228,10 +2228,10 @@
    "desc": "2マス先までつく",
    "range_class": "mid",
    "cost": "free",
-   "yomi": "ぞくぞくらんす"
+   "yomi": "ゔぉいどらんす"
   },
   "dark_pierce": {
-   "name": "ゾクゾクドリル",
+   "name": "ヴォイドドリル",
    "type": "闇",
    "category": "attack",
    "role": "pierce",
@@ -2255,10 +2255,10 @@
    "range_class": "near",
    "cost": "some",
    "enabled": false,
-   "yomi": "ぞくぞくどりる"
+   "yomi": "ゔぉいどどりる"
   },
   "dark_ring": {
-   "name": "ゾクゾクリング",
+   "name": "ヴォイドリング",
    "type": "闇",
    "category": "attack",
    "role": "ring",
@@ -2280,10 +2280,10 @@
    "desc": "射程内の敵みんなに当たる",
    "range_class": "near",
    "cost": "many",
-   "yomi": "ぞくぞくりんぐ"
+   "yomi": "ゔぉいどりんぐ"
   },
   "dark_map": {
-   "name": "ゾクゾクスパイラル",
+   "name": "ヴォイドスパイラル",
    "type": "闇",
    "category": "attack",
    "role": "map",
@@ -2311,10 +2311,10 @@
    "range_class": "shape",
    "cost": "few",
    "enabled": false,
-   "yomi": "ぞくぞくすぱいらる"
+   "yomi": "ゔぉいどすぱいらる"
   },
   "dark_debuff": {
-   "name": "ゾクゾクブレイク",
+   "name": "ヴォイドブレイク",
    "type": "闇",
    "category": "debuff",
    "role": "debuff",
@@ -2340,10 +2340,10 @@
    "enabled": false,
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ぞくぞくぶれいく"
+   "yomi": "ゔぉいどぶれいく"
   },
   "dark_hide": {
-   "name": "ゾクゾクハイド",
+   "name": "ヴォイドハイド",
    "type": "闇",
    "category": "buff",
    "role": "buff",
@@ -2368,10 +2368,10 @@
    "enabled": false,
    "range_class": "self",
    "cost": "few",
-   "yomi": "ぞくぞくはいど"
+   "yomi": "ゔぉいどはいど"
   },
   "dragon_ladder1": {
-   "name": "リュガ",
+   "name": "ドラグ",
    "type": "竜",
    "category": "attack",
    "role": "ladder",
@@ -2390,10 +2390,10 @@
    "desc": "竜の力で たたく。何回でも使える",
    "range_class": "near",
    "cost": "free",
-   "yomi": "りゅが"
+   "yomi": "どらぐ"
   },
   "dragon_ladder2": {
-   "name": "リュガラ",
+   "name": "ドラグガ",
    "type": "竜",
    "category": "attack",
    "role": "ladder",
@@ -2412,10 +2412,10 @@
    "desc": "竜の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "りゅがら"
+   "yomi": "どらぐが"
   },
   "dragon_ladder3": {
-   "name": "リュガドン",
+   "name": "ドラグバースト",
    "type": "竜",
    "category": "attack",
    "role": "ladder",
@@ -2434,10 +2434,10 @@
    "desc": "大きな竜の力をぶつける",
    "range_class": "near",
    "cost": "free",
-   "yomi": "りゅがどん"
+   "yomi": "どらぐばーすと"
   },
   "dragon_ladder4": {
-   "name": "リュガドーン",
+   "name": "ドラグノヴァ",
    "type": "竜",
    "category": "attack",
    "role": "ladder",
@@ -2456,10 +2456,10 @@
    "desc": "いちばん大きな竜の力。移動したら使えない",
    "range_class": "near",
    "cost": "free",
-   "yomi": "りゅがどーん"
+   "yomi": "どらぐのゔぁ"
   },
   "dragon_toss": {
-   "name": "ガオガオショット",
+   "name": "ワイバーンショット",
    "type": "竜",
    "category": "attack",
    "role": "toss",
@@ -2478,10 +2478,10 @@
    "desc": "竜を飛ばす。2マス先までとどく",
    "range_class": "mid",
    "cost": "free",
-   "yomi": "がおがおしょっと"
+   "yomi": "わいばーんしょっと"
   },
   "dragon_arrow": {
-   "name": "ガオガオアロー",
+   "name": "ワイバーンアロー",
    "type": "竜",
    "category": "attack",
    "role": "arrow",
@@ -2501,10 +2501,10 @@
    "range_class": "far",
    "cost": "some",
    "enabled": false,
-   "yomi": "がおがおあろー"
+   "yomi": "わいばーんあろー"
   },
   "dragon_ring": {
-   "name": "ガオガオリング",
+   "name": "ワイバーンリング",
    "type": "竜",
    "category": "attack",
    "role": "ring",
@@ -2523,10 +2523,10 @@
    "desc": "射程内の敵みんなに当たる",
    "range_class": "mid",
    "cost": "many",
-   "yomi": "がおがおりんぐ"
+   "yomi": "わいばーんりんぐ"
   },
   "dragon_map": {
-   "name": "ガオガオライン",
+   "name": "ワイバーンライン",
    "type": "竜",
    "category": "attack",
    "role": "map",
@@ -2551,10 +2551,10 @@
    "range_class": "shape",
    "cost": "few",
    "enabled": false,
-   "yomi": "がおがおらいん"
+   "yomi": "わいばーんらいん"
   },
   "dragon_buff": {
-   "name": "ガオガオパワー",
+   "name": "ワイバーンオーラ",
    "type": "竜",
    "category": "buff",
    "role": "buff",
@@ -2585,10 +2585,10 @@
    "enabled": false,
    "range_class": "self",
    "cost": "few",
-   "yomi": "がおがおぱわー"
+   "yomi": "わいばーんおーら"
   },
   "dragon_debuff": {
-   "name": "ガオガオロア",
+   "name": "ワイバーンロア",
    "type": "竜",
    "category": "debuff",
    "role": "debuff",
@@ -2614,10 +2614,10 @@
    "enabled": false,
    "range_class": "near",
    "cost": "few",
-   "yomi": "がおがおろあ"
+   "yomi": "わいばーんろあ"
   },
   "sig_enou": {
-   "name": "キツネビカッター",
+   "name": "フォックスブレイド",
    "type": "炎",
    "category": "attack",
    "role": "sig_line",
@@ -2636,13 +2636,13 @@
     "ail": "burn",
     "chance": 0.5
    },
-   "desc": "燃やすべき線だけを焼く王のきつね火",
+   "desc": "きつね火の刃で切りさく",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "きつねびかったー"
+   "yomi": "ふぉっくすぶれいど"
   },
   "starter_enou": {
-   "name": "キツネビダッシュ",
+   "name": "フレイムラッシュ",
    "type": "炎",
    "category": "attack",
    "role": "sig_starter",
@@ -2661,13 +2661,13 @@
     "ail": "burn",
     "chance": 0.5
    },
-   "desc": "だれにもつかまらない速さで火をまとって走る",
+   "desc": "火をまとって走り、体当たりする",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "きつねびだっしゅ"
+   "yomi": "ふれいむらっしゅ"
   },
   "sig_sasori": {
-   "name": "サソリメテオ",
+   "name": "スティンガーフォール",
    "type": "炎",
    "category": "attack",
    "role": "sig_line",
@@ -2689,10 +2689,10 @@
    "desc": "流れ星のようなしっぽの一撃",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "さそりめてお"
+   "yomi": "すてぃんがーふぉーる"
   },
   "sig_sala": {
-   "name": "ヨウガンスライド",
+   "name": "マグマスライダー",
    "type": "炎",
    "category": "attack",
    "role": "sig_line",
@@ -2714,10 +2714,10 @@
    "desc": "溶岩の上をすべって体当たり",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ようがんすらいど"
+   "yomi": "まぐますらいだー"
   },
   "sig_otter": {
-   "name": "プカプカタイフーン",
+   "name": "メイルストローム",
    "type": "水",
    "category": "attack",
    "role": "sig_line",
@@ -2733,13 +2733,13 @@
    "hit": 100,
    "crit": 20,
    "effect": {},
-   "desc": "浮かんだまま大きなうずをまく",
+   "desc": "大きなうずで敵をのみこむ",
    "range_class": "near",
    "cost": "few",
-   "yomi": "ぷかぷかたいふーん"
+   "yomi": "めいるすとろーむ"
   },
   "sig_croc": {
-   "name": "オオアゴガブリ",
+   "name": "ジョーズクラッシュ",
    "type": "水",
    "category": "attack",
    "role": "sig_line",
@@ -2755,13 +2755,13 @@
    "hit": 100,
    "crit": 20,
    "effect": {},
-   "desc": "親分の大きなあごでかみつく",
+   "desc": "大きなあごでかみくだく",
    "range_class": "near",
    "cost": "few",
-   "yomi": "おおあごがぶり"
+   "yomi": "じょーずくらっしゅ"
   },
   "sig_whale": {
-   "name": "オヤブンウェーブ",
+   "name": "ギガウェーブ",
    "type": "水",
    "category": "attack",
    "role": "sig_line",
@@ -2777,13 +2777,13 @@
    "hit": 100,
    "crit": 20,
    "effect": {},
-   "desc": "小さい子を守る大きな波",
+   "desc": "大きな波でおしながす",
    "range_class": "near",
    "cost": "few",
-   "yomi": "おやぶんうぇーぶ"
+   "yomi": "ぎがうぇーぶ"
   },
   "sig_kuma": {
-   "name": "グリズリーバーサーク",
+   "name": "ワイルドバーサーク",
    "type": "森",
    "category": "attack",
    "role": "sig_line",
@@ -2803,13 +2803,13 @@
     "chance": 0.5,
     "drain": 0.5
    },
-   "desc": "怒ると止まらない大きな爪",
+   "desc": "怒りの爪で切りさく",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ぐりずりーばーさーく"
+   "yomi": "わいるどばーさーく"
   },
   "starter_kuma": {
-   "name": "ベルベルパンチ",
+   "name": "ベアナックル",
    "type": "森",
    "category": "attack",
    "role": "sig_starter",
@@ -2829,13 +2829,13 @@
     "chance": 0.5,
     "drain": 0.5
    },
-   "desc": "鈴の音がひびくパンチ",
+   "desc": "重いこぶしでなぐる",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "べるべるぱんち"
+   "yomi": "べあなっくる"
   },
   "sig_aloe": {
-   "name": "ユグドラドレイン",
+   "name": "エバーグリーンドレイン",
    "type": "森",
    "category": "attack",
    "role": "sig_line",
@@ -2855,13 +2855,13 @@
     "chance": 0.5,
     "drain": 0.5
    },
-   "desc": "大樹の力ですいとって大きく回復",
+   "desc": "大樹の力で体力をすいとる",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ゆぐどらどれいん"
+   "yomi": "えばーぐりーんどれいん"
   },
   "sig_mantis": {
-   "name": "カマキリケンポー",
+   "name": "マンティスエッジ",
    "type": "森",
    "category": "attack",
    "role": "sig_line",
@@ -2881,10 +2881,10 @@
     "chance": 0.5,
     "drain": 0.5
    },
-   "desc": "百回練習した型で切る",
+   "desc": "鋭いかまで切りさく",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "かまきりけんぽー"
+   "yomi": "まんてぃすえっじ"
   },
   "sig_tora": {
    "name": "ビャッコサンダー",
@@ -2906,13 +2906,13 @@
     "ail": "para",
     "chance": 0.5
    },
-   "desc": "西の門を守る白い虎の雷",
+   "desc": "白い虎の雷をおとす",
    "range_class": "mid",
    "cost": "few",
    "yomi": "びゃっこさんだー"
   },
   "starter_tora": {
-   "name": "マケンキダッシュ",
+   "name": "サンダーラッシュ",
    "type": "雷",
    "category": "attack",
    "role": "sig_starter",
@@ -2931,13 +2931,13 @@
     "ail": "para",
     "chance": 0.5
    },
-   "desc": "勝つまでやめない突進",
+   "desc": "雷をまとって突進する",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "まけんきだっしゅ"
+   "yomi": "さんだーらっしゅ"
   },
   "sig_piri": {
-   "name": "ナルカミボルト",
+   "name": "ストームボルト",
    "type": "雷",
    "category": "attack",
    "role": "sig_line",
@@ -2956,13 +2956,13 @@
     "ail": "para",
     "chance": 0.5
    },
-   "desc": "雨を知らせる大きな雷",
+   "desc": "大きな雷をおとす",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "なるかみぼると"
+   "yomi": "すとーむぼると"
   },
   "sig_thor": {
-   "name": "ゴウカイスマッシュ",
+   "name": "ミョルニルスマッシュ",
    "type": "雷",
    "category": "attack",
    "role": "sig_line",
@@ -2981,13 +2981,13 @@
     "ail": "para",
     "chance": 0.5
    },
-   "desc": "豪快にふりおろす雷のつち",
+   "desc": "雷のつちをふりおろす",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ごうかいすまっしゅ"
+   "yomi": "みょるにるすまっしゅ"
   },
   "sig_momonga": {
-   "name": "ヨカゼグライド",
+   "name": "ナイトグライダー",
    "type": "風",
    "category": "attack",
    "role": "sig_line",
@@ -3003,10 +3003,10 @@
    "hit": 100,
    "crit": 20,
    "effect": {},
-   "desc": "よく気がつく見張りの夜風",
+   "desc": "夜風にのってすべりこみ、切りつける",
    "range_class": "near",
    "cost": "few",
-   "yomi": "よかぜぐらいど"
+   "yomi": "ないとぐらいだー"
   },
   "sig_taka": {
    "name": "イーグルダイブ",
@@ -3025,13 +3025,13 @@
    "hit": 100,
    "crit": 20,
    "effect": {},
-   "desc": "約束を守る鷲の急降下",
+   "desc": "空から急降下してつかみかかる",
    "range_class": "near",
    "cost": "few",
    "yomi": "いーぐるだいぶ"
   },
   "sig_kabuto": {
-   "name": "ツノムシャチャージ",
+   "name": "ホーンブレイカー",
    "type": "風",
    "category": "attack",
    "role": "sig_line",
@@ -3047,13 +3047,13 @@
    "hit": 100,
    "crit": 20,
    "effect": {},
-   "desc": "主の前に立つ一途なツノの突進",
+   "desc": "ツノをかまえて突進する",
    "range_class": "near",
    "cost": "few",
-   "yomi": "つのむしゃちゃーじ"
+   "yomi": "ほーんぶれいかー"
   },
   "sig_armad": {
-   "name": "マンマルローリング",
+   "name": "ギガローリング",
    "type": "地",
    "category": "attack",
    "role": "sig_line",
@@ -3072,10 +3072,10 @@
    "desc": "まるくなって ころがって ぶつかる",
    "range_class": "near",
    "cost": "few",
-   "yomi": "まんまるろーりんぐ"
+   "yomi": "ぎがろーりんぐ"
   },
   "sig_kuwa": {
-   "name": "クワガタギリ",
+   "name": "クロスシザー",
    "type": "地",
    "category": "attack",
    "role": "sig_line",
@@ -3091,13 +3091,13 @@
    "hit": 100,
    "crit": 20,
    "effect": {},
-   "desc": "武者のかぶとの一太刀",
+   "desc": "大あごではさみ切る",
    "range_class": "near",
    "cost": "few",
-   "yomi": "くわがたぎり"
+   "yomi": "くろすしざー"
   },
   "sig_zou": {
-   "name": "マンモスストンプ",
+   "name": "タイタンストンプ",
    "type": "地",
    "category": "attack",
    "role": "sig_line",
@@ -3113,10 +3113,10 @@
    "hit": 100,
    "crit": 20,
    "effect": {},
-   "desc": "白い象が大地をふみならす",
+   "desc": "大地をふみならす",
    "range_class": "near",
    "cost": "few",
-   "yomi": "まんもすすとんぷ"
+   "yomi": "たいたんすとんぷ"
   },
   "sig_yuki": {
    "name": "コンロンファング",
@@ -3138,13 +3138,13 @@
     "ail": "freeze",
     "chance": 0.5
    },
-   "desc": "雪の山の白い牙",
+   "desc": "氷の牙でかみつく",
    "range_class": "near",
    "cost": "few",
    "yomi": "こんろんふぁんぐ"
   },
   "sig_pen": {
-   "name": "ヨロイスライド",
+   "name": "フロストスライダー",
    "type": "氷",
    "category": "attack",
    "role": "sig_line",
@@ -3166,10 +3166,10 @@
    "desc": "氷のよろいで すべってぶつかる",
    "range_class": "near",
    "cost": "few",
-   "yomi": "よろいすらいど"
+   "yomi": "ふろすとすらいだー"
   },
   "sig_seal": {
-   "name": "セイウチファング",
+   "name": "タスクブレイカー",
    "type": "氷",
    "category": "attack",
    "role": "sig_line",
@@ -3188,13 +3188,13 @@
     "ail": "freeze",
     "chance": 0.5
    },
-   "desc": "群れの長の大きなキバ",
+   "desc": "大きなキバでつく",
    "range_class": "near",
    "cost": "few",
-   "yomi": "せいうちふぁんぐ"
+   "yomi": "たすくぶれいかー"
   },
   "sig_prism": {
-   "name": "ニジイロビーム",
+   "name": "プリズムレイ",
    "type": "光",
    "category": "attack",
    "role": "sig_line",
@@ -3210,10 +3210,10 @@
    "hit": 100,
    "crit": 20,
    "effect": {},
-   "desc": "雨上がりのにじの光",
+   "desc": "にじ色の光線をうつ",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "にじいろびーむ"
+   "yomi": "ぷりずむれい"
   },
   "sig_grif": {
    "name": "ゴールデンクロー",
@@ -3232,13 +3232,13 @@
    "hit": 100,
    "crit": 20,
    "effect": {},
-   "desc": "黄金を守る門番の爪",
+   "desc": "金色の爪で切りさく",
    "range_class": "mid",
    "cost": "few",
    "yomi": "ごーるでんくろー"
   },
   "sig_hotaru": {
-   "name": "ミチシルベビーム",
+   "name": "ガイディングライト",
    "type": "光",
    "category": "attack",
    "role": "sig_line",
@@ -3254,13 +3254,13 @@
    "hit": 100,
    "crit": 20,
    "effect": {},
-   "desc": "道しるべの光",
+   "desc": "まっすぐな光線でうつ",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "みちしるべびーむ"
+   "yomi": "がいでぃんぐらいと"
   },
   "sig_ghost": {
-   "name": "オバケマチブセ",
+   "name": "ファントムブロウ",
    "type": "闇",
    "category": "attack",
    "role": "sig_line",
@@ -3279,13 +3279,13 @@
     "ail": "poison",
     "chance": 0.5
    },
-   "desc": "何年でも待つお化けの一撃",
+   "desc": "影から飛び出して不意打ちする",
    "range_class": "near",
    "cost": "few",
-   "yomi": "おばけまちぶせ"
+   "yomi": "ふぁんとむぶろう"
   },
   "sig_owl": {
-   "name": "ナイトウィスパー",
+   "name": "ルナティックアイ",
    "type": "闇",
    "category": "attack",
    "role": "sig_line",
@@ -3304,13 +3304,13 @@
     "ail": "poison",
     "chance": 0.5
    },
-   "desc": "ひと声で弱点を見ぬく",
+   "desc": "月の目で見つめ、弱点を見ぬいて打つ",
    "range_class": "near",
    "cost": "few",
-   "yomi": "ないとうぃすぱー"
+   "yomi": "るなてぃっくあい"
   },
   "sig_bat": {
-   "name": "ヨマワリバイト",
+   "name": "ブラッドファング",
    "type": "闇",
    "category": "attack",
    "role": "sig_line",
@@ -3329,13 +3329,13 @@
     "ail": "poison",
     "chance": 0.5
    },
-   "desc": "悪いやつにだけ向ける夜の牙",
+   "desc": "やみの牙でかみつく",
    "range_class": "near",
    "cost": "few",
-   "yomi": "よまわりばいと"
+   "yomi": "ぶらっどふぁんぐ"
   },
   "sig_dino": {
-   "name": "アマエンボチャージ",
+   "name": "ダイノラッシュ",
    "type": "竜",
    "category": "attack",
    "role": "sig_line",
@@ -3351,13 +3351,13 @@
    "hit": 100,
    "crit": 20,
    "effect": {},
-   "desc": "主のためなら止まらない大突進",
+   "desc": "頭から大突進する",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "あまえんぼちゃーじ"
+   "yomi": "だいのらっしゅ"
   },
   "sig_seiryu": {
-   "name": "セイリュウストリーム",
+   "name": "アズールストリーム",
    "type": "竜",
    "category": "attack",
    "role": "sig_line",
@@ -3373,10 +3373,10 @@
    "hit": 100,
    "crit": 20,
    "effect": {},
-   "desc": "自分で決めて守る青い龍の流れ",
+   "desc": "青い龍の水流でおしながす",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "せいりゅうすとりーむ"
+   "yomi": "あずーるすとりーむ"
   },
   "sig_lind": {
    "name": "ゴールドブレス",
@@ -3395,13 +3395,13 @@
    "hit": 100,
    "crit": 20,
    "effect": {},
-   "desc": "宝より守り方。誇り高い竜の息",
+   "desc": "金色の息をはく",
    "range_class": "mid",
    "cost": "few",
    "yomi": "ごーるどぶれす"
   },
   "fsig_2061": {
-   "name": "ヘラクレスチャージ",
+   "name": "オリンポスチャージ",
    "type": "風",
    "category": "attack",
    "role": "sig_boss",
@@ -3420,7 +3420,7 @@
    "desc": "王のツノで突進する",
    "range_class": "near",
    "cost": "few",
-   "yomi": "へらくれすちゃーじ"
+   "yomi": "おりんぽすちゃーじ"
   },
   "godherak_cross": {
    "name": "オウジャクロス",
@@ -3450,7 +3450,7 @@
    "yomi": "おうじゃくろす"
   },
   "fsig_2004": {
-   "name": "スザクストーム",
+   "name": "クリムゾンフェザー",
    "type": "風",
    "category": "attack",
    "role": "sig_fusion",
@@ -3469,13 +3469,13 @@
     "ail": "burn",
     "chance": 0.5
    },
-   "desc": "南を守る火の鳥のつばさ",
+   "desc": "炎の羽をまきちらす",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "すざくすとーむ"
+   "yomi": "くりむぞんふぇざー"
   },
   "fsig_2005": {
-   "name": "ラドーンバイト",
+   "name": "ガーディアンバイト",
    "type": "森",
    "category": "attack",
    "role": "sig_fusion",
@@ -3498,10 +3498,10 @@
    "desc": "黄金のりんごを守る竜",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "らどーんばいと"
+   "yomi": "がーでぃあんばいと"
   },
   "fsig_2006": {
-   "name": "ダブルホーンアタック",
+   "name": "ツインホーンブレイク",
    "type": "地",
    "category": "attack",
    "role": "sig_fusion",
@@ -3520,10 +3520,10 @@
    "desc": "ツノとクワの二つの一撃",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "だぶるほーんあたっく"
+   "yomi": "ついんほーんぶれいく"
   },
   "fsig_2007": {
-   "name": "プテラグライド",
+   "name": "プテラストライク",
    "type": "竜",
    "category": "attack",
    "role": "sig_fusion",
@@ -3542,10 +3542,10 @@
    "desc": "大むかしの空を飛ぶ",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ぷてらぐらいど"
+   "yomi": "ぷてらすとらいく"
   },
   "fsig_2008": {
-   "name": "ロングネックスイング",
+   "name": "ブラキオハンマー",
    "type": "竜",
    "category": "attack",
    "role": "sig_fusion",
@@ -3564,10 +3564,10 @@
    "desc": "長い首でおそいかかる",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ろんぐねっくすいんぐ"
+   "yomi": "ぶらきおはんまー"
   },
   "fsig_2009": {
-   "name": "トリプルホーンチャージ",
+   "name": "トリケラブレイク",
    "type": "森",
    "category": "attack",
    "role": "sig_fusion",
@@ -3590,10 +3590,10 @@
    "desc": "三本の角でつっこむ",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "とりぷるほーんちゃーじ"
+   "yomi": "とりけらぶれいく"
   },
   "fsig_2010": {
-   "name": "ヨミガエリフレイム",
+   "name": "リザレクトフレイム",
    "type": "炎",
    "category": "attack",
    "role": "sig_fusion",
@@ -3615,10 +3615,10 @@
    "desc": "よみがえりの神の炎",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "よみがえりふれいむ"
+   "yomi": "りざれくとふれいむ"
   },
   "fsig_2011": {
-   "name": "タイヨウフレア",
+   "name": "サンゴッドフレア",
    "type": "光",
    "category": "attack",
    "role": "sig_fusion",
@@ -3637,10 +3637,10 @@
    "desc": "太陽の神の光",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "たいようふれあ"
+   "yomi": "さんごっどふれあ"
   },
   "fsig_2012": {
-   "name": "アイスロックプレス",
+   "name": "モノリスプレス",
    "type": "地",
    "category": "attack",
    "role": "sig_fusion",
@@ -3662,10 +3662,10 @@
    "desc": "氷の岩ごとのしかかる",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "あいすろっくぷれす"
+   "yomi": "ものりすぷれす"
   },
   "fsig_2013": {
-   "name": "マンモスドスン",
+   "name": "エンシェントタスク",
    "type": "地",
    "category": "attack",
    "role": "sig_fusion",
@@ -3684,10 +3684,10 @@
    "desc": "大むかしの大きな牙",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "まんもすどすん"
+   "yomi": "えんしぇんとたすく"
   },
   "fsig_2014": {
-   "name": "フレイムウイング",
+   "name": "ゴールドフレアウイング",
    "type": "光",
    "category": "attack",
    "role": "sig_fusion",
@@ -3709,10 +3709,10 @@
    "desc": "金色の炎のつばさ",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ふれいむういんぐ"
+   "yomi": "ごーるどふれあういんぐ"
   },
   "fsig_2015": {
-   "name": "サンダーウイング",
+   "name": "ボルトウイング",
    "type": "光",
    "category": "attack",
    "role": "sig_fusion",
@@ -3734,10 +3734,10 @@
    "desc": "金色の雷のつばさ",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "さんだーういんぐ"
+   "yomi": "ぼるとういんぐ"
   },
   "fsig_2016": {
-   "name": "ナゾナゾロア",
+   "name": "リドルロア",
    "type": "光",
    "category": "attack",
    "role": "sig_fusion",
@@ -3756,10 +3756,10 @@
    "desc": "なぞをかけるほえ声",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "なぞなぞろあ"
+   "yomi": "りどるろあ"
   },
   "fsig_2017": {
-   "name": "ライトウイング",
+   "name": "ホーリーウイング",
    "type": "光",
    "category": "attack",
    "role": "sig_fusion",
@@ -3778,7 +3778,7 @@
    "desc": "光のつばさで打つ",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "らいとういんぐ"
+   "yomi": "ほーりーういんぐ"
   },
   "fsig_2018": {
    "name": "ディープタイダル",
@@ -3803,7 +3803,7 @@
    "yomi": "でぃーぷたいだる"
   },
   "fsig_2020": {
-   "name": "トリプルヘッドバーン",
+   "name": "トリプルヘッドブレイズ",
    "type": "竜",
    "category": "attack",
    "role": "sig_fusion",
@@ -3825,10 +3825,10 @@
    "desc": "三つの首から炎",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "とりぷるへっどばーん"
+   "yomi": "とりぷるへっどぶれいず"
   },
   "fsig_2022": {
-   "name": "スチームキック",
+   "name": "スチームブラスト",
    "type": "炎",
    "category": "attack",
    "role": "sig_fusion",
@@ -3850,10 +3850,10 @@
    "desc": "あつい湯けむりのキック",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "すちーむきっく"
+   "yomi": "すちーむぶらすと"
   },
   "fsig_2024": {
-   "name": "ライジュウボルト",
+   "name": "プラズマボルト",
    "type": "雷",
    "category": "attack",
    "role": "sig_fusion",
@@ -3875,10 +3875,10 @@
    "desc": "雷の獣の火花",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "らいじゅうぼると"
+   "yomi": "ぷらずまぼると"
   },
   "fsig_2025": {
-   "name": "カザンシェルプレス",
+   "name": "ボルケーノシェル",
    "type": "地",
    "category": "attack",
    "role": "sig_fusion",
@@ -3900,10 +3900,10 @@
    "desc": "火山のような甲羅でのしかかる",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "かざんしぇるぷれす"
+   "yomi": "ぼるけーのしぇる"
   },
   "fsig_2026": {
-   "name": "ホワイトフレイム",
+   "name": "ホワイトインフェルノ",
    "type": "炎",
    "category": "attack",
    "role": "sig_fusion",
@@ -3925,10 +3925,10 @@
    "desc": "白い炎",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ほわいとふれいむ"
+   "yomi": "ほわいといんふぇるの"
   },
   "fsig_2027": {
-   "name": "ガルムファング",
+   "name": "ケルベロスファング",
    "type": "炎",
    "category": "attack",
    "role": "sig_fusion",
@@ -3950,10 +3950,10 @@
    "desc": "冥界の番犬の牙",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "がるむふぁんぐ"
+   "yomi": "けるべろすふぁんぐ"
   },
   "fsig_2028": {
-   "name": "ゴッドフレイム",
+   "name": "ヒノカミフレイム",
    "type": "竜",
    "category": "attack",
    "role": "sig_fusion",
@@ -3975,7 +3975,7 @@
    "desc": "火の神の炎",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ごっどふれいむ"
+   "yomi": "ひのかみふれいむ"
   },
   "fsig_2029": {
    "name": "ロータスウェーブ",
@@ -4025,7 +4025,7 @@
    "yomi": "なーがぼると"
   },
   "fsig_2031": {
-   "name": "スカイダイブ",
+   "name": "スカイブリーチ",
    "type": "水",
    "category": "attack",
    "role": "sig_fusion",
@@ -4044,10 +4044,10 @@
    "desc": "空を泳ぐくじらの潮",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "すかいだいぶ"
+   "yomi": "すかいぶりーち"
   },
   "fsig_2032": {
-   "name": "マッドボム",
+   "name": "マッドインパクト",
    "type": "地",
    "category": "attack",
    "role": "sig_fusion",
@@ -4066,10 +4066,10 @@
    "desc": "どろをはね上げる",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "まっどぼむ"
+   "yomi": "まっどいんぱくと"
   },
   "fsig_2033": {
-   "name": "イッカクスラスト",
+   "name": "ナーワルスラスト",
    "type": "氷",
    "category": "attack",
    "role": "sig_fusion",
@@ -4091,7 +4091,7 @@
    "desc": "一本角でつく",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "いっかくすらすと"
+   "yomi": "なーわるすらすと"
   },
   "fsig_2034": {
    "name": "ルミナスウェーブ",
@@ -4116,7 +4116,7 @@
    "yomi": "るみなすうぇーぶ"
   },
   "fsig_2035": {
-   "name": "タコアシスイング",
+   "name": "テンタクルストーム",
    "type": "水",
    "category": "attack",
    "role": "sig_fusion",
@@ -4138,10 +4138,10 @@
    "desc": "八本の腕で大うずをまく",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "たこあしすいんぐ"
+   "yomi": "てんたくるすとーむ"
   },
   "fsig_2036": {
-   "name": "イカヅチホーン",
+   "name": "サンダーアントラー",
    "type": "地",
    "category": "attack",
    "role": "sig_fusion",
@@ -4163,10 +4163,10 @@
    "desc": "雷の角でつっこむ",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "いかづちほーん"
+   "yomi": "さんだーあんとらー"
   },
   "fsig_2037": {
-   "name": "ワタゲフライト",
+   "name": "フロートストーム",
    "type": "風",
    "category": "attack",
    "role": "sig_fusion",
@@ -4189,7 +4189,7 @@
    "desc": "わた毛を飛ばす",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "わたげふらいと"
+   "yomi": "ふろーとすとーむ"
   },
   "fsig_2038": {
    "name": "ヤマガミチャージ",
@@ -4244,7 +4244,7 @@
    "yomi": "じゅひょうすとーむ"
   },
   "fsig_2040": {
-   "name": "ヒナタボッコビーム",
+   "name": "サンシャインレイ",
    "type": "森",
    "category": "attack",
    "role": "sig_fusion",
@@ -4267,10 +4267,10 @@
    "desc": "あたたかい光",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ひなたぼっこびーむ"
+   "yomi": "さんしゃいんれい"
   },
   "fsig_2041": {
-   "name": "ドクハナショック",
+   "name": "ポイズンブルーム",
    "type": "雷",
    "category": "attack",
    "role": "sig_fusion",
@@ -4293,10 +4293,10 @@
    "desc": "しびれる毒の花",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "どくはなしょっく"
+   "yomi": "ぽいずんぶるーむ"
   },
   "fsig_2042": {
-   "name": "ライチョウダイブ",
+   "name": "サンダーバードダイブ",
    "type": "風",
    "category": "attack",
    "role": "sig_fusion",
@@ -4318,10 +4318,10 @@
    "desc": "雷の鳥の急降下",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "らいちょうだいぶ"
+   "yomi": "さんだーばーどだいぶ"
   },
   "fsig_2043": {
-   "name": "サンダーホーン",
+   "name": "ライノボルト",
    "type": "地",
    "category": "attack",
    "role": "sig_fusion",
@@ -4343,10 +4343,10 @@
    "desc": "いなずまの角",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "さんだーほーん"
+   "yomi": "らいのぼると"
   },
   "fsig_2044": {
-   "name": "オーロラハウル",
+   "name": "ポーラーハウル",
    "type": "氷",
    "category": "attack",
    "role": "sig_fusion",
@@ -4368,7 +4368,7 @@
    "desc": "オーロラの下のとおぼえ",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "おーろらはうる"
+   "yomi": "ぽーらーはうる"
   },
   "fsig_2045": {
    "name": "ペガサスボルト",
@@ -4396,7 +4396,7 @@
    "yomi": "ぺがさすぼると"
   },
   "fsig_2046": {
-   "name": "ヌエシャウト",
+   "name": "ナイトメアシャウト",
    "type": "雷",
    "category": "attack",
    "role": "sig_fusion",
@@ -4418,10 +4418,10 @@
    "desc": "夜にひびく鳴き声",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ぬえしゃうと"
+   "yomi": "ないとめあしゃうと"
   },
   "fsig_2047": {
-   "name": "ハチライボム",
+   "name": "エイトボルトストーム",
    "type": "竜",
    "category": "attack",
    "role": "sig_fusion",
@@ -4443,10 +4443,10 @@
    "desc": "八つの雷の竜",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "はちらいぼむ"
+   "yomi": "えいとぼるとすとーむ"
   },
   "fsig_2048": {
-   "name": "オロチサンドストーム",
+   "name": "デザートストーム",
    "type": "竜",
    "category": "attack",
    "role": "sig_fusion",
@@ -4465,7 +4465,7 @@
    "desc": "砂あらしの八つの首",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "おろちさんどすとーむ"
+   "yomi": "でざーとすとーむ"
   },
   "fsig_2049": {
    "name": "ヤクスタンピード",
@@ -4493,7 +4493,7 @@
    "yomi": "やくすたんぴーど"
   },
   "fsig_2050": {
-   "name": "ピーコックビーム",
+   "name": "ピーコックレイ",
    "type": "風",
    "category": "attack",
    "role": "sig_fusion",
@@ -4512,10 +4512,10 @@
    "desc": "千の目の羽が光る",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ぴーこっくびーむ"
+   "yomi": "ぴーこっくれい"
   },
   "fsig_2051": {
-   "name": "ミチビキダイブ",
+   "name": "ヤタガラスダイブ",
    "type": "風",
    "category": "attack",
    "role": "sig_fusion",
@@ -4537,10 +4537,10 @@
    "desc": "三本足のからすの道案内",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "みちびきだいぶ"
+   "yomi": "やたがらすだいぶ"
   },
   "fsig_2052": {
-   "name": "アラシウイング",
+   "name": "テンペストウイング",
    "type": "竜",
    "category": "attack",
    "role": "sig_fusion",
@@ -4559,7 +4559,7 @@
    "desc": "あらしをよぶ竜のつばさ",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "あらしういんぐ"
+   "yomi": "てんぺすとういんぐ"
   },
   "fsig_2053": {
    "name": "ゲンブプレス",
@@ -4612,7 +4612,7 @@
    "yomi": "すとーんげいず"
   },
   "fsig_2055": {
-   "name": "ガイアストンプ",
+   "name": "テラストンプ",
    "type": "竜",
    "category": "attack",
    "role": "sig_fusion",
@@ -4631,10 +4631,10 @@
    "desc": "大地の女神の力",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "がいあすとんぷ"
+   "yomi": "てらすとんぷ"
   },
   "fsig_2056": {
-   "name": "クリスタルホーン",
+   "name": "ダイヤホーン",
    "type": "氷",
    "category": "attack",
    "role": "sig_fusion",
@@ -4656,10 +4656,10 @@
    "desc": "水晶の一本角",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "くりすたるほーん"
+   "yomi": "だいやほーん"
   },
   "fsig_2058": {
-   "name": "セツリュウブレス",
+   "name": "ホワイトアウトブレス",
    "type": "竜",
    "category": "attack",
    "role": "sig_fusion",
@@ -4681,10 +4681,10 @@
    "desc": "雪の竜の白い息",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "せつりゅうぶれす"
+   "yomi": "ほわいとあうとぶれす"
   },
   "fsig_2059": {
-   "name": "エクリプスビーム",
+   "name": "トワイライトレイ",
    "type": "光",
    "category": "attack",
    "role": "sig_fusion",
@@ -4706,10 +4706,10 @@
    "desc": "太陽がかくれる光と闇",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "えくりぷすびーむ"
+   "yomi": "とわいらいとれい"
   },
   "fsig_2062": {
-   "name": "ネカジリバイト",
+   "name": "ニーズヘッグバイト",
    "type": "竜",
    "category": "attack",
    "role": "sig_fusion",
@@ -4731,7 +4731,7 @@
    "desc": "世界樹の根をかじる",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ねかじりばいと"
+   "yomi": "にーずへっぐばいと"
   },
   "fsig_2063": {
    "name": "ミッドナイトサイズ",
@@ -4760,7 +4760,7 @@
    "yomi": "みっどないとさいず"
   },
   "fsig_2064": {
-   "name": "フェンリルバイト",
+   "name": "グレイプニルファング",
    "type": "氷",
    "category": "attack",
    "role": "sig_fusion",
@@ -4782,10 +4782,10 @@
    "desc": "鎖の狼の大きな口",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ふぇんりるばいと"
+   "yomi": "ぐれいぷにるふぁんぐ"
   },
   "fsig_2065": {
-   "name": "エイトレッグダッシュ",
+   "name": "ゲイルギャロップ",
    "type": "光",
    "category": "attack",
    "role": "sig_fusion",
@@ -4807,7 +4807,7 @@
    "desc": "八本の脚で走りぬける",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "えいとれっぐだっしゅ"
+   "yomi": "げいるぎゃろっぷ"
   },
   "fsig_2066": {
    "name": "ラビリンスチャージ",
@@ -4836,7 +4836,7 @@
    "yomi": "らびりんすちゃーじ"
   },
   "fsig_2067": {
-   "name": "アトラスプレス",
+   "name": "ヘヴンズプレス",
    "type": "光",
    "category": "attack",
    "role": "sig_fusion",
@@ -4855,10 +4855,10 @@
    "desc": "天をささえる力でのしかかる",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "あとらすぷれす"
+   "yomi": "へゔんずぷれす"
   },
   "fsig_2068": {
-   "name": "テンビンジャッジ",
+   "name": "ラストジャッジ",
    "type": "地",
    "category": "attack",
    "role": "sig_fusion",
@@ -4880,7 +4880,7 @@
    "desc": "心の重さをはかる天秤",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "てんびんじゃっじ"
+   "yomi": "らすとじゃっじ"
   },
   "fsig_2069": {
    "name": "グングニルスロー",
@@ -4933,7 +4933,7 @@
    "yomi": "するとぶれーど"
   },
   "fsig_2071": {
-   "name": "ラグナサンダー",
+   "name": "ジャッジメントサンダー",
    "type": "雷",
    "category": "attack",
    "role": "sig_boss",
@@ -4955,10 +4955,10 @@
    "desc": "雷鳴で射程3の敵みんなを打つ",
    "range_class": "far",
    "cost": "few",
-   "yomi": "らぐなさんだー"
+   "yomi": "じゃっじめんとさんだー"
   },
   "ragna_dark": {
-   "name": "ラグナダークネス",
+   "name": "アビスダークネス",
    "type": "闇",
    "category": "attack",
    "role": "sig_boss",
@@ -4980,10 +4980,10 @@
    "desc": "闇の大きな一撃",
    "range_class": "far",
    "cost": "few",
-   "yomi": "らぐなだーくねす"
+   "yomi": "あびすだーくねす"
   },
   "ragna_fire": {
-   "name": "ラグナインフェルノ",
+   "name": "ワールドエンドフレア",
    "type": "炎",
    "category": "attack",
    "role": "sig_boss",
@@ -5005,7 +5005,7 @@
    "desc": "すべてを焼く炎。移動したら使えない",
    "range_class": "far",
    "cost": "once",
-   "yomi": "らぐないんふぇるの"
+   "yomi": "わーるどえんどふれあ"
   },
   "fsig_2073": {
    "name": "ホムラアギト",
@@ -5033,7 +5033,7 @@
    "yomi": "ほむらあぎと"
   },
   "fsig_2074": {
-   "name": "イカヅチアギト",
+   "name": "ライトニングファング",
    "type": "雷",
    "category": "attack",
    "role": "sig_fusion",
@@ -5055,7 +5055,7 @@
    "desc": "雷の竜が、稲妻の顎でかみつく",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "いかづちあぎと"
+   "yomi": "らいとにんぐふぁんぐ"
   },
   "fsig_2075": {
    "name": "ミツドモエ",
