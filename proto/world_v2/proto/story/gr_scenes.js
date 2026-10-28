@@ -2712,21 +2712,21 @@ GR_SC.godherak_win=[
 
 // ---- 第1話 v11（ゲーム台詞_ギリシャ_第1話_v11.md・2026-10-29 オーナー「1話はいきなり面白く」）: 冷たい始まり→三日前の回想→今 ----
 GR_SC.ep1_cold=[
- {fn:async()=>bgPan('anime_ep1_01','rl',1.2)},   // 右から左へ速く
+ {fn:async()=>bgPan('anime_ep1_01','rl',1.2)},   // 右から左へ速く(狐は絵に描きこみ済み)
  {w:null,t:'第1話　画面の外へ'},
- {fn:async()=>{ monShow(1001,{x:92,y:24,w:28}); await sleep(80); monShow(1001,{x:12,y:24,w:28}); }},
  {w:null,t:'夕方。オリーブの丘の村。坂の上から、火の玉みたいな何かが駆けおりてくる。'},
  {w:'x',n:'研究員',t:'そっち行ったぞ！　網、網！'},
  {fn:async()=>bgPan('anime_ep1_02','rl',1.0)},
- {w:null,t:'三本のしっぽを燃やした狐が、屋台のオリーブの山を跳びこえた。'},
- {fn:async()=>{ monHide(); bgPan('anime_ep1_03','zoomin',3.0); }},
- {w:'hero',f:'surprised',t:'……え。'},
+ {w:null,t:'しっぽを燃やした狐が、屋台のオリーブの山を跳びこえた。'},
+ {fn:async()=>bgPan('anime_ep1_03',['46% 25%','38% 40%'],3.0)},
+ {w:'hero',f:'surprised',np:1,t:'……え。'},
  {fn:async()=>shake&&shake(0.3)},
  {w:null,t:'狐は、スーツケースを踏み台にして跳んだ。ヤマトは、しりもちをついた。'},
- {w:'hero',f:'surprised',t:'今の……エンジュ！？'},
+ {w:'hero',f:'surprised',np:1,t:'今の……エンジュ！？'},
  {w:'x',n:'研究員',t:'君、だいじょうぶ！？　……速すぎる、あいつ！'},
+ {fn:async()=>bgPan('anime_ep1_13',['82% 40%','36% 50%'],4.0)},
  {w:null,t:'狐は、神殿の丘の方へ消えた。ヤマトの手に、オリーブの袋が残った。'},
- {w:'hero',f:'smile',t:'……本物だ。'},
+ {w:'hero',f:'smile',np:1,t:'……本物だ。'},
 ];
 GR_SC.ep1_flash=[
  {fn:async()=>bgPan('anime_ep1_04','lr',6.0)},
@@ -2758,7 +2758,7 @@ GR_SC.ep1_flash=[
  {fn:async()=>{ SAVE.items=SAVE.items||{}; SAVE.items.loupe=1; }},
  {fn:async()=>bgPan('anime_ep1_07','tb',4.0)},
  {w:null,t:'一晩の空の旅。窓の下は、エーゲ海だった。'},
- {fn:async()=>{ bgPan('anime_ep1_08','rl',4.0); }},
+ {fn:async()=>{ bgPan('anime_ep1_08','rl',4.0); }},   // ヒヨドルの群れは絵に描きこみ済み
  {w:null,t:'窓の外を、風の鳥のテリオンが並んで飛んでいく。一羽が、窓をつついた。'},
  {w:'x',n:'野生のテリオン',t:'……なか、だれかいる。うるさい。'},
  {w:'hero',f:'surprised',t:'しゃべった！　しかも、うるさいって言われた！'},
