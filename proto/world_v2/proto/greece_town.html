@@ -116,6 +116,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 #stCard .cap{position:absolute;left:0;right:0;bottom:calc(52px + env(safe-area-inset-bottom));text-align:center;color:#fff;font-weight:800;font-size:clamp(17px,4.6vw,24px);line-height:1.7;letter-spacing:.06em;
   text-shadow:0 2px 10px rgba(0,0,0,.6),0 0 2px rgba(0,0,0,.6);padding:0 16px;white-space:pre-line;opacity:0;transition:opacity .6s;z-index:2}
 #stCard .cap.on{opacity:1}
+#stFF{position:absolute;top:calc(14px + env(safe-area-inset-top));right:104px;padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.6);background:rgba(0,0,0,.3);color:#fff;font:inherit;font-weight:800;font-size:13px;display:none;z-index:3;cursor:pointer}#stFF.on{background:#e8a53a;border-color:#fff}
+#st.field #stSkip,#st.field #stFF{top:calc(64px + env(safe-area-inset-top))}
 #stSkip{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.6);background:rgba(0,0,0,.3);color:#fff;font:inherit;font-weight:800;font-size:13px;display:none;z-index:3;cursor:pointer}
 .stBtn{border:2px solid #fff;border-radius:999px;background:var(--ink);color:#fff;font:inherit;font-weight:800;font-size:17px;letter-spacing:.12em;padding:12px 34px;box-shadow:0 4px 14px rgba(20,30,60,.3);cursor:pointer;min-width:220px}
 .stBtn.sub{background:rgba(255,250,240,.95);color:var(--ink);border-color:rgba(44,62,102,.25)}
@@ -173,7 +175,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
   <div id="stPick"></div>
   <div id="stBox"><b></b><p></p><i></i></div>
   <div id="stTitle"><h1><img src="ui/logo.webp" alt="テリオンモンスター"></h1><button class="stBtn" id="btNew">はじめから</button><button class="stBtn sub" id="btCont">つづきから</button><div class="stMini"><button id="btTest">全部ためす</button><a id="btVs" href="../battle/vs.html">CPU対戦</a><a id="btDex" href="../battle/dex.html">テリオン表</a><a id="btFuse" href="../battle/fusion.html">融合表</a></div></div>
-  <button id="stSkip">スキップ</button>
+  <button id="stSkip">スキップ</button><button id="stFF">早送り</button>
 </div>
 <script src="../../three.min.js"></script>
 <script src="../../gltfloader.128.js"></script>
@@ -2505,7 +2507,14 @@ ST.box.addEventListener('click',e=>{ e.stopPropagation(); advance(); });
 ST.el.addEventListener('click',()=>{ if(!ST.el.classList.contains('field')&&ST.box.style.display==='block') advance(); });
 addEventListener('keydown',e=>{ if((e.code==='Space'||e.code==='Enter')&&ADV){ e.preventDefault(); advance(); } });
 function waitAdv(){ return new Promise(r=>{ ADV=r; }); }
-async function typeOut(el,t){ el.textContent=''; let skip=false; const prev=ADV; ADV=()=>{ skip=true; };
+// 早送り・スキップ(2026-10-29 オーナー「冒頭が死ぬほど長い。スキップできるように・早送り」)。早送り=文字を一度に出し、少し待って自動で次へ(押せば止まる)。スキップ=その場面の台詞を飛ばす(旗などのしかけは動かす)。冒頭(第1話の東京〜港)は残りを全部飛ばす
+let FF=false; try{ FF=localStorage.getItem('w2_ff')==='1'; }catch(e){}
+let SKIP_SCENE=false, OPEN_SKIP=false;
+const ST_FF=$('stFF'); function ffPaint(){ ST_FF.classList.toggle('on',FF); ST_FF.textContent=FF?'早送り中':'早送り'; }
+ST_FF.addEventListener('click',e=>{ e.stopPropagation(); FF=!FF; try{ localStorage.setItem('w2_ff',FF?'1':'0'); }catch(e){} ffPaint(); if(FF) advance(); }); ffPaint();
+const VISUAL_FN=/monShow|monHide|waitExamine|stDark|sleep\(|shake|flash|pan\(/;
+function waitAdvFF(n){ return new Promise(r=>{ ADV=r; if(FF) setTimeout(()=>{ if(ADV===r){ ADV=null; r(); } },550+Math.min(900,(n||0)*18)); }); }
+async function typeOut(el,t){ el.textContent=''; if(FF||SKIP_SCENE){ el.textContent=t; return; } let skip=false; const prev=ADV; ADV=()=>{ skip=true; };
   for(let i=1;i<=t.length;i++){ if(skip){ el.textContent=t; break; } el.textContent=t.slice(0,i); await sleep(22); } ADV=null; }
 // 背景の絵: 'anime_…' はアニメの背景(intro/anime_*.webp・オーナー 2026-10-26)、それ以外は intro/bg_*.webp
 function bgUrl(b){ return 'intro/'+(String(b).startsWith('anime_')?b:'bg_'+b)+'.webp'; }
@@ -2513,11 +2522,14 @@ function stShow(mode,bg){ ST.el.style.display='block'; ST.el.classList.toggle('f
   ST.el.classList.remove('trio'); for(const k of ['card','title','pick','ph']) ST[k].style.display='none'; ST.box.style.display='none'; for(const k of ['L','R','R2']){ ST[k].classList.add('off'); ST[k].dataset.w=''; } ST.skip.style.display='none'; }
 function stHide(){ grStHide(); ST.el.style.display='none'; ST.box.style.display='none'; ADV=null; }
 // lines: {w:'hero'|'genzo'|...|'partner'|null(ナレ), t, f:表情, if:()=>bool, fn:async()=>{}}
-async function runScene(lines,opt){ opt=opt||{}; const field=!!opt.field; STORY=true; objUpdate(); enterEl.classList.remove('on'); talkClose(); IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; AUTO=null;
-  stShow(field?'field':'full',opt.bg); if(!field) PAUSED=true; ST.L.removeAttribute('src'); ST.R.removeAttribute('src'); ST.R2.removeAttribute('src');
+async function runScene(lines,opt){ opt=opt||{}; const field=!!opt.field; if(opt.prologue&&OPEN_SKIP){ for(const L of lines){ if(L.fn&&!VISUAL_FN.test(String(L.fn))&&(!L.if||L.if())) await L.fn(); } return; } STORY=true; objUpdate(); enterEl.classList.remove('on'); talkClose(); IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; AUTO=null;
+  stShow(field?'field':'full',opt.bg); if(!field) PAUSED=true; SKIP_SCENE=!!(opt.prologue&&OPEN_SKIP); ST_FF.style.display='block'; ST.skip.style.display='block'; ST.skip.textContent=opt.prologue?'冒頭をスキップ':'スキップ';
+  ST.skip.onclick=e=>{ e.stopPropagation(); SKIP_SCENE=true; if(opt.prologue) OPEN_SKIP=true; advance(); };
+  ST.L.removeAttribute('src'); ST.R.removeAttribute('src'); ST.R2.removeAttribute('src');
   { const ps=[]; for(const L of lines){ const q=L.w&&L.w!=='partner'?pSrc(L.w,L.f||'normal'):null; if(q&&!ps.includes(q)) ps.push(q); } await Promise.race([Promise.all(ps.map(u=>new Promise(r=>{ const im=new Image(); PIMG[u]=im; im.onload=im.onerror=r; im.src=u; }))),sleep(1500)]); }
   for(const L of lines){ if(L.todo||(!L.fn&&!L.t)) continue;   // 台詞の枠だけ(空)の行は飛ばす(物語はあとで貼る)
-    if(L.if&&!L.if()) continue; if(L.fn){ ST.box.style.display='none'; await L.fn(); continue; }
+    if(L.if&&!L.if()) continue; if(L.fn){ if(SKIP_SCENE&&VISUAL_FN.test(String(L.fn))) continue; ST.box.style.display='none'; await L.fn(); continue; }
+    if(SKIP_SCENE) continue;
     const w=L.w; const nar=!w; ST.box.classList.toggle('nar',nar); ST.box.style.display='block';
     ST.nm.textContent=w==='hero'?(SAVE?SAVE.name:DEFN(SAVE&&SAVE.g)):(w==='partner'?MONN[1001]:(L.n||WHO[w]||w||''));
     const src=w&&w!=='partner'?pSrc(w,L.f||'normal'):null;
@@ -2531,8 +2543,8 @@ async function runScene(lines,opt){ opt=opt||{}; const field=!!opt.field; STORY=
     else { ST.L.classList.add('dim'); ST.R.classList.add('dim'); ST.R2.classList.add('dim'); }
     pFace(ST.L,'L'); pFace(ST.R,'R'); pFace(ST.R2,'R');
     ST.el.classList.toggle('trio',!ST.R2.classList.contains('off')&&!!ST.R2.getAttribute('src'));
-    await typeOut(ST.tx,fillT(L.t)); await waitAdv(); }
-  stHide(); STORY=false; if(!field){ PAUSED=!READY.scene||!!opt.keepPaused; LAST=performance.now(); } objUpdate(); saveGame(); }
+    await typeOut(ST.tx,fillT(L.t)); if(SKIP_SCENE) continue; await waitAdvFF(L.t.length); }
+  SKIP_SCENE=false; ST_FF.style.display='none'; ST.skip.onclick=null; stHide(); STORY=false; if(!field){ PAUSED=!READY.scene||!!opt.keepPaused; LAST=performance.now(); } objUpdate(); saveGame(); }
 async function runCards(cards){ stShow('full'); PAUSED=true; ST.card.style.display='block'; ST.skip.style.display='block'; let skipAll=false; ST.skip.onclick=e=>{ e.stopPropagation(); skipAll=true; advance(); };
   for(const c of cards){ if(skipAll||!c.t) continue; ST.bg.style.opacity=0; await sleep(250); ST.bg.style.backgroundImage=`url(${bgUrl(c.bg)})`; ST.card.querySelectorAll('.mon2d').forEach(e=>e.remove());
     for(const m of c.mons||[]){ const im=document.createElement('img'); im.className='mon2d'; im.src='../battle/img/'+m[0]+'.webp'; im.style.left=m[1]+'%'; im.style.top=m[2]+'%'; im.style.width=`min(${m[3]||30}vw,${(m[3]||30)*6.3}px)`; im.style.animationDelay=(Math.random()*2)+'s'; if(m[4]) im.style.opacity=m[4]; ST.card.appendChild(im); }
@@ -2977,13 +2989,13 @@ function joinStory(mid){ if(window.Progress&&Progress.state()){ Progress.add(mid
 // 話をつなぐ関数(どれも、終わった所で旗を立てて記録する)
 // ============================================================================
 async function ep1Tokyo(){
-  await runScene(SC.tokyo,{bg:'anime_tokyo_bedroom',keepPaused:true});
-  await runScene(SC.tokyo_eve,{bg:'anime_tokyo_street',keepPaused:true});
-  await runScene(SC.vault,{bg:'anime_europe_night',keepPaused:true});
-  await runScene(SC.tokyo_night,{bg:'anime_tokyo_living',keepPaused:true});
+  await runScene(SC.tokyo,{bg:'anime_tokyo_bedroom',keepPaused:true,prologue:true});
+  await runScene(SC.tokyo_eve,{bg:'anime_tokyo_street',keepPaused:true,prologue:true});
+  await runScene(SC.vault,{bg:'anime_europe_night',keepPaused:true,prologue:true});
+  await runScene(SC.tokyo_night,{bg:'anime_tokyo_living',keepPaused:true,prologue:true});
   SAVE.stage='skyport'; saveGame(); }
-async function ep1Sky(){ await runScene(SC.skyport,{bg:'anime_tokyo_skyport',keepPaused:true}); SAVE.stage='airship'; saveGame(); }
-async function ep1Air(){ await runScene(SC.airship,{bg:'anime_airship_cabin_night',keepPaused:true}); await runScene(SC.port,{bg:'anime_greek_port',keepPaused:true}); }
+async function ep1Sky(){ await runScene(SC.skyport,{bg:'anime_tokyo_skyport',keepPaused:true,prologue:true}); SAVE.stage='airship'; saveGame(); }
+async function ep1Air(){ await runScene(SC.airship,{bg:'anime_airship_cabin_night',keepPaused:true,prologue:true}); await runScene(SC.port,{bg:'anime_greek_port',keepPaused:true,prologue:true}); }
 async function ep1Temple(){ await storyField('temple1'); flag('temple1'); saveGame(); await ep1TempleRest(); }
 async function ep1TempleRest(){ await runScene(SC.hideout,{bg:'anime_europe_night'}); await storyField('temple1b'); flag('ep1'); saveGame(); await ep2Start(); }
 async function ep2Start(){ await storyField('elly2'); await storyField('net2'); flag('chase2'); saveGame(); }
@@ -5093,8 +5105,8 @@ GR_SC.mihalis=[
  {w:'mihalis',t:'昨日の獅子、橋の上から見ていた。'},
  {w:'mihalis',t:'今日は、わたしの子が変わるところを、よく見なさい。'},
  {w:'elly',f:'sad',t:'……ピリポンは、まだ変われないの。'},
- {w:'mihalis',t:'先の姿の子を、まだ仲間にしていないだろう。'},
- {w:'elly',f:'normal',t:'……ピリムサ、さがさなきゃ。'},
+ {w:'mihalis',t:'変わり方は、強い子に勝って覚えるもんだ。'},
+ {w:'elly',f:'normal',t:'……じゃあ、勝たなきゃ。'},
 ];
 // 第20話 3: 負けた時（TRAINER_RULE.mihalis の lose）
 GR_SC.mihalis_lose=[
@@ -5484,7 +5496,7 @@ GR_SC.atlard_win=[
  {w:'alek',t:'クロッコ。'},
  {w:null,t:'クロッコが、床に鼻をつけた。しっぽが、扉の方を向いた。'},
  {w:'alek',t:'……行け。'},
- {w:null,t:'暗やみを、重いものが床をすべって横切った。どさっ、どさっ、と人の倒れる音。'},
+ {w:null,t:'暗やみを、重いものが床をすべって横切った。どさっ、どさっ。'},
  {fn:async()=>stDark(false)},
  {w:null,t:'明かりがもどると、アレクが、エリーの手首をしっかりつかんでいた。'},
  {w:'elly',f:'sad',t:'……アレク。'},
@@ -6306,7 +6318,7 @@ CN_SC.c16_4=[{w:null,t:"向こう岸に着くと、亀は、五人をこうら�
 CN_SC.c16_5=[{w:null,t:"夜。岸の岩かげで、たき火をした。"},{w:null,t:"セイリュは、ヤマトのひざの上で、丸くなって眠っていた。地面には、おりていない。"},{w:"partner",t:"……寝相、よくなったな。"},{w:"hero",f:"normal",t:"……ほんとだ。"},{w:"lifa",f:"normal",t:"熱も、少し下がってる。"}];
 CN_SC.c16_6=[{w:null,t:"夜明け。川霧が晴れると、対岸の丘の上に、長い灰色の壁が見えた。"},{w:"hao",f:"surprised",t:"……古い都の城壁だ。"},{w:"alek",f:"normal",t:"思ったより、近いな。"},{w:null,t:"第16話　おわり"}];
 CN_SC.c17_1=[{w:null,t:"第17話　古い都の門"},{w:null,t:"朝。五人で、灰色の城壁の下まで歩いた。南の門は、閉じている。"},{w:null,t:"門の前の霧の中を、金色の角の子が、ふわりと横切った。"},{w:"hero",f:"surprised",t:"……今の、何？　鹿？"},{w:"hao",f:"surprised",t:"麒麟だ。いいことの前に出るって、師匠が言ってた。"},{w:"partner",t:"……もう、いない。"},{w:"lifa",f:"normal",t:"写真、撮れなかった……。"},{w:"alek",f:"normal",t:"またか。"}];
-CN_SC.c17_3=[{w:null,t:"門をくぐると、碁盤の目の通り。古い屋根の家が、どこまでも並んでいた。"},{w:null,t:"鐘楼の広場のすみに、古い書庫の建物があった。戸の前に、老人が一人。"},{w:"x",n:"老人",t:"……若い客は、めずらしい。"},{w:null,t:"老人は、ヤマトのポケットからのぞいているルーペに目をとめた。"},{w:"x",n:"老人",t:"そのルーペ。……ゲンイチのか。"},{w:"hero",f:"surprised",t:"じいちゃんの！　知り合い？"},{w:"x",n:"老人",t:"昔、いっしょに土を掘った。……あいつは、元気か。"},{w:"hero",f:"normal",t:"この前、電話、いきなり切られた。"},{w:"x",n:"老人",t:"……変わらんな。"}];
+CN_SC.c17_3=[{w:null,t:"南の門の両わきに、石の獅子の像が二体。動かない、ただの飾りだった。"},{w:null,t:"門をくぐると、碁盤の目の通り。古い屋根の家が、どこまでも並んでいた。"},{w:null,t:"鐘楼の広場のすみに、古い書庫の建物があった。戸の前に、老人が一人。"},{w:"x",n:"老人",t:"……若い客は、めずらしい。"},{w:null,t:"老人は、ヤマトのポケットからのぞいているルーペに目をとめた。"},{w:"x",n:"老人",t:"そのルーペ。……ゲンイチのか。"},{w:"hero",f:"surprised",t:"じいちゃんの！　知り合い？"},{w:"x",n:"老人",t:"昔、いっしょに土を掘った。……あいつは、元気か。"},{w:"hero",f:"normal",t:"この前、電話、いきなり切られた。"},{w:"x",n:"老人",t:"……変わらんな。"},{w:"x",n:"老人",t:"旅の話を、何か集めてきたか。"},{w:"elly",f:"normal",t:"西は、「虎は、朝の来る方へ吠える」。"},{w:"alek",f:"normal",t:"南は、「鳥は、海の上で輪を描く」。"},{w:"hao",f:"normal",t:"北は、「亀は、水の底で目をあける」。"},{w:"x",n:"老人",t:"……東が、足りんな。"}];
 CN_SC.c17_4=[{w:"lifa",f:"serious",t:"ここ、昔の記録が残ってるんですか。三年前のも。"},{w:"x",n:"老人",t:"紙の記録だけはな。機械の記録は、すぐ消されるが。"},{w:"lifa",f:"surprised",t:"……消される。"},{w:"x",n:"老人",t:"見たいなら、あしたの朝、開ける。今日は、もう鍵を閉めた。"},{w:"hero",f:"normal",t:"今、開けてよ。"},{w:"x",n:"老人",t:"鍵は、ゲンイチと同じで、気まぐれでな。"},{w:null,t:"書庫の奥の、重い扉。その向こうに、記録の棚が、暗く並んでいた。"},{w:null,t:"第17話　おわり"}];
 CN_SC.c18_1=[{w:null,t:"第18話　記録庫"},{w:null,t:"朝。老人が、重い扉の鍵を、三回まちがえてから開けた。"},{w:"x",n:"老人",t:"……ほらな。気まぐれだ。"},{w:null,t:"中は、紙のにおい。天井まで、記録の箱が積まれている。"},{w:"lifa",f:"serious",t:"三年前の、大停電の箱は……。"},{w:"x",n:"老人",t:"奥から三番目の棚。上から二段目。"},{w:"hao",f:"surprised",t:"覚えてるのかよ。"},{w:"x",n:"老人",t:"ほかに、することがないからな。"}];
 CN_SC.c18_2a=[{w:null,t:"箱の中は、紙の報告書の束。字が、細かい。"},{w:"alek",f:"normal",t:"ヤマト。ルーペ。"},{w:"hero",f:"normal",t:"あ、うん。"}];
@@ -6736,7 +6748,7 @@ NR_SC.n24_3a=[{w:null,t:"ソヨモモとリンドヴルムが、空から守り�
 NR_SC.n24_3w=[{w:null,t:"エンジュの火が、竜の鼻先に当たった。けれど、そこで力がつきた。"},{w:null,t:"エンジュは、氷の上に横になった。起き上がろうとして、足がすべった。"}];
 NR_SC.n24_3l=[{w:null,t:"竜の尾が、エンジュを氷の上にたたきつけた。"},{w:null,t:"エンジュは、氷の上に横になった。起き上がろうとして、足がすべった。"}];
 NR_SC.n24_4=[{w:null,t:"ヤマトは、エンジュのそばまで走った。"},{w:null,t:"そして、氷の上に、ひざをついた。エンジュの目の高さまで、しゃがんだ。"},{w:"hero",f:"normal",t:"……エンジュ。"},{w:null,t:"ヤマトは、それだけ言った。"},{w:null,t:"前足が、氷をつかんだ。うしろ足が、ふんばった。エンジュは、立った。"},{w:null,t:"ヤマトの右に、エリーがしゃがんだ。左に、アレクがしゃがんだ。"},{w:null,t:"ピリポンが、エンジュの右に。クロッコが、左に並んだ。"},{w:"partner",t:"……せまい。"},{w:null,t:"三体が、同じ時に、竜の方へ跳んだ。火と雷と水しぶきが、一つに重なった。"}];
-NR_SC.n24_5=[{w:null,t:"氷の上に、紺と金の竜が立っていた。背中から腕まで、金の稲妻がびりびりと走っていた。"},{w:null,t:"おなかに、エンジュの顔があった。たてがみは金色で、口から火がもれていた。爪の先で、雷がぱちぱち鳴った。"},{w:"alek",f:"surprised",t:"……三つ、重なった。"},{w:"elly",f:"surprised",t:"……ピリポン？"},{w:null,t:"竜の尾が、ふり下ろされた。紺と金の竜は、その尾を、両手の爪で受けとめた。"},{w:null,t:"受けとめたまま、動かなかった。おなかのエンジュの顔が、竜の目を、まっすぐ見ていた。"},{w:null,t:"竜の目の赤が、少しだけ、うすくなった。"},{w:null,t:"紺と金の竜は、尾をそっと氷の上に下ろした。それから、四本目の線を、引きちぎった。"}];
+NR_SC.n24_5=[{w:null,t:"氷の上に、紺と金の竜が立っていた。"},{w:null,t:"背中から腕まで、金の稲妻がびりびりと走っていた。"},{w:null,t:"おなかに、エンジュの顔があった。"},{w:null,t:"たてがみは金色で、口から火がもれていた。爪の先で、雷がぱちぱち鳴った。"},{w:"alek",f:"surprised",t:"……三つ、重なった。"},{w:"elly",f:"surprised",t:"……ピリポン？"},{w:null,t:"竜の尾が、ふり下ろされた。紺と金の竜は、その尾を、両手の爪で受けとめた。"},{w:null,t:"受けとめたまま、動かなかった。"},{w:null,t:"おなかのエンジュの顔が、竜の目を、まっすぐ見ていた。"},{w:null,t:"竜の目の赤が、少しだけ、うすくなった。"},{w:null,t:"紺と金の竜は、尾をそっと氷の上に下ろした。それから、四本目の線を、引きちぎった。"}];
 NR_SC.n24_6=[{w:null,t:"ばちん、と音がした。塔のてっぺんの赤い光が、消えた。"},{w:null,t:"アドリアンの手が、板の上で止まった。画面は、まっ暗になっていた。"},{w:null,t:"ラグナディオの目が、金色にもどった。竜は、氷の上に、まるくなった。"},{w:null,t:"紺と金の竜は、ふっとほどけた。エンジュとピリポンとクロッコが、雪の上に転がった。"},{w:"x",n:"クロッコ",t:"…………。"},{w:null,t:"クロッコは、そのまま、雪の上で寝た。"},{w:"alek",f:"normal",t:"……寝るな。"},{w:null,t:"アドリアンは、まっ暗な画面を見たまま、動かなかった。"},{w:null,t:"第24話　おわり"}];
 NR_SC.n25_1=[{w:null,t:"第25話　古い電話の先"},{w:null,t:"夕方。中心の部屋。ラグナディオは、フェンガロのとなりで、まるくなって眠っていた。"},{w:null,t:"ポチャが、竜のしっぽの先の火に、そっと近づいた。それから、あわてて下がった。"},{w:"elly",f:"normal",t:"……あつかった？"},{w:null,t:"ポチャは、リヴの足のうしろにかくれた。"},{w:"partner",t:"……近づきすぎ。"},{w:null,t:"リヴは、何も言わずに、竜の背中に、自分の上着をかけた。"}];
 NR_SC.n25_2=[{w:null,t:"研究所の外の氷の上に、警備隊の車が、何台も止まっていた。"},{w:null,t:"町の人たちが、その横で、毛布にくるまって見ていた。"},{w:null,t:"黒い塔の前で、アドリアンは、まっ暗な画面の前に立ったままだった。"},{w:null,t:"警備隊の人が、両わきに立った。アドリアンは、手を出した。"},{w:null,t:"手首に、輪がはめられた。アドリアンは、輪を見下ろした。"}];

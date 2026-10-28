@@ -214,13 +214,13 @@ function joinStory(mid){ if(window.Progress&&Progress.state()){ Progress.add(mid
 // 話をつなぐ関数(どれも、終わった所で旗を立てて記録する)
 // ============================================================================
 async function ep1Tokyo(){
-  await runScene(SC.tokyo,{bg:'anime_tokyo_bedroom',keepPaused:true});
-  await runScene(SC.tokyo_eve,{bg:'anime_tokyo_street',keepPaused:true});
-  await runScene(SC.vault,{bg:'anime_europe_night',keepPaused:true});
-  await runScene(SC.tokyo_night,{bg:'anime_tokyo_living',keepPaused:true});
+  await runScene(SC.tokyo,{bg:'anime_tokyo_bedroom',keepPaused:true,prologue:true});
+  await runScene(SC.tokyo_eve,{bg:'anime_tokyo_street',keepPaused:true,prologue:true});
+  await runScene(SC.vault,{bg:'anime_europe_night',keepPaused:true,prologue:true});
+  await runScene(SC.tokyo_night,{bg:'anime_tokyo_living',keepPaused:true,prologue:true});
   SAVE.stage='skyport'; saveGame(); }
-async function ep1Sky(){ await runScene(SC.skyport,{bg:'anime_tokyo_skyport',keepPaused:true}); SAVE.stage='airship'; saveGame(); }
-async function ep1Air(){ await runScene(SC.airship,{bg:'anime_airship_cabin_night',keepPaused:true}); await runScene(SC.port,{bg:'anime_greek_port',keepPaused:true}); }
+async function ep1Sky(){ await runScene(SC.skyport,{bg:'anime_tokyo_skyport',keepPaused:true,prologue:true}); SAVE.stage='airship'; saveGame(); }
+async function ep1Air(){ await runScene(SC.airship,{bg:'anime_airship_cabin_night',keepPaused:true,prologue:true}); await runScene(SC.port,{bg:'anime_greek_port',keepPaused:true,prologue:true}); }
 async function ep1Temple(){ await storyField('temple1'); flag('temple1'); saveGame(); await ep1TempleRest(); }
 async function ep1TempleRest(){ await runScene(SC.hideout,{bg:'anime_europe_night'}); await storyField('temple1b'); flag('ep1'); saveGame(); await ep2Start(); }
 async function ep2Start(){ await storyField('elly2'); await storyField('net2'); flag('chase2'); saveGame(); }
