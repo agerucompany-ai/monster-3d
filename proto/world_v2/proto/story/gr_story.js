@@ -41,6 +41,18 @@ const BG_ALIAS={anime_marble_valley:['anime_temple_ruins',''], anime_parthena_ci
   anime_observatory_night:['anime_temple_ruins','night'], anime_mountain_hut_night:['anime_oliva_lab','night'], anime_lab:['anime_oliva_lab',''], anime_temple_night:['anime_temple_ruins','night']};
 function grBg(b){ const a=BG_ALIAS[b]; if(ST&&ST.bg) ST.bg.style.filter=a&&a[1]==='night'?'brightness(.42) saturate(.7) hue-rotate(195deg)':''; return a?a[0]:b; }
 
+// ---- 背景を流す・寄る(第1話 v11・2026-10-29 オーナー「背景をたくさん描いてスライドしながらの映像」) ----
+//  mode: 'lr' 左→右 / 'rl' 右→左 / 'tb' 上→下 / 'zoomin' ゆっくり寄る / 'fix' 動かさない。sec=かける秒(早送り中は短く)
+function bgPan(k,mode,sec){ const el=ST.bg; if(!el) return; for(const q of ['L','R','R2']){ ST[q].classList.add('off'); ST[q].dataset.w=''; ST[q].removeAttribute('src'); } ST.el.classList.remove('trio');   /* カットが変わったら前の人は下げる */ el.style.filter=''; el.style.transition='none'; el.style.backgroundImage=`url(${bgUrl(k)})`;
+  const P={lr:['20% 50%','scale(1.14) translateX(4%)','80% 50%','scale(1.14) translateX(-4%)'], rl:['80% 50%','scale(1.14) translateX(-4%)','20% 50%','scale(1.14) translateX(4%)'],
+    tb:['50% 0%','scale(1.14) translateY(4%)','50% 100%','scale(1.14) translateY(-4%)'], zoomin:['50% 50%','scale(1)','50% 50%','scale(1.28)'], fix:['50% 50%','scale(1)','50% 50%','scale(1)']}[mode]||null;
+  const q=P||['50% 50%','scale(1)','50% 50%','scale(1)']; el.style.backgroundPosition=q[0]; el.style.transform=q[1]; void el.offsetWidth;
+  const t=Math.max(.2,(FF?.45:1)*(sec||0)); if(mode==='fix'||!sec) return;
+  el.style.transition=`background-position ${t}s ease-in-out, transform ${t}s ease-in-out, opacity .5s`; el.style.backgroundPosition=q[2]; el.style.transform=q[3]; }
+function bgReset(){ const el=ST&&ST.bg; if(!el) return; el.style.transition='opacity .5s'; el.style.transform=''; el.style.backgroundPosition=''; }
+// 画面を小さく揺らす(第1話 v11 カット2)
+function shake(sec){ const el=ST.el; if(!el||!el.animate) return; el.animate([{transform:'translate(0,0)'},{transform:'translate(-6px,3px)'},{transform:'translate(5px,-4px)'},{transform:'translate(-3px,2px)'},{transform:'translate(0,0)'}],{duration:(sec||.3)*1000}); }
+
 // ---- 旗のヘルパー ----
 const GF=()=>(SAVE&&SAVE.flags)||{};
 const lastWin=()=>!!(WORLD.lastBattle&&WORLD.lastBattle.result==='win');
@@ -221,8 +233,13 @@ async function ep1Tokyo(){
   SAVE.stage='skyport'; saveGame(); }
 async function ep1Sky(){ await runScene(SC.skyport,{bg:'anime_tokyo_skyport',keepPaused:true,prologue:true}); SAVE.stage='airship'; saveGame(); }
 async function ep1Air(){ await runScene(SC.airship,{bg:'anime_airship_cabin_night',keepPaused:true,prologue:true}); await runScene(SC.port,{bg:'anime_greek_port',keepPaused:true,prologue:true}); }
+// 第1話 v11(2026-10-29): 冷たい始まり(村の坂を狐が駆けおりる)→三日前の東京の回想→今(クロエ博士の伝言)→操作。stage: cold→flash→now
+async function ep1Open(){
+  if(!['flash','now'].includes(SAVE.stage)){ SAVE.stage='cold'; await runScene(SC.ep1_cold,{bg:'anime_ep1_01',keepPaused:true,prologue:true}); SAVE.stage='flash'; saveGame(); }
+  if(SAVE.stage==='flash'){ await runScene(SC.ep1_flash,{bg:'anime_ep1_04',keepPaused:true,prologue:true}); SAVE.items=SAVE.items||{}; SAVE.stage='now'; saveGame(); }
+  await runScene(SC.ep1_now,{bg:'anime_ep1_09',keepPaused:true,prologue:true}); }
 async function ep1Temple(){ await storyField('temple1'); flag('temple1'); saveGame(); await ep1TempleRest(); }
-async function ep1TempleRest(){ await runScene(SC.hideout,{bg:'anime_europe_night'}); await storyField('temple1b'); flag('ep1'); saveGame(); await ep2Start(); }
+async function ep1TempleRest(){ await runScene(SC.hideout,{bg:'anime_ep1_10'}); await storyField('temple1b'); flag('ep1'); saveGame(); await ep2Start(); }
 async function ep2Start(){ await storyField('elly2'); await storyField('net2'); flag('chase2'); saveGame(); }
 async function ep2Bond(){ await storyField('lab'); saveGame(); await ep2Night(); }
 async function ep2Night(){ setTime('evening',true); await runScene(SC.night2,{bg:'anime_oliva_lab'}); flag('ep2'); setTime('morning',true); saveGame(); await ep3Morning(); }

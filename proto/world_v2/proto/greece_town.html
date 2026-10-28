@@ -2519,11 +2519,11 @@ async function typeOut(el,t){ el.textContent=''; if(FF||SKIP_SCENE){ el.textCont
 // 背景の絵: 'anime_…' はアニメの背景(intro/anime_*.webp・オーナー 2026-10-26)、それ以外は intro/bg_*.webp
 function bgUrl(b){ return 'intro/'+(String(b).startsWith('anime_')?b:'bg_'+b)+'.webp'; }
 function stShow(mode,bg){ ST.el.style.display='block'; ST.el.classList.toggle('field',mode==='field'); if(bg) ST.bg.style.backgroundImage=`url(${bgUrl(grBg(bg))})`;
-  ST.el.classList.remove('trio'); for(const k of ['card','title','pick','ph']) ST[k].style.display='none'; ST.box.style.display='none'; for(const k of ['L','R','R2']){ ST[k].classList.add('off'); ST[k].dataset.w=''; } ST.skip.style.display='none'; }
+  ST.el.classList.remove('trio'); for(const k of ['card','title','pick','ph']) ST[k].style.display='none'; ST.box.style.display='none'; for(const k of ['L','R','R2']){ ST[k].classList.add('off'); ST[k].dataset.w=''; } ST.skip.style.display='none'; if(typeof bgReset==='function') bgReset(); }
 function stHide(){ grStHide(); ST.el.style.display='none'; ST.box.style.display='none'; ADV=null; }
 // lines: {w:'hero'|'genzo'|...|'partner'|null(ナレ), t, f:表情, if:()=>bool, fn:async()=>{}}
 async function runScene(lines,opt){ opt=opt||{}; const field=!!opt.field; if(opt.prologue&&OPEN_SKIP){ for(const L of lines){ if(L.fn&&!VISUAL_FN.test(String(L.fn))&&(!L.if||L.if())) await L.fn(); } return; } STORY=true; objUpdate(); enterEl.classList.remove('on'); talkClose(); IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; AUTO=null;
-  stShow(field?'field':'full',opt.bg); if(!field) PAUSED=true; SKIP_SCENE=!!(opt.prologue&&OPEN_SKIP); ST_FF.style.display='block'; ST.skip.style.display='block'; ST.skip.textContent=opt.prologue?'冒頭をスキップ':'スキップ';
+  stShow(field?'field':'full',opt.bg); if(!field) PAUSED=true; SKIP_SCENE=!!(opt.prologue&&OPEN_SKIP); ST_FF.style.display='block'; ST.skip.style.display='block'; ST.skip.textContent=opt.prologue?'冒頭をスキップ':'スキップ'; ST_FF.style.right=(14+ST.skip.offsetWidth+8)+'px';
   ST.skip.onclick=e=>{ e.stopPropagation(); SKIP_SCENE=true; if(opt.prologue) OPEN_SKIP=true; advance(); };
   ST.L.removeAttribute('src'); ST.R.removeAttribute('src'); ST.R2.removeAttribute('src');
   { const ps=[]; for(const L of lines){ const q=L.w&&L.w!=='partner'?pSrc(L.w,L.f||'normal'):null; if(q&&!ps.includes(q)) ps.push(q); } await Promise.race([Promise.all(ps.map(u=>new Promise(r=>{ const im=new Image(); PIMG[u]=im; im.onload=im.onerror=r; im.src=u; }))),sleep(1500)]); }
@@ -2816,6 +2816,18 @@ const BG_ALIAS={anime_marble_valley:['anime_temple_ruins',''], anime_parthena_ci
   anime_observatory_night:['anime_temple_ruins','night'], anime_mountain_hut_night:['anime_oliva_lab','night'], anime_lab:['anime_oliva_lab',''], anime_temple_night:['anime_temple_ruins','night']};
 function grBg(b){ const a=BG_ALIAS[b]; if(ST&&ST.bg) ST.bg.style.filter=a&&a[1]==='night'?'brightness(.42) saturate(.7) hue-rotate(195deg)':''; return a?a[0]:b; }
 
+// ---- 背景を流す・寄る(第1話 v11・2026-10-29 オーナー「背景をたくさん描いてスライドしながらの映像」) ----
+//  mode: 'lr' 左→右 / 'rl' 右→左 / 'tb' 上→下 / 'zoomin' ゆっくり寄る / 'fix' 動かさない。sec=かける秒(早送り中は短く)
+function bgPan(k,mode,sec){ const el=ST.bg; if(!el) return; for(const q of ['L','R','R2']){ ST[q].classList.add('off'); ST[q].dataset.w=''; ST[q].removeAttribute('src'); } ST.el.classList.remove('trio');   /* カットが変わったら前の人は下げる */ el.style.filter=''; el.style.transition='none'; el.style.backgroundImage=`url(${bgUrl(k)})`;
+  const P={lr:['20% 50%','scale(1.14) translateX(4%)','80% 50%','scale(1.14) translateX(-4%)'], rl:['80% 50%','scale(1.14) translateX(-4%)','20% 50%','scale(1.14) translateX(4%)'],
+    tb:['50% 0%','scale(1.14) translateY(4%)','50% 100%','scale(1.14) translateY(-4%)'], zoomin:['50% 50%','scale(1)','50% 50%','scale(1.28)'], fix:['50% 50%','scale(1)','50% 50%','scale(1)']}[mode]||null;
+  const q=P||['50% 50%','scale(1)','50% 50%','scale(1)']; el.style.backgroundPosition=q[0]; el.style.transform=q[1]; void el.offsetWidth;
+  const t=Math.max(.2,(FF?.45:1)*(sec||0)); if(mode==='fix'||!sec) return;
+  el.style.transition=`background-position ${t}s ease-in-out, transform ${t}s ease-in-out, opacity .5s`; el.style.backgroundPosition=q[2]; el.style.transform=q[3]; }
+function bgReset(){ const el=ST&&ST.bg; if(!el) return; el.style.transition='opacity .5s'; el.style.transform=''; el.style.backgroundPosition=''; }
+// 画面を小さく揺らす(第1話 v11 カット2)
+function shake(sec){ const el=ST.el; if(!el||!el.animate) return; el.animate([{transform:'translate(0,0)'},{transform:'translate(-6px,3px)'},{transform:'translate(5px,-4px)'},{transform:'translate(-3px,2px)'},{transform:'translate(0,0)'}],{duration:(sec||.3)*1000}); }
+
 // ---- 旗のヘルパー ----
 const GF=()=>(SAVE&&SAVE.flags)||{};
 const lastWin=()=>!!(WORLD.lastBattle&&WORLD.lastBattle.result==='win');
@@ -2996,8 +3008,13 @@ async function ep1Tokyo(){
   SAVE.stage='skyport'; saveGame(); }
 async function ep1Sky(){ await runScene(SC.skyport,{bg:'anime_tokyo_skyport',keepPaused:true,prologue:true}); SAVE.stage='airship'; saveGame(); }
 async function ep1Air(){ await runScene(SC.airship,{bg:'anime_airship_cabin_night',keepPaused:true,prologue:true}); await runScene(SC.port,{bg:'anime_greek_port',keepPaused:true,prologue:true}); }
+// 第1話 v11(2026-10-29): 冷たい始まり(村の坂を狐が駆けおりる)→三日前の東京の回想→今(クロエ博士の伝言)→操作。stage: cold→flash→now
+async function ep1Open(){
+  if(!['flash','now'].includes(SAVE.stage)){ SAVE.stage='cold'; await runScene(SC.ep1_cold,{bg:'anime_ep1_01',keepPaused:true,prologue:true}); SAVE.stage='flash'; saveGame(); }
+  if(SAVE.stage==='flash'){ await runScene(SC.ep1_flash,{bg:'anime_ep1_04',keepPaused:true,prologue:true}); SAVE.items=SAVE.items||{}; SAVE.stage='now'; saveGame(); }
+  await runScene(SC.ep1_now,{bg:'anime_ep1_09',keepPaused:true,prologue:true}); }
 async function ep1Temple(){ await storyField('temple1'); flag('temple1'); saveGame(); await ep1TempleRest(); }
-async function ep1TempleRest(){ await runScene(SC.hideout,{bg:'anime_europe_night'}); await storyField('temple1b'); flag('ep1'); saveGame(); await ep2Start(); }
+async function ep1TempleRest(){ await runScene(SC.hideout,{bg:'anime_ep1_10'}); await storyField('temple1b'); flag('ep1'); saveGame(); await ep2Start(); }
 async function ep2Start(){ await storyField('elly2'); await storyField('net2'); flag('chase2'); saveGame(); }
 async function ep2Bond(){ await storyField('lab'); saveGame(); await ep2Night(); }
 async function ep2Night(){ setTime('evening',true); await runScene(SC.night2,{bg:'anime_oliva_lab'}); flag('ep2'); setTime('morning',true); saveGame(); await ep3Morning(); }
@@ -3411,7 +3428,13 @@ GR_SC.temple1=[
 ];
 // 第1話 10: ゼロデイのかくれ家。temple1 のすぐあと（full・背景 anime_europe_night）
 GR_SC.hideout=[
- {w:null,t:'同じころ。ゼロデイのかくれ家。地図の上で、ギリシャの一点が光る。'},
+ {fn:async()=>bgPan('anime_ep1_10','lr',4.0)},
+ {w:null,t:'同じころ。ヨーロッパの取引所。職員の首の端末が、赤く光った。'},
+ {w:null,t:'職員は、うつろな目で、承認を押した。'},
+ {w:'x',n:'女幹部',t:'……ほら、押した。'},
+ {w:'x',n:'女幹部',t:'お金は、ついで。欲しかったのは、石板の記録。'},
+ {fn:async()=>bgPan('anime_ep1_11','zoomin',3.0)},
+ {w:null,t:'地図の上で、ギリシャの一点が光った。'},
  {w:'x',n:'女幹部',t:'……光った。オリーヴァ村の石板。'},
  {w:'x',n:'女幹部',t:'思ったより、早かったわね。'},
 ];
@@ -5896,6 +5919,70 @@ GR_SC.godherak_win=[
  {fn:async()=>{ flag('ep30'); saveGame(); }},
 ];
 
+// ---- 第1話 v11（ゲーム台詞_ギリシャ_第1話_v11.md・2026-10-29 オーナー「1話はいきなり面白く」）: 冷たい始まり→三日前の回想→今 ----
+GR_SC.ep1_cold=[
+ {fn:async()=>bgPan('anime_ep1_01','rl',1.2)},   // 右から左へ速く
+ {w:null,t:'第1話　画面の外へ'},
+ {fn:async()=>{ monShow(1001,{x:92,y:24,w:28}); await sleep(80); monShow(1001,{x:12,y:24,w:28}); }},
+ {w:null,t:'夕方。オリーブの丘の村。坂の上から、火の玉みたいな何かが駆けおりてくる。'},
+ {w:'x',n:'研究員',t:'そっち行ったぞ！　網、網！'},
+ {fn:async()=>bgPan('anime_ep1_02','rl',1.0)},
+ {w:null,t:'三本のしっぽを燃やした狐が、屋台のオリーブの山を跳びこえた。'},
+ {fn:async()=>{ monHide(); bgPan('anime_ep1_03','zoomin',3.0); }},
+ {w:'hero',f:'surprised',t:'……え。'},
+ {fn:async()=>shake&&shake(0.3)},
+ {w:null,t:'狐は、スーツケースを踏み台にして跳んだ。ヤマトは、しりもちをついた。'},
+ {w:'hero',f:'surprised',t:'今の……エンジュ！？'},
+ {w:'x',n:'研究員',t:'君、だいじょうぶ！？　……速すぎる、あいつ！'},
+ {w:null,t:'狐は、神殿の丘の方へ消えた。ヤマトの手に、オリーブの袋が残った。'},
+ {w:'hero',f:'smile',t:'……本物だ。'},
+];
+GR_SC.ep1_flash=[
+ {fn:async()=>bgPan('anime_ep1_04','lr',6.0)},
+ {w:null,t:'三日前。東京。'},
+ {w:null,t:'宙に浮いた画面の中で、炎の狐が、焼いたオリーブをかじっていた。'},
+ {w:null,t:'画面のすみに、小さな字。「日本国内では飼育・持ちこみ禁止」'},
+ {w:'hana',t:'にいに、また狐？'},
+ {w:'hero',f:'normal',t:'狐じゃない。エンジュ。'},
+ {w:'hana',t:'その子、さわれるの？'},
+ {w:'hero',f:'normal',t:'……画面だよ。'},
+ {w:'hana',t:'じゃあ、にいにも、さわったことないんだ。'},
+ {w:'hero',f:'sad',t:'…………。'},
+ {w:'x',n:'家のAI',t:'外の気温は二十八度。お散歩に最適です。'},
+ {w:'hero',f:'angry',t:'外に出たって、テリオンはいないだろ。'},
+ {fn:async()=>bgPan('anime_ep1_05','fix',0)},
+ {w:'genichi',t:'昔の仲間の娘が、ギリシャで研究所をやっとる。'},
+ {w:'genichi',t:'夏の手伝いがほしいそうだ。行くか？'},
+ {w:'hero',f:'surprised',t:'行く！'},
+ {w:'misaki',t:'ヨーロッパは今、大変なのよ。'},
+ {w:'genichi',t:'一日じゅう画面じゃ、目が悪くなるぞ。'},
+ {w:'misaki',t:'……そういう話じゃないでしょ。'},
+ {w:'genichi',t:'そういう話だ。'},
+ {fn:async()=>bgPan('anime_ep1_06','tb',4.0)},
+ {w:'hana',t:'写真じゃ、さわれないもん。'},
+ {w:'hero',f:'normal',t:'……じゃあ、帰ったら、さわった話をしてやる。'},
+ {w:'hana',t:'約束ね。'},
+ {w:'genichi',t:'これを持っていけ。ほこりをかぶっとったから、やる。'},
+ {w:null,t:'「じいちゃんのルーペ」を受け取った。'},
+ {fn:async()=>{ SAVE.items=SAVE.items||{}; SAVE.items.loupe=1; }},
+ {fn:async()=>bgPan('anime_ep1_07','tb',4.0)},
+ {w:null,t:'一晩の空の旅。窓の下は、エーゲ海だった。'},
+ {fn:async()=>{ bgPan('anime_ep1_08','rl',4.0); }},
+ {w:null,t:'窓の外を、風の鳥のテリオンが並んで飛んでいく。一羽が、窓をつついた。'},
+ {w:'x',n:'野生のテリオン',t:'……なか、だれかいる。うるさい。'},
+ {w:'hero',f:'surprised',t:'しゃべった！　しかも、うるさいって言われた！'},
+ {fn:async()=>monHide()},
+];
+GR_SC.ep1_now=[
+ {fn:async()=>bgPan('anime_ep1_09','fix',0)},
+ {w:null,t:'今。オリーヴァ村。端末に、音声のメッセージ。'},
+ {w:'elena',n:'クロエ博士',ph:1,t:'ヤマトくん？　ごめん、迎えに行けなくなったの。'},
+ {w:'elena',n:'クロエ博士',ph:1,t:'研究所の子が一体、逃げちゃって。'},
+ {w:'elena',n:'クロエ博士',ph:1,t:'裏の神殿の、大きな石の前で待ってて。'},
+ {w:'hero',f:'normal',t:'……逃げた子って、さっきの。'},
+ {w:'hero',f:'smile',t:'神殿の丘だ。'},
+];
+
 // ============================================================================
 // 中国編の物語のしかけ(2026-10-28 Windows)。台詞は story/cn_scenes.js(Mac の「台本_中国編_第N話」から cn_extract.py で機械で抜き出し)。
 //  ギリシャ編の 2-4 共通のしかけ(gr_story.js の AREA_RULE・TRAINER_RULE・need/until・startEncounter の after/next)の上にのせる。
@@ -7265,21 +7352,19 @@ function heroGo(g){ CFG.hero.urls=['../chars/hero_'+g+'.glb']; CFG.hero.height=g
 async function arriveTown(){ fadeEl.classList.add('on'); await sleep(260); stHide(); ST.el.style.display='none'; if(LOADP) await LOADP; LOADP=null;
   if(MAP!=='oliva_town') await loadMap('oliva_town','start'); else { const p=D.arrive.start; WORLD.tp(p[0],p[1],p[2]); partnerPlace(); }
   followersSet(); SAVE.stage='field'; setTime('evening',true); await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); await sleep(300);
-  showArea(D.name); AREA=D.name; await storyField('arrive'); followersSet(); flag('arrived'); saveGame(); }   // 相棒は第2話の手のひらの約束(SC.lab)で
+  showArea(D.name); AREA=D.name; followersSet();   /* 狐が駆けぬける所(SC.arrive)は第1話 v11 の頭へ移した */ flag('arrived'); saveGame(); }   // 相棒は第2話の手のひらの約束(SC.lab)で
 // 主人公はヤマト(男の子)だけ(2026-10-26 オーナー)。性別・名前の設定画面は無し。古い記録(g:'f')はヤマトとして読む
-async function newGame(){ ST.title.style.display='none'; await runCards(INTRO);
+async function newGame(){ ST.title.style.display='none';   // はじめの字幕(INTRO)は第1話 v11 でなくした(2026-10-29)
   stShow('full'); ST.bg.style.backgroundImage='none'; const g='m';
   SAVE={v:1,g,name:DEFN(g),partner:null,flags:{},unlock:{evo:false,fusion:false},owned:[],stage:'tokyo'}; NOSAVE=false; saveGame(); await progInit();
   heroGo(g); fadeEl.classList.add('on'); await sleep(260);
   LOADP=loadMap('oliva_town','start').catch(e=>console.error(e));   // 会話のあいだに村を読んでおく
   await sleep(60); fadeEl.classList.remove('on');
-  await ep1Tokyo(); await ep1Sky(); await ep1Air(); await arriveTown(); }   // ---- 物語(gr_story.js): 第1話(東京→空中港→飛行船→港→村)
+  await ep1Open(); await arriveTown(); }   // ---- 物語(gr_story.js): 第1話 v11(村の坂→三日前の東京→今)。v10 の ep1Tokyo/ep1Sky/ep1Air は残してあるが使わない   // ---- 物語(gr_story.js): 第1話(東京→空中港→飛行船→港→村)
 async function contGame(sv){ ST.title.style.display='none'; SAVE=sv; if(sv.g!=='m'){ sv.g='m'; sv.name=DEFN('m'); } SAVE.unlock=SAVE.unlock||{evo:false,fusion:false}; SAVE.owned=SAVE.owned||[]; PARTY=sv.party||PARTY; BOX=sv.box||BOX; ITEMS=sv.items||ITEMS; heroGo(sv.g); await progInit();   // 古い記録(party:[{mid,rank}]・box)は progress.js が最初の init で移行する
   grMigrate(); { const f=SAVE.flags||{}; if(f.corinth&&!f.evo19&&!f.ep18) SAVE.unlock.evo=true; }   // ---- 物語(gr_story.js): 古いセーブの手当て(進化の解禁は第19話へ移した)
   if(!SAVE.flags||!SAVE.flags.arrived||!sv.map){ SAVE.flags=SAVE.flags||{}; stShow('full'); LOADP=loadMap('oliva_town','start');   // 判定はぜんぶ SAVE.stage で見る(第1話 2-3)
-    if(SAVE.stage==='asuka'||SAVE.stage==='tokyo') await ep1Tokyo();
-    if(SAVE.stage==='skyport') await ep1Sky();
-    await ep1Air(); await arriveTown(); return; }
+    await ep1Open(); await arriveTown(); return; }   // 古いセーブ(tokyo/skyport/airship)も v11 の頭から
   fadeEl.classList.add('on'); stHide(); await loadMap(sv.map,null,[sv.x,sv.z,sv.yaw]); followersSet(); if(sv.tod) setTime(sv.tod,true);
   await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); showArea(D.name); AREA=D.name; objUpdate(); grArrive(); }
 // ---- 全部ためす(2026-10-27 オーナー「操作性を確かめたい・全部モンスターが使える・全マップ」) ----
