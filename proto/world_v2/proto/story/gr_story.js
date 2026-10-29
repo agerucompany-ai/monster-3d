@@ -238,10 +238,10 @@ async function ep1Open(){
   if(!['flash','now'].includes(SAVE.stage)){ SAVE.stage='cold'; await runScene(SC.ep1_cold,{bg:'anime_ep1_01',keepPaused:true,prologue:true}); SAVE.stage='flash'; saveGame(); }
   if(SAVE.stage==='flash'){ await runScene(SC.ep1_flash,{bg:'anime_ep1_04',keepPaused:true,prologue:true}); SAVE.items=SAVE.items||{}; SAVE.stage='now'; saveGame(); }
   await runScene(SC.ep1_now,{bg:'anime_ep1_09',keepPaused:true,prologue:true}); }
-async function ep1Temple(){ await storyField('temple1'); flag('temple1'); saveGame(); await ep1TempleRest(); }
-async function ep1TempleRest(){ await runScene(SC.hideout,{bg:'anime_ep1_10'}); await storyField('temple1b'); flag('ep1'); saveGame(); await ep2Start(); }
-async function ep2Start(){ await storyField('elly2'); await storyField('net2'); flag('chase2'); saveGame(); }
-async function ep2Bond(){ await storyField('lab'); saveGame(); await ep2Night(); }
+async function ep1Temple(){ await runScene(SC.temple1,{bg:'anime_ep1_14'});   /* 2026-10-29 狐を重ねず、描きこんだ絵で見せる(全画面) */ flag('temple1'); saveGame(); await ep1TempleRest(); }
+async function ep1TempleRest(){ await runScene(SC.hideout,{bg:'anime_ep1_10'}); await runScene(SC.temple1b,{bg:'anime_ep1_18'}); flag('ep1'); saveGame(); await ep2Start(); }
+async function ep2Start(){ await runScene(SC.elly2,{bg:'anime_ep1_19'}); await runScene(SC.net2,{bg:'anime_ep1_20'}); flag('chase2'); saveGame(); }
+async function ep2Bond(){ await runScene(SC.lab,{bg:'anime_ep1_22'}); saveGame(); await ep2Night(); }
 async function ep2Night(){ setTime('evening',true); await runScene(SC.night2,{bg:'anime_oliva_lab'}); flag('ep2'); setTime('morning',true); saveGame(); await ep3Morning(); }
 async function ep3Morning(){ await runScene(SC.morning3,{bg:'anime_oliva_lab'}); flag('morning3'); saveGame(); }
 async function ep5Lab(){ setTime('noon',true); await runScene(SC.lab5,{bg:'anime_oliva_lab'}); saveGame(); }
