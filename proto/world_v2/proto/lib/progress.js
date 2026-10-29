@@ -233,7 +233,7 @@ P.recruitRoll=function(lead){ if(!mon(lead.mid)) return null; if(P.knowsForm(lea
 // prepare(opt, ctx): startBattle の opts に player / recruit / decorate / startStage を足す。ctx={area, zeroday}
 P.prepare=function(opt, ctx){ opt=opt||{}; ctx=ctx||{}; const pl=opt.player||{};
   const party=P.battleParty(); if(!party.length) throw new Error('progress: パーティが空');
-  opt.player=Object.assign({}, pl, {party, box:P.legacyBox(), owned:pl.owned||P.ownedList(), fusionKnown:pl.fusionKnown||P.fusionKnownList(), rankCap:20, items:pl.items||(SAVE&&SAVE.items)||{heal:0}});
+  opt.player=Object.assign({}, pl, {party, box:P.legacyBox(), owned:pl.owned||P.ownedList(), fusionKnown:pl.fusionKnown||P.fusionKnownList(), rankCap:20, items:{}});   // 盤 v4: 回復の道具はなし
   if(opt.startStage==null) opt.startStage=P.startStage(ctx.area);
   opt.noWildForms=TRUMP_FORMS.slice();   // battle.js: 野生・古代テリオン戦では切り札の姿まで上げない
   if((opt.kind||'wild')==='wild' && opt.enemy && Array.isArray(opt.enemy.pack) && opt.enemy.party && opt.enemy.party.length===1){   // 野生の群れ(呼ぶ側が enemy.pack=そのマップの野生の種類 を渡した時)
@@ -443,7 +443,7 @@ function card(c, opts){ const d=el('div','pgCard'+(opts.on?' on':'')+(opts.pend?
   d.innerHTML=`${opts.leader?'<i class="ld"></i>':''}${opts.tag?`<span class="tg">${opts.tag}</span>`:''}<img src="${IMG(c.mid)}" alt=""><div class="nm">${nameOf(c.mid)}</div><div class="lv">Lv${c.lv}</div><div class="bar"><i style="width:${pct}%"></i></div>`; d.dataset.uid=c.uid; return d; }
 // メニュー(2026-10-27 オーナー「ステータスとかパーティーの情報みれるタブのような画面欲しいな」): パーティ・牧場・ずかん・もちもの。ラベル・アイコン・数字だけ
 const TABS=[['party','パーティ','ally'],['ranch','牧場','terrain'],['dex','ずかん','evolve'],['fuse','融合','fuse'],['items','もちもの','potion']];
-const ITEMJ={heal:['回復の水筒','potion'], snack:['おやつの材料','elixir']};
+const ITEMJ={};   // 2026-10-29 盤 v4: 回復の水筒・おやつの材料・〇〇のおやつはなくした(古いセーブに残っていても出さない)
 function terrInfo(){ const MB=root.MonBattle; return MB&&MB.TYPE_TERR&&MB.BRIEF?{TT:MB.TYPE_TERR, J:MB.BRIEF.TERR_JP, H:MB.BRIEF.TERR_HEX, X:Math.round((MB.BRIEF.TERR_X||0.3)*100)}:null; }
 function tnB(t,I){ const h=I.H[t]; const hx=h!=null?'#'+(h>>>0&0xffffff).toString(16).padStart(6,'0'):'#777'; const lt=h!=null&&(((h>>16)&255)*0.299+((h>>8)&255)*0.587+(h&255)*0.114)>150; return `<span class="pgTn${lt?' lt':''}" style="background:${hx}">${I.J[t]||t}</span>`; }
 function canSwap(){ if(UI.opts&&UI.opts.canSwap===false){ UI.toast('入れかえは街の中で'); return false; } return true; }
@@ -494,7 +494,7 @@ UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const 
       if(anc.length){ B.appendChild(el('div','pgSec',`<span>古代テリオン</span><span>${anc.length}</span>`)); for(const f of anc) B.appendChild(el('div','',fuseRow(f))); }
       if(nor.length){ B.appendChild(el('div','pgSec',`<span>融合</span><span>${nor.length}</span>`)); for(const f of nor) B.appendChild(el('div','',fuseRow(f))); } }
     else if(tab==='items'){ const it=(SAVE&&SAVE.items)||{}; B.appendChild(el('div','pgSec','<span>もちもの</span>'));
-      const ks=Object.keys(it).filter(k=>+it[k]>0); for(const k of ks){ const j=ITEMJ[k]||[k,'potion']; B.appendChild(el('div','pgItem',`${ICON(j[1])}<span>${j[0]}</span><b>×${it[k]}</b>`)); } if(!ks.length) B.appendChild(el('div','pgItem','<span>—</span>'));
+      const ks=Object.keys(it).filter(k=>+it[k]>0 && ITEMJ[k]); for(const k of ks){ const j=ITEMJ[k]||[k,'potion']; B.appendChild(el('div','pgItem',`${ICON(j[1])}<span>${j[0]}</span><b>×${it[k]}</b>`)); } if(!ks.length) B.appendChild(el('div','pgItem','<span>—</span>'));
       B.appendChild(el('div','pgSec','<span>ジェム</span>')); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>無料ジェム</span><b>${P.gems()}</b>`));
       const pdv=P.paidGems(); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>有償ジェム</span><b>${pdv==null?'—':pdv}</b>`));
       const a=el('div','pgAct'); const b=el('button','pgBtn gem','ジェムを買う'); b.onclick=()=>{ if(!P.buyGems()) UI.toast('じゅんび中'); }; a.appendChild(b); B.appendChild(a);

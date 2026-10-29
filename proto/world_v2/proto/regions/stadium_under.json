@@ -82,6 +82,10 @@
    "master": 1,
    "zeroday": 1,
    "scene": "belladonna",
+   "ai": {
+    "hpX": 0.53,
+    "atkX": 0.53
+   },
    "after": "belladonna_win",
    "flagWin": "bella",
    "todo": "ベラドンナの絵は未作成(ペトラの体を仮に使用)",

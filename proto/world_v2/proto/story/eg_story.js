@@ -197,7 +197,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(8,'e08_1',LU,'*',{bg:NB,tod:'night'}); sc(8,'e08_2',LU,'*',{bg:NB}); sc(8,'e08_3',LU,'*',{bg:NB});
   fn(8,'e08_q',LU,()=>xQuiz([['男の話',['最後まで聞く','言い返す'],0,'男は、話をやめた']],NB));
   sc(8,'e08_4b',LU,'*',{bg:NB}); sc(8,'e08_5',LU,'*',{bg:NB});
-  bt(8,'e08_b','e08_6',LU,{bg:NB,anc:{id:2030,tier:5,lv:39,flag:'eg_eleki',tune:{hp:1.89,atk:2.85}},R:{terrain:'stream',guests:['partner',1046,71,'own3'],fuse:[2044]}});
+  bt(8,'e08_b','e08_6',LU,{bg:NB,anc:{id:2030,tier:5,lv:39,flag:'eg_eleki',tune:{hp:2.63,atk:3.96}},R:{terrain:'stream',guests:['partner',1046,71,'own3'],fuse:[2044]}});
   sc(8,'e08_7',LU,'*',{bg:NB});
   // 第9話 ひびのオベリスク(アスワン西岸の石切り場・古代オベリオンから道を聞く・水門2/4)
   go(9,'e09_g',LU,AS,'from_boat',{tod:'morning'});
@@ -245,7 +245,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   bt(16,'e16_b','e16_4',AS,{bg:DI,mid:'e16_3',foe:()=>cnFoe({n:'ミラ＆ジョー',zeroday:1,party:P(1005,1006,1038)}),R:{terrain:'ruins'}});
   sc(16,'e16_5',AS,'*',{bg:DI});
   sc(17,'e17_1',AS,'*',{bg:'anime_eg_control'}); sc(17,'e17_2',AS,'*',{bg:'anime_eg_control'});
-  bt(17,'e17_b','e17_3',AS,{bg:'anime_eg_control',foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1061,lv:40,fixed:true,leader:true,boss:true,circle:true},{mid:1005,lv:39,stage:2,evo:true},{mid:1006,lv:39,fixed:true},{mid:1013,lv:39,fixed:true},{mid:1012,lv:38,stage:2,evo:true})},'ランサム'),R:{terrain:'ruins',guests:['partner',1046,'own2','own3'],fuse:[2026],ai:{hpX:0.55,atkX:0.6}}});   // 2026-10-28 切り札ディアボーグ(ボス・1.75倍・魔法陣から出る)。シム sim/sim_e17.js 150戦: 勝率66%(前の hpX/atkX 1.2 では3%)
+  bt(17,'e17_b','e17_3',AS,{bg:'anime_eg_control',foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1061,lv:40,fixed:true,leader:true,boss:true,circle:true},{mid:1005,lv:39,stage:2,evo:true},{mid:1006,lv:39,fixed:true},{mid:1013,lv:39,fixed:true},{mid:1012,lv:38,stage:2,evo:true})},'ランサム'),R:{terrain:'ruins',guests:['partner',1046,'own2','own3'],fuse:[2026],ai:{hpX:0.96,atkX:1.04}}});   // 2026-10-28 切り札ディアボーグ(ボス・1.75倍・魔法陣から出る)。シム sim/sim_e17.js 150戦: 勝率66%(前の hpX/atkX 1.2 では3%)
   sc(17,'e17_4',AS,'*',{bg:'anime_eg_control',post:()=>flag('eg_ransom')});
   sc(18,'e18_1',AS,'*',{bg:'anime_eg_control',tod:'dawn'}); sc(18,'e18_2a',AS,'*',{bg:'anime_eg_control'});
   fn(18,'e18_q',AS,()=>xQuiz(EG_Q18,'anime_eg_control'));
@@ -255,7 +255,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   bt(19,'e19_b','e19_4',AS,{bg:'anime_eg_lakebed',foe:()=>cnFoe({n:'ログ＆パッチ',zeroday:1,party:P(1007,1062)}),R:{terrain:'ruins'}});
   sc(19,'e19_5',AS,'*',{bg:'anime_eg_lakebed'});
   sc(20,'e20_1',AS,'*',{bg:'anime_eg_sunken',tod:'evening'}); sc(20,'e20_2',AS,'*',{bg:'anime_eg_sunken'}); sc(20,'e20_3',AS,'*',{bg:'anime_eg_sunken'}); sc(20,'e20_4',AS,'*',{bg:'anime_eg_sunken'}); sc(20,'e20_5',AS,'*',{bg:'anime_eg_sunken'});
-  bt(20,'e20_b','e20_6',AS,{bg:'anime_eg_sunken',must:1,anc:{id:2011,tier:5,lv:40,flag:'eg_raga',tune:{hp:1.97,atk:2.89}},R:{terrain:'ruins',guests:['partner','own3',1037,'own2'],fuse:[2048]}});
+  bt(20,'e20_b','e20_6',AS,{bg:'anime_eg_sunken',must:1,anc:{id:2011,tier:5,lv:40,flag:'eg_raga',tune:{hp:2.07,atk:3.04}},R:{terrain:'ruins',guests:['partner','own3',1037,'own2'],fuse:[2048]}});
   // 第21話 北の電話(カイロの病院→空の港・ナディアと別れる・父の電話)
   go(21,'e21_g',AS,CA,'from_china',{tod:'morning'});
   sc(21,'e21_1',CA,'*',{bg:'anime_eg_hospital_day'});

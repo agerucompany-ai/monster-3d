@@ -2112,14 +2112,13 @@ function enterPlace(n){ const f=SAVE?SAVE.flags:{}; if(chasing()) return;   // -
   if(n==='隠し研究所'){ toast('ゼロデイの隠し研究所'); return; }
   if(n==='道しるべ'){ toast(MAP&&MAP.startsWith('eg_')?'→ ギザ → ナイルデルタ → ルクソール → 王家の谷 → 王の墓 → アスワン → アブ・シンベル → 白砂漠 → 紅海':(MAP&&MAP.startsWith('cn_')?'→ 竹海の村 → 西の高原 → 化石の谷 → 南の山 → 雲海の石柱 → 北の大河 → 東の島 → 古い都 → 雪の高原 → 東の海':'→ アルカディアの森 → 運河の町コリンタ → 雲の山道 → 山の村デルフィナ')); return; }
   if(n==='山の天文台'){ toast('山の天文台'); return; }
-  if(n==='店'){ ITEMS.heal=Math.max(ITEMS.heal||0,3); toast('回復の水筒 ×'+ITEMS.heal); saveGame(); return; }
   if(n==='いこいの泉'){ toast('みんな元気になった'); return; } toast(n); }
 function npcTalk(n){ if(n.o.brief){ talkClose(); HERO.yaw=Math.atan2(n.x-HERO.x,n.z-HERO.z); briefShow(n.o.brief,'info'); return; }   // 案内の人=地図の案内(せりふなし)
   const f=SAVE?SAVE.flags:{};   // ---- 物語(gr_story.js): 勝ったあとの場面の続き(afterFlag)・勝負しない人の一言・NPC_RULE
   if(storyOn()&&n.beaten&&n.o.after&&n.o.afterFlag&&!f[n.o.afterFlag]&&SC[n.o.after]){ storyField(n.o.after); return; }
   { const rr=ruleOf(n.o); if(rr&&rr.off&&rr.line){ talkTo(n,rr.line); return; } }
   let sc=n.o.scene; if(NPC_RULE[sc]) sc=storyOn()?NPC_RULE[sc](f):null; if(sc&&!n.o.trainer&&!f[sc]&&SC[sc]){ storyField(sc); return; }
-  if(n.o.role==='shop'){ ITEMS.heal=Math.max(ITEMS.heal||0,3); saveGame(); } talkTo(n); }
+  talkTo(n); }   // 2026-10-29 盤 v4: 回復の水筒はなくした(店は話すだけ)
 document.getElementById('tod').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) setTime(b.dataset.t); });
 const _pv=new THREE.Vector3();
 const talkEl=document.getElementById('talk'), bangEl=document.getElementById('bang'), flashEl=document.getElementById('flash'); let TALK=null;
@@ -2129,7 +2128,7 @@ function talkTo(n,line){ TALK=n; n.talkT=4; const ty=Math.atan2(n.x-HERO.x,n.z-H
 function talkClose(){ TALK=null; talkEl.style.display='none'; }
 talkEl.addEventListener('click',talkClose);
 // ---- 自然の中の出会い → 盤のバトル(world_v2/battle/battle.js の startBattle) ----
-let PARTY=[{mid:7,rank:5}], BOX={7:{rank:5}}; let ITEMS={heal:3};
+let PARTY=[{mid:7,rank:5}], BOX={7:{rank:5}}; let ITEMS={};   // 2026-10-29 盤 v4: 回復の水筒・おやつはなくした(もちものはジェムだけ)
 let ENC=null, encCool=0;
 function loadScript(src){ return new Promise((res,rej)=>{ const e=document.createElement('script'); e.src=src; e.onload=res; e.onerror=rej; document.head.appendChild(e); }); }
 function placeAt(x,z){ if(TER.streamQ(x,z)[0]<8) return 'stream'; if(TER.coastD(x,z)<14) return 'seaside'; for(const e of D.grass.tall){ if(inEll(x,z,[e[0],e[1],e[2]+2,e[3]+2])<1) return 'meadow'; } if(x>-34&&x<46&&z>23&&z<50) return 'olive'; return 'meadow'; }
@@ -7070,7 +7069,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(8,'e08_1',LU,'*',{bg:NB,tod:'night'}); sc(8,'e08_2',LU,'*',{bg:NB}); sc(8,'e08_3',LU,'*',{bg:NB});
   fn(8,'e08_q',LU,()=>xQuiz([['男の話',['最後まで聞く','言い返す'],0,'男は、話をやめた']],NB));
   sc(8,'e08_4b',LU,'*',{bg:NB}); sc(8,'e08_5',LU,'*',{bg:NB});
-  bt(8,'e08_b','e08_6',LU,{bg:NB,anc:{id:2030,tier:5,lv:39,flag:'eg_eleki',tune:{hp:1.89,atk:2.85}},R:{terrain:'stream',guests:['partner',1046,71,'own3'],fuse:[2044]}});
+  bt(8,'e08_b','e08_6',LU,{bg:NB,anc:{id:2030,tier:5,lv:39,flag:'eg_eleki',tune:{hp:2.63,atk:3.96}},R:{terrain:'stream',guests:['partner',1046,71,'own3'],fuse:[2044]}});
   sc(8,'e08_7',LU,'*',{bg:NB});
   // 第9話 ひびのオベリスク(アスワン西岸の石切り場・古代オベリオンから道を聞く・水門2/4)
   go(9,'e09_g',LU,AS,'from_boat',{tod:'morning'});
@@ -7118,7 +7117,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   bt(16,'e16_b','e16_4',AS,{bg:DI,mid:'e16_3',foe:()=>cnFoe({n:'ミラ＆ジョー',zeroday:1,party:P(1005,1006,1038)}),R:{terrain:'ruins'}});
   sc(16,'e16_5',AS,'*',{bg:DI});
   sc(17,'e17_1',AS,'*',{bg:'anime_eg_control'}); sc(17,'e17_2',AS,'*',{bg:'anime_eg_control'});
-  bt(17,'e17_b','e17_3',AS,{bg:'anime_eg_control',foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1061,lv:40,fixed:true,leader:true,boss:true,circle:true},{mid:1005,lv:39,stage:2,evo:true},{mid:1006,lv:39,fixed:true},{mid:1013,lv:39,fixed:true},{mid:1012,lv:38,stage:2,evo:true})},'ランサム'),R:{terrain:'ruins',guests:['partner',1046,'own2','own3'],fuse:[2026],ai:{hpX:0.55,atkX:0.6}}});   // 2026-10-28 切り札ディアボーグ(ボス・1.75倍・魔法陣から出る)。シム sim/sim_e17.js 150戦: 勝率66%(前の hpX/atkX 1.2 では3%)
+  bt(17,'e17_b','e17_3',AS,{bg:'anime_eg_control',foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1061,lv:40,fixed:true,leader:true,boss:true,circle:true},{mid:1005,lv:39,stage:2,evo:true},{mid:1006,lv:39,fixed:true},{mid:1013,lv:39,fixed:true},{mid:1012,lv:38,stage:2,evo:true})},'ランサム'),R:{terrain:'ruins',guests:['partner',1046,'own2','own3'],fuse:[2026],ai:{hpX:0.96,atkX:1.04}}});   // 2026-10-28 切り札ディアボーグ(ボス・1.75倍・魔法陣から出る)。シム sim/sim_e17.js 150戦: 勝率66%(前の hpX/atkX 1.2 では3%)
   sc(17,'e17_4',AS,'*',{bg:'anime_eg_control',post:()=>flag('eg_ransom')});
   sc(18,'e18_1',AS,'*',{bg:'anime_eg_control',tod:'dawn'}); sc(18,'e18_2a',AS,'*',{bg:'anime_eg_control'});
   fn(18,'e18_q',AS,()=>xQuiz(EG_Q18,'anime_eg_control'));
@@ -7128,7 +7127,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   bt(19,'e19_b','e19_4',AS,{bg:'anime_eg_lakebed',foe:()=>cnFoe({n:'ログ＆パッチ',zeroday:1,party:P(1007,1062)}),R:{terrain:'ruins'}});
   sc(19,'e19_5',AS,'*',{bg:'anime_eg_lakebed'});
   sc(20,'e20_1',AS,'*',{bg:'anime_eg_sunken',tod:'evening'}); sc(20,'e20_2',AS,'*',{bg:'anime_eg_sunken'}); sc(20,'e20_3',AS,'*',{bg:'anime_eg_sunken'}); sc(20,'e20_4',AS,'*',{bg:'anime_eg_sunken'}); sc(20,'e20_5',AS,'*',{bg:'anime_eg_sunken'});
-  bt(20,'e20_b','e20_6',AS,{bg:'anime_eg_sunken',must:1,anc:{id:2011,tier:5,lv:40,flag:'eg_raga',tune:{hp:1.97,atk:2.89}},R:{terrain:'ruins',guests:['partner','own3',1037,'own2'],fuse:[2048]}});
+  bt(20,'e20_b','e20_6',AS,{bg:'anime_eg_sunken',must:1,anc:{id:2011,tier:5,lv:40,flag:'eg_raga',tune:{hp:2.07,atk:3.04}},R:{terrain:'ruins',guests:['partner','own3',1037,'own2'],fuse:[2048]}});
   // 第21話 北の電話(カイロの病院→空の港・ナディアと別れる・父の電話)
   go(21,'e21_g',AS,CA,'from_china',{tod:'morning'});
   sc(21,'e21_1',CA,'*',{bg:'anime_eg_hospital_day'});
@@ -7198,7 +7197,7 @@ const NR_Q07=[['図面',['一階の、入口の部屋','屋上の、機械の部
 const NR_Q10=[['教会の線',['七番の穴','十二番の穴','二十一番の穴'],1]];
 const NR_LINES=['眠る者よ','地の下で鳴れ','おまえの音のある所で','子らは生きる'];
 const NR_BOT=()=>P({mid:1050,lv:62,fixed:true,leader:true},{mid:290,lv:60,fixed:true},{mid:2049,lv:60,fixed:true},{mid:1052,lv:60,fixed:true});
-const NR_RAGNA=o=>Object.assign({id:2071,tier:6,lv:73,size:13,flag:'nr_ragna_s',tune:{hp:0.64,atk:0.4,escort:5}},o||{});
+const NR_RAGNA=o=>Object.assign({id:2071,tier:6,lv:73,size:13,flag:'nr_ragna_s',tune:{hp:2.6,atk:2.8,escort:5}},o||{});
 // 新4(三体融合・ゴルドレクス)が生まれた: 旗 nr_trio・融合の仕方を覚える
 function nrTrio(){ flag('nr_trio'); const pg=window.Progress&&Progress.state(); if(pg){ pg.fusions=pg.fusions||{}; pg.fusions[LOKI_ID]=1; } }
 xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
@@ -7275,7 +7274,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   // 第15〜16話 研究所の下の神殿(全画面。王オーディガル=キマドラ(リュバーン＋エンレオ)・首輪の機械=ガイアドラ(リュバーン＋アルマガネ))
   const TE='anime_nr_temple';
   sc(15,'n15_1',GL,'*',{bg:TE,tod:'night'}); sc(15,'n15_2',GL,'*',{bg:TE}); sc(15,'n15_3',GL,'*',{bg:TE});
-  bt(15,'n15_b','n15_4',GL,{bg:TE,anc:{id:2069,tier:5,lv:59,flag:'nr_odin_s',tune:{hp:1.4,atk:1.82}},R:{terrain:'ruins',guests:['partner',199,'own2','own3'],fuse:[2020]}});
+  bt(15,'n15_b','n15_4',GL,{bg:TE,anc:{id:2069,tier:5,lv:59,flag:'nr_odin_s',tune:{hp:1.77,atk:2.3}},R:{terrain:'ruins',guests:['partner',199,'own2','own3'],fuse:[2020]}});
   sc(15,'n15_5',GL,'*',{bg:TE}); sc(15,'n15_6',GL,'*',{bg:TE});
   sc(16,'n16_1',GL,'*',{bg:TE}); sc(16,'n16_2a',GL,'*',{bg:TE});
   bt(16,'n16_b','n16_2',GL,{bg:TE,foe:()=>cnFoe({n:'ゼロデイの大人たち',zeroday:1,party:P(1064,1067,1064,1050)}),R:{terrain:'ruins',guests:['partner',199,1037,'own2'],fuse:[2055]}});
@@ -7305,7 +7304,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   go(24,'n24_g',CO,GL,'from_core',{tod:'morning'});
   const IC='anime_nr_slope';   // 研究所の外の氷の上(全画面)
   sc(24,'n24_2',GL,'*',{bg:IC}); sc(24,'n24_3a',GL,'*',{bg:IC});
-  bt(24,'n24_b','n24_3',GL,{bg:IC,anc:()=>NR_RAGNA({tune:{hp:0.9,atk:0.8,escort:5}}),R:{terrain:'snowfield',size:13,guests:['partner','own2','own3',1025,1013,290],own:[1003],triple:[LOKI_ID]}});
+  bt(24,'n24_b','n24_3',GL,{bg:IC,anc:()=>NR_RAGNA({tune:{hp:3.66,atk:5.6,escort:5}}),R:{terrain:'snowfield',size:13,guests:['partner','own2','own3',1025,1013,290],own:[1003],triple:[LOKI_ID]}});
   sc(24,'n24_4',GL,'*',{bg:IC}); sc(24,'n24_5',GL,'*',{bg:IC,post:()=>nrTrio()}); sc(24,'n24_6',GL,'*',{bg:IC});
   // 第25話 古い電話の先(アドリアンが捕まる・見張り小屋の古い電話・牢の窓)
   sc(25,'n25_1',GL,'*',{bg:'anime_nr_core'}); sc(25,'n25_2',GL,'*',{bg:IC,tod:'evening'});
@@ -7385,7 +7384,7 @@ async function testSaveNew(){ const list=await fetch('../battle/data/monsters.js
   const pick=[1001,178,1022,180,1026,195].map(id=>bases.find(m=>m.id===id)?id:null).filter(Boolean); for(const m of bases){ if(pick.length>=6) break; if(!pick.includes(m.id)) pick.push(m.id); }
   const party=pick.slice(0,6).map(id=>roster.find(c=>c.mid===id).uid);
   const lines={}; for(const m of bases) lines[m.id]=1;
-  return {v:1,g:'m',name:DEFN('m'),partner:1001,flags:{arrived:1},unlock:{evo:true,fusion:true,triple:true},owned:mine.map(m=>m.id),stage:'field',test:4,items:{heal:9},
+  return {v:1,g:'m',name:DEFN('m'),partner:1001,flags:{arrived:1},unlock:{evo:true,fusion:true,triple:true},owned:mine.map(m=>m.id),stage:'field',test:4,items:{},
     map:'oliva_town',x:null,z:null,yaw:null, prog:{v:1,gems:99999,roster,party,partyMax:6,lines,forms,fusions,learnV:1,starter:1001,quests:{},log:[],arc:'greece',pulls:0}}; }
 async function testGame(fresh){ ST.title.style.display='none'; SKEY=SKEY_TEST; TESTMODE=true; NOSAVE=false;
   let sv=null; if(!fresh) try{ const s=JSON.parse(localStorage.getItem(SKEY_TEST)); if(s&&s.v===1&&s.test===4) sv=s; /* test:1〜3(融合体・2段目の子・物語だけの古の個体を持っていた前の形)は作り直す */ }catch(e){}

@@ -126,7 +126,7 @@ details .wrap{display:flex;flex-wrap:wrap;gap:6px;padding:0 8px 8px}
   <section id="secBoard"><h2><img src="img/ui/terrain.webp" alt="">盤</h2>
     <div class="row"><span class="lab">種類</span><div class="seg" id="bKind"><button data-v="wild">野生</button><button data-v="trainer">人</button><button data-v="master">ボス</button><button data-v="ancient">古代</button></div></div>
     <div class="row" id="tierRow"><span class="lab">古代の格</span><div class="seg" id="bTier"><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button><button data-v="6">6</button></div></div>
-    <div class="row"><span class="lab">大きさ</span><div class="seg" id="bSize"><button data-v="7">7×7</button><button data-v="9">9×9</button><button data-v="11">11×11</button><button data-v="13">13×13</button></div></div>
+    <div class="row"><span class="lab">出せる数</span><div class="seg" id="bSize"><button data-v="7">3体</button><button data-v="9">4体</button><button data-v="11">5体</button><button data-v="13">6体</button></div></div>
     <div class="row"><span class="lab">ターン</span><div class="seg" id="bTurn"><button data-v="0">自動</button><button data-v="10">10</button><button data-v="15">15</button><button data-v="20">20</button><button data-v="25">25</button><button data-v="30">30</button></div></div>
     <div class="list" id="places"></div>
   </section>
@@ -266,12 +266,12 @@ function sceneOpt(sc){ const D=REG[sc.map]; if(!D) return null; let opt;
   else { const B=BOSSES.find(b=>b.map===sc.map&&(sc.anc?(b.type==='anc'&&b.mid===sc.anc):(b.type==='npc'&&b.o.scene===sc.npc))); if(!B) return null;
     opt=encounterOpt(B); opt._pf=partyFor(sc.map, sc.final); if(sc.place){ opt.terrainTheme=sc.place.tt; opt.backdrop=sc.place.bd; } }
   const pf=opt._pf; delete opt._pf;
-  opt.player={party:pf.party, owned:pf.owned, items:{heal:3}, rankCap:20};
+  opt.player={party:pf.party, owned:pf.owned, items:{}, rankCap:20};
   if(pf.P.fuse) opt.fusionUnlocked=true; if(pf.P.triple) opt.tripleUnlocked=true;
   return opt; }
 function sceneChips(sc){ const D=REG[sc.map]; if(!D) return ''; const B=sc.wild?null:BOSSES.find(b=>b.map===sc.map&&(sc.anc?(b.type==='anc'&&b.mid===sc.anc):(b.type==='npc'&&b.o.scene===sc.npc)));
   let size=7, pl, lv; if(B){ const o=encounterOpt(B); size=o.size; pl=sc.place||{tt:o.terrainTheme}; lv=B.lv; } else { pl={tt:(D.battle&&D.battle.default||{}).terrainTheme||'meadow'}; lv=mapLv(sc.map).join('〜'); }
-  return `${size}×${size}・${placeJP(pl.tt)}・Lv${lv}`; }
+  return `${SZN(size)}・${placeJP(pl.tt)}・Lv${lv}`; }
 function renderScenes(){ const el=$('scenes'); el.innerHTML='';
   for(const sc of SCENES){ const D=REG[sc.map]; if(!D) continue; const B=sc.wild?null:BOSSES.find(b=>b.map===sc.map&&(sc.anc?(b.type==='anc'&&b.mid===sc.anc):(b.type==='npc'&&b.o.scene===sc.npc))); if(!sc.wild&&!B) continue;
     const mid=B?B.mid:(wildPool(D)[0]); const b=document.createElement('button'); b.className='scn';
@@ -296,7 +296,7 @@ function renderBossList(){ const el=$('foeBoss'); if(!bossBuilt){ bossBuilt=true
     for(const [ak,an] of ARCS){ const L=BOSSES.filter(b=>b.arc===ak); if(!L.length) continue; const d=document.createElement('details'); if(S.foe.boss&&L.some(b=>b.key===S.foe.boss)) d.open=true; d.innerHTML=`<summary>${an}　${L.length}</summary><div class="wrap"></div>`; const w=d.querySelector('.wrap');
       let cur=''; for(const B of L){ if(B.map!==cur){ cur=B.map; const h=document.createElement('div'); h.className='mapn'; h.textContent=REG[B.map].name; w.appendChild(h); }
         const b=document.createElement('button'); b.className='bossb'; b.dataset.k=B.key; const o=encounterOpt(B);
-        b.innerHTML=`<img src="${art(B.mid)}" alt="" loading="lazy"><span>${B.name}<small>${B.type==='anc'?'古代':'ボス'}・${o.size}×${o.size}・${placeJP(o.terrainTheme)}・Lv${B.lv}${o.enemy.party.length>1?'・'+o.enemy.party.length+'体':''}</small></span>`;
+        b.innerHTML=`<img src="${art(B.mid)}" alt="" loading="lazy"><span>${B.name}<small>${B.type==='anc'?'古代':'ボス'}・${SZN(o.size)}・${placeJP(o.terrainTheme)}・Lv${B.lv}${o.enemy.party.length>1?'・'+o.enemy.party.length+'体':''}</small></span>`;
         b.onclick=()=>{ S.foe.boss=B.key; const o2=encounterOpt(B); S.board.kind=o2.kind; S.board.size=o2.size; S.board.place={tt:o2.terrainTheme, bd:o2.backdrop}; if(o2.enemy.ancient) S.board.tier=o2.enemy.ancient.tier; S.board.fromBoss=B.key; renderAll(); save(); };
         w.appendChild(b); } el.appendChild(d); } }
   for(const b of el.querySelectorAll('.bossb')) b.classList.toggle('on', b.dataset.k===S.foe.boss); }
@@ -316,6 +316,7 @@ function renderPlaces(){ const el=$('places'); if(!placesBuilt){ placesBuilt=tru
     for(const [ak,an,ids] of ARCS){ const d=document.createElement('details'); d.innerHTML=`<summary>${an}</summary><div class="wrap"></div>`; const w=d.querySelector('.wrap');
       for(const id of ids){ const D=REG[id]; if(!D) continue; const h=document.createElement('div'); h.className='mapn'; h.textContent=D.name; w.appendChild(h); for(const p of mapPlaces(D)) w.appendChild(mk(p)); } el.appendChild(d); } }
   const cur=S.board.place.tt+'|'+(S.board.place.bd||''); for(const b of el.querySelectorAll('.chip')) b.classList.toggle('on', b.dataset.k===cur); }
+function SZN(n){ return ({7:3,9:4,11:5,13:6}[+n]||5)+'体'; }   // 2026-10-29 盤 v4: 盤はいつも 縦13×横9。size は出せる数の決まり
 function renderBoard(){ segOn('bKind', S.board.kind); segOn('bSize', S.board.size); segOn('bTurn', S.board.turn); segOn('bTier', S.board.tier); $('tierRow').style.display=S.board.kind==='ancient'&&S.foe.mode!=='boss'?'':'none'; renderPlaces(); }
 // ---- ルール・演出 ----
 function fx(){ return (MB&&MB._dbg&&MB._dbg.FX2)||null; }
@@ -327,7 +328,7 @@ function renderRules(){ for(const b of $('rules').children){ const k=b.dataset.k
 $('rules').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; const k=b.dataset.k; if(FXK[k]) setFx(k, !FXK[k]()); else { S.rule[k]=!S.rule[k]; if(k==='triple'&&S.rule.triple) S.rule.fuse=true; if(k==='fuse'&&!S.rule.fuse) S.rule.triple=false; save(); } renderRules(); renderSum(); });
 
 function renderSum(){ const k={wild:'野生',trainer:'人',master:'ボス',ancient:'古代'}[S.board.kind]; const f=S.foe.mode==='boss'?((BOSSES.find(b=>b.key===S.foe.boss)||{}).name||'—'):S.foe.mode==='wild'?((REG[S.foe.wildMap]||{}).name||'')+' 野生':S.foe.mode==='pick'?S.foe.party.length+'体':'ランダム'+S.foe.n+'体';
-  const t=[`${S.me.party.length}体 Lv${S.me.lv}`, 'vs '+f, k, `${S.board.size}×${S.board.size}`, placeJP(S.board.place.tt), S.board.turn?S.board.turn+'ターン':null, S.rule.fuse?'融合':null, S.rule.triple?'3体融合':null, S.rule.evo?'進化':null].filter(Boolean);
+  const t=[`${S.me.party.length}体 Lv${S.me.lv}`, 'vs '+f, k, SZN(S.board.size), placeJP(S.board.place.tt), S.board.turn?S.board.turn+'ターン':null, S.rule.fuse?'融合':null, S.rule.triple?'3体融合':null, S.rule.evo?'進化':null].filter(Boolean);
   $('sum').innerHTML=t.map(x=>`<span>${x}</span>`).join(''); }
 function renderAll(){ renderMe(); renderFoe(); renderBoard(); renderRules(); renderSum(); }
 
@@ -378,7 +379,7 @@ function buildOpt(){ const allIds=MON.map(m=>m.id);
   S.me.party=S.me.party.filter(canOwn); if(!S.me.party.length) S.me.party=STARTERS.slice();
   const me=S.me.party.slice(0,6).map(m=>({mid:m, lv:S.me.lv}));
   const owned=S.rule.evo?allIds:S.me.party.slice();
-  let opt={ kind:S.board.kind, size:S.board.size, terrainTheme:S.board.place.tt, backdrop:S.board.place.bd||undefined, player:{party:me, owned, items:{heal:3}, rankCap:20}, enemy:null };
+  let opt={ kind:S.board.kind, size:S.board.size, terrainTheme:S.board.place.tt, backdrop:S.board.place.bd||undefined, player:{party:me, owned, items:{}, rankCap:20}, enemy:null };
   const m=S.foe.mode;
   if(m==='boss'&&S.foe.boss){ const B=BOSSES.find(b=>b.key===S.foe.boss); if(B){ const o=encounterOpt(B); opt.enemy=o.enemy; if(!S.me.stage) opt.startStage=o.startStage; if(S.board.kind!==o.kind&&!(S.board.kind==='ancient'||o.kind==='ancient')) opt.kind=S.board.kind; else opt.kind=o.kind; } }
   if(!opt.enemy&&m==='wild'){ const D=REG[S.foe.wildMap]; const pool=D?wildPool(D):[]; if(pool.length){ const band=mapLv(S.foe.wildMap); const lv=()=>band[0]+Math.floor(Math.random()*(band[1]-band[0]+1));
