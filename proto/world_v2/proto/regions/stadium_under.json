@@ -201,6 +201,10 @@
    "flag": "king",
    "lv": 24,
    "tier": 6,
+   "tune": {
+    "hp": 6.482,
+    "atk": 1.208
+   },
    "need": "low30",
    "lose": "godherak_lose",
    "afterFlag": "ep30"
