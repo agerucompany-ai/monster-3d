@@ -50,6 +50,9 @@ function bgPan(k,mode,sec){ const el=ST.bg; if(!el) return; for(const q of ['L',
   const t=Math.max(.2,(FF?.45:1)*(sec||0)); if(mode==='fix'||!sec) return;
   el.style.transition=`background-position ${t}s ease-in-out, transform ${t}s ease-in-out, opacity .5s`; el.style.backgroundPosition=q[2]; el.style.transform=q[3]; }
 function bgReset(){ const el=ST&&ST.bg; if(!el) return; el.style.transition='opacity .5s'; el.style.transform=''; el.style.backgroundPosition=''; }
+// 歩ける場面(field)の途中で、一枚絵を全画面に出す／歩ける画面へ戻す(2026-10-30 狐や鳥を重ねず描きこんだ絵で見せる)
+function cutPan(k,mode,sec){ ST.el.classList.remove('field'); bgPan(k,mode,sec); }
+function cutBack(){ bgReset(); for(const q of ['L','R','R2']){ ST[q].classList.add('off'); ST[q].dataset.w=''; ST[q].removeAttribute('src'); } ST.el.classList.add('field'); }
 // 画面を小さく揺らす(第1話 v11 カット2)
 function shake(sec){ const el=ST.el; if(!el||!el.animate) return; el.animate([{transform:'translate(0,0)'},{transform:'translate(-6px,3px)'},{transform:'translate(5px,-4px)'},{transform:'translate(-3px,2px)'},{transform:'translate(0,0)'}],{duration:(sec||.3)*1000}); }
 
