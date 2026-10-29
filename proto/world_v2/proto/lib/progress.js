@@ -18,7 +18,7 @@ const CFG={
   cradleW:{1:60, 2:30, 3:10},   // 生み出すで出る段の重み(1体あたり)
   recruitDragon:0.05, recruitMin:0.05, recruitMax:0.50,           // 竜タイプは5%
   // 2026-10-30 店(オーナー承認の数): 肉=戦いの中で野生の子にあげると 倒した時に仲間になる確率に足す(同じ子は足し算)。上限80%・竜30%。闘気の水晶=戦いの中で選んだ子の闘気+50
-  //   ジェムは無料ジェムだけで買う(有償ジェムは課金サーバー therion-pay が 生み出す(cradle) しか引けない決まりのため)
+  //   2026-10-30 オーナー決定: 有償ジェムでも買える。生み出すと同じく 無料ジェムを先に使い、足りない分だけ有償ジェムをサーバーで引く(therion-pay の SPEND shop:600)
   shop:[{k:'meat1', price:100, add:0.10}, {k:'meat2', price:300, add:0.20}, {k:'meat3', price:600, add:0.35}, {k:'ki', price:150}],
   fedMax:0.80, fedMaxDragon:0.30,
   expNeed:(lv)=>Math.round(12+1.6*lv*lv),     // 次のレベルまでのEXP(Lv1→2=14・Lv5=52・Lv10=172・Lv50=4012・Lv98=15378)
@@ -213,9 +213,18 @@ P.totalGems=()=>P.gems()+(P.paidGems()||0);
 function itemsObj(){ if(!SAVE) return null; if(!SAVE.items||typeof SAVE.items!=='object') SAVE.items={}; return SAVE.items; }
 P.items=()=>Object.assign({}, (SAVE&&SAVE.items)||{});
 P.itemCount=(k)=>Math.max(0,+(((SAVE&&SAVE.items)||{})[k])||0);
-P.shopList=()=>CFG.shop.map(x=>({k:x.k, name:(ITEMJ[x.k]||[x.k])[0], icon:(ITEMJ[x.k]||[0,'potion'])[1], price:x.price, add:x.add||0, have:P.itemCount(x.k), canBuy:P.gems()>=x.price}));
+P.shopList=()=>CFG.shop.map(x=>({k:x.k, name:(ITEMJ[x.k]||[x.k])[0], icon:(ITEMJ[x.k]||[0,'potion'])[1], price:x.price, add:x.add||0, have:P.itemCount(x.k), canBuy:P.totalGems()>=x.price}));
 P.buyItem=function(k){ const pg=prog(); const x=CFG.shop.find(s=>s.k===k); if(!pg||!x) return {ok:false, why:'nosave'}; if(pg.gems<x.price) return {ok:false, why:'gems'};
   const it=itemsObj(); pg.gems-=x.price; it[k]=(+it[k]||0)+1; pg.log.unshift({t:Date.now(), n:-x.price, r:'shop'}); pg.log=pg.log.slice(0,30); P.save(); emit('gems',{n:-x.price,reason:'shop',total:pg.gems}); emit('shop',{k, have:it[k]}); return {ok:true, k, have:it[k]}; };
+// 有償ジェムも使う買い方(2026-10-30): 無料ジェムで足りればそのまま。足りない分だけ PAID.spend(need,'shop')。サーバーが引けた時だけ無料の分も引いて渡す
+P.buyItemAsync=async function(k){ const pg=prog(); const x=CFG.shop.find(s=>s.k===k); if(!pg||!x) return {ok:false, why:'nosave'};
+  if(pg.gems>=x.price) return P.buyItem(k);
+  const need=x.price-pg.gems, paid=P.paidGems(); if(!PAID||paid==null||paid<need) return {ok:false, why:'gems'};
+  if(P._shopBusy) return {ok:false, why:'busy'}; P._shopBusy=true;
+  try{ const r=await PAID.spend(need,'shop'); if(!r||!r.ok) return {ok:false, why:(r&&r.why)||'paid'};
+    const it=itemsObj(); const free=pg.gems; pg.gems=0; if(free) pg.log.unshift({t:Date.now(), n:-free, r:'shop'}); pg.log.unshift({t:Date.now(), n:-need, r:'shop_paid'}); pg.log=pg.log.slice(0,30);
+    it[k]=(+it[k]||0)+1; P.save(); emit('gems',{n:-free,reason:'shop',total:pg.gems}); emit('shop',{k, have:it[k]}); return {ok:true, k, have:it[k], paid:need}; }
+  finally{ P._shopBusy=false; } };
 P.useItem=function(k){ const it=itemsObj(); if(!it||!(+it[k]>0)) return false; it[k]=+it[k]-1; P.save(); return true; };   // battle.js が使った時に呼ぶ(opts.useItem)
 
 // ---------------------------------------------------------------- 野生・地方の決まり
@@ -420,7 +429,7 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgOdds .lrn{color:#9fe0ff;font-size:10px}
 #pgToast{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);background:rgba(10,14,30,.92);border:1px solid rgba(255,217,119,.6);color:#ffe9a8;font-weight:800;font-size:15px;padding:10px 18px;border-radius:999px;display:none;pointer-events:none;white-space:nowrap}
 `;
-const REASON={shop:'店',zeroday:'ゼロデイ',cradle:'生み出す',cradle_paid:'生み出す(有償)',dup:'ダブり',test:'テスト',start:'はじめ'};
+const REASON={shop:'店',shop_paid:'店(有償)',zeroday:'ゼロデイ',cradle:'生み出す',cradle_paid:'生み出す(有償)',dup:'ダブり',test:'テスト',start:'はじめ'};
 function reasonJP(r){ if(!r) return ''; if(/^quest:/.test(r)) return 'クエスト'; return REASON[r]||r; }
 function el(tag,cls,html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
 UI.mount=function(o){ o=o||{}; if(R) return R; const st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);
@@ -523,9 +532,10 @@ UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const 
   }
   else if(cur==='shop'){ T.textContent='店'; TB.style.display='none';   // 2026-10-30
     B.appendChild(el('div','pgItem',`${ICON('gem')}<span>無料ジェム</span><b id="pgShopGem">${P.gems()}</b>`));
+    { const pdv=P.paidGems(); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>有償ジェム</span><b id="pgShopPaid">${pdv==null?'—':pdv}</b>`)); }   // 2026-10-30 有償ジェムでも買える
     for(const x of P.shopList()){ const d=el('div','pgItem pgShop',`${ICON(x.icon)}<span>${x.name}${x.add?`<small>+${Math.round(x.add*100)}%</small>`:'<small>闘気+50</small>'}</span><b>×${x.have}</b>`);
       const b=el('button','pgBtn gem pgBuy',`${ICON('gem')}${x.price}`); b.disabled=!x.canBuy; b.dataset.k=x.k;
-      b.onclick=()=>{ const r=P.buyItem(x.k); if(!r.ok){ UI.toast('ジェムがたりない'); return; } UI.toast(`${x.name}　×${r.have}`); UI.render(); };
+      b.onclick=async()=>{ if(b.disabled) return; b.disabled=true; let r; try{ r=await P.buyItemAsync(x.k); }catch(e){ r={ok:false, why:'net'}; } if(!r.ok){ b.disabled=!(P.totalGems()>=x.price); UI.toast(r.why==='gems'||r.why==='insufficient'?'ジェムがたりない':(r.why==='busy'?'処理中':'通信エラー')); return; } UI.toast(`${x.name}　×${r.have}`); UI.render(); };
       d.appendChild(b); B.appendChild(d); } }
   else if(cur==='cradle'){ T.textContent='生み出す'; const pool=P.cradle.pool(); const price=P.cradle.price();
     const h=el('div'); h.id='pgHatch'; B.appendChild(h);

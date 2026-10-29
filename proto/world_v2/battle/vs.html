@@ -250,7 +250,7 @@ const SCENES=[
   {n:'アドリアン戦', map:'nr_core', npc:'adrian', final:1},
   {n:'ベラドンナ戦', map:'nr_core', npc:'bella3', final:1},
   {n:'王ゴッドヘラク戦', map:'stadium_under', anc:2061},
-  {n:'青龍セイリュウ戦', map:'cn_sea', anc:291},
+  {n:'青龍セイリュウ戦', map:'cn_sea', anc:3291},   // 2026-10-30 バグ直し: 地図(cn_sea.json)の古代は 3291(291 のままだと場面のボタンが出なかった)
   {n:'守り①ミノタス戦', map:'oliva_maze', anc:2066},
   {n:'雪原の野生の群れ', map:'cn_kunlun', wild:1},
   {n:'溶岩の古代 スルヴァ', map:'nr_iceland', anc:2070, place:{tt:'volcanic', bd:'volcano'}},
@@ -393,6 +393,7 @@ function buildOpt(){ const allIds=MON.map(m=>m.id);
   if(S.me.stage) opt.startStage=S.me.stage;
   else { if(opt.startStage==null) opt.startStage=1; opt.budget=Math.max(((MB.SIZE_RULES[opt.size]||{}).budget||3)*opt.startStage, need); }
   if(S.rule.fuse) opt.fusionUnlocked=true; if(S.rule.triple) opt.tripleUnlocked=true;
+  if(S.rule.fuse) opt.enemy.ai=Object.assign({}, opt.enemy.ai||{}, {fuse:true});   // 2026-10-30 battle.js: ふつうの人(trainer)は enemy.ai.fuse の時だけ融合する。CPU対戦は「融合」の決まりのとおり CPU も融合する
   if(!S.rule.evo){ opt.enemy.ai=Object.assign({}, opt.enemy.ai||{}, {evo:0}); opt.enemy.party.forEach(e=>{ delete e.evo; }); }
   const st=STR[S.foe.str]; if(st) opt.enemy.ai=Object.assign({}, opt.enemy.ai||{}, st, (opt.enemy.ai&&opt.enemy.ai.hpX)?{hpX:opt.enemy.ai.hpX*st.hpX, atkX:(opt.enemy.ai.atkX||1)*st.atkX}:{});
   if(S.board.turn) opt.maxTurn=S.board.turn;

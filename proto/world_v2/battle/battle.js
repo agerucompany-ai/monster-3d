@@ -740,7 +740,8 @@ function fusionResult(a,b){
   return fid;
 }
 // 2026-10-28 オーナー「融合の仕方を覚える」: player.fusionKnown(融合体idの配列)を渡した時、自分の子はその融合だけ。渡さない(CPU対戦など)=全部・敵(AI)は今まで通り
-function fuseKnownOk(owner, fid){ if(owner===1 && BT.opts && BT.opts.enemyNoFuse) return false; return owner!==0 || ONLINE || !BT.fuseKnown || BT.fuseKnown.has(+fid); }   // 2026-10-28 物語: enemyNoFuse=敵の融合はエジプト11まで無し
+// 2026-10-30 バグ直し: ふつうの人(kind:'trainer')は融合しない(enemy.ai.fuse:true の時だけ)。エジプト後半の人の2体が1手目に融合して 体力1万の子になり、勝率3〜13%(tune_v4)になっていた。使い手(master)・古代・ボスはそのまま
+function fuseKnownOk(owner, fid){ if(owner===1 && BT.opts && BT.opts.enemyNoFuse) return false; if(owner===1 && BT.kind==='trainer' && !(BT.diff&&BT.diff.fuse)) return false; return owner!==0 || ONLINE || !BT.fuseKnown || BT.fuseKnown.has(+fid); }   // 2026-10-28 物語: enemyNoFuse=敵の融合はエジプト11まで無し
 function attackTargets(u, range){
   if(V2ON()) return attackTargetsV2(u, (range&&typeof range==='object')?range:null);   // 技 v2: 2つめは技
   if(!canAttack(u)) return [];
@@ -1631,7 +1632,7 @@ function initThree(){
     clearTimeout(_lpTimer); _lpTimer=0;
     if(_lpFired){ _lpFired=false; return; }
     if(CAMV.dragged){ CAMV.dragged=false; return; }   // 盤を動かした・寄せた指はタップにしない
-    if(state) onPick(e); });
+    if(state) onPick({clientX:_lpX, clientY:_lpY}); });   // 2026-10-30: 指が少しずれても 触った所のマスを選ぶ
   cv.addEventListener('pointercancel', e=>{ clearTimeout(_lpTimer); _lpTimer=0; });
   window.addEventListener('resize', ()=>{ if(BT.running) fit(); });
   camWire(cv);
@@ -1733,7 +1734,7 @@ function camWire(cv){
   cv.addEventListener('pointermove', e=>{ if(!CAMV.ptrs.has(e.pointerId)) return; CAMV.ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(CAMV.pinch && CAMV.ptrs.size>=2){ const [p,q]=[...CAMV.ptrs.values()]; const dd=Math.hypot(p.x-q.x,p.y-q.y)||1; CAMV.uz=Math.max(1,Math.min(CAM_ZMAX,CAMV.pinch.z*dd/CAMV.pinch.d)); CAMV.showZ=null; CAMV.lockUntil=0; CAMV.lockFx=false; camBtnSync(); return; }
     const g=CAMV.drag; if(!g) return; const mx=e.clientX-g.x, my=e.clientY-g.y;
-    if(!g.on){ if(Math.hypot(mx,my)<10) return; g.on=true; CAMV.dragged=true; clearTimeout(_lpTimer); _lpTimer=0; CAMV.showZ=null; CAMV.lockUntil=0; CAMV.lockFx=false; CAMV.tx=CAMV.cx; CAMV.tz=CAMV.cz; CAMV.uz=Math.max(1,Math.min(CAMV.uz,CAMV.cZ)); }
+    if(!g.on){ if(Math.hypot(mx,my)<(camZoomed()?10:28)) return; g.on=true;   /* 2026-10-30 バグ直し: 全体の時は盤が動かないのに 指が10pxずれただけでタップが消えていた → 全体の時は28pxまでタップ */ CAMV.dragged=true; clearTimeout(_lpTimer); _lpTimer=0; CAMV.showZ=null; CAMV.lockUntil=0; CAMV.lockFx=false; CAMV.tx=CAMV.cx; CAMV.tz=CAMV.cz; CAMV.uz=Math.max(1,Math.min(CAMV.uz,CAMV.cZ)); }
     const [px,pz]=camPxPerUnit(); CAMV.tx-=mx/px; CAMV.tz-=my/pz; g.x=e.clientX; g.y=e.clientY; });
   const up=e=>{ CAMV.ptrs.delete(e.pointerId); if(CAMV.ptrs.size<2) CAMV.pinch=null; if(CAMV.ptrs.size===0) CAMV.drag=null;
     else if(CAMV.ptrs.size===1 && !CAMV.drag){ const p=[...CAMV.ptrs.values()][0]; CAMV.drag={x:p.x,y:p.y,on:true}; } };
@@ -2802,7 +2803,8 @@ function m3dHeight(u){ const m=mon(u); const k=unitSizeK(u); let h=1.25*k;
   const e=ci3Ext(u.mid); if(e){ const foot=Math.max(e.w,e.d)/Math.max(0.01,e.h); const lim=0.8*k/Math.max(0.01,foot); if(h>lim) h=Math.max(lim, 0.8*k); }   // 体の幅・奥行き = マスの 0.8×段(大きい子はマスをこえてよい・中心はマス)   // 2026-10-28: 体の幅・奥行きがマスの 80%(大きい子 95%)に収まる高さに
   // 2026-10-30 オーナー「レベル1なのにデカすぎる」(スミヤモ): 長い体は上の下限(0.8×段)で 体の長さがマス1.8個分になっていた。
   //   1段目は 見た目の大きさ(高さ×いちばん長い向き)を 0.8×段² までにする(1段目の真ん中の子の約1.15倍・ほかの1段目は変わらない)
-  if(e && m.level===1 && m.role!=='fusion'){ const f=Math.max(e.w,e.d)/Math.max(0.01,e.h), amax=0.8*k*k; if(h*h*f>amax) h=Math.sqrt(amax/f); }
+  //   2026-10-30 オーナー決定「オキヤモ(1008)が少し大きい」: 同じ決まりを 2段目・3段目(融合でない子)にも(段の k=1.0/1.35 で 0.8×k²)。変わる子: オキヤモ−12%・マグヤモラ−8%・イリュネ−8%・マンモガイア−4%・ほか3%以下
+  if(e && m.role!=='fusion'){ const f=Math.max(e.w,e.d)/Math.max(0.01,e.h), amax=0.8*k*k; if(h*h*f>amax) h=Math.sqrt(amax/f); }
   return h; }
 function m3dDetach(s){ if(!s) return; if(s.m3d){ s.grp.remove(s.m3d.root); try{ s.m3d.mixer.stopAllAction(); s.m3d.mats.forEach(m=>m.dispose()); }catch(e){} s.m3d=null; }
   s.m3dWant=null; s.sp.visible=true; s.rim.visible=true; s.glow.visible=true; }
@@ -4374,7 +4376,25 @@ function updateUI(){ if(BT.headless) return;
     ac.appendChild(row); }
   // detail (相手等)
   $id('detail').style.display='none';
+  hudHold();
 }
+// 2026-10-30 バグ直し(盤が跳ねる): 子を選ぶ・外す・技を開くたびに 下の帯(hud)の高さが変わり、盤(カメラの fit)が縮んだり上下に動いたりして、次のタップが別のマスに当たっていた。
+//   帯の高さは その戦いでいちばん高くなった高さより低くしない(盤が動かない)。はじめに「選んだ時」「技を開いた時」の高さを測っておく(hudPremeasure)
+function hudHold(){ if(BT.headless||!state) return; const hud=$id('hud'); if(!hud) return;
+  const key=innerWidth+'x'+innerHeight; if(hudHold._k!==key){ hudHold._k=key; hudHold._h=0; hud.style.minHeight=''; if(!hudHold._pm) hudHold._need=true; }
+  if(state.phase!=='battle'){ return; }
+  if(BT.auto){ if(hudHold._h||hud.style.minHeight){ hudHold._h=0; hud.style.minHeight=''; } hudHold._need=true; return; }   // オートの間は 帯を小さく(盤を大きく)。手動にもどした時に もう一度測る
+  if(hudHold._need && !hudHold._pm){ hudHold._need=false; hudPremeasure(); return; }
+  hud.style.minHeight=''; const h=hud.offsetHeight; if(h>(hudHold._h||0)+1) hudHold._h=Math.min(h, Math.round(innerHeight*0.46));
+  if(hudHold._h){ hud.style.minHeight=hudHold._h+'px'; const mr=hud.querySelector('.mainrow'); if(mr) mr.style.marginTop=Math.max(2, hudHold._h-h+2)+'px'; } }   // 待った・ターン終了の段は いつも帯のいちばん下(押す所が動かない)
+function hudReset(){ hudHold._h=0; hudHold._k=null; hudHold._need=true; const hud=$id('hud'); if(hud) hud.style.minHeight=''; }
+// 「子を選んだ時」の帯の高さを先に測る(いちばん技の多い子で)。今の選び方はそのまま戻す
+function hudPremeasure(){ if(BT.headless||!state||state.phase!=='battle'||hudHold._pm) return; const me=alive(0).filter(u=>u.r>=0); if(!me.length) return;
+  let best=me[0], bn=-1; for(const u of me){ const n=V2ON()?movesV2(u).length:1; if(n>bn){ bn=n; best=u; } }
+  const hud=$id('hud'); if(hud){ hud._on=true; hud.style.display=''; }   // 配置の間は隠れている(fit が出す)ので 先に出して測る
+  const keep={sel, selMode, selMoves, selAtks, selMove, selAim, selCombo}; hudHold._pm=true;
+  try{ sel=best; selMode='move'; selCombo=null; selMove=pickSelMove(best); selAim=null; recompute(); updateUI(); }
+  finally{ ({sel, selMode, selMoves, selAtks, selMove, selAim, selCombo}=keep); hudHold._pm=false; updateUI(); } }
 // ---- 技 v2 の画面の部品 ----
 function typeBadge(t){ return `<span class="tyb" style="background:${TYPE_COL[t]||'#666'}">${t}</span>`; }
 function typeBadges(m){ return typeBadge(m.type)+(m.type2?typeBadge(m.type2):''); }
@@ -4581,6 +4601,7 @@ function beginBattle(){
   if(!BT.headless) setTimeout(flashGoodTerrain, 900);
   if(!BT.headless && (BT.kind==='master'||BT.kind==='ancient')) setTimeout(bossIntro, 150);   // FX2: 物語のボス・古代テリオンの登場
   if(!BT.headless) setTimeout(ciHiPrefetch,0);
+  if(!BT.headless) hudReset();   // 2026-10-30 盤が跳ねないように 下の帯の高さを先に決める(はじめの updateUI で測る)
   startTurn(0);
 }
 const DAN=['','一段','二段','三段'];
@@ -5372,6 +5393,7 @@ function startBattle(opts){
     BT.autoButton = opts.autoButton!=null ? !!opts.autoButton : true;   // 2026-10-24: オートは上のバーに・全部の戦いで使える(autoButton:false で隠す)
     BT.showResult = opts.showResult!==false;
     applyPlace();
+    if(!BT.headless){ const old=effects.splice(0); for(const e of old){ try{ e.cleanup&&e.cleanup(); }catch(err){} } }   // 2026-10-30 バグ直し: 前の戦いで止まったままの演出(途中でやめた時など)を 前の戦いの状態のうちに片づける(新しい戦いで名前の帯や光が出ないように)
     state=newBattleState(); uidSeq=1; for(const k in sprites){ m3dDetach(sprites[k]); if(unitGroup) unitGroup.remove(sprites[k].grp); delete sprites[k]; }
     spawnEnemy(); ancientEscort(); setEvoArea(V2ON()||evoNeededParty(), false);
     BT.startedAt=(typeof performance!=='undefined'?performance.now():Date.now());
@@ -5523,7 +5545,7 @@ function showResult(res, done){
       +(c.tag?`<span class="tag${c.miss?' miss':''}">${c.tag}</span>`:c.isNew?`<span class="tag">${m.name}が仲間になった！</span>`:c.miss?`<span class="tag miss">仲間にならなかった</span>`:`<span class="tag stack">重ね ${c.stack}　★${c.rankBefore} → ★${c.rankAfter}</span>`); }   // miss = 倒して仲間(ランダム)のはずれ(2026-10-26)
   const rows=[]; if(toWL && res.hpShare!=null) rows.push(`<span class="tohp">残り体力　自分 ${Math.round(res.hpShare*100)}%　相手 ${Math.round((1-res.hpShare)*100)}%</span>`);
   if(res.rewards.gems>0) rows.push(`<span class="gem">ジェム +${res.rewards.gems}</span>`);
-  for(const r of (res.extraRows||[])) rows.push(r);   // 進行(progress.js)の decorate が返した行: EXP・レベルアップなど
+  for(const r of (res.extraRows||[])) if(!(c&&c.tag&&String(r).replace(/<[^>]*>/g,'')===c.tag)) rows.push(r);   // 進行(progress.js)の decorate が返した行: EXP・レベルアップなど(2026-10-30 カードの札と同じ文は2回出さない)
 
   if(res.fusions.length) rows.push('融合の記録 '+res.fusions.map(f=>MID[f].name).join('・'));
   list.innerHTML=rows.map(r=>`<div>${r}</div>`).join('');
@@ -5575,9 +5597,10 @@ const API={ init, startBattle, simulate, TACT, PVE_STAGE, PVE_EVO, get SERIES(){
   setAuto(v){ if(v===2||v==='fast'){ BT.fastPref=true; setAutoMode(2); } else if(!!v!==BT.auto) toggleAuto(); return BT.auto; },
   // 確認用(test.html・puppeteer)
   _dbg:{ get state(){ return state; }, sync(){ syncUnits(); updateUI(); },
-    cam(){ return {uz:CAMV.uz, z:CAMV.cZ, x:CAMV.cx, zz:CAMV.cz, show:CAMV.showZ}; }, camAll(){ camAll(); }, camZoom(z){ CAMV.uz=z; CAMV.cZ=z; camBtnSync(); },   // 2026-10-30 確認用: 寄りのカメラ
+    cam(){ return {uz:CAMV.uz, z:CAMV.cZ, x:CAMV.cx, zz:CAMV.cz, show:CAMV.showZ, ptrs:CAMV.ptrs.size, dragged:CAMV.dragged, pick:pickEnabled}; }, camAll(){ camAll(); }, camZoom(z){ CAMV.uz=z; CAMV.cZ=z; camBtnSync(); },   // 2026-10-30 確認用: 寄りのカメラ
     unitPx(uid){ const s=sprites[uid]; if(!s||!camera) return null; const rc=renderer.domElement.getBoundingClientRect(); const h=(s.m3d&&s.m3d.h)||s.sc||1; const p=s.grp.position; const a=new THREE.Vector3(p.x,p.y,p.z).project(camera), b=new THREE.Vector3(p.x,p.y+h,p.z).project(camera); const c=new THREE.Vector3(p.x+1,p.y,p.z).project(camera); return {w:Math.round((c.x-a.x)*rc.width/2), h:Math.round((b.y-a.y)*rc.height/2), x:Math.round((a.x*0.5+0.5)*rc.width), y:Math.round((-a.y*0.5+0.5)*rc.height)}; }, clear(){ clearSel(); }, tagURL(t,k){ const tx=tagTex(t,k); return tx.image.toDataURL(); },
     cellPx(r,c){ if(!renderer||!camera) return null; const w=cell2world(r,c); const v=new THREE.Vector3(w.x, cellH(r,c)+0.05, w.z).project(camera); const rc=renderer.domElement.getBoundingClientRect(); return [rc.left+(v.x+1)/2*rc.width, rc.top+(-v.y+1)/2*rc.height]; },
+    selCells(){ return sel?{move:((selMoves&&selMoves.move)||[]).filter(p=>!(p[0]===sel.r&&p[1]===sel.c)), fuse:(selMoves&&selMoves.fuse)||[]}:null; },   // 2026-10-30 確認用: 選んだ子の動ける・融合のマス
     selInfo(){ return sel?{uid:sel.uid, mode:selMode, move:selMove&&selMove.id, name:mvName(selMove), range:selMove&&moveRange(sel,selMove), aim:selAim, targets:(selAtks||[]).map(e=>[e.r,e.c])}:null; }, get BT(){ return BT; }, sprites, M3D, aiSide:(o)=>{ aiSide(o); return state.phase; }, endTurn:()=>endTurn(), killLeader(o){ const L=leaderOf(o); if(!L) return false; L.hp=0; killUnit(L); afterAction(); return state.phase; },
     gauge(uid,v){ const u=state.units[uid]; if(u&&v!=null){ u.g=v; syncUnits(); updateUI(); } return u?u.g:null; }, put(uid,r,c){ const u=state.units[uid]; if(!u||unitAt(r,c)) return false; state.board[u.r][u.c]=null; u.r=r; u.c=c; state.board[r][c]=u.uid; syncUnits(); return true; },
     evolve(uid){ const u=state.units[uid]; return u?evolveUnit(u,true):false; },
