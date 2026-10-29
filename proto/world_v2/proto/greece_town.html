@@ -2112,7 +2112,7 @@ function enterPlace(n){ const f=SAVE?SAVE.flags:{}; if(chasing()) return;   // -
   if(n==='隠し研究所'){ toast('ゼロデイの隠し研究所'); return; }
   if(n==='道しるべ'){ toast(MAP&&MAP.startsWith('eg_')?'→ ギザ → ナイルデルタ → ルクソール → 王家の谷 → 王の墓 → アスワン → アブ・シンベル → 白砂漠 → 紅海':(MAP&&MAP.startsWith('cn_')?'→ 竹海の村 → 西の高原 → 化石の谷 → 南の山 → 雲海の石柱 → 北の大河 → 東の島 → 古い都 → 雪の高原 → 東の海':'→ アルカディアの森 → 運河の町コリンタ → 雲の山道 → 山の村デルフィナ')); return; }
   if(n==='山の天文台'){ toast('山の天文台'); return; }
-  if(n==='いこいの泉'){ toast('みんな元気になった'); return; } toast(n); }
+  toast(n); }   // いこいの泉はただの景色(2026-10-30・入口の名札もなくした)
 function npcTalk(n){ if(n.o.brief){ talkClose(); HERO.yaw=Math.atan2(n.x-HERO.x,n.z-HERO.z); briefShow(n.o.brief,'info'); return; }   // 案内の人=地図の案内(せりふなし)
   const f=SAVE?SAVE.flags:{};   // ---- 物語(gr_story.js): 勝ったあとの場面の続き(afterFlag)・勝負しない人の一言・NPC_RULE
   if(storyOn()&&n.beaten&&n.o.after&&n.o.afterFlag&&!f[n.o.afterFlag]&&SC[n.o.after]){ storyField(n.o.after); return; }

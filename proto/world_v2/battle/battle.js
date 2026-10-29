@@ -1354,6 +1354,7 @@ function startTurn(side){
   if(window._SIM || BT.headless) return;             // シム: 両軍のAIはハーネスが同期で動かす
   if(side===0){ undoStack=[]; const fx=finalX(); if(fx>1){ showBanner(`${IC('warn')}決戦 ダメージ+${Math.round((fx-1)*100)}%`); if(state.turn===finalStart()) toast(`決戦！ 残り${MAX_TURN-state.turn+1}ターン・ダメージが上がる`); } else showBanner('あなたのターン'); updateUI(); if(BT.auto) autoTurn(); }
   else { setTimeout(cpuTurn, 350); }
+  if(side===0 && camOn() && state.phase==='battle'){ const p=camHomeOf(); CAMV.tx=p[0]; CAMV.tz=p[1]; }   // 自分の番の始め: 自分の子たちの所
 }
 function endTurn(){
   clearSel();
@@ -1616,9 +1617,11 @@ function initThree(){
   cv.addEventListener('pointerup',   e=>{
     clearTimeout(_lpTimer); _lpTimer=0;
     if(_lpFired){ _lpFired=false; return; }
+    if(CAMV.dragged){ CAMV.dragged=false; return; }   // 盤を動かした・寄せた指はタップにしない
     if(state) onPick(e); });
   cv.addEventListener('pointercancel', e=>{ clearTimeout(_lpTimer); _lpTimer=0; });
   window.addEventListener('resize', ()=>{ if(BT.running) fit(); });
+  camWire(cv);
 }
 // ---- カメラ(2026-10-29 盤 v4): 縦長の盤(13×9)を、上のバーと下の帯(配置の帯)の間に上下いっぱいに収める。
 //   いつも手前(画面の下)=自分・奥(上)=相手。横長の画面でも左右に分けない(盤の向きは変えず、高さで合わせる)
@@ -1645,12 +1648,88 @@ function fit(){
       camPlace(d,tz,polar); const b=camBounds(); const ok=b.y1<=yHi && b.y0>=yLo && b.x0>=-xLim && b.x1<=xLim;
       if(ok){ best={d,tz}; hi=d; } else lo=d; }
     fit._c=best||{d:hi,tz:0}; }
-  const dist=fit._c.d; _camDist=dist; camPlace(dist, fit._c.tz, polar);
-  if(scene.fog){ scene.fog.near=dist*0.95; scene.fog.far=dist*2.6; }
+  const dist=fit._c.d; camPlace(dist, fit._c.tz, polar);
+  if(scene.fog){ scene.fog.near=dist*0.95; scene.fog.far=dist*2.6; }   // 霧は全体の距離で(寄っても盤は霧の手前)
+  _camDist = window._camZoom ? dist : camRun(dist, polar, yLo, yHi, xLim, topPx, ch);
   if(window._camZoom){ const z=window._camZoom; camera.clearViewOffset(); camera.fov=30; const d=z.d||4.2;   // 確認用: 1体に寄る(盤と同じ見下ろし角)
     camera.position.set(z.x, (z.y||0)+0.8+Math.sin(polar)*d, z.z+Math.cos(polar)*d); camera.lookAt(z.x,(z.y||0)+0.8,z.z); camera.updateProjectionMatrix(); }
 }
 let _camDist=22;
+// ---- 寄りのカメラ(2026-10-30 オーナー決定): 盤が 9×13 で大きくなり子が小さく見えるので、体はそのままでカメラを寄せる ----
+//   ・ふだんは全体の距離の 1/CAM_Z0(縦長も横長も 味方=下・敵=上 のまま。見下ろす角も今のまま)
+//   ・指1本のドラッグ=盤を動かす / 2本指=寄せ・引き / ホイール=寄せ・引き / 「全体」ボタン=全体と寄りの切りかえ。盤の外は CAM_EDGE マスまでしか見せない
+//   ・自動: 自分の子を選んだ所・動いている子(敵も)を追う / 攻撃・進化・融合は撃つ子と当たる所が入るように(要れば少し引く) / 配置は自陣 / 自分の番の始めは自分の子
+const CAM_Z0=1.8, CAM_ZMAX=3.2, CAM_EDGE=0.6;
+const CAMV={uz:CAM_Z0, prevUz:CAM_Z0, showZ:null, tx:0, tz:0, cx:0, cz:0, cZ:CAM_Z0, init:false, off:0, lockUntil:0, lockFx:false, last:0, drag:null, ptrs:new Map(), dragged:false, pinch:null};
+const _cvA=(typeof THREE!=='undefined')?new THREE.Vector3():null;
+function camAt(d, polar, fx, fz){ const L=fz+CAMV.off; camera.position.set(fx, Math.sin(polar)*d, L+Math.cos(polar)*d); camera.lookAt(fx,0,L); camera.updateMatrixWorld(); }
+function camPY(x,y,z){ return _cvA.set(x,y,z).project(camera); }
+// 注視する所(fx,fz)が 上のバーと下の帯の間の真ん中に来るように 注視点のずれ(off)を合わせる
+function camOff(d, polar, fx, fz, yc){ for(let k=0;k<4;k++){ camAt(d,polar,fx,fz); const e=camPY(fx,0,fz).y-yc; if(Math.abs(e)<0.002) break; CAMV.off-=e*d*0.36; } }
+// 盤の外が CAM_EDGE マスより多く見えないように 注視する所を寄せる(盤より画面が大きい向きは真ん中)
+function camClamp(d, polar, fx, fz, yLo, yHi, xLim){ const zF=-NR/2-CAM_EDGE, zN=NR/2+CAM_EDGE, xE=NC/2+CAM_EDGE, yc=(yLo+yHi)/2;
+  for(let k=0;k<5;k++){ camOff(d,polar,fx,fz,yc);
+    const a=camPY(fx,1.25,zF).y, b=camPY(fx,0,zN).y, l=camPY(-xE,0,fz).x, r=camPY(xE,0,fz).x;
+    camAt(d,polar,fx,fz+0.5); const sa=(camPY(fx,1.25,zF).y-a)/0.5||1, sb=(camPY(fx,0,zN).y-b)/0.5||1;   // 奥と手前で 動き方がちがう(遠近)ので別々に
+    camAt(d,polar,fx+0.5,fz); const sl=(camPY(-xE,0,fz).x-l)/0.5||-1, sr=(camPY(xE,0,fz).x-r)/0.5||-1;
+    let dz=0; if(a<yHi&&b>yLo) dz=(yc-(a+b)/2)/((sa+sb)/2); else if(a<yHi) dz=(yHi-a)/sa; else if(b>yLo) dz=(yLo-b)/sb;
+    let dx=0; if(l>-xLim&&r<xLim) dx=(-(l+r)/2)/((sl+sr)/2); else if(l>-xLim) dx=(-xLim-l)/sl; else if(r<xLim) dx=(xLim-r)/sr;
+    if(Math.abs(dz)<0.01&&Math.abs(dx)<0.01) break; fz+=dz; fx+=dx; }
+  return [fx,fz]; }
+function camLocked(now){ return now<CAMV.lockUntil || (CAMV.lockFx && now<(BT.fxUntil||0)); }
+function camRun(dFull, polar, yLo, yHi, xLim, topPx, ch){
+  const now=performance.now(), dt=Math.min(0.1, CAMV.last?(now-CAMV.last)/1000:0.016); CAMV.last=now;
+  camBtnPlace(topPx); CAMV.yLo=yLo; CAMV.yHi=yHi; CAMV.xLim=xLim; CAMV.dFull=dFull; CAMV.polar=polar;
+  if(!CAMV.init){ CAMV.init=true; const p=camHomeOf(); CAMV.tx=CAMV.cx=p[0]; CAMV.tz=CAMV.cz=p[1]; CAMV.cZ=CAMV.uz; }
+  const locked=camLocked(now); if(!locked){ CAMV.showZ=null; CAMV.lockFx=false; }
+  // 動いている子を追う(攻撃・進化の見せ場の間は動かさない)
+  let fol=false; if(!locked && !CAMV.drag && !CAMV.pinch && state && state.phase==='battle'){ for(const uid in sprites){ const s=sprites[uid]; if(s.move && now-s.move.t0<s.move.dur+60){ CAMV.tx=s.grp.position.x; CAMV.tz=s.grp.position.z; fol=true; break; } } }
+  const tZ=Math.max(1, Math.min(CAMV.uz, CAMV.showZ||CAMV.uz));
+  if(CAMV.drag&&CAMV.drag.on||CAMV.pinch){ CAMV.cZ=tZ; CAMV.cx=CAMV.tx; CAMV.cz=CAMV.tz; }
+  else { const k=1-Math.exp(-dt*(fol?9:5.5)); CAMV.cZ+=(tZ-CAMV.cZ)*k; CAMV.cx+=(CAMV.tx-CAMV.cx)*k; CAMV.cz+=(CAMV.tz-CAMV.cz)*k; }
+  const d=dFull/CAMV.cZ; const c=camClamp(d,polar,CAMV.cx,CAMV.cz,yLo,yHi,xLim); CAMV.cx=c[0]; CAMV.cz=c[1];
+  if(!fol && Math.abs(CAMV.cZ-tZ)<0.01){ const c2=camClamp(dFull/tZ,polar,CAMV.tx,CAMV.tz,yLo,yHi,xLim); CAMV.tx=c2[0]; CAMV.tz=c2[1]; }   // 行き過ぎたドラッグをためこまない
+  camAt(d,polar,CAMV.cx,CAMV.cz); camera.updateProjectionMatrix();
+  return d; }
+function camHomeOf(){ if(!state) return [0,0]; if(state.phase==='place'){ const w=cell2world(NR-2,(NC-1)/2); return [w.x,w.z]; }   // 配置: 自陣(手前の3列)
+  const me=Object.values(state.units||{}).filter(u=>u.owner===0&&u.hp>0&&u.r>=0); if(!me.length) return [0,0]; let x=0,z=0; for(const u of me){ const w=cell2world(u.r,u.c); x+=w.x; z+=w.z; } return [x/me.length, z/me.length]; }
+function camOn(){ return !BT.headless && !IS_NODE && !!camera && !window._camZoom; }
+// 1マスへ寄る(選んだ子)。lock の間は 動く子を追わない
+function camFocus(r,c,lock){ if(!camOn()) return; const w=cell2world(r,c); CAMV.tx=w.x; CAMV.tz=w.z; CAMV.showZ=null; CAMV.lockFx=false; CAMV.lockUntil=lock?performance.now()+lock:0; }
+// 見せ場: cells(とその上の高さ)が全部入るように 真ん中へ寄り、要れば引く。o.fx=true の間(BT.fxUntil まで)と o.hold ミリ秒は動かさない
+function camShow(cells, o){ if(!camOn()||!CAMV.dFull||!cells||!cells.length) return; o=o||{};
+  let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9; for(const p of cells){ if(!p) continue; const r=p.r!=null?p.r:p[0], c=p.c!=null?p.c:p[1]; if(r==null||r<0) continue; const w=cell2world(r,c); x0=Math.min(x0,w.x); x1=Math.max(x1,w.x); z0=Math.min(z0,w.z); z1=Math.max(z1,w.z); }
+  if(x0>x1) return; const m=o.pad!=null?o.pad:0.9; x0-=m; x1+=m; z0-=m; z1+=m; const fx=(x0+x1)/2, fz=(z0+z1)/2;
+  const {yLo,yHi,xLim,dFull,polar}=CAMV; let z=CAMV.uz; const keepOff=CAMV.off;
+  for(let i=0;i<16 && z>1.0001;i++){ const d=dFull/z; const c=camClamp(d,polar,fx,fz,yLo,yHi,xLim); camAt(d,polar,c[0],c[1]);
+    const pts=[[x0,0,z0],[x1,0,z0],[x0,0,z1],[x1,0,z1],[x0,1.6,z0],[x1,1.6,z0]]; let ok=true;
+    for(const q of pts){ const v=camPY(q[0],q[1],q[2]); if(v.y>yHi-0.02||v.y<yLo+0.02||v.x<-xLim||v.x>xLim){ ok=false; break; } }
+    if(ok) break; z=Math.max(1,z*0.9); }
+  CAMV.off=keepOff; CAMV.tx=fx; CAMV.tz=fz; CAMV.showZ=z<CAMV.uz-0.001?z:null;
+  CAMV.lockUntil=performance.now()+(o.hold||0); CAMV.lockFx=!!o.fx; }
+// 盤を指で動かす・2本指で寄せ/引き(タップ・長押しとは 動いた量で分ける)
+function camPxPerUnit(){ const {dFull,polar}=CAMV; if(!dFull) return [40,40]; const keep=CAMV.off; const d=dFull/CAMV.cZ; camAt(d,polar,CAMV.cx,CAMV.cz);
+  const a=camPY(CAMV.cx,0,CAMV.cz).clone(), b=camPY(CAMV.cx+1,0,CAMV.cz).clone(), e=camPY(CAMV.cx,0,CAMV.cz+1).clone(); CAMV.off=keep;
+  const cv=renderer.domElement; return [Math.max(1,(b.x-a.x)*cv.clientWidth/2), Math.max(1,(a.y-e.y)*cv.clientHeight/2)]; }
+function camWire(cv){
+  cv.addEventListener('pointerdown', e=>{ if(!camOn()) return; CAMV.ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); try{ cv.setPointerCapture(e.pointerId); }catch(_){}
+    if(CAMV.ptrs.size===1){ CAMV.dragged=false; CAMV.drag={x:e.clientX,y:e.clientY,on:false}; CAMV.pinch=null; }
+    else if(CAMV.ptrs.size===2){ const [p,q]=[...CAMV.ptrs.values()]; CAMV.pinch={d:Math.hypot(p.x-q.x,p.y-q.y)||1,z:CAMV.uz}; CAMV.dragged=true; CAMV.drag=null; clearTimeout(_lpTimer); _lpTimer=0; } });
+  cv.addEventListener('pointermove', e=>{ if(!CAMV.ptrs.has(e.pointerId)) return; CAMV.ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(CAMV.pinch && CAMV.ptrs.size>=2){ const [p,q]=[...CAMV.ptrs.values()]; const dd=Math.hypot(p.x-q.x,p.y-q.y)||1; CAMV.uz=Math.max(1,Math.min(CAM_ZMAX,CAMV.pinch.z*dd/CAMV.pinch.d)); CAMV.showZ=null; CAMV.lockUntil=0; CAMV.lockFx=false; camBtnSync(); return; }
+    const g=CAMV.drag; if(!g) return; const mx=e.clientX-g.x, my=e.clientY-g.y;
+    if(!g.on){ if(Math.hypot(mx,my)<10) return; g.on=true; CAMV.dragged=true; clearTimeout(_lpTimer); _lpTimer=0; CAMV.showZ=null; CAMV.lockUntil=0; CAMV.lockFx=false; CAMV.tx=CAMV.cx; CAMV.tz=CAMV.cz; CAMV.uz=Math.max(1,Math.min(CAMV.uz,CAMV.cZ)); }
+    const [px,pz]=camPxPerUnit(); CAMV.tx-=mx/px; CAMV.tz-=my/pz; g.x=e.clientX; g.y=e.clientY; });
+  const up=e=>{ CAMV.ptrs.delete(e.pointerId); if(CAMV.ptrs.size<2) CAMV.pinch=null; if(CAMV.ptrs.size===0) CAMV.drag=null;
+    else if(CAMV.ptrs.size===1 && !CAMV.drag){ const p=[...CAMV.ptrs.values()][0]; CAMV.drag={x:p.x,y:p.y,on:true}; } };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('wheel', e=>{ if(!camOn()) return; e.preventDefault(); CAMV.uz=Math.max(1,Math.min(CAM_ZMAX,CAMV.uz*Math.exp(-e.deltaY*0.0015))); CAMV.showZ=null; camBtnSync(); }, {passive:false});
+}
+// 「全体」ボタン(アイコンだけ): 全体 ⇔ 寄り
+function camAll(){ if(CAMV.uz>1.05){ CAMV.prevUz=CAMV.uz; CAMV.uz=1; } else { CAMV.uz=Math.max(1.3,CAMV.prevUz||CAM_Z0); } CAMV.showZ=null; camBtnSync(); }
+function camBtnSync(){ const b=$id('camAll'); if(b) b.classList.toggle('on', CAMV.uz<=1.05); }
+function camBtnPlace(topPx){ const b=$id('camAll'); if(!b) return; const on=!!(state&&(state.phase==='place'||state.phase==='battle')); const tp=Math.round(topPx+8)+'px';
+  if(b._on!==on){ b._on=on; b.style.display=on?'flex':'none'; } if(b._tp!==tp){ b._tp=tp; b.style.top=tp; } }
 let _frameNo=0;
 function animate(){ if(!BT.loop) return; requestAnimationFrame(animate); _frameNo++; BT.frames=(BT.frames||0)+1; if(renderer){ fit(); applyShake(); applyCamPunch(); if(!fx2Frozen()){ PART.begin(); updateEffects(); PART.flush(); updateAmbient(); updateSpriteIdle(); } const t=performance.now()*0.001; updateLiquids(t); updateSky(t); updateHL(t); monUniforms(camera,sunLight,monLightLevel([hemiLight,ambLight,sunLight,fillLight])); renderer.render(scene,camera); if(CI3.on) ci3Render(); } }
 
@@ -3223,6 +3302,7 @@ function attackFx(att, targets, def, move){ if(BT.headless) return;
   const big = special || !!(move && (move.big || /^sig_/.test(move.role||'')));   // 大技: 系統・融合・ボスの技・合体・進化/融合のあとの必殺技
   const mapCells=_fxMapCells, mapAim=_fxMapAim; _fxMapCells=null; _fxMapAim=null;
   const cells=[]; const seen={}; for(const t of targets){ const k=t.r+','+t.c; if(seen[k]) continue; seen[k]=1; cells.push({r:t.r,c:t.c,k,uid:t.uid}); }
+  camShow([{r:ar,c:ac}].concat(cells, (mapCells||[]).map(p=>Array.isArray(p)?{r:p[0],c:p[1]}:p)), {fx:true, hold:900/SPD()});   // 2026-10-30 寄りのカメラ
   const mode = (move && move.target==='map') ? 'map' : ((cells.length>1 || (move && move.target==='area')) ? 'area' : ((cells[0] && Math.max(Math.abs(cells[0].r-ar),Math.abs(cells[0].c-ac))<=1) ? 'melee' : 'proj'));
   const seq={q:{}, after:[], left:cells.length, done:false}; for(const x of cells) seq.q[x.k]=[]; _seq=seq;
   Promise.resolve().then(()=>{ if(_seq===seq) _seq=null; });   // 攻撃の処理(同期)が終わったら溜めるのをやめる
@@ -3415,7 +3495,7 @@ function koStamp(r,c,lead,owner){ if(BT.headless||!renderer||!camera) return; fx
 // ---- 進化(FX2版): 光の繭に包まれ → 繭が割れて新しい姿が現れる ----
 // ---- 進化(2026-10-29 3D): 光の柱に包まれ、白く光りながら大きくなって 新しい3Dに入れかわる・新しい名前の帯 ----
 // o={from,to,clutch,awake}。前の姿の3Dはその場に残して(盤の子の絵は新しい姿を読みこむ)、光って消える。2Dの子(3Dなし)は前の演出(evolveFx2D)。
-function evolveFx(r,c,o){ if(BT.headless) return; o=o||{}; const u=unitAt(r,c); const s=u&&sprites[u.uid];
+function evolveFx(r,c,o){ if(BT.headless) return; o=o||{}; camShow([{r,c}],{pad:1.4, hold:2600/SPD()}); const u=unitAt(r,c); const s=u&&sprites[u.uid];
   if(!s || !s.m3d) return evolveFx2D(r,c,o);
   const w=cell2world(r,c), h=cellH(r,c); const sp=SPD(); const lv=(MID[u.mid]||{}).level||2; const big=o.awake?1:(lv>=3||(MID[u.mid]||{}).role==='fusion'?1.3:1.0);
   const tc=o.clutch?0xff8a40:(TYPE_HEX[(MID[u.mid]||{}).type]||0xffe070); const gold=o.clutch?0xffb070:0xfff0a0; const T=(o.awake?720:1050);
@@ -3481,7 +3561,7 @@ function evolveFx2D(r,c){ if(BT.headless) return; const u=unitAt(r,c); const s=u
   }, T);
 }
 // ---- 融合(FX2版): 素材の子が渦を巻いて中央へ吸い込まれ → 光が弾けて新しい子が現れる(3体はもっと大きく) ----
-function fusionFx(r,c,ca,cb){ if(BT.headless) return; const w=cell2world(r,c), h=cellH(r,c); const sp=SPD();
+function fusionFx(r,c,ca,cb){ if(BT.headless) return; camShow([{r,c}],{pad:1.8, hold:2600/SPD()}); const w=cell2world(r,c), h=cellH(r,c); const sp=SPD();
   const src=Object.keys(sprites).filter(uid=>!state.units[uid] && !_hold[uid]);   // いま消えた素材の子(tryFusion が units から外した直後)
   const n3=src.length>=3; const T=(n3?820:640)/sp; const cols=[ca||0xffffff, cb||0xc080ff, 0xff80c0];
   const nu=unitAt(r,c); const nuid=nu?nu.uid:null;
@@ -4019,7 +4099,7 @@ function v2Tap(r,c){ if(!V2ON()||!sel||!selMove) return false; const mv=selMove;
   if(r===sel.r&&c===sel.c && noAimMove(mv)) return useSelMoveV2();
   return false; }
 function setSelGhost(uid){ for(const k in sprites){ const s=sprites[k]; const o=(+k===uid)?0.55:1; if(s.mat.opacity!==o) s.mat.opacity=o; } }
-function selectUnit(u){ sel=u; BT.tileInfo=null; selCombo=null; selMove=pickSelMove(u); selAim=null; if(V2ON()&&selMove&&selMove.target==='map'){ const b=aiMapBest(u,selMove); selAim=b?b.aim:null; } recompute(); selMode = canMove(u)?'move':'attack'; setSelGhost(u.uid); drawSelHL(); updateUI(); }
+function selectUnit(u){ sel=u; BT.tileInfo=null; selCombo=null; selMove=pickSelMove(u); selAim=null; if(V2ON()&&selMove&&selMove.target==='map'){ const b=aiMapBest(u,selMove); selAim=b?b.aim:null; } recompute(); selMode = canMove(u)?'move':'attack'; setSelGhost(u.uid); drawSelHL(); updateUI(); if(u.owner===0) camFocus(u.r,u.c); }
 function setMode(mode){
   if(!sel) return;
   if(mode==='evolve'){ pushUndo(); if(evolveUnit(sel,false)) reselectAfter(); else undoStack.pop(); return; }
@@ -4397,6 +4477,7 @@ function enterPlace(){   // world_v2: 編成と配置を1画面に(パーティ�
   preparePlaceList();
   buildTerrain(); buildStructures(); syncUnits(); fit();
   drawPlaceHL(); renderPlaceRow(); updateUI();
+  if(camOn()){ const p=camHomeOf(); CAMV.tx=CAMV.cx=p[0]; CAMV.tz=CAMV.cz=p[1]; CAMV.showZ=null; CAMV.lockUntil=0; }   // 配置: 自陣が見える所
 }
 let placePick=null;
 function placedUnit(i){ return Object.values(state.units).find(x=>x.owner===0&&x._pl===i)||null; }
@@ -5077,6 +5158,9 @@ const CSS=`
 #mb-detail{display:none}
 #mb-fxflash{position:absolute;inset:0;z-index:12;pointer-events:none;opacity:0;mix-blend-mode:screen}
 #mb-ovPlace{position:absolute;inset:0;display:none;flex-direction:column;pointer-events:none;z-index:20}
+#mb-camAll{position:absolute;right:8px;top:48px;z-index:24;display:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(10,13,24,.72);padding:0;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+#mb-camAll img{width:32px;height:32px;display:block;pointer-events:none}
+#mb-camAll.on{background:linear-gradient(180deg,#2f6fd0,#22468a);border-color:#8fb4ff;box-shadow:0 0 0 2px rgba(143,180,255,.25)}
 #mb-placeBar{margin-top:auto;background:rgba(8,10,16,.92);border-top:1px solid #2c3346;padding:8px 10px calc(8px + env(safe-area-inset-bottom));pointer-events:auto}
 #mb-placeRow{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
 #mb-ovDetail{position:absolute;inset:0;background:rgba(6,8,14,.72);z-index:40;display:none;align-items:center;justify-content:center;padding:16px}
@@ -5185,7 +5269,7 @@ const CSS=`
 #mb-cutin.m3.k-sp .ci3Hole{box-shadow:0 0 0 300vmax rgba(2,4,10,.82)}
 `;
 const DOM=`<div id="mb-wrap"><canvas id="mb-cv"></canvas><div id="mb-hud"><div id="mb-sel"></div><div id="mb-actions"></div></div></div>
-<div id="mb-topbar"></div><div id="mb-detail"></div><div id="mb-fxflash"></div><div id="mb-bigDim"></div><div id="mb-bigName"><div class="bn1"></div><div class="bn2"></div></div><div id="mb-toast"></div><div id="mb-turnBanner"></div>
+<div id="mb-topbar"></div><button id="mb-camAll" aria-label="全体"><img alt=""></button><div id="mb-detail"></div><div id="mb-fxflash"></div><div id="mb-bigDim"></div><div id="mb-bigName"><div class="bn1"></div><div class="bn2"></div></div><div id="mb-toast"></div><div id="mb-turnBanner"></div>
 <div id="mb-cutin"><div class="ciRays"></div><div class="ciParts"></div><div class="ciBand"><div class="ciLines"></div><div class="ciFlash"></div><img class="ciA" alt=""><img class="ciB" alt=""><img class="ciC" alt=""><div class="ciTxt"></div><div class="ciSub"></div></div></div>
 <div id="mb-ovPlace"><div id="mb-placeBar">
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:14px;color:#ffd86b;white-space:nowrap">配置</b><span id="mb-placeHint" style="font-size:12px;color:#cfe0ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span><span id="mb-placeCount" style="margin-left:auto;font-size:12px;color:#8ee0ff;white-space:nowrap"></span></div>
@@ -5204,6 +5288,7 @@ function buildDom(){
   $id('cutin').addEventListener('pointerdown',(e)=>{ e.preventDefault(); _ci.q.length=0; _cutinEnd(); });
   $id('menu').addEventListener('click',(e)=>{ const b=e.target.closest('[data-m]'); if(b){ menuClick(b.dataset.m); return; } if(!e.target.closest('#mb-menuBox')) closeMenu(); });
   $id('btAutoPlace').onclick=autoPlace; $id('btResetPlace').onclick=resetPlace; $id('btBegin').onclick=beginBattle;
+  { const b=$id('camAll'); b.querySelector('img').src=icSrc('terrain'); b.addEventListener('click',e=>{ e.stopPropagation(); camAll(); }); }
   initThree();
 }
 
@@ -5451,7 +5536,9 @@ const API={ init, startBattle, simulate, TACT, PVE_STAGE, PVE_EVO, get SERIES(){
   get MID(){ return MID; }, get MONSTERS(){ return MONSTERS; }, baseFormId:(m)=>baseFormId(m), lineOf:(m)=>lineUpIds(m),
   setAuto(v){ if(v===2||v==='fast'){ BT.fastPref=true; setAutoMode(2); } else if(!!v!==BT.auto) toggleAuto(); return BT.auto; },
   // 確認用(test.html・puppeteer)
-  _dbg:{ get state(){ return state; }, sync(){ syncUnits(); updateUI(); }, clear(){ clearSel(); }, tagURL(t,k){ const tx=tagTex(t,k); return tx.image.toDataURL(); },
+  _dbg:{ get state(){ return state; }, sync(){ syncUnits(); updateUI(); },
+    cam(){ return {uz:CAMV.uz, z:CAMV.cZ, x:CAMV.cx, zz:CAMV.cz, show:CAMV.showZ}; }, camAll(){ camAll(); }, camZoom(z){ CAMV.uz=z; CAMV.cZ=z; camBtnSync(); },   // 2026-10-30 確認用: 寄りのカメラ
+    unitPx(uid){ const s=sprites[uid]; if(!s||!camera) return null; const rc=renderer.domElement.getBoundingClientRect(); const h=(s.m3d&&s.m3d.h)||s.sc||1; const p=s.grp.position; const a=new THREE.Vector3(p.x,p.y,p.z).project(camera), b=new THREE.Vector3(p.x,p.y+h,p.z).project(camera); const c=new THREE.Vector3(p.x+1,p.y,p.z).project(camera); return {w:Math.round((c.x-a.x)*rc.width/2), h:Math.round((b.y-a.y)*rc.height/2), x:Math.round((a.x*0.5+0.5)*rc.width), y:Math.round((-a.y*0.5+0.5)*rc.height)}; }, clear(){ clearSel(); }, tagURL(t,k){ const tx=tagTex(t,k); return tx.image.toDataURL(); },
     cellPx(r,c){ if(!renderer||!camera) return null; const w=cell2world(r,c); const v=new THREE.Vector3(w.x, cellH(r,c)+0.05, w.z).project(camera); const rc=renderer.domElement.getBoundingClientRect(); return [rc.left+(v.x+1)/2*rc.width, rc.top+(-v.y+1)/2*rc.height]; },
     selInfo(){ return sel?{uid:sel.uid, mode:selMode, move:selMove&&selMove.id, name:mvName(selMove), range:selMove&&moveRange(sel,selMove), aim:selAim, targets:(selAtks||[]).map(e=>[e.r,e.c])}:null; }, get BT(){ return BT; }, sprites, M3D, aiSide:(o)=>{ aiSide(o); return state.phase; }, endTurn:()=>endTurn(), killLeader(o){ const L=leaderOf(o); if(!L) return false; L.hp=0; killUnit(L); afterAction(); return state.phase; },
     gauge(uid,v){ const u=state.units[uid]; if(u&&v!=null){ u.g=v; syncUnits(); updateUI(); } return u?u.g:null; }, put(uid,r,c){ const u=state.units[uid]; if(!u||unitAt(r,c)) return false; state.board[u.r][u.c]=null; u.r=r; u.c=c; state.board[r][c]=u.uid; syncUnits(); return true; },
