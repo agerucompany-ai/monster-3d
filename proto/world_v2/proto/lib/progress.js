@@ -17,6 +17,10 @@ const CFG={
   recruitArc:{greece:1.0, china:0.75, egypt:0.6, norse:0.45},   // 2026-10-28 オーナー: 5〜50%。後の編ほど下がる
   cradleW:{1:60, 2:30, 3:10},   // 生み出すで出る段の重み(1体あたり)
   recruitDragon:0.05, recruitMin:0.05, recruitMax:0.50,           // 竜タイプは5%
+  // 2026-10-30 店(オーナー承認の数): 肉=戦いの中で野生の子にあげると 倒した時に仲間になる確率に足す(同じ子は足し算)。上限80%・竜30%。闘気の水晶=戦いの中で選んだ子の闘気+50
+  //   ジェムは無料ジェムだけで買う(有償ジェムは課金サーバー therion-pay が 生み出す(cradle) しか引けない決まりのため)
+  shop:[{k:'meat1', price:100, add:0.10}, {k:'meat2', price:300, add:0.20}, {k:'meat3', price:600, add:0.35}, {k:'ki', price:150}],
+  fedMax:0.80, fedMaxDragon:0.30,
   expNeed:(lv)=>Math.round(12+1.6*lv*lv),     // 次のレベルまでのEXP(Lv1→2=14・Lv5=52・Lv10=172・Lv50=4012・Lv98=15378)
   expGain:(enemyLv,stage,kind)=>Math.round((10+4*enemyLv)*([1,1.5,2][stage-1]||1)*({wild:1,trainer:1.5,master:2.5,ancient:2.5}[kind]||1)),   // 倒した相手1体ぶん
   benchExp:0.5,                               // 盤に出なかったパーティの子はEXP半分
@@ -205,6 +209,15 @@ P.setPaid=function(p){ PAID=p||null; if(UI.refresh) UI.refresh(); };
 P.paidGems=function(){ try{ const b=PAID&&PAID.balance(); return b==null?null:Math.max(0,+b||0); }catch(e){ return null; } };   // null = まだ分からない(サーバーにつながっていない)
 P.totalGems=()=>P.gems()+(P.paidGems()||0);
 
+// ---------------------------------------------------------------- 店(2026-10-30): 肉3種・闘気の水晶をジェムで買う。もちもの=SAVE.items(フィールドの ITEMS と同じ物)
+function itemsObj(){ if(!SAVE) return null; if(!SAVE.items||typeof SAVE.items!=='object') SAVE.items={}; return SAVE.items; }
+P.items=()=>Object.assign({}, (SAVE&&SAVE.items)||{});
+P.itemCount=(k)=>Math.max(0,+(((SAVE&&SAVE.items)||{})[k])||0);
+P.shopList=()=>CFG.shop.map(x=>({k:x.k, name:(ITEMJ[x.k]||[x.k])[0], icon:(ITEMJ[x.k]||[0,'potion'])[1], price:x.price, add:x.add||0, have:P.itemCount(x.k), canBuy:P.gems()>=x.price}));
+P.buyItem=function(k){ const pg=prog(); const x=CFG.shop.find(s=>s.k===k); if(!pg||!x) return {ok:false, why:'nosave'}; if(pg.gems<x.price) return {ok:false, why:'gems'};
+  const it=itemsObj(); pg.gems-=x.price; it[k]=(+it[k]||0)+1; pg.log.unshift({t:Date.now(), n:-x.price, r:'shop'}); pg.log=pg.log.slice(0,30); P.save(); emit('gems',{n:-x.price,reason:'shop',total:pg.gems}); emit('shop',{k, have:it[k]}); return {ok:true, k, have:it[k]}; };
+P.useItem=function(k){ const it=itemsObj(); if(!it||!(+it[k]>0)) return false; it[k]=+it[k]-1; P.save(); return true; };   // battle.js が使った時に呼ぶ(opts.useItem)
+
 // ---------------------------------------------------------------- 野生・地方の決まり
 P.arc=()=>prog()&&prog().arc||CFG.arc;
 P.setArc=(a)=>{ if(prog()&&ARC_POOL[a]){ prog().arc=a; if(a==='norse' && prog().partyMax<CFG.partyMaxFinal) P.setPartyMax(CFG.partyMaxFinal); P.save(); } };   // 北欧編に入ったら6体まで(2026-10-27)
@@ -223,17 +236,22 @@ P.wildPack=function(lead, area, pool, n){ const L=Object.assign({}, lead, {leade
 
 // ---------------------------------------------------------------- バトル(battle.js の startBattle に渡す物を作り、結果を反映)
 // 倒して仲間(G1): その系統を初めて → 段ごとの確率で仲間に / すでに持っている系統 → 何も起きない(null)
+function dragonT(mid){ const m=mon(mid); return !!m && [].concat(m.type||[],m.type2||[]).some(t=>String(t).indexOf('竜')>=0); }
+P.recruitable=function(mid){ const m=mon(mid); if(!m) return false; if(P.knowsForm(mid)&&P.hasLine(mid)) return false; return !(BOSS_FORMS.includes(+mid)||TRUMP_FORMS.includes(+mid)||m.role==='fusion'); };   // 肉をあげて意味がある子(仲間になる判定がある子)
 P.recruitRoll=function(lead){ if(!mon(lead.mid)) return null; if(P.knowsForm(lead.mid)&&P.hasLine(lead.mid)) return null; if(BOSS_FORMS.includes(+lead.mid)||TRUMP_FORMS.includes(+lead.mid)||mon(lead.mid).role==='fusion') return null;   // 2026-10-28: 1段目=仲間 / 2段目以上=進化の仕方を覚える(系統の子がいなければ1段目の子も)
   const st=stageOf(lead.mid); const m=mon(lead.mid); const ty=[].concat(m.type||[],m.type2||[]); let p;
   if(ty.some(t=>String(t).indexOf('竜')>=0)) p=CFG.recruitDragon;
   else { p=(CFG.recruit[st]!=null?CFG.recruit[st]:0.3)*((CFG.recruitArc||{})[P.arc()]||1); }
-  p=Math.max(CFG.recruitMin,Math.min(CFG.recruitMax,p)); const ok=Math.random()<p;
+  p=Math.max(CFG.recruitMin,Math.min(CFG.recruitMax,p));
+  if(+lead.fed>0) p=Math.min(dragonT(lead.mid)?CFG.fedMaxDragon:CFG.fedMax, p+(+lead.fed));   // 2026-10-30 店の肉(足し算・上限80%・竜30%)
+  const ok=Math.random()<p;
   if(!ok) return {isNew:false, miss:true, p, tag:st>=2?'覚えられなかった':undefined};
   return caughtOf(obtain(lead.mid, lead.lv||1, 'wild'), p); };
 // prepare(opt, ctx): startBattle の opts に player / recruit / decorate / startStage を足す。ctx={area, zeroday}
+function battleItems(){ const o={}; for(const k of Object.keys(ITEMJ)){ const n=P.itemCount(k); if(n>0) o[k]=n; } return o; }
 P.prepare=function(opt, ctx){ opt=opt||{}; ctx=ctx||{}; const pl=opt.player||{};
   const party=P.battleParty(); if(!party.length) throw new Error('progress: パーティが空');
-  opt.player=Object.assign({}, pl, {party, box:P.legacyBox(), owned:pl.owned||P.ownedList(), fusionKnown:pl.fusionKnown||P.fusionKnownList(), rankCap:20, items:{}});   // 盤 v4: 回復の道具はなし
+  opt.player=Object.assign({}, pl, {party, box:P.legacyBox(), owned:pl.owned||P.ownedList(), fusionKnown:pl.fusionKnown||P.fusionKnownList(), rankCap:20, items:battleItems()});   // 盤 v4: 回復の道具はなし。2026-10-30 店の肉・闘気の水晶だけ
   if(opt.startStage==null) opt.startStage=P.startStage(ctx.area);
   opt.noWildForms=TRUMP_FORMS.slice();   // battle.js: 野生・古代テリオン戦では切り札の姿まで上げない
   if((opt.kind||'wild')==='wild' && opt.enemy && Array.isArray(opt.enemy.pack) && opt.enemy.party && opt.enemy.party.length===1){   // 野生の群れ(呼ぶ側が enemy.pack=そのマップの野生の種類 を渡した時)
@@ -243,6 +261,7 @@ P.prepare=function(opt, ctx){ opt=opt||{}; ctx=ctx||{}; const pl=opt.player||{};
   const enemy=(opt.enemy&&opt.enemy.party)||[];
   const kind=opt.kind||'wild';
   opt.recruit=(lead)=>P.recruitRoll(lead);
+  opt.recruitable=(mid)=>P.recruitable(mid); opt.useItem=(k)=>P.useItem(k);   // 2026-10-30 肉をあげられる子 / 使った道具をセーブから引く
   opt.decorate=(res)=>P.applyResult(res,{party, enemy, kind, zeroday, area:ctx.area});
   return opt; };
 // 結果を反映(decorate から1回だけ呼ばれる)。戻り値=結果画面に足す行
@@ -321,6 +340,7 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgAct{display:flex;gap:8px;margin:8px 0}
 .pgBtn{font:800 15px/1 inherit;padding:12px 16px;border-radius:14px;border:2px solid rgba(255,255,255,.5);background:rgba(44,62,102,.9);color:#fff;cursor:pointer;flex:1}
 .pgBtn.main{background:#b8860b;border-color:#ffd977;font-size:18px;padding:16px}
+.pgShop span{flex:1;display:flex;flex-direction:column;gap:2px}.pgShop small{font-size:12px;color:#9fe0ff;font-weight:800}.pgShop b{min-width:2.6em;text-align:right}.pgBuy{flex:0 0 auto;min-width:96px;padding:10px 12px}.pgBuy:disabled{opacity:.45}
 .pgBtn.gem{background:#123a2a;border-color:#4fd47a;color:#c9ffd9}
 .pgBtn:disabled{opacity:.45}
 .pgBig{text-align:center;padding:10px 0 4px}
@@ -400,7 +420,7 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgOdds .lrn{color:#9fe0ff;font-size:10px}
 #pgToast{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);background:rgba(10,14,30,.92);border:1px solid rgba(255,217,119,.6);color:#ffe9a8;font-weight:800;font-size:15px;padding:10px 18px;border-radius:999px;display:none;pointer-events:none;white-space:nowrap}
 `;
-const REASON={zeroday:'ゼロデイ',cradle:'生み出す',cradle_paid:'生み出す(有償)',dup:'ダブり',test:'テスト',start:'はじめ'};
+const REASON={shop:'店',zeroday:'ゼロデイ',cradle:'生み出す',cradle_paid:'生み出す(有償)',dup:'ダブり',test:'テスト',start:'はじめ'};
 function reasonJP(r){ if(!r) return ''; if(/^quest:/.test(r)) return 'クエスト'; return REASON[r]||r; }
 function el(tag,cls,html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
 UI.mount=function(o){ o=o||{}; if(R) return R; const st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);
@@ -443,7 +463,7 @@ function card(c, opts){ const d=el('div','pgCard'+(opts.on?' on':'')+(opts.pend?
   d.innerHTML=`${opts.leader?'<i class="ld"></i>':''}${opts.tag?`<span class="tg">${opts.tag}</span>`:''}<img src="${IMG(c.mid)}" alt=""><div class="nm">${nameOf(c.mid)}</div><div class="lv">Lv${c.lv}</div><div class="bar"><i style="width:${pct}%"></i></div>`; d.dataset.uid=c.uid; return d; }
 // メニュー(2026-10-27 オーナー「ステータスとかパーティーの情報みれるタブのような画面欲しいな」): パーティ・牧場・ずかん・もちもの。ラベル・アイコン・数字だけ
 const TABS=[['party','パーティ','ally'],['ranch','牧場','terrain'],['dex','ずかん','evolve'],['fuse','融合','fuse'],['items','もちもの','potion']];
-const ITEMJ={};   // 2026-10-29 盤 v4: 回復の水筒・おやつの材料・〇〇のおやつはなくした(古いセーブに残っていても出さない)
+const ITEMJ={meat1:['ふつうの肉','meat1'], meat2:['上等な肉','meat2'], meat3:['特上の肉','meat3'], ki:['闘気の水晶','kicrystal']};   // 2026-10-29 盤 v4: 回復の水筒・おやつの材料・〇〇のおやつはなくした(古いセーブに残っていても出さない)。2026-10-30 店の肉・闘気の水晶
 function terrInfo(){ const MB=root.MonBattle; return MB&&MB.TYPE_TERR&&MB.BRIEF?{TT:MB.TYPE_TERR, J:MB.BRIEF.TERR_JP, H:MB.BRIEF.TERR_HEX, X:Math.round((MB.BRIEF.TERR_X||0.3)*100)}:null; }
 function tnB(t,I){ const h=I.H[t]; const hx=h!=null?'#'+(h>>>0&0xffffff).toString(16).padStart(6,'0'):'#777'; const lt=h!=null&&(((h>>16)&255)*0.299+((h>>8)&255)*0.587+(h&255)*0.114)>150; return `<span class="pgTn${lt?' lt':''}" style="background:${hx}">${I.J[t]||t}</span>`; }
 function canSwap(){ if(UI.opts&&UI.opts.canSwap===false){ UI.toast('入れかえは街の中で'); return false; } return true; }
@@ -494,13 +514,19 @@ UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const 
       if(anc.length){ B.appendChild(el('div','pgSec',`<span>古代テリオン</span><span>${anc.length}</span>`)); for(const f of anc) B.appendChild(el('div','',fuseRow(f))); }
       if(nor.length){ B.appendChild(el('div','pgSec',`<span>融合</span><span>${nor.length}</span>`)); for(const f of nor) B.appendChild(el('div','',fuseRow(f))); } }
     else if(tab==='items'){ const it=(SAVE&&SAVE.items)||{}; B.appendChild(el('div','pgSec','<span>もちもの</span>'));
-      const ks=Object.keys(it).filter(k=>+it[k]>0 && ITEMJ[k]); for(const k of ks){ const j=ITEMJ[k]||[k,'potion']; B.appendChild(el('div','pgItem',`${ICON(j[1])}<span>${j[0]}</span><b>×${it[k]}</b>`)); } if(!ks.length) B.appendChild(el('div','pgItem','<span>—</span>'));
+      const ks=Object.keys(ITEMJ).filter(k=>+it[k]>0); for(const k of ks){ const j=ITEMJ[k]||[k,'potion']; B.appendChild(el('div','pgItem',`${ICON(j[1])}<span>${j[0]}</span><b>×${it[k]}</b>`)); } if(!ks.length) B.appendChild(el('div','pgItem','<span>—</span>'));
       B.appendChild(el('div','pgSec','<span>ジェム</span>')); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>無料ジェム</span><b>${P.gems()}</b>`));
       const pdv=P.paidGems(); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>有償ジェム</span><b>${pdv==null?'—':pdv}</b>`));
       const a=el('div','pgAct'); const b=el('button','pgBtn gem','ジェムを買う'); b.onclick=()=>{ if(!P.buyGems()) UI.toast('じゅんび中'); }; a.appendChild(b); B.appendChild(a);
       B.appendChild(el('div','pgSec','<span>きろく</span>'));
       const Lg=el('div','pgLog'); for(const g of (prog()?prog().log:[])) Lg.appendChild(el('div','',`<span>${reasonJP(g.r)}</span><span class="${g.n>=0?'p':'m'}">${g.n>=0?'+':''}${g.n}</span>`)); if(!Lg.children.length) Lg.appendChild(el('div','','<span>—</span>')); B.appendChild(Lg); }
   }
+  else if(cur==='shop'){ T.textContent='店'; TB.style.display='none';   // 2026-10-30
+    B.appendChild(el('div','pgItem',`${ICON('gem')}<span>無料ジェム</span><b id="pgShopGem">${P.gems()}</b>`));
+    for(const x of P.shopList()){ const d=el('div','pgItem pgShop',`${ICON(x.icon)}<span>${x.name}${x.add?`<small>+${Math.round(x.add*100)}%</small>`:'<small>闘気+50</small>'}</span><b>×${x.have}</b>`);
+      const b=el('button','pgBtn gem pgBuy',`${ICON('gem')}${x.price}`); b.disabled=!x.canBuy; b.dataset.k=x.k;
+      b.onclick=()=>{ const r=P.buyItem(x.k); if(!r.ok){ UI.toast('ジェムがたりない'); return; } UI.toast(`${x.name}　×${r.have}`); UI.render(); };
+      d.appendChild(b); B.appendChild(d); } }
   else if(cur==='cradle'){ T.textContent='生み出す'; const pool=P.cradle.pool(); const price=P.cradle.price();
     const h=el('div'); h.id='pgHatch'; B.appendChild(h);
     if(UI._hatch){ const r=UI._hatch; h.classList.add('on'); h.innerHTML=`<img src="${IMG(r.mid)}" alt=""><div class="nm">${r.name}</div>`+(r.dup?(r.gemsBack?`<span class="tag dup">ダブり　${ICON('gem')}+${r.gemsBack}</span>`:`<span class="tag dup">ダブり　${nameOf(r.targetMid)} Lv${r.before} → Lv${r.after}</span>`):((r.forms&&r.forms.length?`<span class="tag">${formTag(r.forms)}</span>`:'')+(r.gaveMid?`<span class="tag">${r.forms&&r.forms.length?nameOf(r.gaveMid)+'　':'生まれた！　'}Lv${r.lv}　${r.inParty?'仲間':'牧場'}</span>`:''))); }

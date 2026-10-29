@@ -245,7 +245,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   bt(16,'e16_b','e16_4',AS,{bg:DI,mid:'e16_3',foe:()=>cnFoe({n:'ミラ＆ジョー',zeroday:1,party:P(1005,1006,1038)}),R:{terrain:'ruins'}});
   sc(16,'e16_5',AS,'*',{bg:DI});
   sc(17,'e17_1',AS,'*',{bg:'anime_eg_control'}); sc(17,'e17_2',AS,'*',{bg:'anime_eg_control'});
-  bt(17,'e17_b','e17_3',AS,{bg:'anime_eg_control',foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1061,lv:40,fixed:true,leader:true,boss:true,circle:true},{mid:1005,lv:39,stage:2,evo:true},{mid:1006,lv:39,fixed:true},{mid:1013,lv:39,fixed:true},{mid:1012,lv:38,stage:2,evo:true})},'ランサム'),R:{terrain:'ruins',guests:['partner',1046,'own2','own3'],fuse:[2026],ai:{hpX:0.96,atkX:1.04}}});   // 2026-10-28 切り札ディアボーグ(ボス・1.75倍・魔法陣から出る)。シム sim/sim_e17.js 150戦: 勝率66%(前の hpX/atkX 1.2 では3%)
+  bt(17,'e17_b','e17_3',AS,{bg:'anime_eg_control',foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1061,lv:40,fixed:true,leader:true,boss:true,circle:true},{mid:1005,lv:39,stage:2,evo:true},{mid:1006,lv:39,fixed:true},{mid:1013,lv:39,fixed:true},{mid:1012,lv:38,stage:2,evo:true})},'ランサム'),R:{terrain:'ruins',guests:['partner',1046,'own2','own3'],fuse:[2026],ai:{hpX:0.89,atkX:0.96}}});   // 2026-10-28 切り札ディアボーグ(ボス・1.75倍・魔法陣から出る)。シム sim/sim_e17.js 150戦: 勝率66%(前の hpX/atkX 1.2 では3%)。2026-10-30 ボスが奥にいるようになって53%→ 0.89/0.96 で約73%(tune_v4 360戦)
   sc(17,'e17_4',AS,'*',{bg:'anime_eg_control',post:()=>flag('eg_ransom')});
   sc(18,'e18_1',AS,'*',{bg:'anime_eg_control',tod:'dawn'}); sc(18,'e18_2a',AS,'*',{bg:'anime_eg_control'});
   fn(18,'e18_q',AS,()=>xQuiz(EG_Q18,'anime_eg_control'));

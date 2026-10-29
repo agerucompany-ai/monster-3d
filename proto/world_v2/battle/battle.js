@@ -19,7 +19,7 @@ function $id(k){ return IS_NODE?null:document.getElementById('mb-'+k); }
 // ---- UIアイコン(2026-10-27): 絵文字の代わりの自前アイコン img/ui/{name}.webp ----
 //   文字列の中では IC('gem') = 目印(\u0001gem\u0002)。HTMLは icHTML/setIc で <img class="ui-ic"> に、キャンバスは icText で drawImage する
 const UI_ICONS=['ally','enemy','area','single','map','atk','heal','burn','poison','freeze','para','dig','cancel','undo','move','combo','cure','revive','elixir','potion','kicrystal','evolve','fuse','fuse3','gem','hint','warn','weak','resist','terrain','leader',
-  'clutch','cover','flag','s_insect','s_greek','s_egypt','s_norse','s_china','s_dragon','s_sea','s_yokai','s_night','s_earth'];   // 2026-10-28 戦術v3: 背水・かげ・シリーズ
+  'clutch','cover','flag','meat1','meat2','meat3','s_insect','s_greek','s_egypt','s_norse','s_china','s_dragon','s_sea','s_yokai','s_night','s_earth'];   // 2026-10-28 戦術v3: 背水・かげ・シリーズ
 function IC(n){ return '\u0001'+n+'\u0002'; }
 function icSrc(n){ return CFG.base+CFG.img+'ui/'+n+'.webp'; }
 function LMK(){ return `<i class="lmk" style="background-image:url(${icSrc('leader')})"></i>`; }
@@ -367,6 +367,17 @@ function finCfg(){ if(BT.sh&&BT.sh.final) return BT.sh.final; if(V2ON() && FINAL
 function finalStart(){ const F=finCfg(); return F ? MAX_TURN-F.left+1 : Infinity; }   // 決戦が始まるターン(STAGE_HUMAN.final)
 function finalX(){ const F=state&&finCfg(); if(!F) return 1; const k=state.turn-finalStart()+1; return k>0 ? 1+F.step*k : 1; }   // 決戦: 1ターン目+step・2ターン目+2step…
 function shPush(me){ const P=BT.sh&&BT.sh.push; if(!P||!state) return false; return state.turn>=P.turn || hpShare(me)>=P.ahead; }   // 人の3段目: リーダーが前に出る(下がって守り続けない)
+// 2026-10-30 オーナー「ボスがいきなり中央に来る・戦いにならない」: 相手(人・古代・ボス)のリーダーとボスは はじめ自陣の奥にいて 手下が先に出る。
+//   前に出るのは (1) 手下が半分以下になった (2) こちらの子が その子の届く所(動ける数+射程)に来た (3) 長引いた(BOSS_HOLD.turn ターン目から) のどれか。一度出たら下がらない。野生は今まで通り。
+//   進化のマスへ向かうのもやめる(ボスは進化のために中央へ行かない)
+const BOSS_HOLD={turn:6, depth:2, w:160}; try{ if(IS_NODE && process.env.BHOLD) Object.assign(BOSS_HOLD, JSON.parse(process.env.BHOLD)); }catch(e){}
+function bossHoldOn(u){ return !!u && u.owner===1 && BT.kind!=='wild' && (u.leader||u.isBoss) && !(BT.opts&&BT.opts.bossHold===false) && BOSS_HOLD.turn>0; }
+function bossAdvance(u){ if(!bossHoldOn(u)) return true; if(u._adv) return true; const me=u.owner;
+  const n0=(state._n0||(state._n0={}))[me]!=null?state._n0[me]:(state._n0[me]=alive(me).length);
+  const mates=alive(me).filter(x=>x.uid!==u.uid&&x.hp>0).length;
+  let go = state.turn>=BOSS_HOLD.turn || (n0>1 && mates<=Math.floor((n0-1)/2));
+  if(!go){ const reach=effMove(u)+effRange(u); for(const e of alive(1-me)){ if(e.r<0||e.hp<=0) continue; if(Math.abs(e.r-u.r)+Math.abs(e.c-u.c)<=reach){ go=true; break; } } }
+  if(go) u._adv=true; return go; }
 function hpShare(o){ let a=0,b=0; for(const u of Object.values(state.units)){ const v=Math.max(0,u.hp); if(u.owner===o) a+=v; else b+=v; } return (a+b)>0?a/(a+b):0.5; }
 function gaugeMul(o){ const sh=hpShare(o); if(T3()){ const B=TACT.behind; return sh<B.share ? Math.min(B.gaugeMax, 1+(B.share-sh)*B.gaugeK) : 1; } return sh<0.45 ? Math.min(1.6, 1+(0.45-sh)*2.4) : 1; }   // 背水: 押されている側ほど溜まりやすい(戦術v3: ×1.8まで)
 // 2026-10-28 オーナー「進化のインセンティブがないと中央付近にモンスターが集まらない」: 中央の3列と相手の陣 = 闘気が1.5倍たまる・手番の始めに+15
@@ -1354,7 +1365,7 @@ function startTurn(side){
   if(window._SIM || BT.headless) return;             // シム: 両軍のAIはハーネスが同期で動かす
   if(side===0){ undoStack=[]; const fx=finalX(); if(fx>1){ showBanner(`${IC('warn')}決戦 ダメージ+${Math.round((fx-1)*100)}%`); if(state.turn===finalStart()) toast(`決戦！ 残り${MAX_TURN-state.turn+1}ターン・ダメージが上がる`); } else showBanner('あなたのターン'); updateUI(); if(BT.auto) autoTurn(); }
   else { setTimeout(cpuTurn, 350); }
-  if(side===0 && camOn() && state.phase==='battle'){ const p=camHomeOf(); CAMV.tx=p[0]; CAMV.tz=p[1]; }   // 自分の番の始め: 自分の子たちの所
+  if(side===0 && camOn() && camZoomed() && state.phase==='battle'){ const p=camHomeOf(); CAMV.tx=p[0]; CAMV.tz=p[1]; }   // 自分の番の始め: 自分の子たちの所
 }
 function endTurn(){
   clearSel();
@@ -1430,7 +1441,7 @@ function setEvoArea(on, appear){ on=!!on; const ch=(BT.evoOn!==on); BT.evoOn=on;
 // 途中で進化できる子が出てきたら(蘇生・融合・変身など)、その時に盤の中央へ出す。一度出したら最後まで残す
 function refreshEvoArea(){ if(!state||BT.evoOn||state.phase!=='battle') return; if(evoNeededNow()) setEvoArea(true,true); }
 // 2026-10-29 進化の2段構え(AI): 進化のマスに入れば闘気なしで進化できる子(zoneGo)は、この手番で届くなら闘気を使わずに入る
-function aiZoneGo(u){ const me=u.owner; if(mon(u).level>=2 && TACT.ai.zone2===false) return false; return !u.anc && mon(u).evolves_to!=null && mon(u).role!=='fusion' && aiCanEvo(u) && !!EVO_CELLS.length && !evoZoneOK(u,u.r,u.c) && !(u.leader && mon(u).level>=2 && alive(me).length>1); }
+function aiZoneGo(u){ const me=u.owner; if(mon(u).level>=2 && TACT.ai.zone2===false) return false; return !u.anc && mon(u).evolves_to!=null && mon(u).role!=='fusion' && aiCanEvo(u) && !!EVO_CELLS.length && !evoZoneOK(u,u.r,u.c) && !(u.leader && mon(u).level>=2 && alive(me).length>1) && !bossHoldOn(u); }   // 2026-10-30: 相手のリーダー・ボスは進化のマスへ向かわない
 function aiZoneReach(u){ if(!aiZoneGo(u) || u.moved || !canMove(u)) return false; return moveTargets(u).move.some(([r,c])=>evoZoneOK(u,r,c)); }
 function aiGaugeEvo(u){ if(canEvolveHere(u) && aiCanEvo(u) && !aiZoneReach(u)){ evolveUnit(u,false); return true; } return false; }
 function aiSideStart(me){ for(const u of alive(me).slice()){ if(u.anc){ u._ancN=0; if(BT.anc&&BT.anc.cd>0) BT.anc.cd--; } if(!aiGaugeEvo(u) && canAwaken(u)) doAwaken(u); } }
@@ -1519,6 +1530,7 @@ function aiBestMove(u){
   // 2026-10-25: 1体だけの側(野生の1対1・最後の1体)は引きこもると時間切れ＝決着しないので、敵への引き寄せを強く・敵の射程を恐れる重みを弱くする
   // (旧: 引き寄せ12/マス・リーダーの脅威回避0.7〜1.1 → 川(地形-36)や相手の射程(-23前後)を越えられず、7x7で両軍が4行離れたまま一度も攻撃せず終わっていた)
   const lone = alive(me).length===1;
+  const bossAdv = bossAdvance(u);   // 2026-10-30
   const idle = T3() ? Math.min(4, state.idle||0) : 0;   // 戦術v3: だれも当たらない手番が続いたら前へ(川・かげでにらみ合いのまま時間切れにしない)
   const pullW = (u.anc ? 30 : (lone ? 40 : 12))*(1+idle*0.5);   // 古代テリオンは子分がいても前に出る
   let best=null, bs=-1e9; const cand=[];
@@ -1534,9 +1546,10 @@ function aiBestMove(u){
     sc+=terrBonusM(mon(u), terrAt(r,c))*120;
     if(T3()){ if(TACT.cover.terr.includes(terrAt(r,c))) sc+=TACT.ai.cover*(u.leader?2:1); sc+=aiFormationScore(u,r,c); }   // 戦術v3: かげ・合体の陣形
     const th=threat(r,c)*(idle?Math.max(0.25,1-idle*0.25):1);
-    const push = u.leader && !u.anc && shPush(me);   // 人の3段目: 押している/長引いたらリーダーも前へ(STAGE_HUMAN.push)
+    const push = u.leader && !u.anc && (bossHoldOn(u) ? bossAdv : shPush(me));   // 人の3段目: 押している/長引いたらリーダーも前へ(STAGE_HUMAN.push)。2026-10-30 相手のリーダーは bossAdvance(手下が減った・近づかれた・長引いた)
     sc-=th*(u.anc?0.15:(u.leader?(lone?(me===0?0.7:0.2):(push?(hpR<0.35?0.6:0.25):(hpR<0.6?1.1:0.7))):(hpR<0.35?0.35:0.08)));   // 1体だけ: 自軍は相手の射程の外で待てる時は待つ(先手を取る)・敵(野生)は気にせず詰める。古代テリオンは恐れない
-    if(u.leader && !u.anc && !push && mode!=='evo' && alive(me).length>1){ const back=START_ROWS[me][0]; sc-=Math.max(0, (me===0?(back-r):(r-back))-2)*70; }   // リーダーは前に出すぎない(進化に向かう時を除く・古代テリオンは除く)
+    if(u.leader && !u.anc && !push && mode!=='evo' && alive(me).length>1){ const back=START_ROWS[me][0]; sc-=Math.max(0, (me===0?(back-r):(r-back))-2)*70; }
+    else if(bossHoldOn(u) && !bossAdv){ const back=START_ROWS[me][0]; sc-=Math.max(0, Math.abs(r-back)-BOSS_HOLD.depth)*BOSS_HOLD.w; }   // 2026-10-30: 古代テリオン・ボス(1体だけの時も)は 前に出る時まで自陣の奥   // リーダーは前に出すぎない(進化に向かう時を除く・古代テリオンは除く)
     if(me===0 && BT.anc && BT.anc.charge && BT.anc.charge.set.has(r+','+c)){ const b=ancUnit(); if(b){ const d=ancBigDmg(b,u); sc-=(d/Math.max(1,u.maxhp))*1600*(u.leader?2.2:1.2)+(d>=u.hp?600:0); } }   // 古代テリオンの大技の赤いマスからにげる(かげなら半分)
     if(sc>bs){ bs=sc; best=[r,c]; }
     cand.push([sc,r,c]);
@@ -1660,7 +1673,8 @@ let _camDist=22;
 //   ・指1本のドラッグ=盤を動かす / 2本指=寄せ・引き / ホイール=寄せ・引き / 「全体」ボタン=全体と寄りの切りかえ。盤の外は CAM_EDGE マスまでしか見せない
 //   ・自動: 自分の子を選んだ所・動いている子(敵も)を追う / 攻撃・進化・融合は撃つ子と当たる所が入るように(要れば少し引く) / 配置は自陣 / 自分の番の始めは自分の子
 const CAM_Z0=1.8, CAM_ZMAX=3.2, CAM_EDGE=0.6;
-const CAMV={uz:CAM_Z0, prevUz:CAM_Z0, showZ:null, tx:0, tz:0, cx:0, cz:0, cZ:CAM_Z0, init:false, off:0, lockUntil:0, lockFx:false, last:0, drag:null, ptrs:new Map(), dragged:false, pinch:null};
+// 2026-10-30 オーナー「デフォルト寄らなくてよい。マスが少なく見える」: はじめは全体(uz=1)。寄せている時(camZoomed)だけ 選んだ子・動く子・見せ場を追う。CAM_Z0 は「全体」ボタンで寄る時の倍率
+const CAMV={uz:1, prevUz:CAM_Z0, showZ:null, tx:0, tz:0, cx:0, cz:0, cZ:1, init:false, off:0, lockUntil:0, lockFx:false, last:0, drag:null, ptrs:new Map(), dragged:false, pinch:null};
 const _cvA=(typeof THREE!=='undefined')?new THREE.Vector3():null;
 function camAt(d, polar, fx, fz){ const L=fz+CAMV.off; camera.position.set(fx, Math.sin(polar)*d, L+Math.cos(polar)*d); camera.lookAt(fx,0,L); camera.updateMatrixWorld(); }
 function camPY(x,y,z){ return _cvA.set(x,y,z).project(camera); }
@@ -1683,7 +1697,7 @@ function camRun(dFull, polar, yLo, yHi, xLim, topPx, ch){
   if(!CAMV.init){ CAMV.init=true; const p=camHomeOf(); CAMV.tx=CAMV.cx=p[0]; CAMV.tz=CAMV.cz=p[1]; CAMV.cZ=CAMV.uz; }
   const locked=camLocked(now); if(!locked){ CAMV.showZ=null; CAMV.lockFx=false; }
   // 動いている子を追う(攻撃・進化の見せ場の間は動かさない)
-  let fol=false; if(!locked && !CAMV.drag && !CAMV.pinch && state && state.phase==='battle'){ for(const uid in sprites){ const s=sprites[uid]; if(s.move && now-s.move.t0<s.move.dur+60){ CAMV.tx=s.grp.position.x; CAMV.tz=s.grp.position.z; fol=true; break; } } }
+  let fol=false; if(!locked && !CAMV.drag && !CAMV.pinch && camZoomed() && state && state.phase==='battle'){ for(const uid in sprites){ const s=sprites[uid]; if(s.move && now-s.move.t0<s.move.dur+60){ CAMV.tx=s.grp.position.x; CAMV.tz=s.grp.position.z; fol=true; break; } } }
   const tZ=Math.max(1, Math.min(CAMV.uz, CAMV.showZ||CAMV.uz));
   if(CAMV.drag&&CAMV.drag.on||CAMV.pinch){ CAMV.cZ=tZ; CAMV.cx=CAMV.tx; CAMV.cz=CAMV.tz; }
   else { const k=1-Math.exp(-dt*(fol?9:5.5)); CAMV.cZ+=(tZ-CAMV.cZ)*k; CAMV.cx+=(CAMV.tx-CAMV.cx)*k; CAMV.cz+=(CAMV.tz-CAMV.cz)*k; }
@@ -1694,10 +1708,11 @@ function camRun(dFull, polar, yLo, yHi, xLim, topPx, ch){
 function camHomeOf(){ if(!state) return [0,0]; if(state.phase==='place'){ const w=cell2world(NR-2,(NC-1)/2); return [w.x,w.z]; }   // 配置: 自陣(手前の3列)
   const me=Object.values(state.units||{}).filter(u=>u.owner===0&&u.hp>0&&u.r>=0); if(!me.length) return [0,0]; let x=0,z=0; for(const u of me){ const w=cell2world(u.r,u.c); x+=w.x; z+=w.z; } return [x/me.length, z/me.length]; }
 function camOn(){ return !BT.headless && !IS_NODE && !!camera && !window._camZoom; }
+function camZoomed(){ return CAMV.uz>1.05; }   // 全体の時は自動で動かさない
 // 1マスへ寄る(選んだ子)。lock の間は 動く子を追わない
-function camFocus(r,c,lock){ if(!camOn()) return; const w=cell2world(r,c); CAMV.tx=w.x; CAMV.tz=w.z; CAMV.showZ=null; CAMV.lockFx=false; CAMV.lockUntil=lock?performance.now()+lock:0; }
+function camFocus(r,c,lock){ if(!camOn()||!camZoomed()) return; const w=cell2world(r,c); CAMV.tx=w.x; CAMV.tz=w.z; CAMV.showZ=null; CAMV.lockFx=false; CAMV.lockUntil=lock?performance.now()+lock:0; }
 // 見せ場: cells(とその上の高さ)が全部入るように 真ん中へ寄り、要れば引く。o.fx=true の間(BT.fxUntil まで)と o.hold ミリ秒は動かさない
-function camShow(cells, o){ if(!camOn()||!CAMV.dFull||!cells||!cells.length) return; o=o||{};
+function camShow(cells, o){ if(!camOn()||!camZoomed()||!CAMV.dFull||!cells||!cells.length) return; o=o||{};
   let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9; for(const p of cells){ if(!p) continue; const r=p.r!=null?p.r:p[0], c=p.c!=null?p.c:p[1]; if(r==null||r<0) continue; const w=cell2world(r,c); x0=Math.min(x0,w.x); x1=Math.max(x1,w.x); z0=Math.min(z0,w.z); z1=Math.max(z1,w.z); }
   if(x0>x1) return; const m=o.pad!=null?o.pad:0.9; x0-=m; x1+=m; z0-=m; z1+=m; const fx=(x0+x1)/2, fz=(z0+z1)/2;
   const {yLo,yHi,xLim,dFull,polar}=CAMV; let z=CAMV.uz; const keepOff=CAMV.off;
@@ -2785,6 +2800,9 @@ function m3dPlay(inst,name,fade){ const to=inst.act[name]; if(!to) return; const
 function unitSizeK(u){ const m=mon(u); if(u.anc||u.isBoss||(m.recipe3&&m.recipe3.length)) return 1.75; if(m.role==='fusion'||m.level===3) return 1.35; return m.level===2?1.0:0.9; }
 function m3dHeight(u){ const m=mon(u); const k=unitSizeK(u); let h=1.25*k;
   const e=ci3Ext(u.mid); if(e){ const foot=Math.max(e.w,e.d)/Math.max(0.01,e.h); const lim=0.8*k/Math.max(0.01,foot); if(h>lim) h=Math.max(lim, 0.8*k); }   // 体の幅・奥行き = マスの 0.8×段(大きい子はマスをこえてよい・中心はマス)   // 2026-10-28: 体の幅・奥行きがマスの 80%(大きい子 95%)に収まる高さに
+  // 2026-10-30 オーナー「レベル1なのにデカすぎる」(スミヤモ): 長い体は上の下限(0.8×段)で 体の長さがマス1.8個分になっていた。
+  //   1段目は 見た目の大きさ(高さ×いちばん長い向き)を 0.8×段² までにする(1段目の真ん中の子の約1.15倍・ほかの1段目は変わらない)
+  if(e && m.level===1 && m.role!=='fusion'){ const f=Math.max(e.w,e.d)/Math.max(0.01,e.h), amax=0.8*k*k; if(h*h*f>amax) h=Math.sqrt(amax/f); }
   return h; }
 function m3dDetach(s){ if(!s) return; if(s.m3d){ s.grp.remove(s.m3d.root); try{ s.m3d.mixer.stopAllAction(); s.m3d.mats.forEach(m=>m.dispose()); }catch(e){} s.m3d=null; }
   s.m3dWant=null; s.sp.visible=true; s.rim.visible=true; s.glow.visible=true; }
@@ -4012,6 +4030,8 @@ function handlePick(sc, tc){
     return;
   }
 
+  if(sel && selMode==='feed'){ for(const t of [sc,tc]){ const u=t&&unitAt(t[0],t[1]); if(u && feedTargets().includes(u)){ feedUnit(sel,u,BT.meatSel); return; } }
+    const t=sc||tc; const u=t&&unitAt(t[0],t[1]); if(u&&u.owner===0&&u.uid!==sel.uid){ selectUnit(u); return; } return; }   // 2026-10-30 肉をあげる相手をタップ
   if(sel && selMode==='combo'){ const a1=sc||tc, a2=tc||sc; if((a1&&comboTapTarget(a1[0],a1[1])) || (a2&&a2!==a1&&comboTapTarget(a2[0],a2[1]))) return;   // 戦術v3: 合体攻撃の相手をタップ
     const t=sc||tc; const u=t&&unitAt(t[0],t[1]); if(u&&u.owner===0&&u.uid!==sel.uid){ selectUnit(u); return; } return; }
   // 移動モード：地面セル優先（背の高い駒の手前マスもちゃんと押せる）
@@ -4116,6 +4136,7 @@ function drawSelHL(){
   addHL(sel.r,sel.c,0xffe089,0.5);
   if(aiCanEvo(sel) && !sel.moved && !evoZoneOK(sel,sel.r,sel.c)) for(const [r,c] of evoZoneCells(sel)){ if(!(r===sel.r&&c===sel.c) && !unitAt(r,c)) addHL(r,c,0xffd24a,0.32); }   // 進化のマス(1段目=中央の3列か相手の陣・2段目=相手の陣)
 
+  if(selMode==='feed'){ for(const u of feedTargets()) addHL(u.r,u.c,0x50f090,0.6); return; }   // 2026-10-30 肉をあげられる野生の子=緑
   if(selMode==='combo' && selCombo){ drawComboHL(); return; }   // 戦術v3: 合体攻撃のねらい
   if(V2ON()){ drawSelHLV2(); return; }
   const aoe = effMulti(sel) || isAreaTerrain(sel);
@@ -4159,14 +4180,23 @@ function drawSelHLV2(){
   if(mv.target==='ally_all'){ for(const a of alive(sel.owner)) if(cheby(a,sel)<=mv.range[1]) addHL(a.r,a.c,0xffe680,0.45); } }
 function clearSel(){ sel=null; selMode='none'; selMoves=null; selAtks=null; selMove=null; selCombo=null; setSelGhost(null); clearHL(); syncUnits(); updateUI(); }
 
+// ---- 店の肉(2026-10-30 オーナー承認): 野生との戦いで 野生の子1体に肉をあげる → 倒した時の仲間になる確率に足す(同じ子は足し算・上限は progress.js)。あげた子の番は終わる ----
+const MEAT={meat1:{n:'ふつうの肉', add:0.10}, meat2:{n:'上等な肉', add:0.20}, meat3:{n:'特上の肉', add:0.35}}; const MEAT_KEYS=Object.keys(MEAT);
+function useItemCb(k){ try{ if(BT.opts&&typeof BT.opts.useItem==='function') BT.opts.useItem(k); }catch(e){ console.error('useItem',e); } }
+function feedOn(){ return BT.kind==='wild' && !BT.anc && typeof (BT.opts&&BT.opts.recruit)==='function' && MEAT_KEYS.some(k=>(STORY.items[k]||0)>0); }
+function feedTargets(){ if(!state||!feedOn()) return []; const ok=BT.opts.recruitable; return alive(1).filter(u=>u.hp>0 && u.r>=0 && !u.summoned && (u.src||[]).length && (typeof ok!=='function' || ok(u.mid0||BT.enemyParty[u.src[0]].mid))); }
+function feedUnit(a, t, k){ if(!a||!t||!MEAT[k]||!((STORY.items[k]||0)>0)||a.acted) return false; const i=t.src[0];
+  STORY.items[k]--; useItemCb(k); undoStack=[]; BT.fed[i]=(BT.fed[i]||0)+MEAT[k].add; a.acted=true; a.moved=true;
+  floatText(t.r,t.c,`${IC(k)}+${Math.round(MEAT[k].add*100)}%`,'#7be0a0'); try{ SFX.play('heal'); }catch(e){}
+  if(!(STORY.items[k]>0)) BT.meatSel=MEAT_KEYS.find(x=>(STORY.items[x]||0)>0); clearSel(); return true; }
 // ---- 待った（1手戻す）----
 let undoStack=[];
-function snapshot(){ return JSON.stringify({units:state.units, board:state.board, energy:state.energy, flags:state.flags, items:state.items, castleHP:state.castleHP, killLv:state.killLv||0, uidSeq}); }
+function snapshot(){ return JSON.stringify({units:state.units, board:state.board, energy:state.energy, flags:state.flags, items:state.items, castleHP:state.castleHP, killLv:state.killLv||0, uidSeq, fed:Object.assign({},BT.fed||{})}); }
 function pushUndo(){ if(state.cur!==0||state.phase!=='battle')return; undoStack.push(snapshot()); if(undoStack.length>40)undoStack.shift(); }
 function doUndo(){
   if(!undoStack.length){ toast('待ったできる手がない'); return; }
   const s=JSON.parse(undoStack.pop());
-  state.units=s.units; state.board=s.board; state.energy=s.energy; state.flags=s.flags; state.items=s.items; state.castleHP=s.castleHP; state.killLv=s.killLv||0; uidSeq=s.uidSeq;
+  state.units=s.units; state.board=s.board; state.energy=s.energy; state.flags=s.flags; state.items=s.items; state.castleHP=s.castleHP; state.killLv=s.killLv||0; uidSeq=s.uidSeq; if(s.fed) BT.fed=s.fed;
   sel=null; selMode='none'; selMoves=null; selAtks=null; selMove=null; clearHL();
   buildStructures(); syncUnits(); updateUI();
   toast('待った（1手戻した）');
@@ -4249,7 +4279,12 @@ function updateUI(){ if(BT.headless) return;
       +(note?`<br><span style="color:#7be0a0;font-size:11px">${note}</span>`:'')+`</div>`;
     if(V2ON()) sd.innerHTML = `<img src="${IMG[sel.mid]}"><div><b style="color:#ffd86b">${sel.leader?LMK():''}${m.name}</b>${terrChip(sel)}${T3()?seriesBadges(sel.mid):''} <span class="muted">${typeBadges(m)}・${DAN[m.level]}・${rkStr(sel)}</span> ${gStr}<br>`
       +`<span class="muted">HP ${sel.hp}/${sel.maxhp}・攻撃 ${Math.round(m.atk*(sel.atkX||1))}・防御 ${Math.round((m.def||0)*rankX(sel.rank||1))}・素早さ ${Math.round(spdOf(sel))}・移動 ${effMove(sel)}</span>${statusChips(sel)}</div>`;
-    if(T3() && selMode==='combo' && selCombo){   // 戦術v3: 合体攻撃のねらい(相手をタップ)
+    if(selMode==='feed'){   // 2026-10-30 店の肉: 肉を選んで 野生の子をタップ
+      const row=document.createElement('div'); row.className='mvgrid';
+      for(const k of MEAT_KEYS){ const n=STORY.items[k]||0; if(n<=0) continue; const b=mkbt(`${IC(k)}${MEAT[k].n}×${n}`,'evo'+(BT.meatSel===k?' on':''),true,()=>{ BT.meatSel=k; updateUI(); }); row.appendChild(b); }
+      ac.appendChild(row);
+      ac.appendChild(mkbt(IC('cancel')+'もどる','',true,()=>{ selMode=canMove(sel)?'move':'attack'; recompute(); drawSelHL(); updateUI(); }));
+    } else if(T3() && selMode==='combo' && selCombo){   // 戦術v3: 合体攻撃のねらい(相手をタップ)
       const c=selCombo.c, team=comboTeam(sel,c)||[]; const row=document.createElement('div'); row.className='tinfo'; row.innerHTML=`<b>${icTag('combo')}${icTag(c._s.icon||'combo')}${escH(c.name)}</b>`+team.map(x=>`<img src="${IMG[x.mid]}" style="width:28px;height:28px;border-radius:6px;object-fit:cover;vertical-align:middle">`).join('')+`<span class="ex">${icTag('single')}${c.range}${c.area?'・'+icTag('area')+c.area:''}・闘気-${comboCost(c)}</span>`; ac.appendChild(row);
       ac.appendChild(mkbt(IC('cancel')+'解除','',true,()=>{ selCombo=null; selMode=canMove(sel)?'move':'attack'; recompute(); drawSelHL(); updateUI(); }));
     } else if(V2ON() && selMode==='attack'){
@@ -4329,8 +4364,10 @@ function updateUI(){ if(BT.headless) return;
   }
   // 下段：待った・降参・ターン終了
   if(!ONLINE && (STORY.items.ki||0)>0 && sel && sel.owner===0)
-    ac.appendChild(mkbt(`${IC('kicrystal')}闘気の水晶×${STORY.items.ki}（+50）`,'evo', state.cur===0 && !sel.acted && gaugeOf(sel)<GAUGE_MAX, ()=>{ pushUndo();
-      STORY.items.ki--; saveStory(); sel.g=Math.min(GAUGE_MAX,gaugeOf(sel)+50); floatText(sel.r,sel.c,'闘気+50','#ffd24a'); syncUnits(); updateUI(); }));
+    ac.appendChild(mkbt(`${IC('kicrystal')}闘気の水晶×${STORY.items.ki}（+50）`,'evo', state.cur===0 && !sel.acted && gaugeOf(sel)<GAUGE_MAX, ()=>{
+      STORY.items.ki--; useItemCb('ki'); undoStack=[]; saveStory(); sel.g=Math.min(GAUGE_MAX,gaugeOf(sel)+50); floatText(sel.r,sel.c,'闘気+50','#ffd24a'); syncUnits(); updateUI(); }));   // 2026-10-30 店で買える。使った道具は待ったで戻さない
+  if(!ONLINE && sel && sel.owner===0 && feedOn() && selMode!=='feed')
+    ac.appendChild(mkbt(`${IC(MEAT_KEYS.find(k=>(STORY.items[k]||0)>0))}肉をあげる`,'evo', state.cur===0 && !sel.acted && feedTargets().length>0, ()=>{ selMode='feed'; if(!(STORY.items[BT.meatSel]>0)) BT.meatSel=MEAT_KEYS.find(k=>(STORY.items[k]||0)>0); drawSelHL(); updateUI(); }));
   { const row=document.createElement('div'); row.className='mainrow';
     if(!ONLINE) row.appendChild(mkbt(IC('undo')+'待った','', state.cur===0 && !BT.auto && undoStack.length>0, doUndo));
     row.appendChild(mkbt('ターン終了','warn end', state.cur===0 && !BT.auto, endTurn));
@@ -4477,7 +4514,7 @@ function enterPlace(){   // world_v2: 編成と配置を1画面に(パーティ�
   preparePlaceList();
   buildTerrain(); buildStructures(); syncUnits(); fit();
   drawPlaceHL(); renderPlaceRow(); updateUI();
-  if(camOn()){ const p=camHomeOf(); CAMV.tx=CAMV.cx=p[0]; CAMV.tz=CAMV.cz=p[1]; CAMV.showZ=null; CAMV.lockUntil=0; }   // 配置: 自陣が見える所
+  if(camOn()){ CAMV.uz=CAMV.cZ=1; camBtnSync(); const p=camHomeOf(); CAMV.tx=CAMV.cx=p[0]; CAMV.tz=CAMV.cz=p[1]; CAMV.showZ=null; CAMV.lockUntil=0; }   // 配置: はじめは全体(2026-10-30)
 }
 let placePick=null;
 function placedUnit(i){ return Object.values(state.units).find(x=>x.owner===0&&x._pl===i)||null; }
@@ -5325,7 +5362,7 @@ function startBattle(opts){
     const pl=opts.player||{}, en=opts.enemy||{};
     BT.party=normParty(pl.party||pl); BT.enemyParty=normParty(en.party||en); applyStartStage(opts); ancientSetup(en);
     if(!BT.party.length||!BT.enemyParty.length) throw new Error('startBattle: player/enemy の party が空');
-    BT.items=Object.assign({heal:0}, pl.items||{}); STORY.items=BT.items; setOwned(pl, en);
+    BT.items=Object.assign({heal:0}, pl.items||{}); STORY.items=BT.items; setOwned(pl, en); BT.fed={};   // 2026-10-30 店の肉: BT.fed[enemyParty の idx]=足す確率
     BT.fusionOn=!!opts.fusionUnlocked; BT.tripleOn=!!opts.tripleUnlocked; BT.tune=Object.assign({}, TUNE, opts.tune||{});
     BT.diff=Object.assign({}, KD.ai, (kind==='wild'&&(BT.solo?BT.rules.ai:WILD_STAGE[BT.startStage]))||{}, en.ai||{}); BT.aiSkill=[ (pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1 ];
     BT.place=resolvePlace(opts.terrainTheme, opts.backdrop);
@@ -5444,7 +5481,8 @@ function catchResult(){
   const L=BT.enemyParty[0]; const lead=BT.enemyParty.find(e=>e.leader)||L; if(!lead) return null;
   // 2026-10-26 進行(progress.js): 呼ぶ側が recruit(lead) を渡した時は「倒して仲間(ランダム・その種類で初回のみ)」の判定を呼ぶ側に任せる。
   //   戻り値 null=何も出さない / {mid, base, isNew:true, lv} =仲間になった / {mid, base, isNew:false, miss:true} =仲間にならなかった(重ねはしない)
-  if(typeof BT.opts.recruit==='function'){ try{ const r=BT.opts.recruit({mid:lead.mid, base:baseFormId(lead.mid), lv:lead.lv, rank:lead.rank}); return r?Object.assign({mid:lead.mid, base:baseFormId(lead.mid), stack:0}, r):null; }catch(e){ console.error('recruit',e); return null; } }
+  if(typeof BT.opts.recruit==='function'){ try{ let cand=lead, fed=0; for(const i in (BT.fed||{})){ const e=BT.enemyParty.find(x=>x.idx===+i); if(e && BT.fed[i]>fed){ fed=BT.fed[i]; cand=e; } }   // 2026-10-30 肉をあげた子がいれば その子(いちばん多くあげた子)が仲間になる判定の相手
+    const lead2=cand; const r=BT.opts.recruit({mid:lead2.mid, base:baseFormId(lead2.mid), lv:lead2.lv, rank:lead2.rank, fed}); return r?Object.assign({mid:lead2.mid, base:baseFormId(lead2.mid), stack:0}, r):null; }catch(e){ console.error('recruit',e); return null; } }
   const pl=BT.opts.player||{}; const cap=+(pl.rankCap||10); const base=baseFormId(lead.mid);
   const box=Object.assign({}, pl.box||{}); for(const p of BT.party){ const b=baseFormId(p.mid); if(!box[b]) box[b]={rank:p.rank, stack:p.stack||0}; }
   const have=box[base];
@@ -5549,6 +5587,7 @@ const API={ init, startBattle, simulate, TACT, PVE_STAGE, PVE_EVO, get SERIES(){
     awaken(uid){ const u=state.units[uid]; if(!u) return false; u.g=GAUGE_MAX; u.acted=false; return doAwaken(u); }, fuse(a,b){ const A=state.units[a], B=state.units[b]; if(!A||!B) return null; A.evo=true; moveUnit(A,B.r,B.c,'pair'); const nu=unitAt(B.r,B.c); return nu?nu.mid:null; },
     fuse3(a,b,c){ const A=state.units[a], B=state.units[b], C=state.units[c]; if(!A||!B||!C) return null; const t3=tripleResult(A,B); if(!t3||t3.c.uid!==C.uid) return null; tryTriple(A,B,C,B.r,B.c); const nu=unitAt(B.r,B.c); return nu?nu.mid:null; },
     canFuse(a,b){ const A=state.units[a], B=state.units[b]; return A&&B?fusionResult(A,B):null; }, canFuse3(a,b){ const A=state.units[a], B=state.units[b]; const t=A&&B?tripleResult(A,B):null; return t?{id:t.id, c:t.c.uid}:null; }, tables(){ return {FUSE_RECIPE, FUSE3, INSECT:[...INSECT], TYPES, STRONG, WEAK}; },
+    sizeOf(mid,o){ const u=Object.assign({mid:+mid},o||{}); const e=ci3Ext(+mid); return {k:unitSizeK(u), h:m3dHeight(u), ext:e?{w:e.w,d:e.d,h:e.h}:null}; },   // 2026-10-30 確認用: 体の大きさ
     m3dLoaded(){ return Object.values(sprites).filter(s=>s.m3d).length; }, m3dLoadAll(){ return Promise.all(Object.values(state.units).map(u=>M3D.load(u.mid).catch(()=>null))); },
     terr(){ const f={}; for(const row of state.terrain) for(const t of row) f[t]=(f[t]||0)+1; return f; }, look(){ return BT.look; }, sel(uid){ const u=state.units[uid]; if(u) selectUnit(u); return !!u; }, detail(uid){ const u=state.units[uid]; if(u) showMonsterDetail(u.mid,u); return !!u; },
     leaders(){ return [0,1].map(o=>{ const L=leaderOf(o); return L?{uid:L.uid,mid:L.mid,r:L.r,c:L.c,hp:L.hp,maxhp:L.maxhp}:null; }); }, cells(){ return {NR, NC, EVO_CELLS, EVO_BASE, evoOn:BT.evoOn, START_ROWS, MAX_TURN}; }, zoneCells(uid){ const u=state.units[uid]; return u?evoZoneCells(u):[]; }, attack(a,b){ const A=state.units[a], B=state.units[b]; if(!A||!B) return false; A.acted=false; A.amp=null; doAttack(A,B); return true; }, setMid(uid,mid){ const u=state.units[uid]; if(!u||!MID[mid]) return false; u.mid=+mid; syncUnits(); return true; }, dmg(aMid,dMid,terr){ const t0=state.terrain[0][0]; state.terrain[0][0]=terr||'plain'; const v=calcDamage({mid:+aMid,r:0,c:0,atkX:1,owner:0},{mid:+dMid,owner:1},null); state.terrain[0][0]=t0; return v; }, dmgRaw(aMid,dMid,terr){ const s0=BT.dmgX; BT.dmgX=1000; const v=this.dmg(aMid,dMid,terr); BT.dmgX=s0; return v; }, get dmgX(){ return BT.dmgX; }, showTable:(k)=>showTable(k), openMenu:()=>openMenu(), closeMenu:()=>closeMenu(), menuClick:(k)=>menuClick(k), autoMode:()=>autoMode(), setAutoMode:(m)=>setAutoMode(m), get fxCount(){ return effects.length; }, get renderer(){ return renderer; }, get partCount(){ return PART.count; }, get partPeak(){ return PART.peak; }, FX2, bossIntro:()=>bossIntro(), fxTerrain:(r,c,k)=>fxTerrain(r,c,k), deathFx:(r,c,o,m)=>deathFx(r,c,o,m), hitStop:(ms)=>hitStop(ms), cutin:(k,o)=>cutin(k,o), get ci3(){ return CI3; } }

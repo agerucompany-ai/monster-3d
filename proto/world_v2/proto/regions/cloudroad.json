@@ -309,7 +309,11 @@
     "partner",
     1033
    ],
-   "next": "ep22Hut"
+   "next": "ep22Hut",
+   "tune": {
+    "hp": 8.588,
+    "atk": 2.802
+   }
   }
  ],
  "drones": [],
