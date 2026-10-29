@@ -2121,7 +2121,7 @@ void main(){ vec4 wp=modelMatrix*vec4(position,1.0); float w=sin(wp.x*2.3+uT*1.4
 }`;
 const LIQ_NOISE=`float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
 float noise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(hash(i),hash(i+vec2(1.0,0.0)),f.x),mix(hash(i+vec2(0.0,1.0)),hash(i+vec2(1.0,1.0)),f.x),f.y); }`;
-const WATER_FRAG=`uniform float uT; uniform vec3 uDeep; uniform vec3 uShallow; uniform vec3 uFoam; uniform float uGrid; uniform float uHalf; uniform float uAlpha; uniform float uScale; varying vec3 vW; varying vec2 vUv;
+const WATER_FRAG=`uniform float uT; uniform vec3 uDeep; uniform vec3 uShallow; uniform vec3 uFoam; uniform float uGrid; uniform float uHalf; uniform float uHalfZ; uniform float uAlpha; uniform float uScale; varying vec3 vW; varying vec2 vUv;
 #include <fog_pars_fragment>
 ${LIQ_NOISE}
 void main(){ vec2 p=vW.xz*uScale;
@@ -2129,11 +2129,11 @@ void main(){ vec2 p=vW.xz*uScale;
   float c=smoothstep(0.38,0.80,n1*0.6+n2*0.4); vec3 col=mix(uDeep,uShallow,c);
   float ca=smoothstep(0.62,0.96,noise(p*5.2+vec2(uT*0.28,-uT*0.22))*0.5+noise(p*7.3-vec2(uT*0.19,uT*0.1))*0.5);
   col+=uFoam*ca*0.45;
-  if(uGrid>0.5){ vec2 g=abs(fract(vW.xz+0.5)-0.5); float l=1.0-smoothstep(0.0,0.04,min(g.x,g.y)); float inside=step(abs(vW.x),uHalf)*step(abs(vW.z),uHalf); col=mix(col,col*0.5,l*0.75*inside); }
+  if(uGrid>0.5){ vec2 g=abs(fract(vW.xz+0.5)-0.5); float l=1.0-smoothstep(0.0,0.04,min(g.x,g.y)); float inside=step(abs(vW.x),uHalf)*step(abs(vW.z),uHalfZ); col=mix(col,col*0.5,l*0.75*inside); }
   gl_FragColor=vec4(col,uAlpha);
 #include <fog_fragment>
 }`;
-const LAVA_FRAG=`uniform float uT; uniform vec3 uDeep; uniform vec3 uShallow; uniform vec3 uFoam; uniform float uGrid; uniform float uHalf; uniform float uAlpha; uniform float uScale; varying vec3 vW; varying vec2 vUv;
+const LAVA_FRAG=`uniform float uT; uniform vec3 uDeep; uniform vec3 uShallow; uniform vec3 uFoam; uniform float uGrid; uniform float uHalf; uniform float uHalfZ; uniform float uAlpha; uniform float uScale; varying vec3 vW; varying vec2 vUv;
 #include <fog_pars_fragment>
 ${LIQ_NOISE}
 void main(){ vec2 p=vW.xz*uScale;
@@ -2142,12 +2142,12 @@ void main(){ vec2 p=vW.xz*uScale;
   float pulse=0.75+0.25*sin(uT*2.0+n1*6.0);
   vec3 col=mix(uDeep, mix(uShallow,uFoam,pulse*crack), crack);
   col+=uShallow*0.25*smoothstep(0.7,0.95,n2)*pulse;
-  if(uGrid>0.5){ vec2 g=abs(fract(vW.xz+0.5)-0.5); float l=1.0-smoothstep(0.0,0.04,min(g.x,g.y)); float inside=step(abs(vW.x),uHalf)*step(abs(vW.z),uHalf); col=mix(col,col*0.35,l*0.8*inside); }
+  if(uGrid>0.5){ vec2 g=abs(fract(vW.xz+0.5)-0.5); float l=1.0-smoothstep(0.0,0.04,min(g.x,g.y)); float inside=step(abs(vW.x),uHalf)*step(abs(vW.z),uHalfZ); col=mix(col,col*0.35,l*0.8*inside); }
   gl_FragColor=vec4(col,uAlpha);
 #include <fog_fragment>
 }`;
 function liquidMat(kind, o){ o=o||{};
-  const uni=THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{ uT:{value:0}, uAmp:{value:o.amp!=null?o.amp:0.02}, uDeep:{value:new THREE.Color(o.deep||(kind==='lava'?0x2a0c06:0x2b6a95))}, uShallow:{value:new THREE.Color(o.shallow||(kind==='lava'?0xff5a12:0x5fb6e6))}, uFoam:{value:new THREE.Color(o.foam||(kind==='lava'?0xffd060:0xe8f8ff))}, uGrid:{value:o.grid?1:0}, uHalf:{value:N/2}, uAlpha:{value:o.alpha!=null?o.alpha:(kind==='lava'?1:0.86)}, uScale:{value:o.scale||1} }]);
+  const uni=THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{ uT:{value:0}, uAmp:{value:o.amp!=null?o.amp:0.02}, uDeep:{value:new THREE.Color(o.deep||(kind==='lava'?0x2a0c06:0x2b6a95))}, uShallow:{value:new THREE.Color(o.shallow||(kind==='lava'?0xff5a12:0x5fb6e6))}, uFoam:{value:new THREE.Color(o.foam||(kind==='lava'?0xffd060:0xe8f8ff))}, uGrid:{value:o.grid?1:0}, uHalf:{value:NC/2}, uHalfZ:{value:NR/2}, uAlpha:{value:o.alpha!=null?o.alpha:(kind==='lava'?1:0.86)}, uScale:{value:o.scale||1} }]);
   const m=new THREE.ShaderMaterial({uniforms:uni, vertexShader:LIQ_VERT, fragmentShader:kind==='lava'?LAVA_FRAG:WATER_FRAG, transparent:kind!=='lava', fog:true, depthWrite:kind==='lava'});
   (kind==='lava'?lavaMats:waterMats).push(m); return m;
 }
