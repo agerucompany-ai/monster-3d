@@ -84,6 +84,13 @@ function monTypes(m){ return m.type2 ? [m.type, m.type2] : [m.type]; }
 function uTypes(u){ return monTypes(mon(u)); }
 function hasType(m, t){ return m.type===t || m.type2===t; }
 function uHasType(u, t){ return hasType(mon(u), t); }
+// --- 2026-10-30 オーナー「融合の技を2つのタイプの技に」: 技の type・type2(3体融合は type3)。相性は 相手によく効く方(弱点が1つでもあれば弱点・みな苦手の時だけ苦手)・地形はどれかで得なら得 ---
+function mvTypes(mv){ if(!mv||!mv.type) return []; const o=[mv.type]; if(mv.type2&&!o.includes(mv.type2)) o.push(mv.type2); if(mv.type3&&!o.includes(mv.type3)) o.push(mv.type3); return o; }
+function mvHas(mv, t){ return !!mv && (mv.type===t || mv.type2===t || mv.type3===t); }
+function bestTypeT(mv, dm, fb){ const ts=mvTypes(mv); if(ts.length<2) return (mv&&mv.type)||fb; let b=ts[0], bs=-9; for(const t of ts){ const s=typeBonusT(t,dm)+typePenaltyT(t,dm); if(s>bs){ bs=s; b=t; } } return b; }
+function mvBonusT(mv, dm, fb){ return typeBonusT(bestTypeT(mv,dm,fb), dm); }
+function mvPenaltyT(mv, dm, fb){ return typePenaltyT(bestTypeT(mv,dm,fb), dm); }
+function mvAils(mv){ const e=(mv&&mv.effect)||{}; const o=[]; for(const k of ['ail','ail2','ail3']) if(e[k] && !o.includes(e[k])) o.push(e[k]); return o; }
 
 // --- 状態異常 ---
 // 雷=マヒ / 氷=凍結 / 炎=やけど / 闇=毒 / 森=毒。攻撃ヒット時に確率で付与。
@@ -213,6 +220,7 @@ function dominates(B, A, u){ if(B===A || B.category!==A.category || B.target!==A
   if(B.power*H(B) < A.power*H(A) || (B.hit||100) < (A.hit||100)) return false;
   const lvl=u?mon(u).level:1;
   if(ea.ail && (eb.ail!==ea.ail || ailCh(B,lvl)<ailCh(A,lvl))) return false;
+  if(mvAils(A).some(x=>!mvAils(B).includes(x)) || mvTypes(A).some(x=>!mvTypes(B).includes(x)) || (ea.debuff2&&!eb.debuff2)) return false;   // 2つのタイプの技
   if((ea.drain||0)>(eb.drain||0) || (ea.pierce||0)>(eb.pierce||0) || (ea.knock||0)>(eb.knock||0)) return false;
   const la=u?usesLeft(u,A):usesMax(A), lb=u?usesLeft(u,B):usesMax(B);
   if(la===Infinity && lb!==Infinity) return false;   // ∞ の技は消さない
@@ -233,15 +241,16 @@ function isHidden(u){ return !!(u.buf && bufOn(u.buf.hide)); }
 function setBuf(u, key, e, foe){ const t=(e.turns||1); const o={x:e.x, add:e.add, until:(state.ht||0)+2*t+1}; if(foe){ (u.dbf||(u.dbf={}))[e.stat]=o; } else { (u.buf||(u.buf={}))[e.stat]=o; } }
 // ---- 射程: [min, max + 地形の+1]。凍結/マヒは max=1。地形の+1 は技のタイプ(水・氷=海 / 炎・森=森 / 闇=瘴気) ----
 function terrRangeUp(u, ty){ const f=TYPE_TERR[ty]&&TYPE_TERR[ty].fx.range; if(!f) return 0; for(const t of f) if(nearTerrain(u,t)) return 1; return 0; }   // 技のタイプの地形に隣接/上で射程+1
-function moveRange(u, mv){ let a=mv.range[0], b=mv.range[1]; if(isOffense(mv) && mv.target!=='map') b+=terrRangeUp(u, mv.type); if(isOffense(mv) && (u.freeze>0||u.para>0)) b=Math.min(b,1); return [a,b]; }
-// 地形の範囲(雷×海の通電・炎×森の延焼・闇×瘴気)は技のタイプで(攻撃の技だけ)
-function isAreaTerrainMv(u, mv){ if(!mv || mv.category!=='attack' || mv.target==='map') return false; const t=mv.type;
-  return (t==='雷'&&nearTerrain(u,'sea')) || (t==='炎'&&nearTerrain(u,'forest')) || (t==='闇'&&nearTerrain(u,'gloom')); }
-function terrAreaSet(u, mv){ const t=mv.type; return connectedTerr(u, t==='雷'?'sea':t==='炎'?'forest':'gloom'); }
+function terrRangeUpMv(u, mv){ for(const t of mvTypes(mv)) if(terrRangeUp(u,t)) return 1; return 0; }   // 2つのタイプの技は どれかで+1
+function moveRange(u, mv){ let a=mv.range[0], b=mv.range[1]; if(isOffense(mv) && mv.target!=='map') b+=terrRangeUpMv(u, mv); if(isOffense(mv) && (u.freeze>0||u.para>0)) b=Math.min(b,1); return [a,b]; }
+// 地形の範囲(雷×海の通電・炎×森の延焼・闇×瘴気)は技のタイプで(攻撃の技だけ・2つのタイプの技は どれかで)
+function areaTerrOf(u, mv){ for(const t of mvTypes(mv)){ if(t==='雷'&&nearTerrain(u,'sea')) return 'sea'; if(t==='炎'&&nearTerrain(u,'forest')) return 'forest'; if(t==='闇'&&nearTerrain(u,'gloom')) return 'gloom'; } return null; }
+function isAreaTerrainMv(u, mv){ if(!mv || mv.category!=='attack' || mv.target==='map') return false; return !!areaTerrOf(u, mv); }
+function terrAreaSet(u, mv){ return connectedTerr(u, areaTerrOf(u, mv)||'gloom'); }
 function attackTargetsV2(u, mv){
   if(!mv){ const all=new Set(); for(const m2 of movesV2(u)) if(isOffense(m2) && m2.target!=='map') for(const e of attackTargetsV2(u,m2)) all.add(e); return [...all]; }
   if(!isOffense(mv) || mv.target==='map' || !moveUsable(u,mv)) return [];
-  const [a,b]=moveRange(u,mv), res=[]; const thunderSea=(mv.type==='雷' && mv.category==='attack' && nearTerrain(u,'sea')); const sea=thunderSea?connectedSea(u):null;
+  const [a,b]=moveRange(u,mv), res=[]; const thunderSea=(mvHas(mv,'雷') && mv.category==='attack' && nearTerrain(u,'sea')); const sea=thunderSea?connectedSea(u):null;
   for(const e of alive(1-u.owner)){ if(e.dug>0) continue; if(mv.target==='single' && isHidden(e)) continue;
     const d=cheby(e,u); let ok=d>=a && d<=b; if(!ok && thunderSea && sea.has(e.r+','+e.c)) ok=true; if(ok) res.push(e); }
   return res; }
@@ -273,9 +282,10 @@ function critChance(att, def, mv){ if(!mv) return 0; return Math.max(0, ((mv.cri
 function calcDamageV2(att, def, mv, o){
   const ma=mon(att), md=mon(def); mv=mv||{p:1}; const legacy=(mv.power==null);
   const power = legacy ? (mv.p||1)*100 : mv.power;
-  const tb = legacy ? typeBonusM(ma,md) : typeBonusT(mv.type||ma.type, md);
-  const pen = legacy ? typePenaltyM(ma,md) : typePenaltyT(mv.type||ma.type, md);
-  const trb = terrBonusM(ma, state.terrain[att.r][att.c]);
+  const tyD = legacy ? null : bestTypeT(mv, md, ma.type);   // 2つのタイプの技は 相手によく効く方
+  const tb = legacy ? typeBonusM(ma,md) : typeBonusT(tyD, md);
+  const pen = legacy ? typePenaltyM(ma,md) : typePenaltyT(tyD, md);
+  const trb = legacy ? terrBonusM(ma, state.terrain[att.r][att.c]) : terrBonusMv(ma, state.terrain[att.r][att.c], mv);
   const chg = (!legacy && att.buf && bufOn(att.buf.charge)) ? 1+(att.buf.charge.x||0.5) : 1;
   const A = ma.atk*(att.atkX||1)*Math.max(0.2,1+statMod(att,'atk'))*chg*balX(ma,'atk');   // 戦術v3: balX=タイプごとのつまみ(TACT.bal)
   const sxA=rankX(att.rank||1), sxD=rankX(def.rank||1);
@@ -778,6 +788,8 @@ function typeBonusM(am,dm){ const ds=monTypes(dm);
   for(const a of monTypes(am)){ let net=0; for(const d of ds){ if((STRONG[a]||[]).includes(d)) net++; else if(typeResExt(a,d)) net--; } if(net>0) return 0.2; } return 0; }
 function typePenaltyM(am,dm){ for(const a of monTypes(am)) for(const d of monTypes(dm)) if((WEAK[a]||[]).includes(d)) return -0.2; return 0; }
 function terrBonusM(am,terr){ if(INSECT.has(am.id)&&terr==='forest') return TERR_X; for(const a of monTypes(am)) if((TERR_BONUS[terr]||[]).includes(a)) return TERR_X; for(const a of monTypes(am)) if((TERR_WEAK[terr]||[]).includes(a)) return -TERR_X; return 0; }
+// 2つ(3つ)のタイプの技: 子のタイプか技のタイプの どれかが得意な地形なら得(苦手は子のタイプのまま)
+function terrBonusMv(am, terr, mv){ const t0=terrBonusM(am,terr); if(t0>0 || !mv || !(mv.type2||mv.type3)) return t0; for(const a of mvTypes(mv)) if((TERR_BONUS[terr]||[]).includes(a)) return TERR_X; return t0; }
 // タイプ別の防御（被ダメ軽減率の基礎値）。地/竜=高い、風/光=低い、他=中
 const TYPE_DEF = {地:0.25, 竜:0.24, 水:0.21, 森:0.19, 氷:0.18, 闇:0.13, 炎:0.19, 雷:0.15, 光:0.13, 風:0.1};   // 差を縮めた(旧 地0.34〜風0.04)
 function defReductionM(m){ return Math.min(0.62, (TYPE_DEF[m.type]!=null?TYPE_DEF[m.type]:0.15) + 0.09*(m.level-1)); }  // Lvで+9%/段
@@ -856,10 +868,11 @@ function doAttack(att, def, move){
 }
 // ===== 技 v2: 攻撃・状態異常・弱体の技(1体/範囲)。当たる/よけた・会心・2回・吸収・つらぬき・状態異常 =====
 function inflictStatusV2(att, t, mv){
-  const e=mv.effect||{}; const ail=e.ail; if(!ail || !state.units[t.uid] || t.hp<=0) return;
-  if(ail==='para' && uHasType(t,'地')) return; if(ail==='freeze' && (mapType==='volcano'||uHasType(t,'炎'))) return; if(ail==='poison' && uHasType(t,'闇')) return; if(ail==='burn' && uHasType(t,'水')) return;
+  const e=mv.effect||{}; const ails=mvAils(mv); if(!ails.length || !state.units[t.uid] || t.hp<=0) return;
   const ch = e.chance==='stage' ? procChance(mon(att).level) : (+e.chance||0);
-  if(Math.random()<ch){ t[ail]=Math.max(t[ail]||0, AIL_TURNS[ail]); floatText(t.r,t.c,AIL_ICON[ail]+AIL_LABEL[ail],'#e0b0ff'); statusFx(t.r,t.c,ail); } }
+  for(const ail of ails){   // 2つのタイプの技は それぞれのタイプの状態異常を1つずつ(別々に)
+    if(ail==='para' && uHasType(t,'地')) continue; if(ail==='freeze' && (mapType==='volcano'||uHasType(t,'炎'))) continue; if(ail==='poison' && uHasType(t,'闇')) continue; if(ail==='burn' && uHasType(t,'水')) continue;
+    if(Math.random()<ch){ t[ail]=Math.max(t[ail]||0, AIL_TURNS[ail]); floatText(t.r,t.c,AIL_ICON[ail]+AIL_LABEL[ail],'#e0b0ff'); statusFx(t.r,t.c,ail); } } }
 function knockBack(att, t, n){ if(!n || !state.units[t.uid] || t.hp<=0 || t.anc) return; const dr=Math.sign(t.r-att.r), dc=Math.sign(t.c-att.c); const r=t.r+dr, c=t.c+dc;
   if(r<0||c<0||r>=NR||c>=NC||unitAt(r,c)) return; state.board[t.r][t.c]=null; t.r=r; t.c=c; state.board[r][c]=t.uid; floatText(r,c,'おしだし','#cfe0ff'); }
 function hitOne(att, t, mv, area, sure){   // 1体に当てる。戻り値 {dmg, miss, crit, kill}
@@ -869,12 +882,12 @@ function hitOne(att, t, mv, area, sure){   // 1体に当てる。戻り値 {dmg,
   if(mv.power>0){ const H=(mv.effect&&mv.effect.hits)||1; for(let h=0;h<H;h++){ const c=isFoe && Math.random()<critChance(att,t,mv); if(c) crit=true; dmg+=calcDamage(att,t,mv,{crit:c}); }
     if(!isFoe) dmg=Math.max(1,Math.round(dmg*(mv.ff||V2.FF))); }
   if(crit && state.stats){ const s=state.stats.crit||(state.stats.crit=[0,0]); s[att.owner]++; }
-  const adv=isFoe && typeBonusT(mv.type,mon(t))>0, res=isFoe && typePenaltyT(mv.type,mon(t))<0;
+  const adv=isFoe && mvBonusT(mv,mon(t))>0, res=isFoe && mvPenaltyT(mv,mon(t))<0;
   if(dmg>0){ t.hp-=dmg; floatText(t.r,t.c,`-${dmg}`, adv?'#ffd24a':(res?'#aab4c0':(t.owner===0?'#ff7a5a':'#ffb0a0')), adv?'num weak':(res?'num res':'num')); if(crit) floatText(t.r,t.c,'会心!','#fff07a','tag'); }
   let kill=false;
   if(t.hp<=0){ const wasLeader=!!t.leader; if(killUnit(t)){ kill=true; if(t.owner===1) state.killLv=(state.killLv||0)+mon(t).level; toast(`${wasLeader?'リーダーの ':''}${mon(t).name} を撃破！`); } }
   else { if(dmg>0) addGauge(t,(t.hp<=t.maxhp/2)?GAUGE_TAKEN_LOW:GAUGE_TAKEN);
-    if(isFoe){ inflictStatusV2(att,t,mv); const ef=mv.effect||{}; if(ef.debuff){ setBuf(t,'dbf',ef.debuff,true); floatText(t.r,t.c,'弱体','#c8b0ff','tag'); } if(ef.knock) knockBack(att,t,ef.knock); } }
+    if(isFoe){ inflictStatusV2(att,t,mv); const ef=mv.effect||{}; if(ef.debuff){ setBuf(t,'dbf',ef.debuff,true); if(ef.debuff2) setBuf(t,'dbf',ef.debuff2,true); floatText(t.r,t.c,'弱体','#c8b0ff','tag'); } if(ef.knock) knockBack(att,t,ef.knock); } }
   return {dmg, crit, kill, adv, res, isFoe}; }
 function doAttackV2(att, def, mv){
   if(!mv) mv=defaultMoveV2(att);
@@ -888,14 +901,14 @@ function doAttackV2(att, def, mv){
   if(!targets.length) return;
   att.acted=true; spendMove(att,mv); if(state.stats&&state.stats.atk) state.stats.atk[att.owner]++;
   attackFx(att, targets, def, mv);
-  const advTerr=terrBonusM(m, state.terrain[att.r][att.c])>0;
+  const advTerr=terrBonusMv(m, state.terrain[att.r][att.c], mv)>0;
   let dealt=0, hitN=0, first=null;
   for(const t of targets){ if(!state.units[t.uid] || t.uid===att.uid || t.dug>0) continue;
     const r=hitOne(att, t, mv, mv.target==='area'||terr, false);
     if(r.miss) continue; if(r.isFoe){ dealt+=r.dmg; hitN++; if(!first) first={t, r}; } }
   if(att.buf && att.buf.charge && mv.power>0) delete att.buf.charge;   // ためた攻撃は1回で消える
   if(hitN) addGauge(att, (first&&first.r.adv)?GAUGE_HIT_WEAK:GAUGE_HIT);
-  if(mv.type==='炎') cureBurnByFire(att, targets);
+  if(mvHas(mv,'炎')) cureBurnByFire(att, targets);
   const dr=(mv.effect&&mv.effect.drain)||0;
   if(dealt>0 && dr>0 && !att.anc && state.units[att.uid] && att.hp>0){ const heal=Math.min(att.maxhp-att.hp, Math.round(dealt*dr*sustainX())); if(heal>0){ att.hp+=heal; floatText(att.r,att.c,`+${heal}`,'#7ee08a'); } }
   awayArm(att);   // 戦術v3: 風は攻撃のあと下がれる
@@ -913,7 +926,7 @@ function doMapAttack(att, mv, aim){
   if(!BT.headless){ camPunch(att.r,att.c,0.7,600); for(const [r,c] of cells) if(Math.random()<0.3) fxTerrain(r,c,1.4); }
   let n=0, dealt=0; for(const t of targets){ if(!state.units[t.uid]) continue; const r=hitOne(att,t,mv,false,true); if(r.isFoe){ n++; dealt+=r.dmg; } }
   if(n) addGauge(att, GAUGE_HIT);
-  if(mv.type==='炎') cureBurnByFire(att, targets);
+  if(mvHas(mv,'炎')) cureBurnByFire(att, targets);
   const dr=(mv.effect&&mv.effect.drain)||0; if(dealt>0 && dr>0 && !att.anc && state.units[att.uid]){ const heal=Math.min(att.maxhp-att.hp, Math.round(dealt*dr*sustainX())); if(heal>0){ att.hp+=heal; floatText(att.r,att.c,`+${heal}`,'#7ee08a'); } }
   awayArm(att);
   toast(`${IC('map')}${mon(att).name}の「${mvName(mv)}」！ 敵${n}体${targets.length>n?`・味方${targets.length-n}体`:''}`);
@@ -1465,12 +1478,12 @@ function aiPickTarget(u,list){ if(list.length>1 && Math.random()>aiSkillOf(u)) r
 function aiSkillOf(u){ const k=BT.aiSkill&&BT.aiSkill[u.owner]; return k==null?1:k; }
 // ===== 技 v2 の AI: 期待ダメージ(威力×命中×(1+会心/2)×当たる数)で技と相手を選ぶ =====
 function expDmg(u, e, mv, area){ const d=calcDamage(u,e,mv)*((mv.effect&&mv.effect.hits)||1); return {raw:d, ev:d*hitChance(u,e,mv,area)*(1+critChance(u,e,mv)*(V2.CRIT.x-1))}; }
-function ailValue(u, e, mv){ const a=mv.effect&&mv.effect.ail; if(!a || e[a]>0) return 0; if(a==='para'&&uHasType(e,'地')||a==='freeze'&&uHasType(e,'炎')||a==='poison'&&uHasType(e,'闇')||a==='burn'&&uHasType(e,'水')) return 0;
-  const ch=mv.effect.chance==='stage'?procChance(mon(u).level):(+mv.effect.chance||0); return ch*(a==='freeze'||a==='para'?30:22); }
+function ailValue(u, e, mv){ let s=0; for(const a of mvAils(mv)){ if(e[a]>0) continue; if(a==='para'&&uHasType(e,'地')||a==='freeze'&&uHasType(e,'炎')||a==='poison'&&uHasType(e,'闇')||a==='burn'&&uHasType(e,'水')) continue;   // 2つのタイプの技は 状態異常ごとに足す
+  const ch=mv.effect.chance==='stage'?procChance(mon(u).level):(+mv.effect.chance||0); s+=ch*(a==='freeze'||a==='para'?30:22); } return s; }
 function costPen(u, mv){ if(!(mv.mp>0)) return 0; const left=usesLeft(u,mv); return 4+14/Math.max(1,left); }   // 回数のある技は少しだけ惜しむ(倒せる時は ∞ の技で)
 function aiScoreTarget(u, e, mv, area){ const x=expDmg(u,e,mv,area); const hp=Math.max(1,e.hp); let s=Math.min(x.ev,hp)*0.5+(1-e.hp/e.maxhp)*80*(x.raw>0?1:0);
-  if(e.leader) s+=900; if(x.raw>=hp) s+=500*hitChance(u,e,mv,area); if(typeBonusT(mv.type,mon(e))>0) s+=40; s+=ailValue(u,e,mv);
-  if(mv.effect&&mv.effect.debuff && !(e.dbf&&bufOn(e.dbf[mv.effect.debuff.stat]))) s+=18; return s; }
+  if(e.leader) s+=900; if(x.raw>=hp) s+=500*hitChance(u,e,mv,area); if(mvBonusT(mv,mon(e))>0) s+=40; s+=ailValue(u,e,mv);
+  if(mv.effect&&mv.effect.debuff && !(e.dbf&&bufOn(e.dbf[mv.effect.debuff.stat]))) s+=18; if(mv.effect&&mv.effect.debuff2 && !(e.dbf&&bufOn(e.dbf[mv.effect.debuff2.stat]))) s+=18; return s; }
 function aiMapScore(u, mv, aim){ let s=0, foes=0; for(const t of mapUnits(u,mv,aim)){ const d=calcDamage(u,t,mv); if(t.owner!==u.owner){ foes++; s+=Math.min(d,t.hp)*0.5+(d>=t.hp?500:0)+(t.leader?300:0); } else { const df=d*(mv.ff||V2.FF); s-=df*0.8+(df>=t.hp?900:0)+(t.leader?400:0); } }
   return foes?s:-1e9; }
 function aiMapBest(u, mv){ let b=null; for(const aim of mapAims(u,mv)){ const s=aiMapScore(u,mv,aim); if(!b||s>b.sc) b={sc:s,aim}; } return b; }
@@ -1772,7 +1785,7 @@ function addTag(r,c,text,kind,h,sx){ const m=new THREE.SpriteMaterial({map:tagTe
 function affinityOf(a,d){ const ma=mon(a), md=mon(d); return typeBonusM(ma,md)>0?'weak':(typePenaltyM(ma,md)<0?'res':''); }
 // 技 v2(2026-10-27 オーナー「相性と地形を重視」): 当てる前に、相手の頭の上に 弱点/いまひとつ/地形+ のアイコンと だいたいのダメージ
 function previewTag(u, e, mv){ const ally=e.owner===u.owner; let d=0; if(mv.power>0){ d=calcDamage(u,e,mv)*((mv.effect&&mv.effect.hits)||1); if(ally) d*=(mv.ff||V2.FF); }
-  const adv=!ally && typeBonusT(mv.type,mon(e))>0, res=!ally && typePenaltyT(mv.type,mon(e))<0, tup=terrBonusM(mon(u),state.terrain[u.r][u.c])>0, tdn=terrBonusM(mon(u),state.terrain[u.r][u.c])<0;
+  const adv=!ally && mvBonusT(mv,mon(e))>0, res=!ally && mvPenaltyT(mv,mon(e))<0, tup=terrBonusMv(mon(u),state.terrain[u.r][u.c],mv)>0, tdn=terrBonusMv(mon(u),state.terrain[u.r][u.c],mv)<0;
   const et=state.terrain[e.r][e.c]; const gd=!ally && terrFx(mon(e),et,'guard'), ev=!ally && mv.target!=='map' && (terrFx(mon(e),et,'evade') || coverOn(u,e,mv));   // 戦術v3: かげ(森・遺跡・2マス以上)
   let t=(adv?IC('weak')+'弱点':res?IC('resist')+'いまひとつ':'')+(tup?IC('terrain'):'')+(tdn?'地形−':'')+(gd?'守り':'')+(ev?'かげ':'')+((!ally&&chargeX(u,mv)>0)?IC('move')+'+'+Math.round(chargeX(u,mv)*100)+'%':''); if(d>0) t+=(t?' ':'')+'-'+Math.round(d);   /* 戦術v3: 突進 */ if(!t) return null;
   return {text:t, kind:adv?'weak':(res||ally||tdn)?'res':'', kill:!ally && d>=e.hp}; }
@@ -2905,12 +2918,12 @@ function magicCircleTex(){ if(_mcTex) return _mcTex; const S=256, cv=document.cr
   for(let i=0;i<24;i++){ const a=i*Math.PI/12; g.save(); g.rotate(a); g.fillRect(-1.5,-120,3,i%2?6:10); g.restore(); }   // 外の目盛り(文字の代わり)
   for(let i=0;i<8;i++){ const a=i*Math.PI/4+Math.PI/8; g.beginPath(); g.arc(Math.cos(a)*90,Math.sin(a)*90,5,0,Math.PI*2); g.fill(); }
   _mcTex=new THREE.CanvasTexture(cv); return _mcTex; }
-function fxMagicCircle(r,c,color,dur){ const w=cell2world(r,c), h=cellH(r,c)+0.05;
+function fxMagicCircle(r,c,color,dur,o){ const w=cell2world(r,c), h=cellH(r,c)+0.05; const SC=(o&&o.s)||1, SPN=(o&&o.spin)||1;   // o={s:大きさ, spin:回る向きと速さ}(2つのタイプの技の2つめの魔法陣)
   const mat=new THREE.MeshBasicMaterial({map:magicCircleTex(),color,transparent:true,opacity:0,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false}); mat.toneMapped=false;
   const m=new THREE.Mesh(new THREE.PlaneGeometry(2.8,2.8),mat); m.rotation.x=-Math.PI/2; m.position.set(w.x,h,w.z); fxGroup.add(m);
   const m2=m.clone(); m2.material=mat.clone(); m2.material.color=new THREE.Color(0xffffff); m2.scale.setScalar(0.62); m2.position.y=h+0.01; fxGroup.add(m2);
   effects.push({t0:performance.now(),dur,update:t=>{ const a=t<0.25?t/0.25:(t>0.7?Math.max(0,(1-t)/0.3):1); const s=0.35+0.65*Math.min(1,t/0.3);
-    m.scale.set(s,s,s); m.rotation.z=t*2.2; mat.opacity=0.95*a; m2.scale.setScalar(s*0.62); m2.rotation.z=-t*3.4; m2.material.opacity=0.7*a; },
+    m.scale.set(s*SC,s*SC,s*SC); m.rotation.z=t*2.2*SPN; mat.opacity=0.95*a; m2.scale.setScalar(s*0.62*SC); m2.rotation.z=-t*3.4*SPN; m2.material.opacity=0.7*a*(SC>1?0.4:1); },
     cleanup:()=>{ fxGroup.remove(m); fxGroup.remove(m2); mat.dispose(); m2.material.dispose(); }});
 }
 function fxBurst(r,c,color,n,o){ o=o||{}; const w=WP(r,c,o.y!=null?o.y:0.45);
@@ -3094,7 +3107,9 @@ function g3(k){ if(G3[k]) return G3[k]; let g;
     case 'disc': g=new THREE.CircleGeometry(0.5,28); g.rotateX(-Math.PI/2); break;
   }
   return G3[k]=g; }
-function m3(color,o){ o=o||{}; let m;
+let _tfxTint=null;   // 2026-10-30 2つのタイプの技: {r,g,b(0〜1), hex, k(寄せる強さ), p(寄せる割合)}
+function tintHex(h, T){ const r=((h>>16)&255)/255, g=((h>>8)&255)/255, b=(h&255)/255; const f=(x,y)=>Math.round(Math.max(0,Math.min(1,x+(y-x)*T.k))*255); return (f(r,T.r)<<16)|(f(g,T.g)<<8)|f(b,T.b); }
+function m3(color,o){ o=o||{}; let m; if(_tfxTint && color!=null && Math.random()<_tfxTint.p) color=tintHex(color,_tfxTint);   // 2つのタイプの技: 3Dの形の一部も もう1つのタイプの色に
   if(o.lit){ m=new THREE.MeshLambertMaterial({color, emissive:o.emis!=null?o.emis:0x000000, transparent:true, opacity:o.op!=null?o.op:1}); }
   else { m=new THREE.MeshBasicMaterial({color, transparent:true, opacity:o.op!=null?o.op:1, blending:o.normal?THREE.NormalBlending:THREE.AdditiveBlending, depthWrite:false, side:o.side||THREE.FrontSide}); }
   if(o.map) m.map=o.map; m.toneMapped=false; if(o.top) m.depthTest=false; return m; }
@@ -3334,12 +3349,13 @@ function tp(o, shot){ if(!TP.ok&&!tpInit()) return false; if(TP.nfree<=0) return
   const k=o.k||0; TP.kd[i]=k+Math.random()*0.9; TP.lay[i]=o.L!=null?o.L:(TFX_ADD[k]?0:1); TP.flo[i]=o.flo!=null?o.flo:-99;
   TP.orb[i]=o.orb||0; if(o.orb){ TP.ocx[i]=o.ocx; TP.ocz[i]=o.ocz; TP.ocvx[i]=o.ocvx||0; TP.ocvz[i]=o.ocvz||0; TP.orad[i]=o.orad||0.3; TP.ovr[i]=o.ovr||0; TP.ang[i]=o.ang!=null?o.ang:Math.random()*6.28; TP.px[i]=o.ocx+Math.cos(TP.ang[i])*TP.orad[i]; TP.pz[i]=o.ocz+Math.sin(TP.ang[i])*TP.orad[i]; }
   const c=o.c, b=i*9; if(Array.isArray(c)){ _rgb(c[0],TP.c,b); _rgb(c[1]!=null?c[1]:c[0],TP.c,b+3); _rgb(c[2]!=null?c[2]:(c[1]!=null?c[1]:c[0]),TP.c,b+6); } else { _rgb(c!=null?c:0xffffff,TP.c,b); TP.c[b+3]=TP.c[b]; TP.c[b+4]=TP.c[b+1]; TP.c[b+5]=TP.c[b+2]; TP.c[b+6]=TP.c[b]; TP.c[b+7]=TP.c[b+1]; TP.c[b+8]=TP.c[b+2]; }
+  if(_tfxTint && Math.random()<_tfxTint.p){ const T=_tfxTint; for(let q=0;q<9;q+=3){ TP.c[b+q]+=(T.r-TP.c[b+q])*T.k; TP.c[b+q+1]+=(T.g-TP.c[b+q+1])*T.k; TP.c[b+q+2]+=(T.b-TP.c[b+q+2])*T.k; } }   // 2つのタイプの技: 粒の一部をもう1つのタイプの色に
   return true; }
 // 時間の流れ(実ms・オート×2で速い・ヒットストップで止まる)の中の 出す係(emitter)
 const TFX={em:[], clock:0, last:0, q:1, fpsE:60, slowT:0, shot:null, get shotCap(){ return (IS_MOBILE?700:1200); }, get on(){ return !window._TFX_OFF; }};
 // e={delay, dur, rate(1秒あたり), fn(e,k) 1つ出す, tick(e,k) 毎フレーム}
 let _tfxLite=false;
-function tfxEm(e){ if(BT.headless) return; e.lite=_tfxLite; e.t0=TFX.clock+(e.delay||0); e.acc=0; TFX.em.push(e); return e; }
+function tfxEm(e){ if(BT.headless) return; e.lite=_tfxLite; e.tint=_tfxTint; e.t0=TFX.clock+(e.delay||0); e.acc=0; TFX.em.push(e); return e; }
 function tfxAt(ms, fn){ tfxEm({delay:ms, dur:0, once:fn}); }
 function tfxN(n){ const v=n*TFX.q; const f=Math.floor(v); return f+(Math.random()<v-f?1:0); }   // 数×品質(端数は確率で)
 function tfxUpdate(){ if(BT.headless||!TP.ok&&!TFX.em.length) return; const now=performance.now(); let dtr=TFX.last?Math.min(50,now-TFX.last):16; TFX.last=now;
@@ -3348,9 +3364,10 @@ function tfxUpdate(){ if(BT.headless||!TP.ok&&!TFX.em.length) return; const now=
   if(TP.n>0||TFX.em.length){ if(TFX.fpsE<46){ TFX.q=Math.max(0.25,TFX.q-dtr*0.0009); } else if(TFX.fpsE>55){ TFX.q=Math.min(1,TFX.q+dtr*0.00012); } }
   if(window._tfxQ) TFX.q=window._tfxQ;
   const dt=dtr*SPD(); TFX.clock+=dt; const ds=dt/1000;
-  for(let j=TFX.em.length-1;j>=0;j--){ const e=TFX.em[j]; if(TFX.clock<e.t0) continue; if(e.once){ TFX.em.splice(j,1); const pl=_tfxLite; _tfxLite=!!e.lite; try{ e.once(); }catch(err){ console.error(err); } finally{ _tfxLite=pl; } continue; }
-    const k=Math.min(1,(TFX.clock-e.t0)/Math.max(1,e.dur)); if(e.tick) e.tick(e,k);
-    if(e.rate&&e.fn){ e.acc+=e.rate*ds*TFX.q; let n=Math.floor(e.acc); e.acc-=n; n=Math.min(n,40); for(let i=0;i<n;i++) e.fn(e,k,i/n); }
+  for(let j=TFX.em.length-1;j>=0;j--){ const e=TFX.em[j]; if(TFX.clock<e.t0) continue; if(e.once){ TFX.em.splice(j,1); const pl=_tfxLite, pt=_tfxTint; _tfxLite=!!e.lite; _tfxTint=e.tint||null; try{ e.once(); }catch(err){ console.error(err); } finally{ _tfxLite=pl; _tfxTint=pt; } continue; }
+    const k=Math.min(1,(TFX.clock-e.t0)/Math.max(1,e.dur)); const pt=_tfxTint; _tfxTint=e.tint||null;
+    try{ if(e.tick) e.tick(e,k);
+    if(e.rate&&e.fn){ e.acc+=e.rate*ds*TFX.q; let n=Math.floor(e.acc); e.acc-=n; n=Math.min(n,40); for(let i=0;i<n;i++) e.fn(e,k,i/n); } } finally{ _tfxTint=pt; }
     if(k>=1){ TFX.em.splice(j,1); if(e.end) try{ e.end(); }catch(err){ console.error(err); } } }
   if(!TP.ok) return; for(const L of TP.L) if(L.pts.parent!==fxGroup) fxGroup.add(L.pts);
   const cnt=[0,0]; const LA=TP.L; const P0=LA[0].P.array, C0=LA[0].C.array, M0=LA[0].M.array, V0=LA[0].V.array, P1=LA[1].P.array, C1=LA[1].C.array, M1=LA[1].M.array, V1=LA[1].V.array;
@@ -3571,6 +3588,54 @@ const TFX_T={
       this.hit(P,a*(u?0.85:0.5),S,{small:!u}); return 60; },
     wave(A,far,a,S){ tfxWave(A,far,a,S,{k:TFXK.flame,c:[0xfff4d0,0xff9a20,0x9a30ff],s:0.4,up:0.7}); } },
 };
+// ==== 2つ(3つ)のタイプの技(2026-10-30 オーナー「融合の技を2つのタイプの技に」) ====
+//  ty が '炎+闇' のような時(attackFx が技の type・type2・type3 から作る): 1つめ(主)の演出を量0.72で、2つめ以降(副)を量0.58(3つの時0.5)で 少し横にずらして重ねる。
+//  主の粒と3Dの形の4割を 2つめのタイプの色に寄せる(_tfxTint: 炎＋闇=黒紫の炎・雷＋闇=紫の稲妻 など)。副は2割だけ主の色に。
+//  当たりには タイプの数だけの色のらせん・輪(どの組み合わせでも両方の色と形が見える)＋組み合わせの見せ場(TFX_MIX: 炎＋水/氷=湯気の爆発 など)。
+//  粒は 1発の上限(S)を 主・副・見せ場で分けて使う(重さの上限・自動で減らす仕組みは今のまま)
+const TINT={炎:0xff6418, 水:0x2a90ff, 森:0x4cc028, 雷:0xffd800, 風:0x3ee0a0, 地:0xa87a40, 氷:0xa8f0ff, 光:0xfff0a0, 闇:0x4a1088, 竜:0xb848ff};
+const TINT_K={闇:0.62, 雷:0.55};   // 寄せる強さ(既定0.5)
+function tintOf(t, k, p){ const h=TINT[t]; if(h==null) return null; return {hex:h, r:((h>>16)&255)/255, g:((h>>8)&255)/255, b:(h&255)/255, k:k!=null?k:(TINT_K[t]||0.5), p:p!=null?p:0.4}; }
+function withTint(T, fn){ const pv=_tfxTint; _tfxTint=T; try{ return fn(); } finally{ _tfxTint=pv; } }
+const _tfxMixC={};
+function tfxT(key){ if(TFX_T[key]) return TFX_T[key]; if(!key||String(key).indexOf('+')<0) return null; return _tfxMixC[key]||(_tfxMixC[key]=tfxMixMake(String(key).split('+'))); }
+function _take(S,f){ const v=(S?S.left:1e9)*f; if(S) S.left-=v; return {left:v}; }
+function _side(A,B,off){ const dx=B.x-A.x, dz=B.z-A.z, d=Math.hypot(dx,dz)||1; const px=-dz/d*off, pz=dx/d*off; return [{x:A.x+px*0.5,y:A.y,z:A.z+pz*0.5},{x:B.x+px,y:B.y,z:B.z+pz}]; }
+function tfxMixMake(ts){ ts=ts.filter(t=>TFX_T[t]); if(ts.length<2) return TFX_T[ts[0]]||null; const T0=TFX_T[ts[0]], subs=ts.slice(1), n=ts.length;
+  const aP=0.72, aS=n>2?0.5:0.58;
+  const pri=fn=>withTint(tintOf(ts[1]), fn);                 // 主: 粒の一部を2つめの色に
+  const sub=fn=>withTint(tintOf(ts[0],0.28,0.2), fn);        // 副: 少しだけ主の色に
+  const SUB=(S,f)=>{ const s=_take(S,f); return subs.map(()=>({left:s.left/subs.length})); };
+  return { mix:ts,
+    muzzle(A,a,S){ const s1=_take(S,0.55); pri(()=>T0.muzzle(A,a*aP,s1)); const ss=SUB(S,1); subs.forEach((t,i)=>sub(()=>TFX_T[t].muzzle(A,a*aS,ss[i]))); },
+    travel(A,B,a,S){ const s1=_take(S,0.58); let tm=pri(()=>T0.travel(A,B,a*aP,s1))||0; const ss=SUB(S,1);
+      subs.forEach((t,i)=>{ const sd=_side(A,B,(i%2?-1:1)*0.24*(1+(i>>1))); const ti=sub(()=>TFX_T[t].travel(sd[0],sd[1],a*aS,ss[i]))||0; tm=Math.max(tm,ti); }); return tm; },
+    hit(P,a,S,o){ const s1=_take(S,0.5), ss=SUB(S,0.7), sa=_take(S,1); pri(()=>T0.hit(P,a*aP,s1,o)); subs.forEach((t,i)=>{ const s=ss[i]; tfxAt(40+i*70, ()=>sub(()=>TFX_T[t].hit(P,a*aS,s,o))); }); tfxMixHit(ts,P,a,sa,o); },
+    rain(P,a,S,u){ const s1=_take(S,0.55), ss=SUB(S,1); let tm=pri(()=>T0.rain(P,a*aP,s1,u))||0; subs.forEach((t,i)=>{ const s=ss[i]; tm=Math.max(tm, sub(()=>TFX_T[t].rain(P,a*aS,s,u))||0); }); return tm; },
+    wave(A,far,a,S){ const s1=_take(S,0.55), ss=SUB(S,1); if(T0.wave) pri(()=>T0.wave(A,far,a*0.8,s1)); subs.forEach((t,i)=>{ if(TFX_T[t].wave) sub(()=>TFX_T[t].wave(A,far,a*0.6,ss[i])); }); } }; }
+// 当たりの見せ場: タイプの色のらせんが のぼる＋それぞれの色の輪＋組み合わせの見せ場
+function tfxMixHit(ts,P,a,S,o){ const R=_R(a)*(o&&o.k||1), y=P.y, sm=o&&o.small; const n=ts.length;
+  ts.forEach((t,i)=>{ const col=TINT[t]; const dir=i%2?-1:1; const ph=i/n*6.283;
+    tfxEm({dur:sm?260:480, rate:(sm?40:72)*Math.min(2,a), fn:(e,k)=>{ tp({orb:8*dir,ocx:P.x,ocz:P.z,orad:0.55*R*(1-k*0.3),ovr:-0.35,ang:ph+k*6.283*dir+Math.random()*0.4,x:0,y:y+0.1+k*0.4,z:0,vy:_rn(1.6,2.4)*R,life:_rn(420,560),s0:0.17*R,s1:0.05,k:TFXK.spark,c:[0xffffff,col,col],a:0.95,st:1.5},S); }});
+    if(!sm) ring3(P.x,y,P.z,col,(1.35+0.35*i)*R,480+80*i,{thin:true,delay:60+i*90}); });
+  if(!sm) tp({x:P.x,y:y+0.55,z:P.z,life:340,s0:0.5*R,s1:1.6*R,k:TFXK.ring,c:TINT[ts[1]],a:0.75},S);
+  for(const k in TFX_MIX){ const p=[...k]; if(p.every(x=>ts.includes(x))){ try{ TFX_MIX[k](P,a,S,o,R); }catch(e){ console.error(e); } } } }
+const TFX_MIX={
+  炎水:(P,a,S,o,R)=>tfxSteam(P,a,S,o,R),   // 湯気の爆発
+  炎氷:(P,a,S,o,R)=>tfxSteam(P,a,S,o,R),
+  炎闇:(P,a,S,o,R)=>{ const y=P.y; tfxEm({dur:o&&o.small?240:540, rate:110*Math.min(2,a), fn:(e,k)=>{ tp({orb:7,ocx:P.x,ocz:P.z,orad:(0.62-0.35*k)*R,ovr:-0.4,x:0,y:y+0.05+k*0.3,z:0,vy:_rn(1.2,2.2)*R,life:_rn(380,520),s0:_rn(0.32,0.5)*R,s1:0.08,k:TFXK.flame,c:[0xc080ff,0x5a1890,0x16041e],a:0.95},S); }}); },   // 黒い炎のうず
+  雷闇:(P,a,S,o,R)=>{ if(o&&o.small) return; const y=P.y; for(let i=0;i<2;i++) bolt3({x:P.x+_rn(-0.5,0.5),y:y+4.4,z:P.z+_rn(-0.5,0.5)},{x:P.x+_rn(-0.08,0.08),y:y+0.05,z:P.z+_rn(-0.08,0.08)},i?0xd090ff:0x9a30ff,{w:0.06+0.02*a,n:12,jit:0.6,delay:60+i*90,dur:360}); },   // 紫の稲妻
+  雷水:(P,a,S,o,R)=>{ if(o&&o.small) return; const y=P.y; for(let i=0;i<3;i++){ const an=i/3*6.283+Math.random(); bolt3({x:P.x,y:y+0.1,z:P.z},{x:P.x+Math.cos(an)*1.1*R,y:y+0.05,z:P.z+Math.sin(an)*1.1*R},0x9fe8ff,{w:0.025,n:6,jit:0.3,delay:80+i*50,dur:220}); } },   // 水に電気が走る
+  森氷:(P,a,S,o,R)=>{ const y=P.y; for(let i=0,n=tfxN(16*a);i<n;i++){ const an=Math.random()*6.28, sp=_rn(0.6,1.6)*R; tp({x:P.x,y:y+_rn(0.3,0.9),z:P.z,vx:Math.cos(an)*sp,vy:_rn(0.6,1.8),vz:Math.sin(an)*sp,g:1.4,dr:1.4,life:_rn(700,1000),s0:0.17*R,s1:0.12*R,k:TFXK.leaf,c:[0xf0fcff,0xa8e8ff,0x60b8e8],sp:_rn(-8,8)},S); } },   // 凍った葉
+  光竜:(P,a,S,o,R)=>{ if(o&&o.small) return; pillar3(P.x,P.y,P.z,0xffd860,{rad:0.42*R,h:4.2,dur:620}); for(let i=0,n=tfxN(12*a);i<n;i++){ const an=Math.random()*6.28; tp({x:P.x,y:P.y+0.4,z:P.z,vx:Math.cos(an)*_rn(1.2,2.6)*R,vy:_rn(1,3),vz:Math.sin(an)*_rn(1.2,2.6)*R,g:5,flo:P.y+0.02,life:_rn(600,900),s0:0.15*R,s1:0.1,k:TFXK.scale,c:[0xfffbe0,0xffd860,0xffa020],sp:_rn(-12,12)},S); } },   // 金の竜の光
+  光闇:(P,a,S,o,R)=>{ if(o&&o.small) return; tp({x:P.x,y:P.y+0.6,z:P.z,life:520,s0:0.6*R,s1:2.2*R,k:TFXK.ring,c:0xffffff,a:0.8},S); },
+  水地:(P,a,S,o,R)=>{ const y=P.y; for(let i=0,n=tfxN(14*a);i<n;i++){ const an=Math.random()*6.28, sp=_rn(1,2.2)*R; tp({x:P.x,y:y+0.2,z:P.z,vx:Math.cos(an)*sp,vy:_rn(2,3.6)*R,vz:Math.sin(an)*sp,g:9,flo:y+0.02,life:_rn(500,800),s0:_rn(0.12,0.2)*R,s1:0.1,k:TFXK.drop,c:[0xb89060,0x7a5a36,0x5a4028],st:1},S); } },   // どろ
+  炎地:(P,a,S,o,R)=>{ const y=P.y; for(let i=0,n=tfxN(12*a);i<n;i++){ const an=Math.random()*6.28, sp=_rn(1,2.4)*R; tp({x:P.x,y:y+0.2,z:P.z,vx:Math.cos(an)*sp,vy:_rn(2,4)*R,vz:Math.sin(an)*sp,g:9,flo:y+0.03,life:_rn(600,900),s0:_rn(0.1,0.16)*R,s1:0.08,k:TFXK.rock,c:[0xffe080,0xff5a10,0x3a1206],sp:_rn(-10,10)},S); } },   // 溶岩のかけら
+};
+function tfxSteam(P,a,S,o,R){ const y=P.y, sm=o&&o.small; tp({x:P.x,y:y+0.6,z:P.z,life:260,s0:0.6*R,s1:1.8*R,k:TFXK.glow,c:0xffffff,a:0.5},S);
+  for(let i=0,n=tfxN((sm?8:22)*a);i<n;i++){ const an=Math.random()*6.28, sp=_rn(0.8,2.2)*R; tp({x:P.x+Math.cos(an)*0.2,y:y+_rn(0.2,0.7),z:P.z+Math.sin(an)*0.2,vx:Math.cos(an)*sp,vy:_rn(0.8,2.6)*R,vz:Math.sin(an)*sp,dr:1.8,life:_rn(800,1300),s0:0.35*R,s1:1.3*R,k:TFXK.smoke,c:[0xffffff,0xf2f6fa,0xdde4ea],a:0.55,fi:0.1},S); }   // 白い湯気が一気にふくらむ
+  for(let i=0,n=tfxN((sm?4:12)*a);i<n;i++){ const an=Math.random()*6.28; tp({x:P.x,y:y+0.3,z:P.z,vx:Math.cos(an)*_rn(1.5,3)*R,vy:_rn(2,4),vz:Math.sin(an)*_rn(1.5,3)*R,g:8,flo:y+0.02,life:_rn(400,650),s0:0.1*R,s1:0.06,k:TFXK.drop,c:[0xffffff,0xc8ecff,0x7cc8ff],st:1.2},S); }
+  if(!sm) ring3(P.x,y,P.z,0xffffff,2.2*R,600,{thin:true}); }
 // 射程内みんな: 撃った子から地面を広がる輪(タイプの粒)
 function tfxWave(A,far,a,S,o){ const y=A.y-0.55; const n=tfxN(Math.min(56,20+far*8)*Math.min(1.5,a)); const T=far/6.5;
   for(let i=0;i<n;i++){ const an=i/n*6.283; tp({orb:o.swirl?3:0.001,ocx:A.x,ocz:A.z,orad:0.3,ovr:(far+0.3)/Math.max(0.2,T),ang:an,x:0,y:y+0.08,z:0,vy:(o.up||0.5)*_rn(0.5,1),g:o.g||0,life:T*1000+_rn(80,200),s0:(o.s||0.2)*0.7*_R(a),s1:(o.s||0.2)*0.45*_R(a),k:o.k,c:o.c,a:o.a!=null?o.a:0.9,L:o.L,st:o.st||0,sp:o.sp||0},S); } }
@@ -3579,7 +3644,7 @@ function tfxWaveCell(P,a,S,col){ for(let i=0,n=tfxN(10*a);i<n;i++){ const an=Mat
 // よけた時: それた先(子の横の地面)
 function tfxMissPt(A,B){ const dx=B.x-A.x, dz=B.z-A.z, d=Math.hypot(dx,dz)||1; const s=Math.random()<0.5?1:-1; return {x:B.x-dz/d*0.62*s+dx/d*0.35, y:B.y-0.45, z:B.z+dx/d*0.62*s+dz/d*0.35, side:s, px:-dz/d, pz:dx/d}; }
 // 攻撃1回の演出(attackFx から)。戻り値=いちばん遅い当たりまでの ms。onHit(x) は当たり(よけた時も)ごとに1回
-function tfxAttack(mode, ty, a, ar,ac, cells, mapAim, mapCells, onHit, lungeMs){ const T=TFX_T[ty]||TFX_T['光']; const cap=TFX.shotCap*TFX.q;
+function tfxAttack(mode, ty, a, ar,ac, cells, mapAim, mapCells, onHit, lungeMs){ const T=tfxT(ty)||TFX_T['光']; const cap=TFX.shotCap*TFX.q;
   const at=(r,c,h)=>{ const w=cell2world(r,c); return {x:w.x, y:cellH(r,c)+h, z:w.z}; };
   const A=at(ar,ac,0.7); const S0={left:cap*0.25};
   T.muzzle(A,a,S0);
@@ -3604,11 +3669,14 @@ function tfxAttack(mode, ty, a, ar,ac, cells, mapAim, mapCells, onHit, lungeMs){
 // ---- 大技(系統・融合・ボスの技・進化/融合のあとの必殺技): カットインの代わりに盤の上で ----
 // 撃つ子の足元に魔法陣・光の柱・集まる光・盤が少し暗くなる・技の名前の帯(画面の上の方・左右に分けない)。約0.8秒
 function bigIntro(att, move, ty, fz, then){ if(BT.headless){ then(); return; } fx2InjectCss(); const r=att.r, c=att.c, w=cell2world(r,c), y=cellH(r,c); const col=TYPE_HEX[ty]||0xffffff; const sp=SPD(); const T=820/sp;
+  const tys=mvTypes(move); const cols=tys.length>1?tys.map(t=>TYPE_HEX[t]||col):[col];   // 2026-10-30: 2つ(3つ)のタイプの技は 魔法陣・光の柱・集まる光・名前の帯も その色で
   fxMagicCircle(r,c,fz?0xffe680:col,T*1.4); pillar3(w.x,y,w.z,fz?0xffe680:col,{rad:0.7,h:4.6,dur:900}); fxConverge(r,c,0xffffff,18,{dur:EMS(800),rad:2.0,kind:'star',size:0.1,y:0.8}); fxConverge(r,c,col,14,{dur:EMS(700),rad:1.6,kind:'glow',size:0.14,spin:2,y:0.5});
-  for(let i=0;i<6;i++){ const a=i/6*6.283; fx3('sphL', m3(i%2?0xffffff:col,{op:0.95}), {x:w.x,y,z:w.z,delay:i*40,dur:780,ro:7},(t,m,mt)=>{ const aa=a+t*7, rr=0.9*(1-t*0.7); m.position.set(w.x+Math.cos(aa)*rr,y+0.2+t*1.8,w.z+Math.sin(aa)*rr); m.scale.setScalar(0.09*(1-t*0.4)); mt.opacity=0.95*(1-t*0.5); }); }
+  if(cols.length>1){ fxMagicCircle(r,c,cols[1],T*1.4,{s:1.32,spin:-1.3}); pillar3(w.x,y,w.z,cols[1],{rad:0.42,h:5.4,dur:900,delay:60}); fxConverge(r,c,cols[1],12,{dur:EMS(700),rad:1.9,kind:'glow',size:0.14,spin:-2,y:0.6}); }
+  if(cols.length>2){ fxMagicCircle(r,c,cols[2],T*1.4,{s:1.62,spin:0.8}); pillar3(w.x,y,w.z,cols[2],{rad:0.98,h:3.6,dur:900,delay:120}); }
+  for(let i=0;i<6;i++){ const a=i/6*6.283; fx3('sphL', m3(cols.length>1?cols[i%cols.length]:(i%2?0xffffff:col),{op:0.95}), {x:w.x,y,z:w.z,delay:i*40,dur:780,ro:7},(t,m,mt)=>{ const aa=a+t*7, rr=0.9*(1-t*0.7); m.position.set(w.x+Math.cos(aa)*rr,y+0.2+t*1.8,w.z+Math.sin(aa)*rr); m.scale.setScalar(0.09*(1-t*0.4)); mt.opacity=0.95*(1-t*0.5); }); }
   if(state.units[att.uid]) animUnit(att.uid,'cast',{dur:700,flash:true});
   camPunch(r,c,0.55,T*sp); SFX.play('evoCharge');
-  const el=$id('bigName'); if(el){ el.style.setProperty('--tc', TYPE_COL[ty]||'#ffd977'); el.classList.toggle('fz',!!fz); el.querySelector('.bn1').textContent=mvName(move)||move&&move.name||''; el.querySelector('.bn2').textContent=(MID[att.mid]||{}).name||''; el.className='on'+(fz?' fz':'')+(att.owner===1?' foe':''); clearTimeout(bigIntro._t); bigIntro._t=setTimeout(()=>{ el.className=''; }, 1500/sp); }
+  const el=$id('bigName'); if(el){ el.style.setProperty('--tc', TYPE_COL[ty]||'#ffd977'); el.style.setProperty('--tc2', tys.length>1?(TYPE_COL[tys[1]]||'#ffd977'):(TYPE_COL[ty]||'#ffd977')); el.style.setProperty('--tc3', tys.length>2?(TYPE_COL[tys[2]]||'#ffd977'):(tys.length>1?(TYPE_COL[tys[1]]||'#ffd977'):(TYPE_COL[ty]||'#ffd977'))); el.classList.toggle('fz',!!fz); el.querySelector('.bn1').textContent=mvName(move)||move&&move.name||''; el.querySelector('.bn2').textContent=(MID[att.mid]||{}).name||''; el.className='on'+(fz?' fz':'')+(att.owner===1?' foe':'')+(tys.length>1?' mx':''); clearTimeout(bigIntro._t); bigIntro._t=setTimeout(()=>{ el.className=''; }, 1500/sp); }
   const dim=$id('bigDim'); if(dim){ dim.className='on'; clearTimeout(bigIntro._d); bigIntro._d=setTimeout(()=>{ dim.className=''; }, 1100/sp); }
   BT.fxUntil=performance.now()+60000;
   setTimeout(()=>{ if(!state||state.phase==='end'){ then(); return; } then(); }, T); }
@@ -3653,11 +3721,12 @@ const HIT_FX={
 // hitImpact: FX2 版(下の FX2 の節)に移した
 function attackFx(att, targets, def, move){ if(BT.headless) return;
   const m=mon(att), ty=(move&&move.type)||m.type, cf=ATK_FX[ty]||ATK_FX['炎'];   // 技 v2: 色と当たりは技のタイプ
+  const tys=(move&&move.power!=null)?mvTypes(move):[]; const tyFx=tys.length>1?tys.join('+'):ty;   // 2026-10-30: 2つのタイプの技は 2つの演出を混ぜる
   const special = !!att.spReady && att.owner!=null; if(special) att.spReady=false;
   const tier = special ? 3 : ((move && move.tier) ? move.tier : (move && move.power!=null ? fxTier(move) : Math.min(3, m.level)));   // 必殺技は盤の演出も最大
-  const terrUp = terrBonusM(m, state.terrain[att.r][att.c])>0;
+  const terrUp = terrBonusMv(m, state.terrain[att.r][att.c], move)>0;
   const vt = !!(move && move.power!=null && move.type);   // 技 v2: 相性は技のタイプ
-  const adv = !!(def && def.mid!=null && (vt?typeBonusT(move.type,mon(def)):typeBonusM(m, mon(def)))>0), res=!!(def && def.mid!=null && (vt?typePenaltyT(move.type,mon(def)):typePenaltyM(m, mon(def)))<0);
+  const adv = !!(def && def.mid!=null && (vt?mvBonusT(move,mon(def)):typeBonusM(m, mon(def)))>0), res=!!(def && def.mid!=null && (vt?mvPenaltyT(move,mon(def)):typePenaltyM(m, mon(def)))<0);
   const ar=att.r, ac=att.c, auid=att.uid;
   const big = special || !!(move && (move.big || /^sig_/.test(move.role||'')));   // 大技: 系統・融合・ボスの技・合体・進化/融合のあとの必殺技
   const mapCells=_fxMapCells, mapAim=_fxMapAim; _fxMapCells=null; _fxMapAim=null;
@@ -3671,7 +3740,7 @@ function attackFx(att, targets, def, move){ if(BT.headless) return;
   BT.fxUntil=performance.now()+60000;
   const fz=!!att.fz;
   const play=()=>{ Promise.resolve().then(play0); };   // 2026-10-30: 攻撃の処理(当たる/よけた)が終わってから撃つ(よけた子には それて飛ぶ)
-  const useT=TFX.on && !!TFX_T[ty]; const amt=tfxAmt(move, att, tier, big);
+  const useT=TFX.on && !!tfxT(tyFx); const amt=tfxAmt(move, att, tier, big);
   const play0=()=>{ const sp=SPD(); const S=fx3Scale(tier,big);
     for(const x of cells) x.miss=!!(x.uid!=null && seq.miss[x.uid]);
     if(!useT){ cf.muzzle(ar, ac, tier); muzzle3(ty, ar, ac, tier, S); }
@@ -3693,7 +3762,7 @@ function attackFx(att, targets, def, move){ if(BT.headless) return;
       delete _hold[x.uid]; flushCell(x.k); syncUnits();
       if(--seq.left<=0) setTimeout(finish, 120); };
     let last=0;
-    if(useT) last=tfxAttack(mode, ty, amt, ar, ac, cells, mapAim, mapCells, onHit, lungeMs);
+    if(useT) last=tfxAttack(mode, tyFx, amt, ar, ac, cells, mapAim, mapCells, onHit, lungeMs);
     else if(mode==='map') last=map3(ty, mapAim, mapCells, cells, tier, S, onHit);
     else if(mode==='area') last=area3(ty, ar, ac, cells, tier, S, onHit);
     else if(mode==='melee' && t0) last=melee3(ty, ar, ac, t0.r, t0.c, tier, S, ()=>onHit(t0), lungeMs);
@@ -4014,6 +4083,7 @@ const FX2_CSS=`
 #mbRoot #mb-bigName .bn1{display:inline-block;padding:6px 26px 7px;font-size:30px;font-weight:900;color:#fff;letter-spacing:.08em;background:linear-gradient(90deg,rgba(10,14,28,0),rgba(10,14,28,.88) 14%,rgba(10,14,28,.88) 86%,rgba(10,14,28,0));border-top:2px solid var(--tc,#ffd977);border-bottom:2px solid var(--tc,#ffd977);text-shadow:0 0 14px var(--tc,#ffd977),0 2px 0 #000;white-space:nowrap}
 #mbRoot #mb-bigName .bn2{margin-top:3px;font-size:13px;font-weight:800;color:#dfe6ff;letter-spacing:.18em;text-shadow:0 1px 3px #000}
 #mbRoot #mb-bigName.fz .bn1{border-color:#ffe680;color:#fffbe8}
+#mbRoot #mb-bigName.mx .bn1{border-image:linear-gradient(90deg,rgba(0,0,0,0),var(--tc,#ffd977) 16%,var(--tc2,#ffd977) 50%,var(--tc3,#ffd977) 84%,rgba(0,0,0,0)) 1;text-shadow:-8px 0 14px var(--tc,#ffd977),8px 0 16px var(--tc2,#ffd977),0 2px 0 #000}
 @keyframes mbBn{0%{opacity:0;transform:scaleX(.2)}14%{opacity:1;transform:scaleX(1.04)}22%{transform:scaleX(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
 #mbRoot .mbNameBand{position:fixed;transform:translate(-50%,-100%);z-index:17;pointer-events:none;text-align:center;white-space:nowrap;animation:mbNb 2s cubic-bezier(.2,.9,.3,1) forwards}
 #mbRoot .mbNameBand i{display:block;font-style:normal;font-size:13px;font-weight:900;color:#fff3b0;letter-spacing:.2em;text-shadow:0 1px 3px #000}
@@ -4744,6 +4814,7 @@ function hudPremeasure(){ if(BT.headless||!state||state.phase!=='battle'||hudHol
 // ---- 技 v2 の画面の部品 ----
 function typeBadge(t){ return `<span class="tyb" style="background:${TYPE_COL[t]||'#666'}">${t}</span>`; }
 function typeBadges(m){ return typeBadge(m.type)+(m.type2?typeBadge(m.type2):''); }
+function mvBadges(mv){ return mvTypes(mv).map(typeBadge).join('') || typeBadge(mv.type); }   // 2つのタイプの技は タイプの札を並べる
 function statusChips(u){ const st=[]; if(u.poison>0)st.push(icTag('poison')); if(u.burn>0)st.push(icTag('burn')); if(u.freeze>0)st.push(icTag('freeze')); if(u.para>0)st.push(icTag('para')); if(u.dug>0) st.push(icTag('dig')); return st.length?' '+st.join(''):''; }
 const CAT_LB={heal:'回復', cure:'浄化', revive:'蘇生', buff:'強化', debuff:'弱体', move:'移動', ailment:'状態'};
 function rangeStr(mv){ if(mv.target==='map'||mv.target==='self'||mv.target==='fallen') return ''; const [a,b]=mv.range; const a2=(mv.target==='ally'||mv.target==='ally_all')?0:a; return a2===b?`${b}`:`${a2}-${b}`; }
@@ -4753,13 +4824,13 @@ function moveMenuV2(){ const box=document.createElement('div'); box.className='m
   const list=movesV2(sel); const ord=list.filter(isOffense).concat(list.filter(x=>!isOffense(x)));   // 攻撃の技 → 支えの技
   for(const mv of ord){ const ok=moveReady(sel,mv); const on=!!(selMove&&selMove.id===mv.id); const left=usesLeft(sel,mv), mx=usesMax(mv);
     let tg=[]; if(ok && isOffense(mv) && mv.power>0) tg = mv.target==='map' ? mapUnits(sel,mv,on?selAim:(aiMapBest(sel,mv)||{}).aim).filter(e=>e.owner!==sel.owner) : attackTargetsV2(sel,mv);
-    const weak = tg.some(e=>typeBonusT(mv.type,mon(e))>0);
-    const res = !weak && tg.length>0 && tg.every(e=>typePenaltyT(mv.type,mon(e))<0);
+    const weak = tg.some(e=>mvBonusT(mv,mon(e))>0);
+    const res = !weak && tg.length>0 && tg.every(e=>mvPenaltyT(mv,mon(e))<0);
     const b=document.createElement('button'); b.className='bt mvb'+(on?' on':'')+(weak?' wk':''); b.disabled=!ok;
     const kind = mv.target==='map'?icTag('map'):(mv.target==='area'?icTag('area'):'');
     const stat = isOffense(mv)&&mv.power>0 ? `威${mv.power}` : (CAT_LB[mv.category]||'');
     const rg=rangeStr(mv);
-    b.innerHTML=`<span class="mvn">${typeBadge(mv.type)}${escH(mvName(mv))}${weak?icTag('weak'):(res?icTag('resist'):'')}</span><span class="mvs">${kind}${stat}${rg?`・${rg}`:''}・${left===Infinity?'∞':left+'/'+mx}${mv.p===false?'・移動前':''}</span>`;
+    b.innerHTML=`<span class="mvn">${mvBadges(mv)}${escH(mvName(mv))}${weak?icTag('weak'):(res?icTag('resist'):'')}</span><span class="mvs">${kind}${stat}${rg?`・${rg}`:''}・${left===Infinity?'∞':left+'/'+mx}${mv.p===false?'・移動前':''}</span>`;
     b.onclick=()=>{ if(on && (mv.target==='map'||noAimMove(mv))){ useSelMoveV2(); return; } selectMoveV2(mv); };
     box.appendChild(b); }
   return box; }
@@ -4785,7 +4856,7 @@ function detailV2(id, u, unitRow, recipeHtml, fuseHtml, chain, isFusion){ const 
   const allLs=(L.learnset||[]).filter(e=>MV2[e.move]&&MV2[e.move].enabled!==false); const keep=new Set(dropDominated(slotPick(allLs.filter(e=>!u||(L.fixed||(e.lv||1)<=lv)).map(e=>MV2[e.move])), null).map(x=>x.id).concat(allLs.filter(e=>u&&!L.fixed&&(e.lv||1)>lv).map(e=>e.move)));   // 下位互換の技は出さない
   const rows=allLs.filter(e=>keep.has(e.move)).map(e=>{ const mv=MV2[e.move]; const got = own ? own.has(mv.id) : true; const left=u&&got?usesLeft(u,mv):usesMax(mv);
     const lab = L.fixed ? '' : (e.evo ? '進化' : `Lv${e.lv}`);
-    return `<div class="mvi ${got?'':'lock'}"><span class="muted" style="display:inline-block;min-width:3.2em">${lab}</span>${typeBadge(mv.type)}<b>${escH(mvName(mv))}</b> <span class="muted">${mv.target==='map'?icTag('map'):(mv.target==='area'?icTag('area'):'')}${isOffense(mv)&&mv.power>0?'威'+mv.power:(CAT_LB[mv.category]||'')}${rangeStr(mv)?'・射程'+rangeStr(mv):''}・${left===Infinity?'∞':(u&&got?left+'/'+usesMax(mv):usesMax(mv)+'回')}${mv.p===false?'・移動前':''}</span></div>`; }).join('');
+    return `<div class="mvi ${got?'':'lock'}"><span class="muted" style="display:inline-block;min-width:3.2em">${lab}</span>${mvBadges(mv)}<b>${escH(mvName(mv))}</b> <span class="muted">${mv.target==='map'?icTag('map'):(mv.target==='area'?icTag('area'):'')}${isOffense(mv)&&mv.power>0?'威'+mv.power:(CAT_LB[mv.category]||'')}${rangeStr(mv)?'・射程'+rangeStr(mv):''}・${left===Infinity?'∞':(u&&got?left+'/'+usesMax(mv):usesMax(mv)+'回')}${mv.p===false?'・移動前':''}</span></div>`; }).join('');
   return `<div class="hd"><img src="${IMG[id]}"><div><h3>${m.name}${m.archetype?` <span style="font-size:12px;color:#9be1ff;font-weight:700">${m.archetype}</span>`:''}</h3>`
     +`<div class="muted">${typeBadges(m)}・${DAN[m.level]}${u?'・'+rkStr(u):''}</div></div></div>`
     +((m.desc||m.profile)?`<div class="chain" style="color:#e0d2a4;font-style:italic;margin:6px 0 0">${m.desc||('「'+m.profile+'」')}</div>`:'')

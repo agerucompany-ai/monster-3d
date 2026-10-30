@@ -3453,6 +3453,7 @@
   "fsig_2004": {
    "name": "クリムゾンフェザー",
    "type": "風",
+   "type2": "炎",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3463,12 +3464,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "burn",
-    "chance": 0.5
+    "chance": "stage",
+    "knock": 1
    },
    "desc": "炎の羽をまきちらす",
    "range_class": "mid",
@@ -3478,6 +3480,7 @@
   "fsig_2005": {
    "name": "ガーディアンバイト",
    "type": "森",
+   "type2": "竜",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3488,13 +3491,18 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 118,
+   "power": 104,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "poison",
-    "chance": 0.5,
-    "drain": 0.5
+    "chance": "stage",
+    "drain": 0.5,
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
    },
    "desc": "黄金のりんごを守る竜",
    "range_class": "mid",
@@ -3504,6 +3512,7 @@
   "fsig_2006": {
    "name": "ツインホーンブレイク",
    "type": "地",
+   "type2": "風",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3514,10 +3523,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "pierce": 0.3,
+    "knock": 1
+   },
    "desc": "ツノとクワの二つの一撃",
    "range_class": "mid",
    "cost": "few",
@@ -3526,6 +3538,7 @@
   "fsig_2007": {
    "name": "プテラストライク",
    "type": "竜",
+   "type2": "風",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3536,10 +3549,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "knock": 1,
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
+   },
    "desc": "大むかしの空を飛ぶ",
    "range_class": "mid",
    "cost": "few",
@@ -3548,6 +3568,7 @@
   "fsig_2008": {
    "name": "ブラキオハンマー",
    "type": "竜",
+   "type2": "水",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3558,10 +3579,21 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    },
+    "debuff2": {
+     "stat": "mob",
+     "add": -1,
+     "turns": 2
+    }
+   },
    "desc": "長い首でおそいかかる",
    "range_class": "mid",
    "cost": "few",
@@ -3570,6 +3602,7 @@
   "fsig_2009": {
    "name": "トリケラブレイク",
    "type": "森",
+   "type2": "竜",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3580,13 +3613,18 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 118,
+   "power": 104,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "poison",
-    "chance": 0.5,
-    "drain": 0.5
+    "chance": "stage",
+    "drain": 0.5,
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
    },
    "desc": "三本の角でつっこむ",
    "range_class": "mid",
@@ -3596,6 +3634,7 @@
   "fsig_2010": {
    "name": "リザレクトフレイム",
    "type": "炎",
+   "type2": "竜",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3606,12 +3645,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "burn",
-    "chance": 0.5
+    "chance": "stage",
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
    },
    "desc": "よみがえりの神の炎",
    "range_class": "mid",
@@ -3621,6 +3665,7 @@
   "fsig_2011": {
    "name": "サンゴッドフレア",
    "type": "光",
+   "type2": "竜",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3631,10 +3676,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "drain": 0.3,
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
+   },
    "desc": "太陽の神の光",
    "range_class": "mid",
    "cost": "few",
@@ -3643,6 +3695,7 @@
   "fsig_2012": {
    "name": "モノリスプレス",
    "type": "地",
+   "type2": "氷",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3653,12 +3706,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "freeze",
-    "chance": 0.5
+    "chance": "stage",
+    "pierce": 0.3
    },
    "desc": "氷の岩ごとのしかかる",
    "range_class": "mid",
@@ -3668,6 +3722,7 @@
   "fsig_2013": {
    "name": "エンシェントタスク",
    "type": "地",
+   "type2": "竜",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3678,10 +3733,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "pierce": 0.3,
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
+   },
    "desc": "大むかしの大きな牙",
    "range_class": "mid",
    "cost": "few",
@@ -3690,6 +3752,7 @@
   "fsig_2014": {
    "name": "ゴールドフレアウイング",
    "type": "光",
+   "type2": "炎",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3700,12 +3763,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "burn",
-    "chance": 0.5
+    "chance": "stage",
+    "drain": 0.3
    },
    "desc": "金色の炎のつばさ",
    "range_class": "mid",
@@ -3715,6 +3779,7 @@
   "fsig_2015": {
    "name": "ボルトウイング",
    "type": "光",
+   "type2": "雷",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3725,12 +3790,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "para",
-    "chance": 0.5
+    "chance": "stage",
+    "drain": 0.3
    },
    "desc": "金色の雷のつばさ",
    "range_class": "mid",
@@ -3740,6 +3806,7 @@
   "fsig_2016": {
    "name": "リドルロア",
    "type": "光",
+   "type2": "地",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3750,10 +3817,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "drain": 0.3,
+    "pierce": 0.3
+   },
    "desc": "なぞをかけるほえ声",
    "range_class": "mid",
    "cost": "few",
@@ -3762,6 +3832,7 @@
   "fsig_2017": {
    "name": "ホーリーウイング",
    "type": "光",
+   "type2": "竜",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3772,10 +3843,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "drain": 0.3,
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
+   },
    "desc": "光のつばさで打つ",
    "range_class": "mid",
    "cost": "few",
@@ -3784,6 +3862,7 @@
   "fsig_2018": {
    "name": "ディープタイダル",
    "type": "竜",
+   "type2": "水",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3794,10 +3873,21 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    },
+    "debuff2": {
+     "stat": "mob",
+     "add": -1,
+     "turns": 2
+    }
+   },
    "desc": "深い海の大きなうねり",
    "range_class": "mid",
    "cost": "few",
@@ -3806,6 +3896,7 @@
   "fsig_2020": {
    "name": "トリプルヘッドブレイズ",
    "type": "竜",
+   "type2": "炎",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3816,12 +3907,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "burn",
-    "chance": 0.5
+    "chance": "stage",
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
    },
    "desc": "三つの首から炎",
    "range_class": "mid",
@@ -3831,6 +3927,7 @@
   "fsig_2022": {
    "name": "スチームブラスト",
    "type": "炎",
+   "type2": "水",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3841,12 +3938,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "burn",
-    "chance": 0.5
+    "chance": "stage",
+    "debuff": {
+     "stat": "mob",
+     "add": -1,
+     "turns": 2
+    }
    },
    "desc": "あつい湯けむりのキック",
    "range_class": "mid",
@@ -3856,6 +3958,7 @@
   "fsig_2024": {
    "name": "プラズマボルト",
    "type": "雷",
+   "type2": "炎",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3866,12 +3969,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "para",
-    "chance": 0.5
+    "chance": "stage",
+    "ail2": "burn"
    },
    "desc": "雷の獣の火花",
    "range_class": "mid",
@@ -3881,6 +3985,7 @@
   "fsig_2025": {
    "name": "ボルケーノシェル",
    "type": "地",
+   "type2": "炎",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3891,12 +3996,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "burn",
-    "chance": 0.5
+    "chance": "stage",
+    "pierce": 0.3
    },
    "desc": "火山のような甲羅でのしかかる",
    "range_class": "mid",
@@ -3906,6 +4012,7 @@
   "fsig_2026": {
    "name": "ホワイトインフェルノ",
    "type": "炎",
+   "type2": "氷",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3916,12 +4023,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "burn",
-    "chance": 0.5
+    "chance": "stage",
+    "ail2": "freeze"
    },
    "desc": "白い炎",
    "range_class": "mid",
@@ -3931,6 +4039,7 @@
   "fsig_2027": {
    "name": "ケルベロスファング",
    "type": "炎",
+   "type2": "闇",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3941,12 +4050,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "burn",
-    "chance": 0.5
+    "chance": "stage",
+    "ail2": "poison"
    },
    "desc": "冥界の番犬の牙",
    "range_class": "mid",
@@ -3956,6 +4066,7 @@
   "fsig_2028": {
    "name": "ヒノカミフレイム",
    "type": "竜",
+   "type2": "炎",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3966,12 +4077,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "burn",
-    "chance": 0.5
+    "chance": "stage",
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
    },
    "desc": "火の神の炎",
    "range_class": "mid",
@@ -3981,6 +4097,7 @@
   "fsig_2029": {
    "name": "ロータスウェーブ",
    "type": "地",
+   "type2": "水",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -3991,10 +4108,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "pierce": 0.3,
+    "debuff": {
+     "stat": "mob",
+     "add": -1,
+     "turns": 2
+    }
+   },
    "desc": "はすの池の大きな波",
    "range_class": "mid",
    "cost": "few",
@@ -4003,6 +4127,7 @@
   "fsig_2030": {
    "name": "ナーガボルト",
    "type": "竜",
+   "type2": "雷",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4013,12 +4138,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "para",
-    "chance": 0.5
+    "chance": "stage",
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
    },
    "desc": "蛇の神の雷",
    "range_class": "mid",
@@ -4028,6 +4158,7 @@
   "fsig_2031": {
    "name": "スカイブリーチ",
    "type": "水",
+   "type2": "風",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4038,10 +4169,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "knock": 1,
+    "debuff": {
+     "stat": "mob",
+     "add": -1,
+     "turns": 2
+    }
+   },
    "desc": "空を泳ぐくじらの潮",
    "range_class": "mid",
    "cost": "few",
@@ -4050,6 +4188,7 @@
   "fsig_2032": {
    "name": "マッドインパクト",
    "type": "地",
+   "type2": "水",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4060,10 +4199,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "pierce": 0.3,
+    "debuff": {
+     "stat": "mob",
+     "add": -1,
+     "turns": 2
+    }
+   },
    "desc": "どろをはね上げる",
    "range_class": "mid",
    "cost": "few",
@@ -4072,6 +4218,7 @@
   "fsig_2033": {
    "name": "ナーワルスラスト",
    "type": "氷",
+   "type2": "水",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4082,12 +4229,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "freeze",
-    "chance": 0.5
+    "chance": "stage",
+    "debuff": {
+     "stat": "mob",
+     "add": -1,
+     "turns": 2
+    }
    },
    "desc": "一本角でつく",
    "range_class": "mid",
@@ -4097,6 +4249,7 @@
   "fsig_2034": {
    "name": "ルミナスウェーブ",
    "type": "光",
+   "type2": "水",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4107,10 +4260,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "drain": 0.3,
+    "debuff": {
+     "stat": "mob",
+     "add": -1,
+     "turns": 2
+    }
+   },
    "desc": "光る波でつつむ",
    "range_class": "mid",
    "cost": "few",
@@ -4119,6 +4279,7 @@
   "fsig_2035": {
    "name": "テンタクルストーム",
    "type": "水",
+   "type2": "闇",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4129,12 +4290,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "poison",
-    "chance": 0.5
+    "chance": "stage",
+    "debuff": {
+     "stat": "mob",
+     "add": -1,
+     "turns": 2
+    }
    },
    "desc": "八本の腕で大うずをまく",
    "range_class": "mid",
@@ -4144,6 +4310,7 @@
   "fsig_2036": {
    "name": "サンダーアントラー",
    "type": "地",
+   "type2": "雷",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4154,12 +4321,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "para",
-    "chance": 0.5
+    "chance": "stage",
+    "pierce": 0.3
    },
    "desc": "雷の角でつっこむ",
    "range_class": "mid",
@@ -4169,6 +4337,7 @@
   "fsig_2037": {
    "name": "フロートストーム",
    "type": "風",
+   "type2": "森",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4179,13 +4348,14 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "poison",
-    "chance": 0.5,
-    "drain": 0.5
+    "chance": "stage",
+    "drain": 0.5,
+    "knock": 1
    },
    "desc": "わた毛を飛ばす",
    "range_class": "mid",
@@ -4195,6 +4365,7 @@
   "fsig_2038": {
    "name": "ヤマガミチャージ",
    "type": "地",
+   "type2": "森",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4205,13 +4376,14 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "poison",
-    "chance": 0.5,
-    "drain": 0.5
+    "chance": "stage",
+    "drain": 0.5,
+    "pierce": 0.3
    },
    "desc": "山の神のイノシシの突進",
    "range_class": "mid",
@@ -4221,6 +4393,7 @@
   "fsig_2039": {
    "name": "ジュヒョウストーム",
    "type": "氷",
+   "type2": "森",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4231,12 +4404,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "freeze",
-    "chance": 0.5,
+    "chance": "stage",
+    "ail2": "poison",
     "drain": 0.5
    },
    "desc": "凍った木の森のあらし",
@@ -4247,6 +4421,7 @@
   "fsig_2040": {
    "name": "サンシャインレイ",
    "type": "森",
+   "type2": "光",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4257,13 +4432,18 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 118,
+   "power": 104,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "poison",
-    "chance": 0.5,
-    "drain": 0.5
+    "chance": "stage",
+    "drain": 0.5,
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
    },
    "desc": "あたたかい光",
    "range_class": "mid",
@@ -4273,6 +4453,7 @@
   "fsig_2041": {
    "name": "ポイズンブルーム",
    "type": "雷",
+   "type2": "森",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4283,12 +4464,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "para",
-    "chance": 0.5,
+    "chance": "stage",
+    "ail2": "poison",
     "drain": 0.5
    },
    "desc": "しびれる毒の花",
@@ -4299,6 +4481,7 @@
   "fsig_2042": {
    "name": "サンダーバードダイブ",
    "type": "風",
+   "type2": "雷",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4309,12 +4492,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "para",
-    "chance": 0.5
+    "chance": "stage",
+    "knock": 1
    },
    "desc": "雷の鳥の急降下",
    "range_class": "mid",
@@ -4324,6 +4508,7 @@
   "fsig_2043": {
    "name": "ライノボルト",
    "type": "地",
+   "type2": "雷",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4334,12 +4519,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "para",
-    "chance": 0.5
+    "chance": "stage",
+    "pierce": 0.3
    },
    "desc": "いなずまの角",
    "range_class": "mid",
@@ -4349,6 +4535,7 @@
   "fsig_2044": {
    "name": "ポーラーハウル",
    "type": "氷",
+   "type2": "雷",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4359,12 +4546,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "freeze",
-    "chance": 0.5
+    "chance": "stage",
+    "ail2": "para"
    },
    "desc": "オーロラの下のとおぼえ",
    "range_class": "mid",
@@ -4374,6 +4562,7 @@
   "fsig_2045": {
    "name": "ペガサスボルト",
    "type": "光",
+   "type2": "雷",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4384,12 +4573,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "para",
-    "chance": 0.5
+    "chance": "stage",
+    "drain": 0.3
    },
    "desc": "天を走る馬の雷",
    "range_class": "mid",
@@ -4399,6 +4589,7 @@
   "fsig_2046": {
    "name": "ナイトメアシャウト",
    "type": "雷",
+   "type2": "闇",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4409,12 +4600,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "para",
-    "chance": 0.5
+    "chance": "stage",
+    "ail2": "poison"
    },
    "desc": "夜にひびく鳴き声",
    "range_class": "mid",
@@ -4424,6 +4616,7 @@
   "fsig_2047": {
    "name": "エイトボルトストーム",
    "type": "竜",
+   "type2": "雷",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4434,12 +4627,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "para",
-    "chance": 0.5
+    "chance": "stage",
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
    },
    "desc": "八つの雷の竜",
    "range_class": "mid",
@@ -4449,6 +4647,7 @@
   "fsig_2048": {
    "name": "デザートストーム",
    "type": "竜",
+   "type2": "地",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4459,10 +4658,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "pierce": 0.3,
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
+   },
    "desc": "砂あらしの八つの首",
    "range_class": "mid",
    "cost": "few",
@@ -4471,6 +4677,7 @@
   "fsig_2049": {
    "name": "ヤクスタンピード",
    "type": "氷",
+   "type2": "風",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4481,12 +4688,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "freeze",
-    "chance": 0.5
+    "chance": "stage",
+    "knock": 1
    },
    "desc": "ふぶきの中を群れで走る",
    "range_class": "mid",
@@ -4496,6 +4704,7 @@
   "fsig_2050": {
    "name": "ピーコックレイ",
    "type": "風",
+   "type2": "光",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4506,10 +4715,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "drain": 0.3,
+    "knock": 1
+   },
    "desc": "千の目の羽が光る",
    "range_class": "mid",
    "cost": "few",
@@ -4518,6 +4730,7 @@
   "fsig_2051": {
    "name": "ヤタガラスダイブ",
    "type": "風",
+   "type2": "闇",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4528,12 +4741,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "poison",
-    "chance": 0.5
+    "chance": "stage",
+    "knock": 1
    },
    "desc": "三本足のからすの道案内",
    "range_class": "mid",
@@ -4543,6 +4757,7 @@
   "fsig_2052": {
    "name": "テンペストウイング",
    "type": "竜",
+   "type2": "風",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4553,10 +4768,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "knock": 1,
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
+   },
    "desc": "あらしをよぶ竜のつばさ",
    "range_class": "mid",
    "cost": "few",
@@ -4565,6 +4787,7 @@
   "fsig_2053": {
    "name": "ゲンブプレス",
    "type": "地",
+   "type2": "氷",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4575,12 +4798,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "freeze",
-    "chance": 0.5
+    "chance": "stage",
+    "pierce": 0.3
    },
    "desc": "北を守る亀の氷のこうらでのしかかる",
    "range_class": "mid",
@@ -4590,6 +4814,7 @@
   "fsig_2054": {
    "name": "ストーンゲイズ",
    "type": "地",
+   "type2": "闇",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4600,12 +4825,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "poison",
-    "chance": 0.5
+    "chance": "stage",
+    "pierce": 0.3
    },
    "desc": "にらんで石のように動けなくする",
    "range_class": "mid",
@@ -4615,6 +4841,7 @@
   "fsig_2055": {
    "name": "テラストンプ",
    "type": "竜",
+   "type2": "地",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4625,10 +4852,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "pierce": 0.3,
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
+   },
    "desc": "大地の女神の力",
    "range_class": "mid",
    "cost": "few",
@@ -4637,6 +4871,7 @@
   "fsig_2056": {
    "name": "ダイヤホーン",
    "type": "氷",
+   "type2": "光",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4647,12 +4882,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "freeze",
-    "chance": 0.5
+    "chance": "stage",
+    "drain": 0.3
    },
    "desc": "水晶の一本角",
    "range_class": "mid",
@@ -4662,6 +4898,7 @@
   "fsig_2058": {
    "name": "ホワイトアウトブレス",
    "type": "竜",
+   "type2": "氷",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4672,12 +4909,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "freeze",
-    "chance": 0.5
+    "chance": "stage",
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
    },
    "desc": "雪の竜の白い息",
    "range_class": "mid",
@@ -4687,6 +4929,7 @@
   "fsig_2059": {
    "name": "トワイライトレイ",
    "type": "光",
+   "type2": "闇",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4697,12 +4940,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "poison",
-    "chance": 0.5
+    "chance": "stage",
+    "drain": 0.3
    },
    "desc": "太陽がかくれる光と闇",
    "range_class": "mid",
@@ -4712,6 +4956,7 @@
   "fsig_2062": {
    "name": "ニーズヘッグバイト",
    "type": "竜",
+   "type2": "闇",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4722,12 +4967,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "poison",
-    "chance": 0.5
+    "chance": "stage",
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
    },
    "desc": "世界樹の根をかじる",
    "range_class": "mid",
@@ -4737,6 +4987,7 @@
   "fsig_2063": {
    "name": "ミッドナイトサイズ",
    "type": "森",
+   "type2": "闇",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4747,13 +4998,18 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 118,
+   "power": 104,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "poison",
-    "chance": 0.5,
-    "drain": 0.5
+    "chance": "stage",
+    "drain": 0.5,
+    "debuff": {
+     "stat": "def",
+     "x": -0.2,
+     "turns": 2
+    }
    },
    "desc": "まよなかの大きなかま",
    "range_class": "mid",
@@ -4763,6 +5019,7 @@
   "fsig_2064": {
    "name": "グレイプニルファング",
    "type": "氷",
+   "type2": "闇",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4773,12 +5030,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "freeze",
-    "chance": 0.5
+    "chance": "stage",
+    "ail2": "poison"
    },
    "desc": "鎖の狼の大きな口",
    "range_class": "mid",
@@ -4788,6 +5046,7 @@
   "fsig_2065": {
    "name": "ゲイルギャロップ",
    "type": "光",
+   "type2": "氷",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4798,12 +5057,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "freeze",
-    "chance": 0.5
+    "chance": "stage",
+    "drain": 0.3
    },
    "desc": "八本の脚で走りぬける",
    "range_class": "mid",
@@ -4813,6 +5073,7 @@
   "fsig_2066": {
    "name": "ラビリンスチャージ",
    "type": "地",
+   "type2": "森",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4823,13 +5084,14 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "poison",
-    "chance": 0.5,
-    "drain": 0.5
+    "chance": "stage",
+    "drain": 0.5,
+    "pierce": 0.3
    },
    "desc": "迷路の主の大きな角",
    "range_class": "mid",
@@ -4839,6 +5101,7 @@
   "fsig_2067": {
    "name": "ヘヴンズプレス",
    "type": "光",
+   "type2": "地",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4849,10 +5112,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
-   "effect": {},
+   "effect": {
+    "drain": 0.3,
+    "pierce": 0.3
+   },
    "desc": "天をささえる力でのしかかる",
    "range_class": "mid",
    "cost": "few",
@@ -4861,6 +5127,7 @@
   "fsig_2068": {
    "name": "ラストジャッジ",
    "type": "地",
+   "type2": "闇",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4871,12 +5138,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "poison",
-    "chance": 0.5
+    "chance": "stage",
+    "pierce": 0.3
    },
    "desc": "心の重さをはかる天秤",
    "range_class": "mid",
@@ -4886,6 +5154,7 @@
   "fsig_2069": {
    "name": "グングニルスロー",
    "type": "雷",
+   "type2": "闇",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4896,12 +5165,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "para",
-    "chance": 0.5
+    "chance": "stage",
+    "ail2": "poison"
    },
    "desc": "神々の王の槍を投げる",
    "range_class": "mid",
@@ -4911,6 +5181,7 @@
   "fsig_2070": {
    "name": "スルトブレード",
    "type": "炎",
+   "type2": "地",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -4921,12 +5192,13 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "burn",
-    "chance": 0.5
+    "chance": "stage",
+    "pierce": 0.3
    },
    "desc": "炎の巨人の剣",
    "range_class": "mid",
@@ -4935,7 +5207,9 @@
   },
   "fsig_2071": {
    "name": "ジャッジメントサンダー",
-   "type": "雷",
+   "type": "竜",
+   "type2": "雷",
+   "type3": "炎",
    "category": "attack",
    "role": "sig_boss",
    "rank": null,
@@ -4951,7 +5225,13 @@
    "crit": 10,
    "effect": {
     "ail": "para",
-    "chance": 0.5
+    "chance": "stage",
+    "ail2": "burn",
+    "debuff": {
+     "stat": "atk",
+     "x": -0.15,
+     "turns": 2
+    }
    },
    "desc": "雷鳴で射程3の敵みんなを打つ",
    "range_class": "far",
@@ -5011,6 +5291,7 @@
   "fsig_2073": {
    "name": "ホムラアギト",
    "type": "炎",
+   "type2": "水",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -5021,12 +5302,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "burn",
-    "chance": 0.5
+    "chance": "stage",
+    "debuff": {
+     "stat": "mob",
+     "add": -1,
+     "turns": 2
+    }
    },
    "desc": "炎のたてがみの竜が、燃える顎でかみつく",
    "range_class": "mid",
@@ -5036,6 +5322,7 @@
   "fsig_2074": {
    "name": "ライトニングファング",
    "type": "雷",
+   "type2": "水",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -5046,12 +5333,17 @@
    ],
    "p": true,
    "mp": 3,
-   "power": 158,
+   "power": 139,
    "hit": 100,
    "crit": 10,
    "effect": {
     "ail": "para",
-    "chance": 0.5
+    "chance": "stage",
+    "debuff": {
+     "stat": "mob",
+     "add": -1,
+     "turns": 2
+    }
    },
    "desc": "雷の竜が、稲妻の顎でかみつく",
    "range_class": "mid",
@@ -5060,7 +5352,9 @@
   },
   "fsig_2075": {
    "name": "ミツドモエ",
-   "type": "雷",
+   "type": "炎",
+   "type2": "雷",
+   "type3": "水",
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
@@ -5075,8 +5369,14 @@
    "hit": 100,
    "crit": 10,
    "effect": {
-    "ail": "para",
-    "chance": 0.5
+    "ail": "burn",
+    "chance": "stage",
+    "ail2": "para",
+    "debuff": {
+     "stat": "mob",
+     "add": -1,
+     "turns": 2
+    }
    },
    "desc": "おなかの顔の炎と、背中と爪の雷をいっしょに放ち、射程3の敵みんなを打つ",
    "range_class": "far",

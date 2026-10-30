@@ -107,6 +107,7 @@ DX.img=id=>`img/${id}.webp`;
 DX.big=id=>`../../img/ci/${id}.webp`;
 DX.tyb=t=>`<span class="tyb" style="background:${DX.TYPE_COL[t]||'#666'}">${t}</span>`;
 DX.tybs=m=>DX.types(m).map(DX.tyb).join('');
+DX.mvTybs=mv=>[mv.type,mv.type2,mv.type3].filter((t,i,arr)=>t&&arr.indexOf(t)===i).map(DX.tyb).join('');   // 2026-10-30 2つ(3つ)のタイプの技はタイプの札を並べる
 DX.marks=id=>{ let s=''; if(DX.god(id)) s+='<span class="mk god">神</span>'; if(DX.ancientArcs(id).length) s+='<span class="mk anc">いにしえ</span>'; return s; };
 DX.card=(id,cls)=>{ const m=DX.M[id]; if(!m) return ''; return `<button class="cd ${cls||''}" data-id="${id}"><span class="mks">${DX.marks(id)}</span><img class="a" src="${DX.img(id)}" loading="lazy" decoding="async" alt=""><span class="nm">${DX.esc(m.name)}</span><span class="ty">${DX.tybs(m)}</span></button>`; };
 
@@ -144,7 +145,7 @@ DX.detailHtml=id=>{ const m=DX.M[id], s=DX.S[id]||{}; if(!m) return '';
   h+=`<section><h2><img src="img/ui/move.webp" alt="">技<span class="n">${L.rows.length}</span></h2>`+L.rows.map(r=>{ const mv=r.mv;
       const lab=L.fixed?'':(r.evo?'進化':`Lv${r.lv||1}`); const off=dxIsOff(mv)&&mv.power>0; const rg=DX.rangeStr(mv);
       const ic=mv.target==='map'?'<img src="img/ui/map.webp" alt="">':mv.target==='area'?'<img src="img/ui/area.webp" alt="">':'';
-      return `<div class="mvr${L.fixed?' fx':''}"><span class="lv">${lab}</span><span class="nm">${DX.tyb(mv.type)}<b>${DX.esc(mv.name)}</b></span><span class="nb">${ic}<span>${off?'威力'+mv.power:(DX.CAT_LB[mv.category]||'')}</span>${rg?`<span>射程${rg}</span>`:''}<span>${mv.mp>0?mv.mp+'回':'∞'}</span>${mv.p===false?'<span>移動前</span>':''}</span></div>`; }).join('')+`</section>`;
+      return `<div class="mvr${L.fixed?' fx':''}"><span class="lv">${lab}</span><span class="nm">${DX.mvTybs(mv)}<b>${DX.esc(mv.name)}</b></span><span class="nb">${ic}<span>${off?'威力'+mv.power:(DX.CAT_LB[mv.category]||'')}</span>${rg?`<span>射程${rg}</span>`:''}<span>${mv.mp>0?mv.mp+'回':'∞'}</span>${mv.p===false?'<span>移動前</span>':''}</span></div>`; }).join('')+`</section>`;
   if(m.evolves_from||m.evolves_to){ const chain=[]; let c=id; const seen={}; while(DX.M[c]&&DX.M[c].evolves_from&&!seen[c]){ seen[c]=1; c=DX.M[c].evolves_from; } const s2={}; while(c!=null&&DX.M[c]&&!s2[c]){ s2[c]=1; chain.push(c); c=DX.M[c].evolves_to; }
     h+=`<section><h2><img src="img/ui/evolve.webp" alt="">進化</h2><div class="ln">${chain.map((x,i)=>(i?'<i class="ar"></i>':'')+DX.card(x, x===id?'in':'')).join('')}</div></section>`; }
   const asRes=DX.fusions.filter(f=>f.id===id), asPar=DX.fusions.filter(f=>f.parents.includes(id));

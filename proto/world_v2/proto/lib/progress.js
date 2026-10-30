@@ -443,6 +443,7 @@ UI.mount=function(o){ o=o||{}; if(R) return R; const st=document.createElement('
 const TYC={炎:'#e8503a',水:'#2f86c5',地:'#9c7a3c',風:'#4fa86a',雷:'#d6a915',闇:'#6a4a8c',氷:'#5cc8e0',光:'#f3d65a',竜:'#b15ad6',森:'#5cbf3a'};
 const CATL={heal:'回復',cure:'浄化',revive:'蘇生',buff:'強化',debuff:'弱体',move:'移動',ailment:'状態'};
 function tyb(t){ return `<span class="pgTy" style="background:${TYC[t]||'#666'}">${t}</span>`; }
+function mvTyb(mv){ return [mv.type,mv.type2,mv.type3].filter((t,i,arr)=>t&&arr.indexOf(t)===i).map(tyb).join(''); }   // 2026-10-30 2つ(3つ)のタイプの技はタイプの札を並べる
 function rngS(mv){ if(mv.target==='map'||mv.target==='self'||mv.target==='fallen') return ''; const [a,b]=mv.range; const a2=(mv.target==='ally'||mv.target==='ally_all')?0:a; return a2===b?`${b}`:`${a2}-${b}`; }
 // 仲間の画面のカード: ステータス(Lv の倍率込み)と 覚えている技・次に覚える技
 UI.movesCard=function(c){ const d=el('div','pgMv'); if(!c) return d; const f=formFor(c); const L=LS[f]||LS[String(f)]; const x=statX(c.lv);
@@ -450,7 +451,7 @@ UI.movesCard=function(c){ const d=el('div','pgMv'); if(!c) return d; const f=for
   if(L) h+=`<div class="pgSt"><span>HP<b>${Math.round(L.hp*x)}</b></span><span>攻撃<b>${Math.round(L.atk*x)}</b></span><span>防御<b>${Math.round(L.def*x)}</b></span><span>素早さ<b>${Math.round(L.spd*x)}</b></span><span>移動<b>${L.mob}</b></span></div>`;
   const all=learnAt(f); const keep=new Set(dropDom(all.map(e=>MV[e.move])).map(m=>m.id)); const gotIds=new Set(movesAt(f,c.lv).map(m=>m.id));
   const got=all.filter(e=>gotIds.has(e.move)), next=all.filter(e=>!(L&&L.fixed)&&(e.lv||1)>c.lv&&keep.has(e.move)).slice(0,3);   // 下位互換の技は出さない
-  const row=(e,lock)=>{ const mv=MV[e.move]; return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${tyb(mv.type)}<b>${mv.name}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${(mv.category==='attack'||mv.category==='ailment')&&mv.power>0?'威'+mv.power:(CATL[mv.category]||'')}${rngS(mv)?'・'+rngS(mv):''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
+  const row=(e,lock)=>{ const mv=MV[e.move]; return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${mvTyb(mv)}<b>${mv.name}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${(mv.category==='attack'||mv.category==='ailment')&&mv.power>0?'威'+mv.power:(CATL[mv.category]||'')}${rngS(mv)?'・'+rngS(mv):''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
   h+=`<div class="pgSec"><span>技</span><span>${got.length}</span></div>`+got.map(e=>row(e,false)).join('')+next.map(e=>row(e,true)).join('');
   d.innerHTML=h; return d; };
 // レベルアップで覚えた技のお知らせ(フィールドに戻ってから・タップで閉じる)
@@ -492,7 +493,7 @@ UI.detail=function(c, o){ o=o||{}; const d=el('div','pgDet'+(o.leader?' lead':''
   const all=learnAt(f); const keep=new Set(dropDom(all.map(e=>MV[e.move])).map(q=>q.id)); const gotIds=new Set(movesAt(f,c.lv).map(q=>q.id));
   const got=all.filter(e=>gotIds.has(e.move)), next=all.filter(e=>!(L&&L.fixed)&&(e.lv||1)>c.lv&&keep.has(e.move)).slice(0,2);
   const row=(e,lock)=>{ const mv=MV[e.move]; const pw=(mv.category==='attack'||mv.category==='ailment')&&mv.power>0?'威力'+mv.power:(CATL[mv.category]||''); const rg=rngS(mv);
-    return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${tyb(mv.type)}<b>${mv.name}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${pw}${rg?'・射程'+rg:''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
+    return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${mvTyb(mv)}<b>${mv.name}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${pw}${rg?'・射程'+rg:''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
   h+=`<div class="pgSec"><span>技</span><span>${got.length}</span></div>`+got.map(e=>row(e,false)).join('')+next.map(e=>row(e,true)).join('');
   d.innerHTML=h; return d; };
 UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const T=R.querySelector('#pgTitle'); const TB=R.querySelector('#pgTabs');
