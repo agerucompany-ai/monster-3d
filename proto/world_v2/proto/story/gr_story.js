@@ -21,9 +21,9 @@ function monShow(id,o){ o=o||{}; let im=document.getElementById('stMon');
   im.style.filter=o.scr?'saturate(.7) hue-rotate(160deg) brightness(1.15) drop-shadow(0 0 12px rgba(120,200,255,.6))':'drop-shadow(0 6px 10px rgba(0,0,0,.3))';
   im.style.display=im.dataset.bad===src?'none':'block'; }   // 絵の無い子(新1など)は出さない(語りで見せる)
 function monHide(){ const im=document.getElementById('stMon'); if(!im) return; im.style.opacity=0; setTimeout(()=>{ if(im.style.opacity==='0') im.style.display='none'; },320); }
-// 「ルーペで調べる」を押すまで待つ
+// 「調べる」を押すまで待つ
 let EXAM=null;
-function waitExamine(label){ return new Promise(res=>{ const b=document.createElement('button'); b.id='stExam'; b.textContent='ルーペで調べる：'+label;
+function waitExamine(label){ return new Promise(res=>{ const b=document.createElement('button'); b.id='stExam'; b.textContent='調べる：'+label;
   b.style.cssText='position:absolute;left:50%;bottom:34%;transform:translateX(-50%);z-index:5;padding:12px 22px;border-radius:999px;border:2px solid #fff;background:#3f8fb0;color:#fff;font:inherit;font-size:16px;font-weight:bold;pointer-events:auto';
   ST.box.style.display='none'; ST.el.appendChild(b); EXAM=()=>{ b.remove(); EXAM=null; res(); }; b.onclick=e=>{ e.stopPropagation(); if(EXAM) EXAM(); }; }); }
 // 場面を暗くする(第25話の暗やみ)
@@ -178,7 +178,7 @@ function grSpots(best,bd){ if(!D||!D.spots||!storyOn()) return {best,bd};
   for(const s of D.spots){ const d=Math.hypot(HERO.x-s.x,HERO.z-s.z); if(d>s.r) continue;
     if(/_stub$/.test(s.id)) inStub=true;
     if(s.auto){ if(!STORY&&!TRANS&&!SPOT_BUSY&&!ENC&&!BRIEF&&encCool<=0&&SPOT_RULE[s.id]&&SPOT_RULE[s.id](SAVE.flags)) onSpot(s); continue; }
-    if(d<bd+1){ best={n:'ルーペで調べる',spot:s}; bd=d; } }
+    if(d<bd+1){ best={n:'調べる',spot:s}; bd=d; } }
   if(!inStub) STUB_COOL=false;
   return {best,bd}; }
 
@@ -322,11 +322,11 @@ async function marbleStub(){ const f=SAVE.flags;
 // ============================================================================
 function grObjText(f){ const beat=k=>Object.keys(f).some(x=>x.startsWith('beat_'+k));
   if(!f.temple1||!f.ep1) return '神殿の丘へ（クロエ博士との待ち合わせ）';
-  if(!f.chase2) return '神殿の石板を調べる';
+  if(!f.chase2) return '神殿の大きな石を調べる';
   if(!f.bond) return 'エンジュを追って、研究所の裏へ';
   if(!f.morning3) return '研究所の裏へ';
   if(!f.ep3){ if(!f.elly3) return '広場のエリーに会う'; const n=(f.petra3?1:0)+(f.tasos?1:0)+(f.farmer3?1:0);
-    if(n<3) return '村の人と話す（'+n+'/3）'; if(!f.elly3b) return '広場のエリーに話す'; if(!f.grandma3) return '神殿の丘で、エリーのおばあちゃんに会う'; return '神殿の石板を調べる'; }
+    if(n<3) return '村の人と話す（'+n+'/3）'; if(!f.elly3b) return '広場のエリーに話す'; if(!f.grandma3) return '神殿の丘で、エリーのおばあちゃんに会う'; return '神殿の大きな石を調べる'; }
   if(!f.hill) return '村の北の門から、オリーブの丘へ';
   if(!f.patch4) return beat('パッチ@oliva_hill')?'丘の道のパッチに話しかける':'丘の道で、消えた野生の子をさがす';
   if(!f.lab5) return '村に戻って、研究所へ';
