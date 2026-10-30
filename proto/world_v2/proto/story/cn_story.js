@@ -25,7 +25,7 @@ const cnNpc=(name,x)=>NPCS.find(q=>q.o.n===name&&(x==null||q.o.x===x));
 function cnFoe(o,name,x){ const q=name&&cnNpc(name,x);
   if(q&&Math.hypot(q.x-HERO.x,q.z-HERO.z)<16) return {o:Object.assign({},q.o,{party:o.party||q.o.party,n:o.n||q.o.n,scene:undefined,after:undefined,flagWin:undefined,rule:undefined,cnStep:undefined,ai:o.ai||q.o.ai}), x:q.x, z:q.z, g:q.g, rig:q.rig, lbl:q.lbl, yaw:q.yaw};
   return stubFoe(Object.assign({trainer:1},q?{party:q.o.party,zeroday:q.o.zeroday}:{},o)); }
-const ZD='ゼロデイの手下';
+const ZD='ヴィクターの手下';
 const P=(...a)=>a.map(x=>typeof x==='number'?{mid:x}:x);
 
 // ---- 段の表 ----
@@ -75,10 +75,10 @@ sc(6,'c06_2',PL);
 bt(6,'c06_b','c06_3',PL,{foe:()=>cnFoe({n:ZD,zeroday:1,party:P(49,1059)}),R:{terrain:'pasture',guests:['partner','own2',1022]}});
 sc(6,'c06_4',PL);
 sc(6,'c06_5',PL,'白虎の岩',{obj:'白虎の岩へ',tod:'evening'});
-// 第7話 白虎の岩(ボルケンと並んで、ゼロデイの追っ手と)
+// 第7話 白虎の岩(ボルケンと並んで、ヴィクターの追っ手と)
 sc(7,'c07_1',PL);
 sc(7,'c07_2',PL);
-bt(7,'c07_b','c07_3',PL,{foe:()=>cnFoe({n:'ゼロデイの追っ手',zeroday:1,party:P(1060,1039,1068)}),R:{terrain:'rocky',guests:['partner','own2',3024]}});
+bt(7,'c07_b','c07_3',PL,{foe:()=>cnFoe({n:'ヴィクターの追っ手',zeroday:1,party:P(1060,1039,1068)}),R:{terrain:'rocky',guests:['partner','own2',3024]}});
 sc(7,'c07_4',PL);
 sc(7,'c07_5',PL,'*',{post:()=>flag('guard_w')});
 // 第8話 止まった街
@@ -168,7 +168,7 @@ sc(24,'c24_1',TH);
 sc(24,'c24_2',TH,'島の森',{obj:'島の森へ'});
 sc(24,'c24_3',TH,'雷の社',{obj:'森の奥の祠(雷の社)へ'});
 sc(24,'c24_4',TH);
-bt(24,'c24_b','c24_5',TH,{foe:()=>cnFoe({n:'ゼロデイの見張り',zeroday:1,party:P(1060,1059)}),R:{terrain:'forest'}});
+bt(24,'c24_b','c24_5',TH,{foe:()=>cnFoe({n:'ヴィクターの見張り',zeroday:1,party:P(1060,1059)}),R:{terrain:'forest'}});
 // 第25話 八つ首
 sc(25,'c25_1',TH);
 bt(25,'c25_b','c25_2',TH,{foe:()=>cnFoe({n:'ログ＆パッチ',zeroday:1,party:P(1007,1062,1060)}),R:{terrain:'forest'}});
@@ -186,12 +186,12 @@ sc(27,'c27_4',SE,'*',{bg:'anime_cn_sea_dawn',post:()=>setTime('morning')});
 // 第28話 呼ばれる(連戦。二戦目はスレイプニア＝グリフォ＋ユキマダラ)
 sc(28,'c28_1',SE,'岩の島',{obj:'分かれた海の石の道を、岩の島へ'});
 sc(28,'c28_2',SE);
-bt(28,'c28_b1','c28_3',SE,{foe:()=>cnFoe({n:'ゼロデイの船の見張り',zeroday:1,party:P(1060,1063)}),R:{terrain:'rocky'}});
+bt(28,'c28_b1','c28_3',SE,{foe:()=>cnFoe({n:'ヴィクターの船の見張り',zeroday:1,party:P(1060,1063)}),R:{terrain:'rocky'}});
 sc(28,'c28_4',SE);
 bt(28,'c28_b2','c28_5',SE,{foe:()=>cnFoe({n:'レン',party:P({mid:1069,lv:30,fixed:true},{mid:1034,lv:28})}),R:{terrain:'rocky',guests:['partner',1054,1046],fuse:[2065],ai:{hpX:1.3,atkX:1.2}}});
 // 第29話 自分で立つ(セイリュウ＝三段目・ヘラツノと朱雀も味方)
 sc(29,'c29_1',SE); sc(29,'c29_2',SE); sc(29,'c29_3',SE); sc(29,'c29_4',SE);
-bt(29,'c29_b','c29_5',SE,{foe:()=>cnFoe({n:'ゼロデイの船の子',zeroday:1,party:P(1064,1060,1069,1040)}),R:{terrain:'rocky',guests:['partner',291,1034,2004]}});
+bt(29,'c29_b','c29_5',SE,{foe:()=>cnFoe({n:'ヴィクターの船の子',zeroday:1,party:P(1064,1060,1069,1040)}),R:{terrain:'rocky',guests:['partner',291,1034,2004]}});
 sc(29,'c29_6',SE);
 // 第30話 青龍の岩(年寄りのセイリュウ・セイリュがヤマトの仲間に・ハオとリーファと別れる・エジプトへの絵)
 sc(30,'c30_1',SE,'青龍の岩',{obj:'石の道の先、青龍の岩へ'});

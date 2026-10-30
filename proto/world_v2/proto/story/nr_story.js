@@ -34,7 +34,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   sc(3,'n03_6',FJ,'*',{bg:CH});
   // 第4話 古い子たち(加勢＝町の古い子・年寄りのラッコとアザラシ)
   sc(4,'n04_1',FJ,'*',{bg:CH,tod:'noon'}); sc(4,'n04_2',FJ,'*',{bg:CH,tod:'evening'});
-  bt(4,'n04_b','n04_3',FJ,{bg:CH,foe:()=>cnFoe({n:'ゼロデイの命令で生まれた子たち',zeroday:1,party:P(1050,1049)}),R:{terrain:'snowfield',guests:['partner',1010,1052]}});
+  bt(4,'n04_b','n04_3',FJ,{bg:CH,foe:()=>cnFoe({n:'ヴィクターの命令で生まれた子たち',zeroday:1,party:P(1050,1049)}),R:{terrain:'snowfield',guests:['partner',1010,1052]}});
   sc(4,'n04_4',FJ,'*',{bg:CN,tod:'night'});
   // 第5話 鎖の狼(氷河の洞・フェンガロが加勢)
   sc(5,'n05_1',FJ,'*',{bg:'anime_nr_mount',tod:'morning'}); sc(5,'n05_2',FJ,'*',{bg:'anime_nr_cave'}); sc(5,'n05_3',FJ,'*',{bg:'anime_nr_cave'}); sc(5,'n05_4',FJ,'*',{bg:'anime_nr_cave'});
@@ -89,7 +89,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   bt(15,'n15_b','n15_4',GL,{bg:TE,anc:{id:2069,tier:5,lv:59,flag:'nr_odin_s',tune:{hp:1.77,atk:2.3}},R:{terrain:'ruins',guests:['partner',199,'own2','own3'],fuse:[2020]}});
   sc(15,'n15_5',GL,'*',{bg:TE}); sc(15,'n15_6',GL,'*',{bg:TE});
   sc(16,'n16_1',GL,'*',{bg:TE}); sc(16,'n16_2a',GL,'*',{bg:TE});
-  bt(16,'n16_b','n16_2',GL,{bg:TE,foe:()=>cnFoe({n:'ゼロデイの大人たち',zeroday:1,party:P(1064,1067,1064,1050)}),R:{terrain:'ruins',guests:['partner',199,1037,'own2'],fuse:[2055]}});
+  bt(16,'n16_b','n16_2',GL,{bg:TE,foe:()=>cnFoe({n:'ヴィクターの大人たち',zeroday:1,party:P(1064,1067,1064,1050)}),R:{terrain:'ruins',guests:['partner',199,1037,'own2'],fuse:[2055]}});
   sc(16,'n16_3',GL,'*',{bg:TE}); sc(16,'n16_4',GL,'*',{bg:TE}); sc(16,'n16_5',GL,'*',{bg:TE});
   // 第17話 最後の守り(研究所の門からアークの中心へ・ボット。アラシドラ=リュバーン＋ソヨモモ)
   sc(17,'n17_1',CO,'*',{objAway:'研究所の門から、アークの中心へ',tod:'night'});
@@ -118,7 +118,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   sc(24,'n24_2',GL,'*',{bg:IC}); sc(24,'n24_3a',GL,'*',{bg:IC});
   bt(24,'n24_b','n24_3',GL,{bg:IC,anc:()=>NR_RAGNA({tune:{hp:3.66,atk:5.6,escort:5}}),R:{terrain:'snowfield',size:13,guests:['partner','own2','own3',1025,1013,290],own:[1003],triple:[LOKI_ID]}});
   sc(24,'n24_4',GL,'*',{bg:IC}); sc(24,'n24_5',GL,'*',{bg:IC,post:()=>nrTrio()}); sc(24,'n24_6',GL,'*',{bg:IC});
-  // 第25話 古い電話の先(アドリアンが捕まる・見張り小屋の古い電話・牢の窓)
+  // 第25話 古い電話の先(スペクターが捕まる・見張り小屋の古い電話・牢の窓)
   sc(25,'n25_1',GL,'*',{bg:'anime_nr_core'}); sc(25,'n25_2',GL,'*',{bg:IC,tod:'evening'});
   sc(25,'n25_3',GL,'*',{bg:'anime_nr_hut'}); sc(25,'n25_4',GL,'*',{bg:'anime_nr_hut'});
   sc(25,'n25_5',GL,'*',{bg:IC}); sc(25,'n25_6',GL,'*',{bg:'anime_nr_greece_window'});

@@ -282,7 +282,7 @@ P.applyResult=function(res, ctx){ const rows=[]; const pg=prog(); if(!pg) return
     rows.push(`${nameOf(c.mid)}　EXP +${n}`); if(r.after>r.before){ res.progress.lvup.push(r); rows.push(`<span class="lvup">${nameOf(c.mid)}　Lv${r.before} → Lv${r.after}</span>`);
       const f=formFor(c); const nw=newMovesBetween(f, r.before, r.after); if(nw.length){ const L={uid:c.uid, mid:f, name:nameOf(f), moves:nw.map(x=>x.name)}; (res.progress.learn||(res.progress.learn=[])).push(L); rows.push(`<span class="lvup">新しい技を覚えた　${nameOf(f)}「${L.moves.join('」「')}」</span>`); } } });
   if(res.progress.learn&&res.progress.learn.length) UI.learnNotice(res.progress.learn);
-  if(res.rewards){ if(ctx.zeroday&&ctx.kind!=='wild'){ res.progress.gems=res.rewards.gems; if(res.rewards.gems) P.addGems(res.rewards.gems,'zeroday'); } else res.rewards.gems=0; }   // ジェムはゼロデイ(手下・幹部)を倒した時だけ(G2)
+  if(res.rewards){ if(ctx.zeroday&&ctx.kind!=='wild'){ res.progress.gems=res.rewards.gems; if(res.rewards.gems) P.addGems(res.rewards.gems,'zeroday'); } else res.rewards.gems=0; }   // ジェムはヴィクター(手下・幹部)を倒した時だけ(G2)
   const K=res.caught; if(K&&K.isNew){ if(K.forms&&K.forms.length) rows.push(`<span class="lvup">${formTag(K.forms)}</span>`); if(K.fusion) rows.push(`<span class="lvup">融合の仕方を覚えた：${nameOf(K.fusion)}</span>`);
     const c=K.uid&&P.get(K.uid); if(c) rows.push(`${nameOf(c.mid)}　Lv${c.lv}　${K.inParty?'仲間':'牧場'}`); }
   else if(K&&K.miss&&K.tag) rows.push(K.tag);
@@ -429,7 +429,7 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgOdds .lrn{color:#9fe0ff;font-size:10px}
 #pgToast{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);background:rgba(10,14,30,.92);border:1px solid rgba(255,217,119,.6);color:#ffe9a8;font-weight:800;font-size:15px;padding:10px 18px;border-radius:999px;display:none;pointer-events:none;white-space:nowrap}
 `;
-const REASON={shop:'店',shop_paid:'店(有償)',zeroday:'ゼロデイ',cradle:'生み出す',cradle_paid:'生み出す(有償)',dup:'ダブり',test:'テスト',start:'はじめ'};
+const REASON={shop:'店',shop_paid:'店(有償)',zeroday:'ヴィクター',cradle:'生み出す',cradle_paid:'生み出す(有償)',dup:'ダブり',test:'テスト',start:'はじめ'};
 function reasonJP(r){ if(!r) return ''; if(/^quest:/.test(r)) return 'クエスト'; return REASON[r]||r; }
 function el(tag,cls,html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
 UI.mount=function(o){ o=o||{}; if(R) return R; const st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);

@@ -234,7 +234,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(14,'e14_1',AS,'*',{bg:'anime_eg_dam'});
   sc(14,'e14_2',AS,'石切り場',{obj:'石切り場の下の、砂にうもれた崖へ'});
   sc(14,'e14_3',AS,'*',{bg:'anime_eg_tunnel'});
-  bt(14,'e14_b','e14_4',AS,{bg:'anime_eg_tunnel',foe:()=>cnFoe({n:'ゼロデイの見張りの機械',zeroday:1,party:P(1064,1067)}),R:{terrain:'stream'}});
+  bt(14,'e14_b','e14_4',AS,{bg:'anime_eg_tunnel',foe:()=>cnFoe({n:'ヴィクターの見張りの機械',zeroday:1,party:P(1064,1067)}),R:{terrain:'stream'}});
   sc(14,'e14_5',AS,'*',{bg:'anime_eg_tunnel',tod:'evening'});
   // 第15〜18話 ダムの中(地図は作らず全画面＋仮の相手)
   const DI='anime_eg_dam_in';
@@ -281,7 +281,7 @@ function xMigrate(){ const f=SAVE&&SAVE.flags; if(!f||f.xMig) return; f.xMig=1; 
 
 // ---- 本体と中国のしかけにつなぐ(ここで包む。本体の html は直さない) ----
 function egInit(){ Object.assign(SC,EG_SC,NR_SC,END_SC); xInsert();
-  Object.assign(WHO,{ryo:'父',nadia:'ナディア',mira:'ミラ',joe:'ジョー',liv:'リヴ',bot:'ボット',yuki:'ユキ',haru:'ハル',adrian:'アドリアン',bella:'ベラドンナ'});
+  Object.assign(WHO,{ryo:'父',nadia:'ナディア',mira:'ミラ',joe:'ジョー',liv:'リヴ',bot:'ボット',yuki:'ユキ',haru:'ハル',adrian:'スペクター',bella:'ベラドンナ'});
   for(const k in X_BG) BG_ALIAS[k]=X_BG[k];
   const _grBg=grBg; grBg=function(b){ const a=X_BG[b]; if(a){ if(ST&&ST.bg) ST.bg.style.filter=X_FILT[a[1]]||CN_FILT[a[1]]||''; return a[0]; } return _grBg(b); };
   // 場所に入った時: 物語の地図はどこでも、今の段がここなら流す

@@ -269,13 +269,13 @@ async function ep30Low(){ await storyField('belladonna_win'); }
 
 // 勝負の相手(地図の人を見つける。見つからない時は仮の相手を今の場所に作る)
 const stubFoe=o=>({o, x:HERO.x, z:HERO.z-2, yaw:0, stub:1});
-const BRIDGE19_O={n:'ゼロデイの手下',trainer:1,zeroday:1,rule:'bridge19',flagWin:'bridge',party:[{mid:1007},{mid:1062}]};
+const BRIDGE19_O={n:'ヴィクターの手下',trainer:1,zeroday:1,rule:'bridge19',flagWin:'bridge',party:[{mid:1007},{mid:1062}]};
 const bridgeFoe=()=>NPCS.find(q=>q.o.rule==='bridge19'&&q.o.x===14&&npcShown(q)) || stubFoe(BRIDGE19_O);
-const THEA24_O={n:'ゼロデイの手下',trainer:1,zeroday:1,rule:'thea24',party:[{mid:1063},{mid:1008}]};
+const THEA24_O={n:'ヴィクターの手下',trainer:1,zeroday:1,rule:'thea24',party:[{mid:1063},{mid:1008}]};
 const theaterFoe=()=>NPCS.find(q=>q.o.rule==='thea24') || stubFoe(THEA24_O);
 const ALEK28_O={n:'アレク',trainer:1,rule:'alek28',party:[{mid:1012,rank:11}]};
 const alek28Foe=()=>NPCS.find(q=>q.o.rule==='alek28'&&npcShown(q)) || stubFoe(ALEK28_O);
-const RAID29_O={n:'ゼロデイの本隊',trainer:1,zeroday:1,rule:'raid29',party:[{mid:1063,rank:11},{mid:1008,rank:11},{mid:1066,rank:10}]};
+const RAID29_O={n:'ヴィクターの本隊',trainer:1,zeroday:1,rule:'raid29',party:[{mid:1063,rank:11},{mid:1008,rank:11},{mid:1066,rank:10}]};
 const raid29Foe=()=>stubFoe(RAID29_O);
 
 // ---- 地図が無い間の代わりの流れ(第15話 2章の nafriaStub・第26話 2章の marbleStub) ----
@@ -351,7 +351,7 @@ function grObjText(f){ const beat=k=>Object.keys(f).some(x=>x.startsWith('beat_'
   if(!f.ep11) return '子羊を、羊飼いに返す';
   if(!f.ep12) return '川上の足あとを追って、渓流へ';
   if(!f.ruins13) return '森の奥の遺跡へ';
-  if(!f.zd13) return '遺跡の入口のゼロデイを通りぬける';
+  if(!f.zd13) return '遺跡の入口のヴィクターを通りぬける';
   if(!f.ep13) return '遺跡の奥へ';
   if(!f.guard2) return '遺跡の奥で、守り②に会う';
   if(!f.ep14) return '遺跡の奥へもどる';
@@ -368,7 +368,7 @@ function grObjText(f){ const beat=k=>Object.keys(f).some(x=>x.startsWith('beat_'
   if(!f.ep18) return 'おばあちゃんの家へ';
   if(!f.can19) return '陸の道で、運河の町コリンタへ';
   if(!f.yus19) return '広場の男の子に話しかける';
-  if(!f.bridge) return '運河の大橋のゼロデイを追いはらう';
+  if(!f.bridge) return '運河の大橋のヴィクターを追いはらう';
   if(!f.east20) return 'ユスフと、運河の東岸へ';
   if(!f.mihalis) return '東岸のミハリスと勝負して、古印をもらう';
   if(!f.ep20) return '東岸へもどる';
