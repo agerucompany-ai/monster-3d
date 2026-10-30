@@ -210,8 +210,8 @@
    "lv": 24,
    "tier": 6,
    "tune": {
-    "hp": 11.615,
-    "atk": 2.165
+    "hp": 7.963,
+    "atk": 1.484
    },
    "need": "low30",
    "lose": "godherak_lose",

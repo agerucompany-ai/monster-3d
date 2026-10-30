@@ -680,8 +680,12 @@ function connectedTerr(u, terr){
   while(stack.length){ const [r,c]=stack.pop();
     for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){ const rr=r+dr,cc=c+dc; if(rr<0||cc<0||rr>=NR||cc>=NC)continue;
       const k=rr+','+cc; if(seen.has(k))continue; if(terrIn(terr,state.terrain[rr][cc])){ seen.add(k); stack.push([rr,cc]); } } }
-  return seen;
+  return spreadCap(u, seen);
 }
+// 2026-10-31 オーナー決定: 地形で広がる攻撃は 撃った子から近い順に TACT.spreadMax マスまで(砂漠など荒地ばかりの盤で 盤のほぼ全部に広がっていた)。全部のタイプの広がりに同じ上限
+function spreadCap(u, set){ const N=(typeof TACT!=='undefined'&&TACT.spreadMax)||0; if(!(N>0) || set.size<=N) return set;
+  const a=[...set].map(k=>{ const p=k.split(','); const r=+p[0], c=+p[1], dr=r-u.r, dc=c-u.c; return [k, Math.max(Math.abs(dr),Math.abs(dc)), dr*dr+dc*dc, r, c]; });
+  a.sort((x,y)=>x[1]-y[1]||x[2]-y[2]||x[3]-y[3]||x[4]-y[4]); return new Set(a.slice(0,N).map(x=>x[0])); }
 function connectedSea(u){ return connectedTerr(u,'sea'); }
 // 範囲攻撃で実際に当たる全ユニット（自分以外・敵味方問わず）
 function areaTargets(u){
@@ -5081,11 +5085,12 @@ const TACT={ on:true,
   cost:{sea:2, lava:2},                                   // 入るのに何歩(水・氷・風は海を1歩・炎は溶岩を1歩)
   cover:{terr:['forest','ruins'], x:0.15, minDist:2},     // かげ: 2マス以上はなれた所からの攻撃 −15%(マップの技・合体はかげなし)
   board:{maxShare:0.7},                                   // 1つの地形は盤の70%まで
-  first:{mode:'guard+gauge', turns:1, gauge:{1:50, 2:30, 3:0}, guard:{1:0, 2:0, 3:0.5}, skip:['wild','ancient']},   // 段ごと(BT.startStage): 1段目=闘気50・2段目=闘気30(2026-10-29 進化の2段構えで 闘気でどこでも進化できるので 70→30・40→50。sim_tactics3 A 150試合で先手 53/46/48%)・3段目=最初の相手の手番だけ守り+50%   // 先手と後手(sim_tactics3.js A で決めた 2026-10-28): 後手(相手)の子は闘気40から(3段目から始まる戦いはなし=もとから後手が少し有利)。'noatk'=先手は1ターン目攻撃なし / 'guard'=後手は turns 回目の手番まで守り+guard / 'guard+gauge' / null=なし
+  spreadMax:12,                                           // 2026-10-31 地形で広がる攻撃(雷・水・氷×海/水辺・炎/森×森・闇×瘴気・地×荒地)は 撃った子から近い順に このマス数まで
+  first:{mode:null, turns:1, gauge:{1:0, 2:0, 3:0}, guard:{1:0, 2:0, 3:0}, skip:['wild','ancient']},   // 2026-10-31 オーナー「先手が絶対有利・後手が有利はあり得ない」: 後手を助ける決まり(後手の闘気50/30・3段目の守り+50%)はなくした(前＝mode:'guard+gauge' gauge{1:50,2:30} guard{3:0.5})。'noatk'(先手の1ターン目攻撃なし)も使わない。   // 段ごと(BT.startStage): 1段目=闘気50・2段目=闘気30(2026-10-29 進化の2段構えで 闘気でどこでも進化できるので 70→30・40→50。sim_tactics3 A 150試合で先手 53/46/48%)・3段目=最初の相手の手番だけ守り+50%   // 先手と後手(sim_tactics3.js A で決めた 2026-10-28): 後手(相手)の子は闘気40から(3段目から始まる戦いはなし=もとから後手が少し有利)。'noatk'=先手は1ターン目攻撃なし / 'guard'=後手は turns 回目の手番まで守り+guard / 'guard+gauge' / null=なし
   behind:{share:0.45, gaugeMax:1.8, gaugeK:3.0, healX:1.3, evoHeal:0.45, evoAtk:0.2, evoTurns:2, selfHp:0.5},   // 背水・土壇場進化
   healGauge:10,                                           // 回復の技を使った子の闘気
   combo:{gather:2, power:100, mult2:1.15, mult3:1.35, small:{1:0.2, 2:0.1}, gauge:0, cost:{2:35, 3:25}},   // cost=参加する子それぞれが使う闘気(2体の合体/3体の合体)
-  bal:{光:{atk:0.7,def:0.88}, 水:{atk:1.45,def:1.12}, 氷:{atk:1.45,def:1.12}, 森:{atk:1.28,def:1.06}, 地:{atk:1.25,def:1.05}, 闇:{atk:1.3,def:1.05}, 竜:{atk:1.2,def:1.03}, 炎:{atk:0.95}, 雷:{atk:1.04}, 風:{atk:1.03}},   // タイプごとの {atk, def} の倍率(バランスのつまみ)。2026-10-30 タイプ相性の作り直しのあと sim/study_types.js(タイプだけの隊)で合わせた。2つのタイプの子は 両方を掛ける
+  bal:{光:{atk:1,def:1}, 水:{atk:1.45,def:1.12}, 氷:{atk:1.45,def:1.12}, 森:{atk:1.28,def:1.06}, 地:{atk:1.25,def:1.05}, 闇:{atk:1.3,def:1.05}, 竜:{atk:1.2,def:1.03}, 炎:{atk:0.95}, 雷:{atk:1.04}, 風:{atk:1.03}},   // タイプごとの {atk, def} の倍率(バランスのつまみ)。2026-10-30 タイプ相性の作り直しのあと sim/study_types.js(タイプだけの隊)で合わせた。2つのタイプの子は 両方を掛ける。2026-10-31 オーナー「光 弱すぎちゃう？」: 光は atk0.7/def0.88→1/1(体の数の攻撃×0.92も戻した)
   ai:{formation:10, cover:8, healLeader:0.75, zoneEvo:600},   // zoneEvo=進化のマスに入る点(2026-10-29 進化の2段構え)
   final:{left:8, step:0.35},
   flag:{on:false},   // 2026-10-29 盤 v4: 旗はなくした(旗を取る決まり・旗のアイコン・説明も)。旧   // 古代テリオン(ボス)の戦いは旗なし   // second='center'|'flanks'=後手が最初から持つ旗 / openTurn=このターンから取れる   // 旗(2026-10-28 オーナー「風の売りは機動力・中間地点にいかに早く到達して進化ポイントを上げるか」): 真ん中の行の3本(中央・左右)。乗ると自分の旗・相手が乗ると取られる・手番の始めに旗1本につき味方全員 闘気+gauge
