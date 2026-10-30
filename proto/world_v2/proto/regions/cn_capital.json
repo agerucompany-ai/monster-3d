@@ -184,7 +184,11 @@
     }
    ],
    "todo": "3Dはヤニスの体を仮に使用",
-   "rule": "cn_off:c20"
+   "rule": "cn_off:c20",
+   "ai": {
+    "hpX": 3.742,
+    "atkX": 3.742
+   }
   },
   {
    "n": "レン",
@@ -214,7 +218,11 @@
    "scene": "dimi5",
    "after": "dimi5_win",
    "flagWin": "dimi5",
-   "until": "ep30"
+   "until": "ep30",
+   "ai": {
+    "hpX": 3.742,
+    "atkX": 3.742
+   }
   },
   {
    "n": "ゼロデイの手下",
@@ -236,7 +244,11 @@
    ],
    "zeroday": 1,
    "todo": "手下の絵は未作成(ギリシャの体を仮に使用)",
-   "rule": "cn_off:c20"
+   "rule": "cn_off:c20",
+   "ai": {
+    "hpX": 3.742,
+    "atkX": 3.742
+   }
   },
   {
    "n": "都の人",

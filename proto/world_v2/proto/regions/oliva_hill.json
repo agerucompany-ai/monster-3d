@@ -2605,7 +2605,11 @@
    "zeroday": 1,
    "afterFlag": "patch4",
    "lose": "patch_lose",
-   "until": "patch4"
+   "until": "patch4",
+   "ai": {
+    "hpX": 0.819,
+    "atkX": 0.819
+   }
   },
   {
    "n": "ログ",

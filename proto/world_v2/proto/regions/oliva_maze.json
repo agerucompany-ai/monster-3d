@@ -77,7 +77,11 @@
    "afterFlag": "log9",
    "lose": "log_lose",
    "need": "maze9",
-   "until": "ep9"
+   "until": "ep9",
+   "ai": {
+    "hpX": 0.779,
+    "atkX": 0.779
+   }
   }
  ],
  "entrances": [],
