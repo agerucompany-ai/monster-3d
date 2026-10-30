@@ -269,9 +269,9 @@ async function ep30Low(){ await storyField('belladonna_win'); }
 
 // 勝負の相手(地図の人を見つける。見つからない時は仮の相手を今の場所に作る)
 const stubFoe=o=>({o, x:HERO.x, z:HERO.z-2, yaw:0, stub:1});
-const BRIDGE19_O={n:'ヴィクターの手下',trainer:1,zeroday:1,rule:'bridge19',flagWin:'bridge',party:[{mid:1007},{mid:1062}]};
+const BRIDGE19_O={n:'手下のカテリナ',trainer:1,zeroday:1,rule:'bridge19',flagWin:'bridge',party:[{mid:1007},{mid:1062}]};
 const bridgeFoe=()=>NPCS.find(q=>q.o.rule==='bridge19'&&q.o.x===14&&npcShown(q)) || stubFoe(BRIDGE19_O);
-const THEA24_O={n:'ヴィクターの手下',trainer:1,zeroday:1,rule:'thea24',party:[{mid:1063},{mid:1008}]};
+const THEA24_O={n:'手下のゾイ',trainer:1,zeroday:1,rule:'thea24',party:[{mid:1063},{mid:1008}]};
 const theaterFoe=()=>NPCS.find(q=>q.o.rule==='thea24') || stubFoe(THEA24_O);
 const ALEK28_O={n:'アレク',trainer:1,rule:'alek28',party:[{mid:1012,rank:11}]};
 const alek28Foe=()=>NPCS.find(q=>q.o.rule==='alek28'&&npcShown(q)) || stubFoe(ALEK28_O);

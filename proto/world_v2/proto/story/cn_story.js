@@ -25,7 +25,7 @@ const cnNpc=(name,x)=>NPCS.find(q=>q.o.n===name&&(x==null||q.o.x===x));
 function cnFoe(o,name,x){ const q=name&&cnNpc(name,x);
   if(q&&Math.hypot(q.x-HERO.x,q.z-HERO.z)<16) return {o:Object.assign({},q.o,{party:o.party||q.o.party,n:o.n||q.o.n,scene:undefined,after:undefined,flagWin:undefined,rule:undefined,cnStep:undefined,ai:o.ai||q.o.ai}), x:q.x, z:q.z, g:q.g, rig:q.rig, lbl:q.lbl, yaw:q.yaw};
   return stubFoe(Object.assign({trainer:1},q?{party:q.o.party,zeroday:q.o.zeroday}:{},o)); }
-const ZD='ヴィクターの手下';
+const ZD='手下';
 const P=(...a)=>a.map(x=>typeof x==='number'?{mid:x}:x);
 
 // ---- 段の表 ----
@@ -47,7 +47,7 @@ sc(1,'c01_5',B,'*',{bg:'anime_cn_lab_night'});
 tp(2,'c02_t',B,-47,33,-2.4,{tod:'night'});
 sc(2,'c02_1',B,'*',{tod:'night'});
 sc(2,'c02_2',B,'*',{tod:'night'});
-bt(2,'c02_b','c02_3',B,{foe:()=>cnFoe({n:ZD},ZD,-50),R:{terrain:'castle',guests:['partner','own2',196]}});
+bt(2,'c02_b','c02_3',B,{foe:()=>cnFoe({n:'手下のシャオユー'},'手下のシャオユー',-50),R:{terrain:'castle',guests:['partner','own2',196]}});
 sc(2,'c02_4',B,'*',{bg:'anime_cn_river_night'});
 // 第3話 竹の森の村
 sc(3,'c03_1',B,'*',{bg:'anime_cn_river_morning',tod:'morning'});
@@ -72,7 +72,7 @@ sc(5,'c05_4',BA,'*',{bg:'anime_cn_bamboo_dawn'});
 sc(6,'c06_1',BA,'*',{bg:'anime_cn_bamboo_dawn'});
 go(6,'c06_g',BA,PL,'from_bamboo',{tod:'morning'});
 sc(6,'c06_2',PL);
-bt(6,'c06_b','c06_3',PL,{foe:()=>cnFoe({n:ZD,zeroday:1,party:P(49,1059)}),R:{terrain:'pasture',guests:['partner','own2',1022]}});
+bt(6,'c06_b','c06_3',PL,{foe:()=>cnFoe({n:'手下のシュン',zeroday:1,party:P(49,1059)}),R:{terrain:'pasture',guests:['partner','own2',1022]}});
 sc(6,'c06_4',PL);
 sc(6,'c06_5',PL,'白虎の岩',{obj:'白虎の岩へ',tod:'evening'});
 // 第7話 白虎の岩(ボルケンと並んで、ヴィクターの追っ手と)
@@ -92,12 +92,12 @@ sc(8,'c08_5',B,'*',{bg:'anime_cn_station'});
 go(9,'c09_g',B,FO,'from_plateau');
 sc(9,'c09_1',FO);
 sc(9,'c09_2',FO,'火の山の坂',{obj:'火の山の坂へ'});
-bt(9,'c09_b','c09_3',FO,{foe:()=>cnFoe({n:ZD,party:P(1045,1060)},ZD,-32),R:{terrain:'volcanic'}});
+bt(9,'c09_b','c09_3',FO,{foe:()=>cnFoe({n:'手下のユエ',party:P(1045,1060)},'手下のユエ',-32),R:{terrain:'volcanic'}});
 sc(9,'c09_4',FO,'*',{bg:'anime_cn_crater'});
 // 第10話 南の峰(夜明け前・朱雀は勝負の相手ではない)
 sc(10,'c10_1',KA,['峰の小道','月の峰'],{obj:'月の峰へ',objAway:'谷の東の道から、南の山へ',tod:'dawn'});
 sc(10,'c10_2',KA,'月の峰',{obj:'月の峰へ'});
-bt(10,'c10_b','c10_3',KA,{foe:()=>cnFoe({n:ZD,zeroday:1,party:P(1039,1060)}),R:{terrain:'rocky'}});
+bt(10,'c10_b','c10_3',KA,{foe:()=>cnFoe({n:'手下のチャオ',zeroday:1,party:P(1039,1060)}),R:{terrain:'rocky'}});
 sc(10,'c10_4',KA); sc(10,'c10_5',KA);
 sc(10,'c10_6',KA,'*',{post:()=>flag('guard_s')});
 // 第11話 追っ手のレン(逃げる盤の代わりにふつうの勝負。レンは強い)
@@ -108,23 +108,23 @@ bt(11,'c11_b','c11_3',KA,{foe:()=>cnFoe({n:'レン',party:P({mid:1034,lv:25},{mi
 sc(11,'c11_4',KA,'リニアの駅',{obj:'北の駅(リニアの駅)へ'});
 // 第12〜14話 列車(地図は作らず、全画面の場面と仮の相手。勝負の前後も全画面)
 sc(12,'c12_1',KA,'*',{bg:'anime_cn_train'}); sc(12,'c12_2',KA,'*',{bg:'anime_cn_train'}); sc(12,'c12_3',KA,'*',{bg:'anime_cn_train'}); sc(12,'c12_4',KA,'*',{bg:'anime_cn_train'});
-bt(12,'c12_b','c12_5',KA,{bg:'anime_cn_train',foe:()=>cnFoe({n:ZD,zeroday:1,party:P(1059,1039)}),R:{terrain:'ruins',size:7}});
+bt(12,'c12_b','c12_5',KA,{bg:'anime_cn_train',foe:()=>cnFoe({n:'手下のウェン',zeroday:1,party:P(1059,1039)}),R:{terrain:'ruins',size:7}});
 sc(12,'c12_6',KA,'*',{bg:'anime_cn_train'});
 sc(13,'c13_1',KA,'*',{bg:'anime_cn_train_roof'});
 bt(13,'c13_b','c13_2',KA,{bg:'anime_cn_train_roof',foe:()=>cnFoe({n:'レン',party:P({mid:1069,lv:28,fixed:true})}),R:{terrain:'rocky',size:7,ai:{hpX:1.8,atkX:1.5}}});
 sc(13,'c13_3',KA,'*',{bg:'anime_cn_train_roof'});
 sc(14,'c14_1',KA,'*',{bg:'anime_cn_field'}); sc(14,'c14_2',KA,'*',{bg:'anime_cn_field'}); sc(14,'c14_3',KA,'*',{bg:'anime_cn_field'}); sc(14,'c14_4',KA,'*',{bg:'anime_cn_field'});
-bt(14,'c14_b','c14_5',KA,{bg:'anime_cn_field',foe:()=>cnFoe({n:ZD,zeroday:1,party:P(49,1059)}),R:{terrain:'meadow',guests:[1012,71,'own2']}});
+bt(14,'c14_b','c14_5',KA,{bg:'anime_cn_field',foe:()=>cnFoe({n:'手下のジエ',zeroday:1,party:P(49,1059)}),R:{terrain:'meadow',guests:[1012,71,'own2']}});
 sc(14,'c14_6',KA,'*',{bg:'anime_cn_field'});
 // 第15話 凍った大河(線路のそばで目ざめ→北の大河へ歩く)
 sc(15,'c15_1',KA,'*',{bg:'anime_cn_field'});
 go(15,'c15_g',KA,GO,'from_pillars',{tod:'noon'});
 sc(15,'c15_2',GO);
 sc(15,'c15_3',GO,'大河の岸',{obj:'大河の岸へ',bg:'anime_cn_frozen'});
-bt(15,'c15_b','c15_4',GO,{bg:'anime_cn_frozen',foe:()=>cnFoe({n:ZD,zeroday:1,party:P(1014,1060)}),R:{terrain:'snowfield'}});
+bt(15,'c15_b','c15_4',GO,{bg:'anime_cn_frozen',foe:()=>cnFoe({n:'手下のボー',zeroday:1,party:P(1014,1060)}),R:{terrain:'snowfield'}});
 // 第16話 氷の下の玄武(玄武とは戦わず、守りながら渡る)
 sc(16,'c16_1',GO,'*',{bg:'anime_cn_frozen'}); sc(16,'c16_2',GO,'*',{bg:'anime_cn_frozen'});
-bt(16,'c16_b','c16_3',GO,{bg:'anime_cn_frozen',foe:()=>cnFoe({n:ZD,zeroday:1,party:P(1014,1059)}),R:{terrain:'stream'}});
+bt(16,'c16_b','c16_3',GO,{bg:'anime_cn_frozen',foe:()=>cnFoe({n:'手下のボー',zeroday:1,party:P(1014,1059)}),R:{terrain:'stream'}});
 sc(16,'c16_4',GO,'*',{bg:'anime_cn_frozen'}); sc(16,'c16_5',GO,'*',{bg:'anime_cn_river_dusk'});
 sc(16,'c16_6',GO,'*',{bg:'anime_cn_wall',post:()=>flag('guard_n')});
 // 第17話 古い都の門(2026-10-28 唐獅子の記憶の問い c17_2a/c17_q/c17_2b はオーナー判断で削除=白虎と被る。門の外の麒麟ジョウキリンは寄り道の古代テリオン)
@@ -149,18 +149,18 @@ sc(20,'c20_4',CA,'*',{bg:'anime_cn_wall'});
 // 第21話 雪の高原
 sc(21,'c21_1',KU,'*',{bg:'anime_cn_gate',objAway:'都の北門から、雪の高原へ'});
 sc(21,'c21_2',KU);
-bt(21,'c21_b','c21_3',KU,{foe:()=>cnFoe({n:ZD,zeroday:1,party:P(1046,1060)}),R:{terrain:'snowfield'}});
+bt(21,'c21_b','c21_3',KU,{foe:()=>cnFoe({n:'手下のチー',zeroday:1,party:P(1046,1060)}),R:{terrain:'snowfield'}});
 sc(21,'c21_4',KU); sc(21,'c21_5',KU,'*',{bg:'anime_cn_cave'});
 // 第22話 吹雪の穴
 sc(22,'c22_1',KU,'*',{bg:'anime_cn_cave'}); sc(22,'c22_2',KU,'*',{bg:'anime_cn_cave'});
 tp(22,'c22_t',KU,40,-52,0.6);
 sc(22,'c22_3',KU);
-bt(22,'c22_b','c22_4',KU,{foe:()=>cnFoe({n:ZD,zeroday:1,party:P(1045,1060,1039)}),R:{terrain:'snowfield',guests:['partner','own2',1047]}});
+bt(22,'c22_b','c22_4',KU,{foe:()=>cnFoe({n:'手下のチー',zeroday:1,party:P(1045,1060,1039)}),R:{terrain:'snowfield',guests:['partner','own2',1047]}});
 sc(22,'c22_5',KU,'*',{bg:'anime_cn_snow'});
 // 第23話 東の海辺(空の船で東の海へ)
 sc(23,'c23_1',SE,'*',{objAway:'空の船乗り場から、東の海へ'});
 sc(23,'c23_2',SE);
-bt(23,'c23_b','c23_3',SE,{foe:()=>cnFoe({n:ZD,zeroday:1,party:P(1014,1059)}),R:{terrain:'seaside',guests:['partner','own2',1022]}});
+bt(23,'c23_b','c23_3',SE,{foe:()=>cnFoe({n:'手下のペイ',zeroday:1,party:P(1014,1059)}),R:{terrain:'seaside',guests:['partner','own2',1022]}});
 sc(23,'c23_4',SE);
 // 第24話 東の島の祠(漁師の船で島へ)
 go(24,'c24_g',SE,TH,'from_sea');
