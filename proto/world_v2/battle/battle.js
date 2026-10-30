@@ -75,9 +75,10 @@ const TYPE_COL = {炎:'#e8503a',水:'#2f86c5',地:'#9c7a3c',風:'#4fa86a',雷:'#
 const TYPE_HEX = {炎:0xe8503a,水:0x2f86c5,地:0x9c7a3c,風:0x4fa86a,雷:0xd6a915,闇:0x6a4a8c,氷:0x5cc8e0,光:0xf3d65a,竜:0xb15ad6,森:0x5cbf3a};
 // 相性: 攻撃側タイプ -> 弱点を突ける相手タイプ (+20%)
 //  竜<氷<炎 / 闇<光 / 土<森・水<森・森<炎 / 闇は何にも強くない(代わりに毒)
-const STRONG = {水:['炎'], 雷:['水','風'], 地:['雷'], 風:['森'], 炎:['氷','森'], 闇:[], 氷:['竜'], 光:['闇'], 森:['地','水'], 竜:[]};
+//  2026-10-30 オーナー: 水→地 を足した・風→森 をなくした。光によく効くタイプはない
+const STRONG = {水:['炎','地'], 雷:['水','風'], 地:['雷'], 風:[], 炎:['氷','森'], 闇:[], 氷:['竜'], 光:['闇'], 森:['地','水'], 竜:[]};
 // 苦手: 攻撃側タイプ -> ダメージが通りにくい相手タイプ (-20%)
-const WEAK = {雷:['地'], 氷:['炎'], 竜:['氷']};   // 雷→土は吸収 / 逆鎖(氷→炎・竜→氷)は通りにくい
+const WEAK = {雷:['地','森'], 氷:['炎'], 地:['風'], 森:['炎']};   // 雷→地は吸収 / 氷→炎は通りにくい(2026-10-30 オーナー: 竜→氷 をなくし 雷→森・地→風・森→炎 を足した)
 
 // --- 複属性ヘルパ（異種融合は type2 を持ち、両タイプの相性・地形適性を受ける） ---
 function monTypes(m){ return m.type2 ? [m.type, m.type2] : [m.type]; }
@@ -108,12 +109,12 @@ const TERR_HEX = {plain:0x83c258, forest:0x2c6a3a, wasteland:0xc39a57, sea:0x265
 //   up=得意(攻撃+TERR_X) / dn=苦手(攻撃−TERR_X) / fx=とくちょう(その地形に立っている時だけ): evade=よけ+ / guard=受けるダメージ− / mob=移動+ / range=その地形で射程+1(技のタイプ) / heal=回復の技×
 const TYPE_TERR = {
   炎:{up:['forest','lava'],     dn:['water','sea'], fx:{range:['forest']},           tx:'森で 射程+1・燃え広がる'},
-  水:{up:['water','sea'],       dn:['wasteland'],   fx:{mob:['water','sea'], range:['sea']}, tx:'水の上で 移動+1・海で 射程+1'},
-  森:{up:['forest','water'],    dn:['wasteland'],   fx:{evade:['forest'], range:['forest']}, tx:'森で よけやすい・射程+1'},
-  雷:{up:['sea','ruins'],       dn:['forest'],      fx:{range:['ruins']},            tx:'海で 通電・遺跡で 射程+1'},
+  水:{up:['water','sea'],       dn:['wasteland'],   fx:{mob:['water','sea'], range:['sea']}, tx:'水の上で 移動+1・海で 射程+1・海と水辺に 波'},
+  森:{up:['forest','water'],    dn:['wasteland'],   fx:{evade:['forest'], range:['forest']}, tx:'森で よけやすい・射程+1・森に つる'},
+  雷:{up:['sea','ruins'],       dn:['forest'],      fx:{range:['ruins']},            tx:'海・水辺で 通電・遺跡で 射程+1'},
   風:{up:['plain'],             dn:['ruins'],       fx:{mob:['plain']},              tx:'平原で 移動+1'},
-  地:{up:['wasteland','ruins'], dn:['sea'],         fx:{guard:['wasteland','ruins']}, tx:'荒地・遺跡で 受けるダメージ−20%'},
-  氷:{up:['snow','sea'],        dn:['lava'],        fx:{range:['sea']},              tx:'海で 射程+1'},
+  地:{up:['wasteland','ruins'], dn:['sea'],         fx:{guard:['wasteland','ruins']}, tx:'荒地・遺跡で 受けるダメージ−20%・荒地に 地割れ'},
+  氷:{up:['snow','sea'],        dn:['lava'],        fx:{range:['sea']},              tx:'海で 射程+1・海と水辺を 凍らせる'},
   光:{up:['ruins','snow'],      dn:['gloom'],       fx:{heal:['ruins']},             tx:'遺跡で 回復の技+50%'},
   闇:{up:['gloom','ruins'],     dn:['plain'],       fx:{evade:['ruins','gloom'], range:['gloom']}, tx:'遺跡・瘴気で よけやすい'},
   竜:{up:['wasteland','lava'],  dn:['snow'],        fx:{},                           tx:'荒地・溶岩で 攻撃+30%'},
@@ -244,7 +245,13 @@ function terrRangeUp(u, ty){ const f=TYPE_TERR[ty]&&TYPE_TERR[ty].fx.range; if(!
 function terrRangeUpMv(u, mv){ for(const t of mvTypes(mv)) if(terrRangeUp(u,t)) return 1; return 0; }   // 2つのタイプの技は どれかで+1
 function moveRange(u, mv){ let a=mv.range[0], b=mv.range[1]; if(isOffense(mv) && mv.target!=='map') b+=terrRangeUpMv(u, mv); if(isOffense(mv) && (u.freeze>0||u.para>0)) b=Math.min(b,1); return [a,b]; }
 // 地形の範囲(雷×海の通電・炎×森の延焼・闇×瘴気)は技のタイプで(攻撃の技だけ・2つのタイプの技は どれかで)
-function areaTerrOf(u, mv){ for(const t of mvTypes(mv)){ if(t==='雷'&&nearTerrain(u,'sea')) return 'sea'; if(t==='炎'&&nearTerrain(u,'forest')) return 'forest'; if(t==='闇'&&nearTerrain(u,'gloom')) return 'gloom'; } return null; }
+// 2026-10-30 オーナー: 森×森(つる)・水×海/水辺(波)・雷×水辺(海と同じく電気)・氷×海/水辺(水が凍る=こおりの判定)・地×荒地(地割れ) を足した。'wet'=海と水辺のひと続き
+const SPREAD_T = {雷:'wet', 炎:'forest', 闇:'gloom', 森:'forest', 水:'wet', 氷:'wet', 地:'wasteland'};
+const TERR_GRP = {wet:['sea','water']};
+function terrIn(k, t){ const g=TERR_GRP[k]; return g ? g.includes(t) : t===k; }
+function nearTerrK(u, k){ const g=TERR_GRP[k]; if(!g) return nearTerrain(u,k); return g.some(t=>nearTerrain(u,t)); }
+function areaTyOf(u, mv){ for(const t of mvTypes(mv)){ const k=SPREAD_T[t]; if(k && nearTerrK(u,k)) return t; } return null; }
+function areaTerrOf(u, mv){ const t=areaTyOf(u, mv); return t?SPREAD_T[t]:null; }
 function isAreaTerrainMv(u, mv){ if(!mv || mv.category!=='attack' || mv.target==='map') return false; return !!areaTerrOf(u, mv); }
 function terrAreaSet(u, mv){ return connectedTerr(u, areaTerrOf(u, mv)||'gloom'); }
 function attackTargetsV2(u, mv){
@@ -313,7 +320,7 @@ const TYPE_TRAIT = {
   氷:'攻撃が当たると凍結を付与（移動・射程が最小化／火山では凍らない）。海で射程+1。雪原で地形+20%',
   光:'回復・状態異常治癒の補助役（攻撃の代わりに味方を癒やす）',
   竜:'高ステータスの最上位種。溶岩で地形+20%・凍りにくい',
-  森:'攻撃力低めだが、攻撃で与ダメの50%を自己回復（吸収）＋毒を付与。森に隣接/上で範囲+1。地・水に強い（風と炎には弱い）',
+  森:'攻撃力低めだが、攻撃で与ダメの50%を自己回復（吸収）＋毒を付与。森に隣接/上で範囲+1。地・水に強い（炎には弱い）',
 };
 // 技ごとに射程・複数対象・威力倍率を計算
 function moveInfo(u, tier){
@@ -669,10 +676,10 @@ function isAreaTerrain(u){ const m=mon(u);
 function connectedTerr(u, terr){
   const seen=new Set(), stack=[];
   for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){ const r=u.r+dr,c=u.c+dc;
-    if(r<0||c<0||r>=NR||c>=NC)continue; if(state.terrain[r][c]===terr){ const k=r+','+c; if(!seen.has(k)){seen.add(k);stack.push([r,c]);} } }
+    if(r<0||c<0||r>=NR||c>=NC)continue; if(terrIn(terr,state.terrain[r][c])){ const k=r+','+c; if(!seen.has(k)){seen.add(k);stack.push([r,c]);} } }
   while(stack.length){ const [r,c]=stack.pop();
     for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){ const rr=r+dr,cc=c+dc; if(rr<0||cc<0||rr>=NR||cc>=NC)continue;
-      const k=rr+','+cc; if(seen.has(k))continue; if(state.terrain[rr][cc]===terr){ seen.add(k); stack.push([rr,cc]); } } }
+      const k=rr+','+cc; if(seen.has(k))continue; if(terrIn(terr,state.terrain[rr][cc])){ seen.add(k); stack.push([rr,cc]); } } }
   return seen;
 }
 function connectedSea(u){ return connectedTerr(u,'sea'); }
@@ -873,6 +880,7 @@ function inflictStatusV2(att, t, mv){
   for(const ail of ails){   // 2つのタイプの技は それぞれのタイプの状態異常を1つずつ(別々に)
     if(ail==='para' && uHasType(t,'地')) continue; if(ail==='freeze' && (mapType==='volcano'||uHasType(t,'炎'))) continue; if(ail==='poison' && uHasType(t,'闇')) continue; if(ail==='burn' && uHasType(t,'水')) continue;
     if(Math.random()<ch){ t[ail]=Math.max(t[ail]||0, AIL_TURNS[ail]); floatText(t.r,t.c,AIL_ICON[ail]+AIL_LABEL[ail],'#e0b0ff'); statusFx(t.r,t.c,ail); } } }
+function freezeRoll(att, t){ if(!state.units[t.uid] || t.hp<=0 || mapType==='volcano' || uHasType(t,'炎')) return; if(Math.random()<procChance(mon(att).level)){ t.freeze=Math.max(t.freeze||0, AIL_TURNS.freeze); floatText(t.r,t.c,AIL_ICON.freeze+AIL_LABEL.freeze,'#e0b0ff'); statusFx(t.r,t.c,'freeze'); } }   // 2026-10-30 氷×海・水辺: 水が凍る
 function knockBack(att, t, n){ if(!n || !state.units[t.uid] || t.hp<=0 || t.anc) return; const dr=Math.sign(t.r-att.r), dc=Math.sign(t.c-att.c); const r=t.r+dr, c=t.c+dc;
   if(r<0||c<0||r>=NR||c>=NC||unitAt(r,c)) return; state.board[t.r][t.c]=null; t.r=r; t.c=c; state.board[r][c]=t.uid; floatText(r,c,'おしだし','#cfe0ff'); }
 function hitOne(att, t, mv, area, sure){   // 1体に当てる。戻り値 {dmg, miss, crit, kill}
@@ -894,7 +902,8 @@ function doAttackV2(att, def, mv){
   if(!mv || !moveUsable(att,mv)){ if(att.owner===0) toast('その技は使えない'); return; }
   if(mv.target==='map') return doMapAttack(att, mv, null);
   const m=mon(att); const terr=isAreaTerrainMv(att,mv); let targets;
-  if(terr){ const set=terrAreaSet(att,mv); targets=Object.values(state.units).filter(x=>x.uid!==att.uid && set.has(x.r+','+x.c)); }
+  const spTy=terr?areaTyOf(att,mv):null;
+  if(terr){ const set=terrAreaSet(att,mv); targets=Object.values(state.units).filter(x=>x.uid!==att.uid && set.has(x.r+','+x.c)); if(!BT.headless) _fxSpread={ty:spTy, cells:[...set].map(k=>k.split(',').map(Number))}; }
   else if(mv.target==='area') targets=attackTargetsV2(att,mv);
   else targets=def?[def]:[];
   if(def && !targets.includes(def)) targets.push(def);
@@ -905,7 +914,7 @@ function doAttackV2(att, def, mv){
   let dealt=0, hitN=0, first=null;
   for(const t of targets){ if(!state.units[t.uid] || t.uid===att.uid || t.dug>0) continue;
     const r=hitOne(att, t, mv, mv.target==='area'||terr, false);
-    if(r.miss) continue; if(r.isFoe){ dealt+=r.dmg; hitN++; if(!first) first={t, r}; } }
+    if(r.miss) continue; if(r.isFoe){ dealt+=r.dmg; hitN++; if(!first) first={t, r}; if(spTy==='氷' && !mvAils(mv).includes('freeze')) freezeRoll(att, t); } }
   if(att.buf && att.buf.charge && mv.power>0) delete att.buf.charge;   // ためた攻撃は1回で消える
   if(hitN) addGauge(att, (first&&first.r.adv)?GAUGE_HIT_WEAK:GAUGE_HIT);
   if(mvHas(mv,'炎')) cureBurnByFire(att, targets);
@@ -1493,7 +1502,7 @@ function aiPlanAt(u, moved, noRand){ const opts=[];
     if(mv.target==='map'){ const b=aiMapBest(u,mv); if(b && b.sc>40) opts.push({sc:b.sc*0.9-costPen(u,mv), mv, aim:b.aim}); continue; }
     const tg=attackTargetsV2(u,mv); if(!tg.length) continue; const terr=isAreaTerrainMv(u,mv);
     if(mv.target==='area' || terr){ let tot=0, bt=null, bs=-1e9; const hits=terr?(()=>{ const set=terrAreaSet(u,mv); return Object.values(state.units).filter(x=>x.uid!==u.uid && set.has(x.r+','+x.c)); })():tg;
-      for(const e of hits){ if(e.owner===u.owner){ const d=calcDamage(u,e,mv)*(mv.ff||V2.FF); tot-=d*0.8+(d>=e.hp?900:0); continue; } const s=aiScoreTarget(u,e,mv,true); tot+=s; if(s>bs){ bs=s; bt=e; } }
+      for(const e of hits){ if(e.owner===u.owner){ const d=calcDamage(u,e,mv)*(mv.ff||V2.FF); tot-=d*(terr?1.5:0.8)+(terr?40:0)+(d>=e.hp?900:0)+(terr&&e.leader?150:0); continue; } /* 2026-10-30: 地形で広がる攻撃は 味方を巻きこむのを もっといやがる */ const s=aiScoreTarget(u,e,mv,true); tot+=s; if(s>bs){ bs=s; bt=e; } }
       if(!bt) bt=tg[0]; const extra=Math.max(0,tot-bs)*0.6; opts.push({sc:bs+extra-costPen(u,mv), mv, t:bt}); continue; }
     for(const e of tg) opts.push({sc:aiScoreTarget(u,e,mv,false)-costPen(u,mv), mv, t:e}); }
   if(!opts.length) return null; opts.sort((a,b)=>b.sc-a.sc);
@@ -1512,6 +1521,28 @@ function aiSupportV2(u){ if(!V2.ai.support || u.acted || u.dug>0) return false; 
     if(w.length){ const all=hl.find(mv=>mv.target==='ally_all'), one=hl.find(mv=>mv.target!=='ally_all'); const pick=(w.length>=2&&all)?all:(one||all); if(pick) return doSupport(u,pick); } }
   const cu=ms.find(mv=>mv.category==='cure'); if(cu && supportTargets(u,cu).some(a=>a.freeze>0||a.para>0||a.hp<a.maxhp*0.7)) return doSupport(u,cu);
   return false; }
+// 2026-10-30 オーナー「CPU も潜る手を使う」: 潜る技(effect.dig・グランドダイブ)を使う場面。潜っている間は攻撃されない・攻撃できない(今の決まりのまま)
+//   1) にげる: 体力が減って(半分未満)、どこへ動いても相手の攻撃で大きく削られる(体力の9割以上)時
+//   2) 進化のマス・相手の陣へ: この手番では届かず 2手番(潜って動く+次も地中)で届く・道の途中が危ない(体力の4割以上)時
+//   3) 古代テリオンの大技の赤いマスから出られない時
+//   今の手で相手を倒せる時は潜らない。1戦に TACT.ai.digMax 回まで
+function aiDigV2(u){ if(u.anc || u.dug>0 || u.acted || u.moved || state.phase==='end') return false;
+  const mv=movesV2(u).find(m=>m.effect&&m.effect.dig); if(!mv || !supportReady(u,mv)) return false;
+  if((u.digN||0)>=(TACT.ai.digMax!=null?TACT.ai.digMax:2)) return false;
+  const me=u.owner, foes=alive(1-me).filter(e=>!(e.dug>0)); if(!foes.length) return false;
+  if(alive(me).length<=1) return false;   // 最後の1体は潜らない(時間切れにしない)
+  const pl=aiPlanAt(u,false,true); if(pl && pl.t && pl.t.owner!==me && calcDamage(u,pl.t,pl.mv)>=pl.t.hp) return false;
+  const fd=foes.map(e=>{ let best=0, mapD=0; for(const m of movesV2(e)){ if(!isOffense(m) || usesLeft(e,m)<1) continue; const d=calcDamage(e,u,m); if(m.target==='map') mapD=Math.max(mapD,d); else best=Math.max(best,d); } return {e, d:best, mapD, reach:effMove(e)+effRange(e)}; });
+  const inc=(r,c)=>{ let t=0; for(const f of fd){ const dd=Math.abs(f.e.r-r)+Math.abs(f.e.c-c); let x=dd<=f.reach?f.d:0; if(f.mapD>x) x=f.mapD; t+=x; } return t; };
+  const cells=[[u.r,u.c]].concat(moveTargets(u).move);
+  const hpR=u.hp/u.maxhp; let why=null;
+  if(hpR<0.5){ let safe=1e9; for(const [r,c] of cells) safe=Math.min(safe, inc(r,c)); if(safe>=u.hp*0.9) why='flee'; }
+  if(!why && aiZoneGo(u)){ const zc=evoZoneCells(u).filter(([r,c])=>{ const o=unitAt(r,c); return !o||o.uid===u.uid; }); const M=effMove(u);
+    let bd=1e9, bz=null; for(const [r,c] of zc){ const d=Math.abs(r-u.r)+Math.abs(c-u.c); if(d<bd){ bd=d; bz=[r,c]; } }
+    if(bz && bd>M && bd<=M*2){ let bc=null, bcd=1e9; for(const [r,c] of cells){ const d=Math.abs(r-bz[0])+Math.abs(c-bz[1]); if(d<bcd){ bcd=d; bc=[r,c]; } } if(bc && inc(bc[0],bc[1])>=u.hp*0.4) why='zone'; } }
+  if(!why && me===0 && BT.anc && BT.anc.charge && BT.anc.charge.set.has(u.r+','+u.c)){ const b=ancUnit(); if(b && ancBigDmg(b,u)>=u.hp*0.6 && cells.every(([r,c])=>BT.anc.charge.set.has(r+','+c))) why='big'; }
+  if(!why) return false;
+  u.digN=(u.digN||0)+1; u.digWhy=why; return doSupport(u,mv); }
 function aiStrike(u){ if(V2ON()) return aiStrikeV2(u); if(!state.units[u.uid] || !canAttack(u)) return false; const t=attackTargets(u); if(!t.length) return false; doAttack(u, aiPickTarget(u,t)); return true; }
 function aiFusePartner(u){ if(mon(u).level<2 || mon(u).role==='fusion') return null; let best=null;
   const pairOK=campFusionOK() && fuseWindow(u.owner); if(!pairOK && !BT.tripleOn) return null;
@@ -1561,6 +1592,7 @@ function aiBestMove(u){
     sc+=terrBonusM(mon(u), terrAt(r,c))*120;
     if(T3()){ if(TACT.cover.terr.includes(terrAt(r,c))) sc+=TACT.ai.cover*(u.leader?2:1); sc+=aiFormationScore(u,r,c); }   // 戦術v3: かげ・合体の陣形
     const th=threat(r,c)*(idle?Math.max(0.25,1-idle*0.25):1);
+    if(u.dug>0 && u.digWhy==='flee') sc-=th*0.4;   // 2026-10-30: にげるために潜った子は 浮かぶ所も相手から離れる
     const push = u.leader && !u.anc && (bossHoldOn(u) ? bossAdv : shPush(me));   // 人の3段目: 押している/長引いたらリーダーも前へ(STAGE_HUMAN.push)。2026-10-30 相手のリーダーは bossAdvance(手下が減った・近づかれた・長引いた)
     sc-=th*(u.anc?0.15:(u.leader?(lone?(me===0?0.7:0.2):(push?(hpR<0.35?0.6:0.25):(hpR<0.6?1.1:0.7))):(hpR<0.35?0.35:0.08)));   // 1体だけ: 自軍は相手の射程の外で待てる時は待つ(先手を取る)・敵(野生)は気にせず詰める。古代テリオンは恐れない
     if(u.leader && !u.anc && !push && mode!=='evo' && alive(me).length>1){ const back=START_ROWS[me][0]; sc-=Math.max(0, (me===0?(back-r):(r-back))-2)*70; }
@@ -1587,6 +1619,7 @@ function aiOneUnit(u){
   if(fz){ moveUnit(u,fz[0],fz[1]); const nu=unitAt(fz[0],fz[1]); if(nu && nu.owner===me && state.phase!=='end') aiStrike(nu); return; }
   // 光タイプ：手負いの味方がいれば回復、状態異常の味方がいれば浄化を優先
   if(V2ON()){ if(aiSupportV2(u)) return; }   // 技 v2: 回復・浄化・蘇生の技
+  if(V2ON()) aiDigV2(u);   // 2026-10-30 オーナー: CPU も地に潜る(潜っても行動は終わらない=このあと地中を動く)
   else if(uHasType(u,'光') && canAttack(u)){
     const wounded=healTargets(u).filter(a=>a.hp<a.maxhp*0.55);
     const afflicted=healTargets(u).filter(hasAnyStatus);
@@ -3719,6 +3752,14 @@ const HIT_FX={
   竜:(r,c,w,k)=>{ fxShock(r,c,0xf0c0ff,{max:2.8*k,dur:380}); fxShock(r,c,0xff80c0,{max:1.8*k,dur:300}); fxP({x:w.x,y:w.y+0.2,z:w.z,n:10,kind:'shard',color:0xb050e0,color2:0xff70c0,size:0.18,sizeEnd:0.2,life:600,grav:2,vel:radial(3.0,1.4,1),spin:6,add:false}); fxRing(r,c,0xd8a0ff,{max:3.2,dur:520,y:0.05}); addShake(0.08); },   // 衝撃波
 };
 // hitImpact: FX2 版(下の FX2 の節)に移した
+let _fxSpread=null;   // 2026-10-30 地形で広がる攻撃: 広がったマス(doAttackV2 が入れて attackFx が使う・見た目だけ)
+function spreadFx(sp0, ar, ac, cells, a, useT, sp){ const ty=sp0.ty, T=useT?(TFX_T[ty]||null):null; const has={}; for(const x of cells) has[x.r+','+x.c]=1;
+  const list=sp0.cells.slice().sort((p,q)=>Math.max(Math.abs(p[0]-ar),Math.abs(p[1]-ac))-Math.max(Math.abs(q[0]-ar),Math.abs(q[1]-ac))).slice(0, IS_MOBILE?24:40);
+  try{ cellGlow3(list.map(([r,c])=>({r,c})), TYPE_HEX[ty]||0xffffff, 1300); }catch(e){}
+  const cap=TFX.shotCap*TFX.q*0.35/Math.max(1,list.length);
+  list.forEach(([r,c])=>{ if(has[r+','+c]) return; const d=Math.max(Math.abs(r-ar),Math.abs(c-ac)); const dl=120+d*85;
+    if(T){ const w=cell2world(r,c); tfxAt(dl, ()=>{ _tfxLite=TFX.q<0.6; try{ T.hit({x:w.x, y:cellH(r,c), z:w.z}, a*0.4, {left:cap+12}, {small:true}); } finally{ _tfxLite=false; } }); }
+    else setTimeout(()=>fxTerrain(r,c,0.7), dl/sp); }); }
 function attackFx(att, targets, def, move){ if(BT.headless) return;
   const m=mon(att), ty=(move&&move.type)||m.type, cf=ATK_FX[ty]||ATK_FX['炎'];   // 技 v2: 色と当たりは技のタイプ
   const tys=(move&&move.power!=null)?mvTypes(move):[]; const tyFx=tys.length>1?tys.join('+'):ty;   // 2026-10-30: 2つのタイプの技は 2つの演出を混ぜる
@@ -3729,7 +3770,7 @@ function attackFx(att, targets, def, move){ if(BT.headless) return;
   const adv = !!(def && def.mid!=null && (vt?mvBonusT(move,mon(def)):typeBonusM(m, mon(def)))>0), res=!!(def && def.mid!=null && (vt?mvPenaltyT(move,mon(def)):typePenaltyM(m, mon(def)))<0);
   const ar=att.r, ac=att.c, auid=att.uid;
   const big = special || !!(move && (move.big || /^sig_/.test(move.role||'')));   // 大技: 系統・融合・ボスの技・合体・進化/融合のあとの必殺技
-  const mapCells=_fxMapCells, mapAim=_fxMapAim; _fxMapCells=null; _fxMapAim=null;
+  const mapCells=_fxMapCells, mapAim=_fxMapAim; _fxMapCells=null; _fxMapAim=null; const spread=_fxSpread; _fxSpread=null;
   const cells=[]; const seen={}; for(const t of targets){ const k=t.r+','+t.c; if(seen[k]) continue; seen[k]=1; cells.push({r:t.r,c:t.c,k,uid:t.uid}); }
   camShow([{r:ar,c:ac}].concat(cells, (mapCells||[]).map(p=>Array.isArray(p)?{r:p[0],c:p[1]}:p)), {fx:true, hold:900/SPD()});   // 2026-10-30 寄りのカメラ
   const mode = (move && move.target==='map') ? 'map' : ((cells.length>1 || (move && move.target==='area')) ? 'area' : ((cells[0] && Math.max(Math.abs(cells[0].r-ar),Math.abs(cells[0].c-ac))<=1) ? 'melee' : 'proj'));
@@ -3762,6 +3803,7 @@ function attackFx(att, targets, def, move){ if(BT.headless) return;
       delete _hold[x.uid]; flushCell(x.k); syncUnits();
       if(--seq.left<=0) setTimeout(finish, 120); };
     let last=0;
+    if(spread && spread.cells.length) spreadFx(spread, ar, ac, cells, amt, useT, sp);   // 2026-10-30: 地形で広がったマス全部に そのタイプの演出
     if(useT) last=tfxAttack(mode, tyFx, amt, ar, ac, cells, mapAim, mapCells, onHit, lungeMs);
     else if(mode==='map') last=map3(ty, mapAim, mapCells, cells, tier, S, onHit);
     else if(mode==='area') last=area3(ty, ar, ac, cells, tier, S, onHit);
@@ -5043,7 +5085,7 @@ const TACT={ on:true,
   behind:{share:0.45, gaugeMax:1.8, gaugeK:3.0, healX:1.3, evoHeal:0.45, evoAtk:0.2, evoTurns:2, selfHp:0.5},   // 背水・土壇場進化
   healGauge:10,                                           // 回復の技を使った子の闘気
   combo:{gather:2, power:100, mult2:1.15, mult3:1.35, small:{1:0.2, 2:0.1}, gauge:0, cost:{2:35, 3:25}},   // cost=参加する子それぞれが使う闘気(2体の合体/3体の合体)
-  bal:{},                                                 // タイプごとの {atk, def} の倍率(バランスのつまみ・例 {"竜":{"def":0.9}})
+  bal:{光:{atk:0.7,def:0.88}, 水:{atk:1.45,def:1.12}, 氷:{atk:1.45,def:1.12}, 森:{atk:1.28,def:1.06}, 地:{atk:1.25,def:1.05}, 闇:{atk:1.3,def:1.05}, 竜:{atk:1.2,def:1.03}, 炎:{atk:0.95}, 雷:{atk:1.04}, 風:{atk:1.03}},   // タイプごとの {atk, def} の倍率(バランスのつまみ)。2026-10-30 タイプ相性の作り直しのあと sim/study_types.js(タイプだけの隊)で合わせた。2つのタイプの子は 両方を掛ける
   ai:{formation:10, cover:8, healLeader:0.75, zoneEvo:600},   // zoneEvo=進化のマスに入る点(2026-10-29 進化の2段構え)
   final:{left:8, step:0.35},
   flag:{on:false},   // 2026-10-29 盤 v4: 旗はなくした(旗を取る決まり・旗のアイコン・説明も)。旧   // 古代テリオン(ボス)の戦いは旗なし   // second='center'|'flanks'=後手が最初から持つ旗 / openTurn=このターンから取れる   // 旗(2026-10-28 オーナー「風の売りは機動力・中間地点にいかに早く到達して進化ポイントを上げるか」): 真ん中の行の3本(中央・左右)。乗ると自分の旗・相手が乗ると取られる・手番の始めに旗1本につき味方全員 闘気+gauge
@@ -6021,6 +6063,7 @@ const API={ init, startBattle, simulate, TACT, PVE_STAGE, PVE_EVO, get SERIES(){
     selInfo(){ return sel?{uid:sel.uid, mode:selMode, move:selMove&&selMove.id, name:mvName(selMove), range:selMove&&moveRange(sel,selMove), aim:selAim, targets:(selAtks||[]).map(e=>[e.r,e.c])}:null; }, get BT(){ return BT; }, sprites, M3D, aiSide:(o)=>{ aiSide(o); return state.phase; }, endTurn:()=>endTurn(), killLeader(o){ const L=leaderOf(o); if(!L) return false; L.hp=0; killUnit(L); afterAction(); return state.phase; },
     gauge(uid,v){ const u=state.units[uid]; if(u&&v!=null){ u.g=v; syncUnits(); updateUI(); } return u?u.g:null; }, put(uid,r,c){ const u=state.units[uid]; if(!u||unitAt(r,c)) return false; state.board[u.r][u.c]=null; u.r=r; u.c=c; state.board[r][c]=u.uid; syncUnits(); return true; },
     evolve(uid){ const u=state.units[uid]; return u?evolveUnit(u,true):false; },
+    ptag(a,b,id){ const A=state.units[a], B=state.units[b], mv=MV2[id]; if(!A||!B||!mv) return null; const p=previewTag(A,B,mv); return p?{text:p.text.replace(/<[^>]*>/g,''), kind:p.kind}:{text:'',kind:''}; },   // 2026-10-30 確認用: 当てる前の印(弱点・いまひとつ)
     moves(uid){ const u=state.units[uid]; return u?movesV2(u).map(m=>({id:m.id,name:mvName(m),type:m.type,role:m.role,target:m.target,range:moveRange(u,m),shape:m.shape})):[]; },   // 2026-10-29 確認用: 技を指定して撃つ
     atkMv(a,b,id,aim){ const A=state.units[a], B=b!=null?state.units[b]:null; const mv=MV2[id]; if(!A||!mv) return false; A.acted=false; A.moved=false; A.amp=null; A.mp={}; A.dug=0; if(mv.target==='map') doMapAttack(A,mv,aim||null); else doAttackV2(A,B,mv); return true; },
     walk(uid,r,c){ const u=state.units[uid]; if(!u||unitAt(r,c)) return false; u.moved=false; u.acted=false; moveUnit(u,r,c); return true; },   // 確認用: ふつうの移動(進化のマスに入ると進化)

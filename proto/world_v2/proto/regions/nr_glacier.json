@@ -142,8 +142,8 @@
    "final": 1,
    "ai": {
     "winAll": true,
-    "hpX": 0.72,
-    "atkX": 0.62,
+    "hpX": 0.612,
+    "atkX": 0.527,
     "rage": 0.4
    },
    "scene": "ransom3",
@@ -201,8 +201,8 @@
    "final": 1,
    "ai": {
     "winAll": true,
-    "hpX": 0.63,
-    "atkX": 0.56,
+    "hpX": 0.577,
+    "atkX": 0.513,
     "rage": 0.4
    },
    "scene": "bot",
@@ -259,8 +259,8 @@
    "todo": "ハルの絵は未作成(タソスの体を仮に使用)",
    "rule": "nr_off:n25",
    "ai": {
-    "hpX": 1.265,
-    "atkX": 1.265
+    "hpX": 1.117,
+    "atkX": 1.117
    }
   },
   {

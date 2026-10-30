@@ -24,7 +24,10 @@
    "2038": "山の神のイノシシ",
    "2004": "朱雀(四神)・ベンヌ(エジプトの神の鳥)",
    "2053": "玄武(四神)"
-  }
+  },
+  "changes": [
+   "2026-10-30 オーナー: 鳥は移動3(フクロウ・グリフォン・グリフォンの融合)・光と雷の素早さを体つきで子ごと・光=体力×0.92 攻撃×0.92・雷=攻撃×1.06 守り×0.82 体力×0.92(融合の子は持つタイプごとに√)"
+  ]
  },
  "creatures": {
   "1001": {
@@ -1288,11 +1291,11 @@
    "stage": 1,
    "line": "tora",
    "archetype": "電撃型",
-   "hp": 127,
-   "atk": 32,
-   "def": 15,
+   "hp": 117,
+   "atk": 34,
+   "def": 12,
    "mob": 2,
-   "spd": 32,
+   "spd": 36,
    "red": 0.13,
    "src_hp": 130,
    "src_atk": 32,
@@ -1323,11 +1326,11 @@
    "stage": 2,
    "line": "tora",
    "archetype": "電撃型",
-   "hp": 400,
-   "atk": 99,
-   "def": 28,
+   "hp": 368,
+   "atk": 105,
+   "def": 23,
    "mob": 2,
-   "spd": 51,
+   "spd": 58,
    "red": 0.219,
    "src_hp": 410,
    "src_atk": 99,
@@ -1375,11 +1378,11 @@
    "stage": 3,
    "line": "tora",
    "archetype": "電撃型",
-   "hp": 1185,
-   "atk": 152,
-   "def": 45,
+   "hp": 1090,
+   "atk": 161,
+   "def": 37,
    "mob": 2,
-   "spd": 70,
+   "spd": 80,
    "red": 0.31,
    "src_hp": 1220,
    "src_atk": 152,
@@ -1453,11 +1456,11 @@
    "stage": 1,
    "line": "piri",
    "archetype": "電撃型",
-   "hp": 122,
-   "atk": 34,
-   "def": 15,
+   "hp": 112,
+   "atk": 36,
+   "def": 12,
    "mob": 2,
-   "spd": 32,
+   "spd": 35,
    "red": 0.13,
    "src_hp": 125,
    "src_atk": 34,
@@ -1488,11 +1491,11 @@
    "stage": 2,
    "line": "piri",
    "archetype": "電撃型",
-   "hp": 440,
-   "atk": 89,
-   "def": 28,
+   "hp": 405,
+   "atk": 94,
+   "def": 23,
    "mob": 2,
-   "spd": 51,
+   "spd": 55,
    "red": 0.219,
    "src_hp": 450,
    "src_atk": 89,
@@ -1536,11 +1539,11 @@
    "stage": 3,
    "line": "piri",
    "archetype": "電撃型",
-   "hp": 1225,
-   "atk": 155,
-   "def": 45,
+   "hp": 1127,
+   "atk": 164,
+   "def": 37,
    "mob": 2,
-   "spd": 70,
+   "spd": 76,
    "red": 0.31,
    "src_hp": 1260,
    "src_atk": 155,
@@ -1595,11 +1598,11 @@
    "stage": 1,
    "line": "thor",
    "archetype": "電撃型",
-   "hp": 117,
-   "atk": 35,
-   "def": 15,
+   "hp": 108,
+   "atk": 37,
+   "def": 12,
    "mob": 2,
-   "spd": 32,
+   "spd": 31,
    "red": 0.13,
    "src_hp": 120,
    "src_atk": 35,
@@ -1630,11 +1633,11 @@
    "stage": 2,
    "line": "thor",
    "archetype": "電撃型",
-   "hp": 410,
-   "atk": 90,
-   "def": 28,
+   "hp": 377,
+   "atk": 95,
+   "def": 23,
    "mob": 2,
-   "spd": 51,
+   "spd": 49,
    "red": 0.219,
    "src_hp": 420,
    "src_atk": 90,
@@ -1678,11 +1681,11 @@
    "stage": 3,
    "line": "thor",
    "archetype": "電撃型",
-   "hp": 1225,
-   "atk": 155,
-   "def": 45,
+   "hp": 1127,
+   "atk": 164,
+   "def": 37,
    "mob": 2,
-   "spd": 70,
+   "spd": 68,
    "red": 0.31,
    "src_hp": 1260,
    "src_atk": 155,
@@ -2982,15 +2985,15 @@
   "166": {
    "name": "ニジッコ",
    "type": "光",
-   "type2": null,
+   "type2": "風",
    "stage": 1,
    "line": "prism",
    "archetype": "妖精型",
-   "hp": 135,
-   "atk": 28,
+   "hp": 124,
+   "atk": 26,
    "def": 11,
-   "mob": 2,
-   "spd": 26,
+   "mob": 3,
+   "spd": 35,
    "red": 0.099,
    "src_hp": 140,
    "src_atk": 28,
@@ -2998,6 +3001,10 @@
    "learnset": [
     {
      "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder1",
      "lv": 1
     },
     {
@@ -3009,11 +3016,19 @@
      "lv": 8
     },
     {
+     "move": "wind_ladder2",
+     "lv": 8
+    },
+    {
      "move": "light_heal_all",
      "lv": 12
     },
     {
      "move": "light_ladder3",
+     "lv": 15
+    },
+    {
+     "move": "wind_ladder3",
      "lv": 15
     }
    ]
@@ -3021,15 +3036,15 @@
   "167": {
    "name": "イリュネ",
    "type": "光",
-   "type2": null,
+   "type2": "風",
    "stage": 2,
    "line": "prism",
    "archetype": "妖精型",
-   "hp": 460,
-   "atk": 78,
+   "hp": 423,
+   "atk": 72,
    "def": 23,
-   "mob": 2,
-   "spd": 42,
+   "mob": 3,
+   "spd": 57,
    "red": 0.187,
    "src_hp": 480,
    "src_atk": 78,
@@ -3039,6 +3054,10 @@
      "move": "light_ladder1",
      "lv": 1,
      "from": 166
+    },
+    {
+     "move": "wind_ladder1",
+     "lv": 1
     },
     {
      "move": "light_heal1",
@@ -3056,6 +3075,10 @@
      "from": 166
     },
     {
+     "move": "wind_ladder2",
+     "lv": 8
+    },
+    {
      "move": "light_heal_all",
      "lv": 12,
      "from": 166
@@ -3066,7 +3089,15 @@
      "from": 166
     },
     {
+     "move": "wind_ladder3",
+     "lv": 15
+    },
+    {
      "move": "light_ladder4",
+     "lv": 34
+    },
+    {
+     "move": "wind_ladder4",
      "lv": 34
     }
    ]
@@ -3074,15 +3105,15 @@
   "276": {
    "name": "イリディア",
    "type": "光",
-   "type2": null,
+   "type2": "風",
    "stage": 3,
    "line": "prism",
    "archetype": "妖精型",
-   "hp": 1370,
-   "atk": 151,
+   "hp": 1260,
+   "atk": 139,
    "def": 39,
-   "mob": 2,
-   "spd": 57,
+   "mob": 3,
+   "spd": 78,
    "red": 0.281,
    "src_hp": 1430,
    "src_atk": 151,
@@ -3092,6 +3123,10 @@
      "move": "light_ladder1",
      "lv": 1,
      "from": 166
+    },
+    {
+     "move": "wind_ladder1",
+     "lv": 1
     },
     {
      "move": "light_heal1",
@@ -3124,6 +3159,10 @@
      "from": 166
     },
     {
+     "move": "wind_ladder2",
+     "lv": 8
+    },
+    {
      "move": "light_heal_all",
      "lv": 12,
      "from": 166
@@ -3134,24 +3173,32 @@
      "from": 166
     },
     {
+     "move": "wind_ladder3",
+     "lv": 15
+    },
+    {
      "move": "light_ladder4",
      "lv": 34,
      "from": 167
+    },
+    {
+     "move": "wind_ladder4",
+     "lv": 34
     }
    ]
   },
   "1053": {
    "name": "コグリフ",
    "type": "光",
-   "type2": null,
+   "type2": "風",
    "stage": 1,
    "line": "grif",
    "archetype": "妖精型",
-   "hp": 130,
-   "atk": 32,
+   "hp": 120,
+   "atk": 29,
    "def": 11,
-   "mob": 2,
-   "spd": 26,
+   "mob": 3,
+   "spd": 36,
    "red": 0.099,
    "src_hp": 135,
    "src_atk": 32,
@@ -3159,6 +3206,10 @@
    "learnset": [
     {
      "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "wind_ladder1",
      "lv": 1
     },
     {
@@ -3170,11 +3221,19 @@
      "lv": 8
     },
     {
+     "move": "wind_ladder2",
+     "lv": 8
+    },
+    {
      "move": "light_heal_all",
      "lv": 12
     },
     {
      "move": "light_ladder3",
+     "lv": 15
+    },
+    {
+     "move": "wind_ladder3",
      "lv": 15
     }
    ]
@@ -3182,15 +3241,15 @@
   "1054": {
    "name": "グリフォ",
    "type": "光",
-   "type2": null,
+   "type2": "風",
    "stage": 2,
    "line": "grif",
    "archetype": "妖精型",
-   "hp": 420,
-   "atk": 81,
+   "hp": 386,
+   "atk": 75,
    "def": 23,
-   "mob": 2,
-   "spd": 42,
+   "mob": 3,
+   "spd": 58,
    "red": 0.187,
    "src_hp": 440,
    "src_atk": 81,
@@ -3200,6 +3259,10 @@
      "move": "light_ladder1",
      "lv": 1,
      "from": 1053
+    },
+    {
+     "move": "wind_ladder1",
+     "lv": 1
     },
     {
      "move": "light_heal1",
@@ -3217,6 +3280,10 @@
      "from": 1053
     },
     {
+     "move": "wind_ladder2",
+     "lv": 8
+    },
+    {
      "move": "light_heal_all",
      "lv": 12,
      "from": 1053
@@ -3227,7 +3294,15 @@
      "from": 1053
     },
     {
+     "move": "wind_ladder3",
+     "lv": 15
+    },
+    {
      "move": "light_ladder4",
+     "lv": 34
+    },
+    {
+     "move": "wind_ladder4",
      "lv": 34
     }
    ]
@@ -3235,15 +3310,15 @@
   "1055": {
    "name": "グリフォード",
    "type": "光",
-   "type2": null,
+   "type2": "風",
    "stage": 3,
    "line": "grif",
    "archetype": "妖精型",
-   "hp": 1220,
-   "atk": 153,
+   "hp": 1122,
+   "atk": 141,
    "def": 39,
-   "mob": 2,
-   "spd": 57,
+   "mob": 3,
+   "spd": 80,
    "red": 0.281,
    "src_hp": 1270,
    "src_atk": 153,
@@ -3253,6 +3328,10 @@
      "move": "light_ladder1",
      "lv": 1,
      "from": 1053
+    },
+    {
+     "move": "wind_ladder1",
+     "lv": 1
     },
     {
      "move": "light_heal1",
@@ -3285,6 +3364,10 @@
      "from": 1053
     },
     {
+     "move": "wind_ladder2",
+     "lv": 8
+    },
+    {
      "move": "light_heal_all",
      "lv": 12,
      "from": 1053
@@ -3295,24 +3378,32 @@
      "from": 1053
     },
     {
+     "move": "wind_ladder3",
+     "lv": 15
+    },
+    {
      "move": "light_ladder4",
      "lv": 34,
      "from": 1054
+    },
+    {
+     "move": "wind_ladder4",
+     "lv": 34
     }
    ]
   },
   "1056": {
    "name": "ホタリィ",
    "type": "光",
-   "type2": null,
+   "type2": "森",
    "stage": 1,
    "line": "hotaru",
    "archetype": "妖精型",
-   "hp": 135,
-   "atk": 32,
+   "hp": 124,
+   "atk": 29,
    "def": 11,
    "mob": 2,
-   "spd": 26,
+   "spd": 37,
    "red": 0.099,
    "src_hp": 140,
    "src_atk": 32,
@@ -3320,6 +3411,10 @@
    "learnset": [
     {
      "move": "light_ladder1",
+     "lv": 1
+    },
+    {
+     "move": "forest_ladder1",
      "lv": 1
     },
     {
@@ -3331,11 +3426,19 @@
      "lv": 8
     },
     {
+     "move": "forest_ladder2",
+     "lv": 8
+    },
+    {
      "move": "light_heal_all",
      "lv": 12
     },
     {
      "move": "light_ladder3",
+     "lv": 15
+    },
+    {
+     "move": "forest_ladder3",
      "lv": 15
     }
    ]
@@ -3343,15 +3446,15 @@
   "1057": {
    "name": "ホタルン",
    "type": "光",
-   "type2": null,
+   "type2": "森",
    "stage": 2,
    "line": "hotaru",
    "archetype": "妖精型",
-   "hp": 460,
-   "atk": 78,
+   "hp": 423,
+   "atk": 72,
    "def": 23,
    "mob": 2,
-   "spd": 42,
+   "spd": 60,
    "red": 0.187,
    "src_hp": 480,
    "src_atk": 78,
@@ -3361,6 +3464,10 @@
      "move": "light_ladder1",
      "lv": 1,
      "from": 1056
+    },
+    {
+     "move": "forest_ladder1",
+     "lv": 1
     },
     {
      "move": "light_heal1",
@@ -3378,6 +3485,10 @@
      "from": 1056
     },
     {
+     "move": "forest_ladder2",
+     "lv": 8
+    },
+    {
      "move": "light_heal_all",
      "lv": 12,
      "from": 1056
@@ -3388,7 +3499,15 @@
      "from": 1056
     },
     {
+     "move": "forest_ladder3",
+     "lv": 15
+    },
+    {
      "move": "light_ladder4",
+     "lv": 34
+    },
+    {
+     "move": "forest_ladder4",
      "lv": 34
     }
    ]
@@ -3396,15 +3515,15 @@
   "1058": {
    "name": "タマボタル",
    "type": "光",
-   "type2": null,
+   "type2": "森",
    "stage": 3,
    "line": "hotaru",
    "archetype": "妖精型",
-   "hp": 1345,
-   "atk": 155,
+   "hp": 1237,
+   "atk": 143,
    "def": 39,
    "mob": 2,
-   "spd": 57,
+   "spd": 82,
    "red": 0.281,
    "src_hp": 1400,
    "src_atk": 155,
@@ -3414,6 +3533,10 @@
      "move": "light_ladder1",
      "lv": 1,
      "from": 1056
+    },
+    {
+     "move": "forest_ladder1",
+     "lv": 1
     },
     {
      "move": "light_heal1",
@@ -3446,6 +3569,10 @@
      "from": 1056
     },
     {
+     "move": "forest_ladder2",
+     "lv": 8
+    },
+    {
      "move": "light_heal_all",
      "lv": 12,
      "from": 1056
@@ -3456,9 +3583,17 @@
      "from": 1056
     },
     {
+     "move": "forest_ladder3",
+     "lv": 15
+    },
+    {
      "move": "light_ladder4",
      "lv": 34,
      "from": 1057
+    },
+    {
+     "move": "forest_ladder4",
+     "lv": 34
     }
    ]
   },
@@ -3600,7 +3735,7 @@
    "hp": 150,
    "atk": 29,
    "def": 15,
-   "mob": 2,
+   "mob": 3,
    "spd": 24,
    "red": 0.13,
    "src_hp": 150,
@@ -3631,7 +3766,7 @@
    "hp": 490,
    "atk": 85,
    "def": 28,
-   "mob": 2,
+   "mob": 3,
    "spd": 38,
    "red": 0.219,
    "src_hp": 490,
@@ -3674,7 +3809,7 @@
    "hp": 1440,
    "atk": 150,
    "def": 45,
-   "mob": 2,
+   "mob": 3,
    "spd": 53,
    "red": 0.31,
    "src_hp": 1440,
@@ -4561,11 +4696,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1725,
-   "atk": 162,
+   "hp": 1655,
+   "atk": 155,
    "def": 50,
    "mob": 3,
-   "spd": 49,
+   "spd": 58,
    "red": 0.333,
    "src_hp": 1540,
    "src_atk": 145,
@@ -4694,11 +4829,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1530,
-   "atk": 171,
+   "hp": 1468,
+   "atk": 164,
    "def": 45,
-   "mob": 2,
-   "spd": 51,
+   "mob": 3,
+   "spd": 60,
    "red": 0.31,
    "src_hp": 1530,
    "src_atk": 149,
@@ -4738,11 +4873,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1570,
-   "atk": 168,
-   "def": 45,
-   "mob": 2,
-   "spd": 55,
+   "hp": 1445,
+   "atk": 166,
+   "def": 41,
+   "mob": 3,
+   "spd": 67,
    "red": 0.31,
    "src_hp": 1570,
    "src_atk": 168,
@@ -4782,11 +4917,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1670,
-   "atk": 144,
+   "hp": 1602,
+   "atk": 138,
    "def": 45,
    "mob": 2,
-   "spd": 35,
+   "spd": 41,
    "red": 0.31,
    "src_hp": 1670,
    "src_atk": 144,
@@ -4833,11 +4968,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1450,
-   "atk": 152,
+   "hp": 1391,
+   "atk": 146,
    "def": 45,
-   "mob": 2,
-   "spd": 44,
+   "mob": 3,
+   "spd": 52,
    "red": 0.31,
    "src_hp": 1450,
    "src_atk": 152,
@@ -4979,11 +5114,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1320,
-   "atk": 201,
-   "def": 49,
+   "hp": 1266,
+   "atk": 207,
+   "def": 44,
    "mob": 2,
-   "spd": 57,
+   "spd": 59,
    "red": 0.329,
    "src_hp": 1320,
    "src_atk": 175,
@@ -5201,11 +5336,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1610,
-   "atk": 192,
-   "def": 81,
+   "hp": 1544,
+   "atk": 198,
+   "def": 73,
    "mob": 2,
-   "spd": 57,
+   "spd": 59,
    "red": 0.448,
    "src_hp": 1440,
    "src_atk": 171,
@@ -5358,11 +5493,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1680,
-   "atk": 140,
+   "hp": 1611,
+   "atk": 134,
    "def": 45,
    "mob": 2,
-   "spd": 42,
+   "spd": 50,
    "red": 0.31,
    "src_hp": 1680,
    "src_atk": 140,
@@ -5437,11 +5572,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1675,
-   "atk": 164,
-   "def": 75,
+   "hp": 1607,
+   "atk": 169,
+   "def": 68,
    "mob": 2,
-   "spd": 42,
+   "spd": 43,
    "red": 0.429,
    "src_hp": 1680,
    "src_atk": 164,
@@ -5581,11 +5716,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1450,
-   "atk": 146,
+   "hp": 1391,
+   "atk": 140,
    "def": 59,
    "mob": 2,
-   "spd": 42,
+   "spd": 50,
    "red": 0.371,
    "src_hp": 1450,
    "src_atk": 146,
@@ -5625,11 +5760,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1470,
-   "atk": 166,
-   "def": 49,
+   "hp": 1410,
+   "atk": 171,
+   "def": 44,
    "mob": 2,
-   "spd": 48,
+   "spd": 50,
    "red": 0.329,
    "src_hp": 1470,
    "src_atk": 166,
@@ -5657,11 +5792,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1300,
-   "atk": 152,
-   "def": 39,
+   "hp": 1247,
+   "atk": 156,
+   "def": 35,
    "mob": 3,
-   "spd": 64,
+   "spd": 66,
    "red": 0.281,
    "src_hp": 1300,
    "src_atk": 152,
@@ -5689,11 +5824,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1675,
-   "atk": 162,
-   "def": 75,
+   "hp": 1607,
+   "atk": 167,
+   "def": 68,
    "mob": 2,
-   "spd": 42,
+   "spd": 43,
    "red": 0.429,
    "src_hp": 1680,
    "src_atk": 162,
@@ -5725,11 +5860,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1500,
-   "atk": 160,
-   "def": 56,
+   "hp": 1439,
+   "atk": 165,
+   "def": 51,
    "mob": 2,
-   "spd": 51,
+   "spd": 53,
    "red": 0.359,
    "src_hp": 1500,
    "src_atk": 160,
@@ -5760,11 +5895,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1430,
-   "atk": 161,
-   "def": 45,
+   "hp": 1316,
+   "atk": 159,
+   "def": 41,
    "mob": 2,
-   "spd": 55,
+   "spd": 67,
    "red": 0.31,
    "src_hp": 1430,
    "src_atk": 161,
@@ -5807,11 +5942,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1535,
-   "atk": 170,
-   "def": 49,
+   "hp": 1472,
+   "atk": 175,
+   "def": 44,
    "mob": 2,
-   "spd": 55,
+   "spd": 57,
    "red": 0.329,
    "src_hp": 1540,
    "src_atk": 170,
@@ -5842,11 +5977,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1405,
-   "atk": 165,
-   "def": 72,
+   "hp": 1348,
+   "atk": 170,
+   "def": 65,
    "mob": 2,
-   "spd": 51,
+   "spd": 53,
    "red": 0.419,
    "src_hp": 1410,
    "src_atk": 165,
@@ -5945,11 +6080,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1460,
-   "atk": 159,
+   "hp": 1400,
+   "atk": 153,
    "def": 39,
    "mob": 3,
-   "spd": 57,
+   "spd": 68,
    "red": 0.281,
    "src_hp": 1460,
    "src_atk": 159,
@@ -6180,11 +6315,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1500,
-   "atk": 140,
+   "hp": 1439,
+   "atk": 134,
    "def": 56,
    "mob": 2,
-   "spd": 44,
+   "spd": 52,
    "red": 0.359,
    "src_hp": 1500,
    "src_atk": 140,
@@ -6262,11 +6397,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1480,
-   "atk": 164,
+   "hp": 1420,
+   "atk": 157,
    "def": 45,
    "mob": 2,
-   "spd": 48,
+   "spd": 57,
    "red": 0.31,
    "src_hp": 1480,
    "src_atk": 164,
@@ -6411,11 +6546,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1460,
-   "atk": 143,
+   "hp": 1400,
+   "atk": 137,
    "def": 45,
    "mob": 2,
-   "spd": 44,
+   "spd": 52,
    "red": 0.31,
    "src_hp": 1460,
    "src_atk": 143,
@@ -6497,11 +6632,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1950,
-   "atk": 169,
+   "hp": 1870,
+   "atk": 162,
    "def": 50,
    "mob": 2,
-   "spd": 39,
+   "spd": 46,
    "red": 0.333,
    "src_hp": 1740,
    "src_atk": 151,
@@ -6595,11 +6730,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1470,
-   "atk": 169,
-   "def": 49,
+   "hp": 1410,
+   "atk": 174,
+   "def": 44,
    "mob": 2,
-   "spd": 55,
+   "spd": 57,
    "red": 0.329,
    "src_hp": 1470,
    "src_atk": 169,
@@ -6712,11 +6847,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1320,
-   "atk": 201,
-   "def": 49,
+   "hp": 1266,
+   "atk": 207,
+   "def": 44,
    "mob": 2,
-   "spd": 57,
+   "spd": 59,
    "red": 0.329,
    "src_hp": 1320,
    "src_atk": 175,
@@ -6778,11 +6913,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 1460,
-   "atk": 179,
-   "def": 59,
+   "hp": 1400,
+   "atk": 184,
+   "def": 53,
    "mob": 2,
-   "spd": 44,
+   "spd": 45,
    "red": 0.371,
    "src_hp": 1460,
    "src_atk": 156,
@@ -6811,11 +6946,11 @@
    "stage": 3,
    "line": null,
    "archetype": "神格型",
-   "hp": 2257,
-   "atk": 217,
-   "def": 72,
+   "hp": 2165,
+   "atk": 223,
+   "def": 65,
    "mob": 2,
-   "spd": 60,
+   "spd": 62,
    "red": 0.419,
    "src_hp": 2261,
    "src_atk": 217,
