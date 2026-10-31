@@ -236,8 +236,9 @@ function pointOf(map){ const i=ORDER.indexOf(map); const at=k=>ORDER.indexOf(k);
   return { evo:i>=at('corinth'), fuse:i>=at('stadium_under'), triple:false, count:arcOf(map)==='norse'?6:(i>at('arcadia')?5:3) }; }
 // その時点の自分のパーティ(相棒＋その編までの野生の系統・その土地のレベル帯の上)
 function partyFor(map, final){ const P=pointOf(map); const arc=arcOf(map); const band=mapLv(map); const lv=Math.min(99,(band[1]||band[0])+1);
-  if(final){ const used=new Set(), out=[]; for(const r of shuffle(RECIPE2)){ if(out.length>=6) break; if(r.some(x=>used.has(baseOf(x)))) continue; r.forEach(x=>{ used.add(baseOf(x)); out.push(x); }); }
-    return {party:out.map(m=>({mid:m, lv:70})), owned:out.slice(), P:Object.assign({}, P, {fuse:true, count:6}), lv:70}; }   // 北欧の終盤(sim_boss_norse.js と同じ): 融合の組になる2段目の子 3組=6体 Lv70・その姿のまま(owned=その姿)
+  if(final && window._vsFuseTeam){ const used=new Set(), out=[]; for(const r of shuffle(RECIPE2)){ if(out.length>=6) break; if(r.some(x=>used.has(baseOf(x)))) continue; r.forEach(x=>{ used.add(baseOf(x)); out.push(x); }); }
+    return {party:out.map(m=>({mid:m, lv:70})), owned:out.slice(), P:Object.assign({}, P, {fuse:true, count:6}), lv:70}; }   // 前の形(融合の組になる2段目 3組・その姿のまま)。2026-10-31 から既定では使わない(window._vsFuseTeam=true の時だけ)
+  if(final) P.fuse=true, P.count=6;   // 2026-10-31 北欧の終盤も 物語どおりの隊(相棒＋北欧までの系統・6体・覚えた姿まで)。人の手で測った強さ(study_human の boss)と同じ
   const arcs=['greece','china','egypt','norse']; const upto=arcs.slice(0, arcs.indexOf(arc)+1);
   const lines=shuffle(upto.flatMap(a=>POOLS[a]||[])).filter((x,i,a)=>a.indexOf(x)===i);
   const mids=[rnd(STARTERS)].concat(lines.slice(0, P.count-1));
@@ -280,7 +281,7 @@ function sceneOpt(sc){ const D=REG[sc.map]; if(!D) return null; let opt;
   else { const B=BOSSES.find(b=>b.map===sc.map&&(sc.anc?(b.type==='anc'&&b.mid===sc.anc):(b.type==='npc'&&b.o.scene===sc.npc))); if(!B) return null;
     opt=encounterOpt(B); opt._pf=partyFor(sc.map, sc.final); if(sc.place){ opt.terrainTheme=sc.place.tt; opt.backdrop=sc.place.bd; } }
   const pf=opt._pf; delete opt._pf;
-  opt.player={party:pf.party, owned:pf.owned, items:{}, rankCap:20};
+  opt.player={party:pf.party, owned:pf.owned, items:{}, rankCap:20}; if(!sc.wild) opt.alignMinions=true;
   if(pf.P.fuse) opt.fusionUnlocked=true; if(pf.P.triple) opt.tripleUnlocked=true;
   return opt; }
 function sceneChips(sc){ const D=REG[sc.map]; if(!D) return ''; const B=sc.wild?null:BOSSES.find(b=>b.map===sc.map&&(sc.anc?(b.type==='anc'&&b.mid===sc.anc):(b.type==='npc'&&b.o.scene===sc.npc)));
@@ -290,10 +291,10 @@ function renderScenes(){ const el=$('scenes'); el.innerHTML='';
   for(const sc of SCENES){ const D=REG[sc.map]; if(!D) continue; const B=sc.wild?null:BOSSES.find(b=>b.map===sc.map&&(sc.anc?(b.type==='anc'&&b.mid===sc.anc):(b.type==='npc'&&b.o.scene===sc.npc))); if(!sc.wild&&!B) continue;
     const mid=B?B.mid:(wildPool(D)[0]); const b=document.createElement('button'); b.className='scn';
     b.innerHTML=`<img src="${art(mid)}" alt="" loading="lazy"><span><b>${sc.n}</b><i>${sceneChips(sc)}</i></span>`;
-    b.onclick=()=>{ const opt=sceneOpt(sc); if(opt) run(opt, ()=>sceneOpt(sc)); }; el.appendChild(b); }
+    b.onclick=()=>{ const opt=strApply(sceneOpt(sc)); if(opt) run(opt, ()=>strApply(sceneOpt(sc))); }; el.appendChild(b); }
   for(const sc of SP_SCENES){ if(!REG[sc.map]) continue; const b=document.createElement('button'); b.className='scn'; b.dataset.sp=sc.special.mode;
     b.innerHTML=`<img src="${art(sc.foe[0])}" alt="" loading="lazy"><span><b>${sc.n}</b><i>${SP_JP[sc.special.mode]}・${placeJP(sc.tt)}・Lv${mapLv(sc.map).join('〜')}</i></span>`;
-    b.onclick=()=>run(spSceneOpt(sc), ()=>spSceneOpt(sc)); el.appendChild(b); } }
+    b.onclick=()=>run(strApply(spSceneOpt(sc)), ()=>strApply(spSceneOpt(sc))); el.appendChild(b); } }
 
 // ---- 自分 / 相手のスロット ----
 function renderSlots(el, list, who){ el.innerHTML=''; for(let i=0;i<6;i++){ const id=list[i]; const d=document.createElement('button'); d.className='slot'+(id?' f':'');
@@ -401,8 +402,11 @@ function buildOpt(){ const allIds=MON.map(m=>m.id);
   if(m==='boss'&&S.foe.boss){ const B=BOSSES.find(b=>b.key===S.foe.boss); if(B){ const o=encounterOpt(B); opt.enemy=o.enemy; if(!S.me.stage) opt.startStage=o.startStage; if(S.board.kind!==o.kind&&!(S.board.kind==='ancient'||o.kind==='ancient')) opt.kind=S.board.kind; else opt.kind=o.kind; } }
   if(!opt.enemy&&m==='wild'){ const D=REG[S.foe.wildMap]; const pool=D?wildPool(D):[]; if(pool.length){ const band=mapLv(S.foe.wildMap); const lv=()=>band[0]+Math.floor(Math.random()*(band[1]-band[0]+1));
       const ep=[{mid:rnd(pool), lv:Math.min(99,lv()+2), leader:true}]; for(let k=1;k<S.foe.wildN;k++) ep.push({mid:rnd(pool), lv:lv(), pack:true}); opt.enemy={party:ep}; if(!S.me.stage) opt.startStage=mapStage(S.foe.wildMap); } }
-  if(!opt.enemy){ const ids=m==='pick'&&S.foe.party.length?S.foe.party.slice(0,6):shuffle(allIds).slice(0,S.foe.n);
-    opt.enemy={ name:'CPU', party:ids.map((id,i)=>Object.assign({mid:id, lv:S.foe.lv, fixed:true}, i===0?{leader:true}:{}, S.rule.evo?{evo:true}:{})) }; }
+  if(!opt.enemy){ // 2026-10-31 ランダムの相手は 自分の隊と同じ段の子から(前は全テリオンから=ほぼ毎回 2段目・3段目・融合が混じっていた)
+    const ms=myStage(me, owned); const pool=allIds.filter(id=>{ const q=mon(id); return q && q.role!=='fusion' && !ANC.has(q.id) && (q.level||1)===ms; });
+    const ids=m==='pick'&&S.foe.party.length?S.foe.party.slice(0,6):shuffle(pool.length?pool:allIds).slice(0,S.foe.n);
+    opt.enemy={ name:'CPU', party:ids.map((id,i)=>Object.assign({mid:id, lv:S.foe.lv, fixed:true}, i===0?{leader:true}:{}, S.rule.evo?{evo:true}:{})) }; opt.alignMinions=false; }   // えらんだ相手・ランダムの相手は そのまま(手下の段をそろえない)
+  else if(m==='boss') opt.alignMinions=true;   // ボス・古代: ボス1体だけ本来の段・手下は自分の隊の段から(battle.js alignMinions)
   if(opt.kind==='ancient'&&!opt.enemy.ancient){ opt.enemy.ancient={tier:S.board.tier, minions:[]}; opt.enemy.party[0].fixed=true; }
   if(opt.kind==='wild') opt.enemy.party.forEach(e=>{ delete e.evo; });
   // 開始の段: 自動=えらんだ姿で置く(出せる数は全員ぶん。ボス・野生の群れはそのマップの段) / 1〜3=物語と同じ(その段まで進化した姿・出せる段の合計×段)
@@ -412,9 +416,13 @@ function buildOpt(){ const allIds=MON.map(m=>m.id);
   if(S.rule.fuse) opt.fusionUnlocked=true; if(S.rule.triple) opt.tripleUnlocked=true;
   if(S.rule.fuse) opt.enemy.ai=Object.assign({}, opt.enemy.ai||{}, {fuse:true});   // 2026-10-30 battle.js: ふつうの人(trainer)は enemy.ai.fuse の時だけ融合する。CPU対戦は「融合」の決まりのとおり CPU も融合する
   if(!S.rule.evo){ opt.enemy.ai=Object.assign({}, opt.enemy.ai||{}, {evo:0}); opt.enemy.party.forEach(e=>{ delete e.evo; }); }
-  const st=STR[S.foe.str]; if(st) opt.enemy.ai=Object.assign({}, opt.enemy.ai||{}, st, (opt.enemy.ai&&opt.enemy.ai.hpX)?{hpX:opt.enemy.ai.hpX*st.hpX, atkX:(opt.enemy.ai.atkX||1)*st.atkX}:{});
+  strApply(opt);
   if(S.board.turn) opt.maxTurn=S.board.turn;
   return opt; }
+// 自分の隊の段(いちばん多い段・同じ数なら低い方)。開始の段を決めた時はその段まで上げた姿で数える
+function myStage(me, owned){ const cnt={}; for(const p of me){ const id=S.me.stage?MB.stageForm(p.mid, S.me.stage, owned):p.mid; const q=mon(id); const s=q?(q.role==='fusion'?3:(q.level||1)):1; cnt[s]=(cnt[s]||0)+1; } let best=1, bn=-1; for(const s of [1,2,3]) if((cnt[s]||0)>bn){ bn=cnt[s]||0; best=s; } return best; }
+// 強さ(よわい/ふつう/つよい)。2026-10-31 場面のボタンにも効くようにした
+function strApply(opt){ if(!opt||!opt.enemy) return opt; const st=STR[S.foe.str]; if(st) opt.enemy.ai=Object.assign({}, opt.enemy.ai||{}, st, (opt.enemy.ai&&opt.enemy.ai.hpX)?{hpX:opt.enemy.ai.hpX*st.hpX, atkX:(opt.enemy.ai.atkX||1)*st.atkX}:{}); return opt; }
 
 // ---- たたかう / 結果 ----
 let LAST=null, RUNNING=false;
@@ -458,7 +466,7 @@ perfShow();
   const ord={start:0, greece:1, china:2, egypt:3, norse:4, other:5, fuse:6, anc:7}; MON.sort((a,b)=>(ord[arcTag(a.id)]-ord[arcTag(b.id)])||(baseOf(a.id)-baseOf(b.id))||((a.level||1)-(b.level||1)));
   S.me.party=S.me.party.filter(canOwn); S.foe.party=S.foe.party.filter(id=>mon(id)); if(S.foe.boss&&!BOSSES.some(b=>b.key===S.foe.boss)) S.foe.boss=null;
   renderScenes(); renderAll(); $('load').style.display='none';
-  window.VS={S, buildOpt, sceneOpt, SCENES, SP_SCENES, spSceneOpt, BOSSES, REG, run, encounterOpt};
+  window.VS={S, buildOpt, sceneOpt, SCENES, SP_SCENES, spSceneOpt, BOSSES, REG, run, encounterOpt, strApply, myStage};
 }catch(e){ console.error(e); $('load').textContent='読み込みエラー'; } })();
 })();
 </script>

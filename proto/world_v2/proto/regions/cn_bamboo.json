@@ -176,8 +176,8 @@
    "flagWin": "cn_dojo",
    "todo": "師範の絵は未作成(ヤニスの体を仮に使用)",
    "ai": {
-    "hpX": 1.13,
-    "atkX": 1.28
+    "hpX": 1.38,
+    "atkX": 1.563
    },
    "rule": "cn_shifu",
    "cnStep": "c04_b"

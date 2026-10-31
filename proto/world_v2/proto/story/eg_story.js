@@ -73,7 +73,7 @@ function xStepOf(e){ if(!e) return null; if(e.x) return e.x; const c=xCur(); if(
   if(e.m&&s.wild&&+e.m.o.id===s.wild&&!e.m.stub) return s; return null; }
 
 // ---- 勝負の盤・借りる子・融合(cnBattleOpt に own3・keep2・triple・maxTurn を足したもの) ----
-function xBattleOpt(e,opt,R){ if(R.terrain){ opt.terrainTheme=R.terrain; opt.backdrop=undefined; } if(R.size) opt.size=R.size; if(R.maxTurn) opt.maxTurn=R.maxTurn; if(R.special) opt.special=Object.assign({},R.special);   /* 2026-10-31 専用の盤 */
+function xBattleOpt(e,opt,R){ storyStage(opt); if(R.tune&&opt.enemy&&opt.enemy.ancient) opt.enemy.ancient.tune=Object.assign({},opt.enemy.ancient.tune||{},R.tune);   /* 2026-10-31 物語の古代の強さ(地図の古代と分けて合わせる) */ if(R.terrain){ opt.terrainTheme=R.terrain; opt.backdrop=undefined; } if(R.size) opt.size=R.size; if(R.maxTurn) opt.maxTurn=R.maxTurn; if(R.special) opt.special=Object.assign({},R.special);   /* 2026-10-31 専用の盤 */
   if(e.m&&R.ai) opt.enemy.ai=Object.assign({},opt.enemy.ai||{},R.ai);
   const party=opt.player&&opt.player.party; const own=new Set(opt.player.owned||[]);
   if(R.guests&&Array.isArray(party)&&party.length){
@@ -182,7 +182,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(6,'e06_1',VA,'*',{bg:'anime_eg_tomb'}); sc(6,'e06_2',VA,'*',{bg:'anime_eg_tomb'}); sc(6,'e06_3',VA,'*',{bg:'anime_eg_tomb'});
   go(6,'e06_g',VA,TB,'from_valley');
   sc(6,'e06_4',TB,'玄室',{obj:'墓の奥、星の天井の部屋へ'});
-  bt(6,'e06_b','e06_5',TB,{wild:2068,must:1,R:{terrain:'tomb',guests:['partner',1012,'own2','own3'],fuse:[AMAKA_ID]}});
+  bt(6,'e06_b','e06_5',TB,{wild:2068,must:1,R:{terrain:'tomb',guests:['partner',1012,'own2','own3'],fuse:[AMAKA_ID],tune:{hp:1.433,atk:1.264}}});
   sc(6,'e06_6',TB,'*',{bg:'anime_eg_valley_dawn',tod:'dawn'});
   // 第7話 ルクソールの町(町の人から聞く→ネフェルと古印の勝負・勝つまで)
   go(7,'e07_g',TB,LU,'from_valley',{tod:'noon'});
@@ -197,13 +197,13 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(8,'e08_1',LU,'*',{bg:NB,tod:'night'}); sc(8,'e08_2',LU,'*',{bg:NB}); sc(8,'e08_3',LU,'*',{bg:NB});
   fn(8,'e08_q',LU,()=>xQuiz([['男の話',['最後まで聞く','言い返す'],0,'男は、話をやめた']],NB));
   sc(8,'e08_4b',LU,'*',{bg:NB}); sc(8,'e08_5',LU,'*',{bg:NB});
-  bt(8,'e08_b','e08_6',LU,{bg:NB,anc:{id:2030,tier:5,lv:39,flag:'eg_eleki',tune:{hp:2.63,atk:3.96}},R:{terrain:'stream',guests:['partner',1046,71,'own3'],fuse:[2044]}});
+  bt(8,'e08_b','e08_6',LU,{bg:NB,anc:{id:2030,tier:5,lv:39,flag:'eg_eleki',tune:{hp:2.63,atk:3.96}},R:{terrain:'stream',guests:['partner',1046,71,'own3'],fuse:[2044],tune:{hp:1.081,atk:1.627}}});
   sc(8,'e08_7',LU,'*',{bg:NB});
   // 第9話 ひびのオベリスク(アスワン西岸の石切り場・古代オベリオンから道を聞く・水門2/4)
   go(9,'e09_g',LU,AS,'from_boat',{tod:'morning'});
   sc(9,'e09_1',AS,'石切り場',{obj:'西岸の、赤い岩の石切り場へ'});
   sc(9,'e09_2',AS); sc(9,'e09_3',AS);
-  bt(9,'e09_b','e09_4',AS,{foe:()=>cnFoe({n:'ミラ＆ジョー',zeroday:1,party:P(1005,1043)}),R:{terrain:'rocky'}});
+  bt(9,'e09_b','e09_4',AS,{foe:()=>cnFoe({n:'ミラ＆ジョー',zeroday:1,party:P(1005,1043)}),R:{terrain:'rocky',ai:{hpX:0.814,atkX:0.814}}});
   sc(9,'e09_5a',AS,'*',{tod:'noon'});
   fn(9,'e09_q',AS,()=>xQuiz([['オベリオンの話',['口をはさまずに待つ','話しかける'],0,'オベリオンは、丸まった']]));
   sc(9,'e09_5b',AS);
@@ -216,13 +216,13 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(11,'e11_2',AB,'大神殿の前',{obj:'大神殿へ',bg:'anime_eg_temple_in'});
   sc(11,'e11_3',AB,'*',{bg:'anime_eg_temple_night',tod:'night',post:()=>xFuseAll()});
   sc(11,'e11_4',AB,'*',{bg:'anime_eg_temple_night'});
-  bt(11,'e11_b','e11_5',AB,{bg:'anime_eg_temple_night',foe:()=>cnFoe({n:'ログ＆パッチとミラ＆ジョー',zeroday:1,party:P(1007,1062,1005,1037)}),R:{terrain:'ruins',guests:['partner',71,'own2','own3']}});
+  bt(11,'e11_b','e11_5',AB,{bg:'anime_eg_temple_night',foe:()=>cnFoe({n:'ログ＆パッチとミラ＆ジョー',zeroday:1,party:P(1007,1062,1005,1037)}),R:{terrain:'ruins',guests:['partner',71,'own2','own3'],ai:{hpX:0.663,atkX:0.663}}});
   sc(11,'e11_6',AB,'*',{bg:'anime_eg_temple_night'});
   // 第12話 最初の光(鏡で光を運ぶ→守り②エクリオン・勝つまで。ブレイグリオ=エンレオ＋グリフォ)
   sc(12,'e12_1',AB,'*',{bg:'anime_eg_temple_night',tod:'dawn'});
   fn(12,'e12_m',AB,()=>xMirror('anime_eg_temple_night'));
   sc(12,'e12_2b',AB,'*',{bg:'anime_eg_temple_in'}); sc(12,'e12_3',AB,'*',{bg:'anime_eg_temple_in'});
-  bt(12,'e12_b','e12_4',AB,{bg:'anime_eg_temple_in',wild:2059,must:1,R:{terrain:'ruins',own:[1054],fuse:[2014]}});
+  bt(12,'e12_b','e12_4',AB,{bg:'anime_eg_temple_in',wild:2059,must:1,R:{terrain:'ruins',own:[1054],fuse:[2014],tune:{hp:1.045,atk:4.263}}});
   sc(12,'e12_5',AB,'*',{tod:'morning'});
   // 第13話 上がる水(空の船で下流の町=ルクソールの川岸へ・2026-10-31 水と時間の盤。新3ライゼンギガス=ピリムサ＋クロベク)
   go(13,'e13_g',AB,LU,'from_cairo',{tod:'noon'});
@@ -242,20 +242,20 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   bt(15,'e15_b','e15_3',AS,{bg:DI,foe:()=>cnFoe({n:'レン',party:P({mid:1034,lv:40,fixed:true},{mid:1040,lv:39})}),R:{terrain:'ruins',maxTurn:6,ai:{hpX:1.3,atkX:1.2}}});
   sc(15,'e15_4',AS,'*',{bg:DI});
   sc(16,'e16_1',AS,'*',{bg:DI}); sc(16,'e16_2',AS,'*',{bg:DI});
-  bt(16,'e16_b','e16_4',AS,{bg:DI,mid:'e16_3',foe:()=>cnFoe({n:'ミラ＆ジョー',zeroday:1,party:P(1005,1006,1038)}),R:{terrain:'ruins'}});
+  bt(16,'e16_b','e16_4',AS,{bg:DI,mid:'e16_3',foe:()=>cnFoe({n:'ミラ＆ジョー',zeroday:1,party:P(1005,1006,1038)}),R:{terrain:'ruins',ai:{hpX:0.769,atkX:0.769}}});
   sc(16,'e16_5',AS,'*',{bg:DI});
   sc(17,'e17_1',AS,'*',{bg:'anime_eg_control'}); sc(17,'e17_2',AS,'*',{bg:'anime_eg_control'});
-  bt(17,'e17_b','e17_3',AS,{bg:'anime_eg_control',foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1061,lv:40,fixed:true,leader:true,boss:true,circle:true},{mid:1005,lv:39,stage:2,evo:true},{mid:1006,lv:39,fixed:true},{mid:1013,lv:39,fixed:true},{mid:1012,lv:38,stage:2,evo:true})},'ランサム'),R:{terrain:'ruins',guests:['partner',1046,'own2','own3'],fuse:[2026],ai:{hpX:0.93,atkX:1.0}}});   // 2026-10-30 タイプ相性の作り直しのあと 0.89/0.96→0.93/1.0(tune_v4 e17 約67%)。2026-10-28 切り札ディアボーグ(ボス・1.75倍・魔法陣から出る)。シム sim/sim_e17.js 150戦: 勝率66%(前の hpX/atkX 1.2 では3%)。2026-10-30 ボスが奥にいるようになって53%→ 0.89/0.96 で約73%(tune_v4 360戦)
+  bt(17,'e17_b','e17_3',AS,{bg:'anime_eg_control',foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1061,lv:40,fixed:true,leader:true,boss:true,circle:true},{mid:1005,lv:39,stage:2,evo:true},{mid:1006,lv:39,fixed:true},{mid:1013,lv:39,fixed:true},{mid:1012,lv:38,stage:2,evo:true})},'ランサム'),R:{terrain:'ruins',guests:['partner',1046,'own2','own3'],fuse:[2026],ai:{hpX:0.73,atkX:0.785}}});   // 2026-10-30 タイプ相性の作り直しのあと 0.89/0.96→0.93/1.0(tune_v4 e17 約67%)。2026-10-28 切り札ディアボーグ(ボス・1.75倍・魔法陣から出る)。シム sim/sim_e17.js 150戦: 勝率66%(前の hpX/atkX 1.2 では3%)。2026-10-30 ボスが奥にいるようになって53%→ 0.89/0.96 で約73%(tune_v4 360戦)
   sc(17,'e17_4',AS,'*',{bg:'anime_eg_control',post:()=>flag('eg_ransom')});
   sc(18,'e18_1',AS,'*',{bg:'anime_eg_control',tod:'dawn'}); sc(18,'e18_2a',AS,'*',{bg:'anime_eg_control'});
   fn(18,'e18_q',AS,()=>xQuiz(EG_Q18,'anime_eg_control'));
   sc(18,'e18_2b',AS,'*',{bg:'anime_eg_control'}); sc(18,'e18_3',AS,'*',{bg:'anime_eg_control'}); sc(18,'e18_4',AS,'*',{bg:'anime_eg_control'});
   // 第19〜20話 湖の底(半分抜けた湖・沈んだ村と神殿・全画面。王ラーガ・勝つまで。サジンオロチ=セイリュ＋アルマガネ)
   sc(19,'e19_1',AS,'*',{bg:'anime_eg_lakebed',tod:'noon'}); sc(19,'e19_2',AS,'*',{bg:'anime_eg_lakebed'}); sc(19,'e19_3',AS,'*',{bg:'anime_eg_lakebed'});
-  bt(19,'e19_b','e19_4',AS,{bg:'anime_eg_lakebed',foe:()=>cnFoe({n:'ログ＆パッチ',zeroday:1,party:P(1007,1062)}),R:{terrain:'ruins'}});
+  bt(19,'e19_b','e19_4',AS,{bg:'anime_eg_lakebed',foe:()=>cnFoe({n:'ログ＆パッチ',zeroday:1,party:P(1007,1062)}),R:{terrain:'ruins',ai:{hpX:0.828,atkX:0.828}}});
   sc(19,'e19_5',AS,'*',{bg:'anime_eg_lakebed'});
   sc(20,'e20_1',AS,'*',{bg:'anime_eg_sunken',tod:'evening'}); sc(20,'e20_2',AS,'*',{bg:'anime_eg_sunken'}); sc(20,'e20_3',AS,'*',{bg:'anime_eg_sunken'}); sc(20,'e20_4',AS,'*',{bg:'anime_eg_sunken'}); sc(20,'e20_5',AS,'*',{bg:'anime_eg_sunken'});
-  bt(20,'e20_b','e20_6',AS,{bg:'anime_eg_sunken',must:1,anc:{id:2011,tier:5,lv:40,flag:'eg_raga',tune:{hp:2.07,atk:3.04}},R:{terrain:'ruins',guests:['partner','own3',1037,'own2'],fuse:[2048]}});
+  bt(20,'e20_b','e20_6',AS,{bg:'anime_eg_sunken',must:1,anc:{id:2011,tier:5,lv:40,flag:'eg_raga',tune:{hp:2.07,atk:3.04}},R:{terrain:'ruins',guests:['partner','own3',1037,'own2'],fuse:[2048],tune:{hp:1.088,atk:1.598}}});
   // 第21話 北の電話(カイロの病院→空の港・ナディアと別れる・父の電話)
   go(21,'e21_g',AS,CA,'from_china',{tod:'morning'});
   sc(21,'e21_1',CA,'*',{bg:'anime_eg_hospital_day'});
@@ -297,7 +297,7 @@ function egInit(){ Object.assign(SC,EG_SC,NR_SC,END_SC); xInsert();
     if(SAVE.unlock&&SAVE.unlock.fusion1) opt.fusionUnlocked=true;
     if(!f.e11_3) opt.enemyNoFuse=true;
     const s=xStepOf(e); if(s&&s.R) xBattleOpt(e,opt,s.R);
-    if(nrEnleo(f)){ const own=new Set(opt.player.owned||[]); own.delete(1003); opt.player.owned=[...own]; }
+    if(nrEnleo(f)){ const own=new Set(opt.player.owned||[]); own.delete(1003); opt.player.owned=[...own]; opt.player.holdForms=(opt.player.holdForms||[]).concat([1003]); }   // 2026-10-31 開始の段まで上げる時も エンオウには上げない
     if(!s&&nrStop(f)){ const party=opt.player&&opt.player.party; if(Array.isArray(party)&&party.length){ const keep=party.filter(p=>ENJU_LINE.includes(+p.mid)||(nrStop(f)===2&&CN_GRIF.includes(+p.mid))); if(keep.length){ party.length=0; keep.forEach(p=>party.push(p)); } } } };
   const _ab=grAfterBattle; grAfterBattle=function(e,win){ const s=storyOn()&&xStepOf(e);
     if(s){ const lb=WORLD.lastBattle||{}; SAVE.flags[s.id+'_b']=(s.draw&&lb.how==='timeout')?3:(win?2:1); return {after:null,next:()=>xRun(),keep:true}; }

@@ -159,8 +159,8 @@
    "flagWin": "sophia",
    "todo": "ソフィアの絵は未作成(ペトラの体を仮に使用)",
    "ai": {
-    "hpX": 0.452,
-    "atkX": 0.402
+    "hpX": 2.026,
+    "atkX": 1.802
    },
    "rule": "sophia"
   },
@@ -357,8 +357,8 @@
    "lv": 18,
    "tier": 5,
    "tune": {
-    "hp": 5.205,
-    "atk": 1.824
+    "hp": 12.565,
+    "atk": 4.403
    },
    "need": "roof25",
    "afterFlag": "ep25",

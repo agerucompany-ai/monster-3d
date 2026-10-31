@@ -4685,6 +4685,23 @@ function doResign(){ if(state.phase!=='battle'||state.cur!==0)return;
 
 // ======================= UI =======================
 function toast(msg){ if(BT.headless) return; if(_seq && !_seq.done){ _seq.after.push(()=>toast(msg)); return; } const t=$id('toast'); setIc(t,msg); t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),1500); }
+// ---- 2026-10-31 はじめての案内: 融合・進化ボタン(闘気)・進化のマス。この端末で初めての時に1回だけ 光らせて短い案内(localStorage mb_guide_v1) ----
+const GUIDE_KEY='mb_guide_v1', GUIDE_MEM={};
+function guideSeen(k){ if(GUIDE_MEM[k]) return true; try{ const o=JSON.parse(localStorage.getItem(GUIDE_KEY)||'{}'); return !!o[k]; }catch(e){ return false; } }
+function guideMark(k){ GUIDE_MEM[k]=1; try{ const o=JSON.parse(localStorage.getItem(GUIDE_KEY)||'{}'); o[k]=1; localStorage.setItem(GUIDE_KEY, JSON.stringify(o)); }catch(e){} }
+const GUIDE_TX={ fuse:['fuse','融合できる！','光るボタンで 2体が1体の強い子に'], evo:['evolve','闘気がたまった！','光るボタンで すぐ進化'], cell:['evolve','金色の列で進化','まん中で2段目・相手の陣で3段目'] };
+function guideShow(k){ const el=$id('guide'); if(!el) return; const t=GUIDE_TX[k]; el.innerHTML=`<img src="${icSrc(t[0])}" alt=""><div><b>${t[1]}</b><span>${t[2]}</span></div>`; el.dataset.k=k; el.classList.add('show'); clearTimeout(guideShow._t); guideShow._t=setTimeout(()=>el.classList.remove('show'),5200); el.onclick=()=>el.classList.remove('show'); BT.guideLog=(BT.guideLog||[]).concat([k]); }
+function guideFusable(u){ if(u.acted) return false; const f=(canMove(u)?moveTargets(u).fuse:[]).concat(adjFuse(u)); return f.length>0; }
+function guideCellPulse(){ if(!structGroup||typeof THREE==='undefined') return; const g=new THREE.Group(); structGroup.add(g); const tiles=[];
+  for(let r=0;r<NR;r++){ const cen=inCenterRow(r), camp=inCampRow(1,r); if(!cen&&!camp) continue; for(let c=0;c<NC;c++) tiles.push(spTile(g,r,c,cen?0xffd860:0xffa050,0.0,0.07)); }
+  const t0=performance.now(); const fn=()=>{ const t=(performance.now()-t0)/1000; if(t>5.5||!g.parent){ if(g.parent) g.parent.remove(g); const i=ambient.indexOf(fn); if(i>=0) ambient.splice(i,1); return; } const a=(0.16+0.3*(0.5+0.5*Math.sin(t*5.2)))*(t>4.5?(5.5-t):1); for(const m of tiles) m.material.opacity=a; }; ambient.push(fn); }
+function guideCheck(){ if(BT.headless||ONLINE||!state||state.phase!=='battle'||state.cur!==0||BT.auto) return; const G=BT.guide||(BT.guide={});
+  if(G.evo && state.stats.evo[0]>0) G.evo=false; if(G.fuse && state.stats.fuse[0]>0) G.fuse=false;   // 押したら光るのはおしまい
+  { const el=$id('guide'); if(el && el.classList.contains('show')) return; }   // 1つずつ(出ている間は次を出さない)
+  const mine=alive(0).filter(u=>!u.acted&&!(u.dug>0)&&!u.anc);
+  if(!G.cellDone){ G.cellDone=true; if(!guideSeen('cell') && EVO_CELLS.length && mine.some(u=>(mon(u).level||1)<=2&&canEverEvolve(0,u.mid,false))){ guideMark('cell'); guideCellPulse(); guideShow('cell'); return; } }
+  if(!G.evoShown && !guideSeen('evo')){ const u=mine.find(x=>gaugeReady(x)&&canEverEvolve(0,x.mid,false)); if(u){ guideMark('evo'); G.evo=G.evoShown=true; floatText(u.r,u.c,IC('evolve')+'進化','#ffe680','tag'); guideShow('evo'); return; } }
+  if(BT.fusionOn && !G.fuseShown && !guideSeen('fuse')){ const u=mine.find(guideFusable); if(u){ guideMark('fuse'); G.fuse=G.fuseShown=true; floatText(u.r,u.c,IC('fuse')+'融合','#e8b0ff','tag'); guideShow('fuse'); return; } } }
 function showBanner(text){ if(BT.headless) return; const b=$id('turnBanner'); setIc(b,text); b.classList.add('show'); clearTimeout(showBanner._t); showBanner._t=setTimeout(()=>b.classList.remove('show'),1000); }
 function floatText(r,c,text,color,cls){ if(BT.headless) return;
   if(!renderer||!camera) return;
@@ -4720,6 +4737,7 @@ function updateUI(){ if(BT.headless) return;
       if(k==='menu'){ menuOpen()?closeMenu():openMenu(); } else if(k==='cycleAuto'){ cycleAuto(); if(menuOpen()) renderMenu(); } }); }
   } else tb.innerHTML='';
   if(menuOpen()) renderMenu();
+  guideCheck();   // 2026-10-31 はじめての案内(融合・進化ボタン・進化のマス)
   // チュートリアル: 進化・融合の「今できるぞ」を初回だけ知らせる
   if(CAMP.on && state.phase==='battle' && state.cur===0){
     if(Object.values(state.units).some(u=>u.owner===0&&gaugeReady(u)&&STORY.owned.includes(mon(u).evolves_to)) && tutOnce('t_evoready'))
@@ -4735,10 +4753,10 @@ function updateUI(){ if(BT.headless) return;
   function appendFuseBtns(){ if(!sel||!selMoves||!selMoves.fuse) return; const seen={};
     for(const [fr,fc] of selMoves.fuse){ const partner=unitAt(fr,fc); if(!partner)continue;
       const fid=fusionResult(sel,partner); if(fid==null||seen[fid])continue; seen[fid]=1;
-      ac.appendChild(mkbt(`${IC('fuse')}融合→${MID[fid].name}（${mon(partner).name}と）`,'fuse', !sel.acted, ()=>{ pushUndo(); moveUnit(sel,fr,fc,'pair'); reselectAfter(); })); }
+      ac.appendChild(mkbt(`${IC('fuse')}融合→${MID[fid].name}（${mon(partner).name}と）`,'fuse'+(BT.guide&&BT.guide.fuse&&!sel.acted?' guide':''), !sel.acted, ()=>{ pushUndo(); moveUnit(sel,fr,fc,'pair'); reselectAfter(); })); }
     for(const [fr,fc] of selMoves.fuse){ const partner=unitAt(fr,fc); if(!partner)continue;   // 3体融合(v3): 相手に隣接する3体目も一緒に
       const t3=tripleResult(sel,partner); if(!t3||seen['t'+t3.id])continue; seen['t'+t3.id]=1;
-      ac.appendChild(mkbt(`${IC('fuse3')}3体融合→${MID[t3.id].name}（${mon(partner).name}・${mon(t3.c).name}と）`,'fuse', !sel.acted, ()=>{ pushUndo(); moveUnit(sel,fr,fc,'triple'); reselectAfter(); })); } }
+      ac.appendChild(mkbt(`${IC('fuse3')}3体融合→${MID[t3.id].name}（${mon(partner).name}・${mon(t3.c).name}と）`,'fuse'+(BT.guide&&BT.guide.fuse&&!sel.acted?' guide':''), !sel.acted, ()=>{ pushUndo(); moveUnit(sel,fr,fc,'triple'); reselectAfter(); })); } }
   if(sel){
     const m=mon(sel);
     const R=effRange(sel), note=traitNote(sel);
@@ -4826,7 +4844,7 @@ function updateUI(){ if(BT.headless) return;
         if(!ONLINE && !STORY.owned.includes(m.evolves_to)){ ok=false; why='(まだ覚えていない)'; }
         else if(sel.acted){ ok=false; why='(行動済)'; }
         else if(!gaugeReady(sel)){ ok=false; why=`(闘気${gaugeOf(sel)}/${evoNeed(sel)})`; }
-        ac.appendChild(mkbt(`${IC('evolve')}進化→${nm.name}${why}`,'evo', ok, ()=>setMode('evolve')));
+        ac.appendChild(mkbt(`${IC('evolve')}進化→${nm.name}${why}`,'evo'+(ok&&BT.guide&&BT.guide.evo?' guide':''), ok, ()=>setMode('evolve')));
       }
       appendFuseBtns();
       ac.appendChild(mkbt(IC('cancel')+'解除','',true,clearSel));
@@ -5107,10 +5125,10 @@ const TACT={ on:true,
   pve:{wild:{hp:1.1,atk:1.1}, trainer:{hp:1,atk:1}, master:{hp:0.92,atk:0.93}, ancient:{hp:0.95,atk:0.96}},   // 2026-10-28 シム(sim_champ*・sim_ancient*)で決めた   // 相手(敵)の体力・攻撃のつまみ(後手の闘気で敵が少し強くなった分を戻す・シムで決める)
   placeW:{terr:300, cov:12, covL:40, cen:1.5, cenL:3, back:30, front:30} };   // 配置の点(地形・かげ・中央からの列の数)
 // 2026-10-29 盤 v4: 開始の段ごとの 敵(人・古代テリオン)の強さ。技の威力の差を広げたので、2段目から始まる戦い(中国・エジプト前半)は相手が強く・3段目から(エジプト後半・北欧)は自分が強くなった分を戻す。体力と攻撃に √k ずつ(シム tune_v4.js)
-const PVE_STAGE={trainer:{1:1,2:0.75,3:1}, master:{1:1,2:0.62,3:1.65}, ancient:{1:1,2:0.55,3:1.7}};
+const PVE_STAGE={trainer:{1:1,2:0.75,3:1}, master:{1:1,2:1,3:1}, ancient:{1:1,2:1,3:1}};   // 2026-10-31 人(master)・古代は 1 に(前 master 2段目0.62・3段目1.65 / 古代 0.55・1.7)。手下がこちらと同じ段から同じ決まりで進化する(alignMinions)ので 段の差の埋め合わせはいらない。強さは地図ごと(人の手 naiveB で合わせた)
 // 2026-10-29 進化の2段構え: 進化のマスに入れば闘気なしで進化するので、進化できる子を連れた戦いは自分が強くなる → その分 相手を強くする。
 //   E=PVE_EVO[種類][開始の段] を「進化できる子の割合」乗で掛ける(全員進化できる=E・だれもできない=1)。シム tune_v4.js で決めた
-const PVE_EVO={trainer:{1:1,2:1}, master:{1:6,2:2}, ancient:{1:12,2:4}};
+const PVE_EVO={trainer:{1:1,2:1}, master:{1:1,2:1}, ancient:{1:1,2:1}};   // 2026-10-31 外した(前 master 1段目6・2段目2 / 古代 12・4)。手下も同じ決まりで進化するので「こちらが進化できるほど相手を強く」はいらない(人の手では進化しきれず 勝てなくなっていた)
 try{ if(IS_NODE && process.env.PVEE) _deepAssign(PVE_EVO, JSON.parse(process.env.PVEE)); }catch(e){}
 function plEvoFrac(){ const P=BT.party||[]; if(!P.length) return 0; let n=0; for(const p of P){ const m=MID[playerStartMid(p.mid)]; if(m && m.evolves_to!=null && (ONLINE || STORY.owned.includes(m.evolves_to))) n++; } return n/P.length; }
 function pveStageX(){ const t=PVE_STAGE[BT.kind]; let k=t?(t[BT.startStage||1]||1):1; const e=PVE_EVO[BT.kind]; const E=e?(e[BT.startStage||1]||1):1; if(E!==1) k*=Math.pow(E, plEvoFrac()); return Math.sqrt(k); }
@@ -5332,12 +5350,14 @@ function ancientEscort(){ const A=BT.anc; if(!A) return; const n=+(A.T.escort||0
   const cfg=(BT.opts&&BT.opts.enemy&&BT.opts.enemy.ancient)||{}; const pool=(cfg.escortMids||cfg.minions||[]).map(Number).filter(m=>MID[m]); if(!pool.length) return;
   const cells=[]; for(const r of START_ROWS[1]) for(let c=0;c<NC;c++) if(!unitAt(r,c)) cells.push([r,c]); cells.sort((p,q)=>(Math.abs(p[0]-b.r)+Math.abs(p[1]-b.c))-(Math.abs(q[0]-b.r)+Math.abs(q[1]-b.c)));
   const lv=Math.max(1,(b.lv||1)-ANCIENT.minionLvDown);
-  for(let k=0;k<n&&k<cells.length;k++){ const [r,c]=cells[k]; const mid=enemyStageForm(pool[k%pool.length], BT.startStage); const nu=addUnit(1,mid,r,c); unitMul(nu, lvRank(lv), A.T.escortX||1, A.T.escortX||1); nu.lv=lv; nu.src=[]; nu.mid0=mid; nu.summoned=true; nu.hmp=0; nu.hmpMax=0; nu.hg=0; } }
+  for(let k=0;k<n&&k<cells.length;k++){ const [r,c]=cells[k]; const top=enemyStageForm(pool[k%pool.length], BT.startStage); const mid=BT.minionSt?enemyStageForm(baseFormId(top), Math.min(BT.minionSt, lvStage(top))):top; if(mid!==top){ const eo=BT.enemyOwned||(BT.enemyOwned=new Set()); let q=MID[mid], g=0; while(q&&q.evolves_to!=null&&q.id!==top&&g++<4){ eo.add(q.evolves_to); q=MID[q.evolves_to]; } } const nu=addUnit(1,mid,r,c); unitMul(nu, lvRank(lv), A.T.escortX||1, A.T.escortX||1); nu.lv=lv; nu.src=[]; nu.mid0=mid; nu.summoned=true; nu.hmp=0; nu.hmpMax=0; nu.hg=0; } }
 // 2026-10-27 野生は群れの数まで(自分が出せる数=群れの数・盤の budget が上限)。人は今まで(budget×段)
 function baseBudget(){ const n=BT.kind==='wild'?Math.max(1,Math.min(BT.rules.budget, BT.enemyParty.length)):BT.rules.budget; return n*BT.startStage; }
 function ancientBudget(){ return Math.max(1, BT.party.reduce((s,p)=>s+((MID[playerStartMid(p.mid)]||{}).level||1),0)); }   // 全パーティがその段で出せる
+// 2026-10-31 挑む側の段 = 隊の段の「平均の強さ」(各自の段の stageRef の平均)。前=隊でいちばん上の段(3段目の相棒＋1段目4体でも 3段目の隊と同じ強さの古代が出ていた)。隊が同じ段なら前と同じ
+function ancRef(k){ const R=ANCIENT.stageRef[k]; const P=BT.party||[]; if(!P.length) return R[BT.anc.pst]; let s=0; for(const p of P) s+=R[Math.min(3,lvStage(playerStartMid(p.mid)))]; return s/P.length; }
 function ancientApply(u){ const A=BT.anc, T=A.T, m=mon(u), R=ANCIENT.stageRef, s=A.pst;
-  const hx=rankX(u.rank)*(R.hp[s]/R.hp[3])*T.hp, ax=rankX(u.rank)*(R.atk[s]/R.atk[3])*T.atk;
+  const hx=rankX(u.rank)*(ancRef('hp')/R.hp[3])*T.hp, ax=rankX(u.rank)*(ancRef('atk')/R.atk[3])*T.atk;
   const PV=(T3()&&TACT.pve.ancient)||{}; const SK=pveStageX(); u.hx=hx*(PV.hp||1)*SK; u.atkX=ax*(PV.atk||1)*SK; u.ancAtk0=u.atkX; u.maxhp=u.hp=Math.max(1,Math.round(m.hp*u.hx)); u.isBoss=true; u.anc=true; u.leader=true; }   // 戦術v3: TACT.pve.ancient
 function ancBigCells(u){ const B=BT.anc.T.big, out=[]; for(let r=0;r<NR;r++) for(let c=0;c<NC;c++){ if(r===u.r&&c===u.c) continue; const dr=Math.abs(r-u.r), dc=Math.abs(c-u.c);
     const ok = B.shape==='cross' ? ((dr<=1||dc<=1) && Math.max(dr,dc)<=B.rng) : Math.max(dr,dc)<=B.rng; if(ok) out.push([r,c]); } return out; }
@@ -5396,13 +5416,14 @@ function rkStr(u){ return u&&u.lv?('Lv'+u.lv):('★'+Math.round((u&&u.rank)||1))
 function stageForm(mid, stage, owned){ let m=MID[+mid]; if(!m) return +mid; let g=0; while(m.evolves_to!=null && MID[m.evolves_to] && MID[m.evolves_to].level<=stage && (!owned || owned.includes(m.evolves_to)) && g++<4) m=MID[m.evolves_to]; return m.id; }
 const STAGE_DMGX={1:1, 2:1, 3:2.6};   // 2026-10-27 野生の群れ(2〜3体)で決めなおした(旧1.7=1対1の時・1対1は SIZE_RULES[7].solo.stageDmgX に残した)
 // 2026-10-27 野生の群れ: 段ごとの野生の体力・攻撃(KIND_DEFAULTS.wild.ai の hpX/atkX を置きかえる。マップの wild[].ai が来ればそちらが勝つ)。sim/sim_wild_pack.js で決めた
-const WILD_STAGE={1:{hpX:1.1, atkX:1.1}, 2:{hpX:1.05, atkX:1.05}, 3:{hpX:0.85, atkX:0.85}};   // 3段目の子は体力/攻撃の比が1段目の1.7倍(1200/163 vs 135/33)なので、7×7(10ターン)で時間切れしないようダメージを×1.7(シム 2026-10-26)
+const WILD_STAGE={1:{hpX:1.1, atkX:1.1}, 2:{hpX:1.05, atkX:1.05}, 3:{hpX:0.7, atkX:0.7}};   // 2026-10-31 3段目 0.85→0.7(人の手 naiveB で 北欧の野生の群れが 28〜65% だった→71〜91%)   // 3段目の子は体力/攻撃の比が1段目の1.7倍(1200/163 vs 135/33)なので、7×7(10ターン)で時間切れしないようダメージを×1.7(シム 2026-10-26)
 // 2026-10-27 人(語り手・語り部・幹部・ボス=kind 'trainer'/'master')の 9×9/11×11 を段ごとに(STAGE_HUMAN)。3段目は体力/攻撃の比が1段目の1.7倍で、
 //   ダメージ1倍のままだと時間切れ(ノルドで10〜63%)・勝ち越した側のリーダーが下がって守り続けて決着しなかった → シムで調整(sim/sim_champ_egypt.js・sim_champ_norse.js)
 //   dmgX = ダメージの倍率(盤の dmgX に掛ける) / atkMP = 1体の攻撃の回数(既定10・撃ち切ると両軍が泉で回復するだけになり時間切れの主因だった) / push = リーダーが前に出る条件(turn ターン目から か 自軍の体力の割合が ahead 以上) / final = 決戦(最後の left ターンはダメージ +step ずつ・バナー)
 //   野生・古代テリオン・7×7・1段目/2段目(ギリシャ・中国・エジプト前半)は今のまま。startBattle/simulate の stageHuman:{…} で上書き・stageHuman:false で切る
 const STAGE_HUMAN={3:{dmgX:{9:1.7, 11:1.4, 13:1.4}, atkMP:20, push:{turn:3, ahead:0.5}, final:{left:5, step:0.3}}};
 function applyStartStage(opts){ BT.startStage=Math.max(1,Math.min(3,+(opts&&opts.startStage)||1));
+  { const pl=(opts&&opts.player)||{}; BT.stageFree=!!pl.stageFree; BT.holdForms=new Set((pl.holdForms||[]).map(Number)); }   // 2026-10-31 物語の借りる子・仲間: その戦いの開始の段まで 覚えていなくても上げて出す(holdForms=上げない姿・北欧のエンレオ)。戦いの中の進化は覚えた姿だけ
   // 2026-10-27 野生の1対1(群れが1体=自分も1体)は、群れの前の決まり(SIZE_RULES[7].solo)のまま
   BT.solo=!!(BT.kind==='wild' && BT.enemyParty.length===1 && BT.rules.solo); if(BT.solo){ BT.rules=Object.assign({}, BT.rules, BT.rules.solo); if(!(opts&&opts.rules&&opts.rules.dmgX!=null)) BT.dmgX=BT.rules.dmgX; }
   const SD=(BT.solo&&BT.rules.stageDmgX)||STAGE_DMGX;
@@ -5413,10 +5434,24 @@ function applyStartStage(opts){ BT.startStage=Math.max(1,Math.min(3,+(opts&&opts
   BT.noWild=new Set(((opts&&opts.noWildForms)||[]).map(Number));   // 2026-10-28 物語の人の切り札の姿(ディアボーグ等)は野生・古代テリオンの子分には出ない(その手前の姿で止める)
   if(BT.startStage>1) for(const e of BT.enemyParty){ if(e.fixed||e.stage!=null) continue; e.mid=enemyStageForm(e.mid, BT.startStage); } }   // 敵: fixed:true か stage: を持つ札はそのまま。下げることはしない
 function enemyStageForm(mid, st){ let id=stageForm(mid, st, null); if(BT.noWild&&BT.noWild.size&&(BT.kind==='wild'||BT.kind==='ancient')){ let g=0; while(BT.noWild.has(id)&&g++<4){ const pv=Object.values(MID).find(m=>m.evolves_to===id); if(!pv) break; id=pv.id; } } return id; }
+// 2026-10-31 オーナー「ボスは三段目・こっちは一段目…3体以上いると後のやつが進化してきて全く歯が立たない」
+//   はじめから上の段にしてよいのは ボス(リーダー)1体だけ(その戦いの本来の段のまま)。手下は こちらの隊が始まる段から始めて こちらと同じ決まりで進化する
+//   (中央の3列で2段目・相手の陣で3段目・闘気)。こちらの隊の段 = 隊でいちばん多い段(同じ数なら低い方)。手下の元の姿までの進化先は その人が覚えている扱い
+//   元から同じか低い段の手下はそのまま。はじめから融合の姿の手下は 材料の1体目の系統にする。人(master)・古代は既定で入・ふつうの人(trainer)は opts.alignMinions:true の時だけ・false で切る
+function lvStage(id){ const q=MID[+id]; return q?(q.role==='fusion'?3:(q.level||1)):1; }
+function playerStageMode(){ const cnt={}; for(const p of BT.party){ const s=lvStage(playerStartMid(p.mid)); cnt[s]=(cnt[s]||0)+1; } let best=1, bn=-1; for(const s of [1,2,3]){ if((cnt[s]||0)>bn){ bn=cnt[s]||0; best=s; } } return best; }
+function alignMinions(opts){ BT.minionSt=null; if(BT.kind==='wild') return; const a=opts&&opts.alignMinions; if(!(a!=null?!!a:(BT.kind==='master'||BT.kind==='ancient'))) return;
+  const S=playerStageMode(); BT.minionSt=S; const eo=BT.enemyOwned||(BT.enemyOwned=new Set());
+  let li=BT.enemyParty.findIndex(e=>e.leader); if(li<0) li=0;
+  BT.enemyParty.forEach((e,i)=>{ if(i===li) return; const m=MID[e.mid]; if(!m) return; let src=+e.mid;
+    if(m.role==='fusion'){ const r=(m.recipe||m.recipe3||[]).map(Number).filter(x=>MID[x]&&MID[x].role!=='fusion'); if(!r.length) return; src=r[0]; }
+    else if(lvStage(e.mid)<=S) return;
+    const to=enemyStageForm(baseFormId(src), S); let q=MID[to], g=0; while(q && q.evolves_to!=null && q.id!==src && g++<4){ eo.add(q.evolves_to); q=MID[q.evolves_to]; }
+    e.mid0=e.mid; e.mid=to; e.minion=true; }); }
 // 2026-10-27 野生の群れ: 自分が盤に出せる数(先頭から順に、その段の姿で出せるLv合計 SIZE_RULES.budget×startStage まで)。呼ぶ側(progress.js)が群れの数をこれに合わせる
 function packCount(mids, stage, owned, size){ const R=SIZE_RULES[+size||7]||SIZE_RULES[7]; const st=Math.max(1,Math.min(3,+stage||1)); const cap=R.budget*st; let used=0, n=0;
   for(const mid of (mids||[])){ const m=MID[stageForm(+mid, st, owned||null)]; if(!m) continue; const lv=m.level||1; if(n>0 && used+lv>cap) continue; used+=lv; n++; } return Math.max(1,n); }
-function playerStartMid(mid){ return BT.startStage>1 ? stageForm(mid, BT.startStage, ONLINE?null:STORY.owned) : +mid; }   // 自分の子: その姿を持っている所まで(持っていなければ一番上の持っている姿)
+function playerStartMid(mid){ if(!(BT.startStage>1)) return +mid; if(BT.stageFree && !ONLINE) return stageForm(mid, BT.startStage, {includes:id=>!BT.holdForms.has(+id)}); return stageForm(mid, BT.startStage, ONLINE?null:STORY.owned); }   // 自分の子: その姿を持っている所まで(持っていなければ一番上の持っている姿)
 
 function setBoardSize(n){
   if(!SIZE_RULES[n]) n=11;
@@ -5675,7 +5710,14 @@ const CSS=`
 #mbRoot .pcard .rk{color:#ffd86b;font-size:9px}
 #mb-toast{position:absolute;left:50%;top:calc(48px + env(safe-area-inset-top));transform:translateX(-50%);background:rgba(8,10,18,.86);border:1px solid rgba(255,216,107,.35);color:#fff;padding:7px 14px;border-radius:10px;z-index:30;font-size:13px;font-weight:700;pointer-events:none;opacity:0;transition:opacity .2s;max-width:88%;text-align:center}
 #mb-toast.show{opacity:1}
-#mbRoot .floatdmg{position:fixed;transform:translate(-50%,-50%);font-size:34px;font-weight:900;text-shadow:0 2px 3px #000,0 0 9px #000,0 0 3px #000;pointer-events:none;z-index:16;white-space:nowrap;animation:mbFdmg 1.1s ease-out forwards}
+#mb-guide{position:absolute;left:50%;top:calc(50px + env(safe-area-inset-top));transform:translateX(-50%);display:none;align-items:center;gap:10px;background:rgba(10,14,30,.94);border:2px solid #ffd86b;color:#fff;padding:8px 14px 8px 10px;border-radius:12px;z-index:31;max-width:min(92%,380px);box-shadow:0 0 18px rgba(255,216,107,.45);cursor:pointer}
+#mb-guide.show{display:flex;animation:mbGd .35s ease-out}
+#mb-guide img{width:40px;height:40px;flex:none}
+#mb-guide b{display:block;font-size:15px;color:#ffe9a0}
+#mb-guide span{display:block;font-size:12.5px;line-height:1.35}
+@keyframes mbGd{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
+#mbRoot button.bt.guide{animation:mbGlow 1s ease-in-out infinite;border-color:#fff2b0}
+@keyframes mbGlow{0%,100%{box-shadow:0 0 0 2px #ffe070,0 0 8px 2px rgba(255,220,100,.5)}50%{box-shadow:0 0 0 3px #fff6c0,0 0 22px 8px rgba(255,220,100,.95)}}#mbRoot .floatdmg{position:fixed;transform:translate(-50%,-50%);font-size:34px;font-weight:900;text-shadow:0 2px 3px #000,0 0 9px #000,0 0 3px #000;pointer-events:none;z-index:16;white-space:nowrap;animation:mbFdmg 1.1s ease-out forwards}
 #mbRoot .floatdmg.num{font-size:38px;-webkit-text-stroke:1.5px #1a0c08;animation:mbFnum 1.3s cubic-bezier(.2,.8,.3,1) forwards}
 #mbRoot .floatdmg.num.weak{font-size:50px;-webkit-text-stroke:2px #3a1800;text-shadow:0 3px 0 #3a1800,0 0 16px rgba(255,200,60,.9);animation:mbFweak 1.35s cubic-bezier(.2,.8,.3,1) forwards}
 #mbRoot .floatdmg.num.res{font-size:28px;animation:mbFnum 1.1s ease-out forwards}
@@ -5800,7 +5842,7 @@ const CSS=`
 #mb-cutin.m3.k-sp .ci3Hole{box-shadow:0 0 0 300vmax rgba(2,4,10,.82)}
 `;
 const DOM=`<div id="mb-wrap"><canvas id="mb-cv"></canvas><div id="mb-hud"><div id="mb-sel"></div><div id="mb-actions"></div></div></div>
-<div id="mb-topbar"></div><button id="mb-camAll" aria-label="全体"><img alt=""></button><div id="mb-detail"></div><div id="mb-fxflash"></div><div id="mb-bigDim"></div><div id="mb-bigName"><div class="bn1"></div><div class="bn2"></div></div><div id="mb-toast"></div><div id="mb-turnBanner"></div>
+<div id="mb-topbar"></div><button id="mb-camAll" aria-label="全体"><img alt=""></button><div id="mb-detail"></div><div id="mb-fxflash"></div><div id="mb-bigDim"></div><div id="mb-bigName"><div class="bn1"></div><div class="bn2"></div></div><div id="mb-toast"></div><div id="mb-guide"></div><div id="mb-turnBanner"></div>
 <div id="mb-cutin"><div class="ciRays"></div><div class="ciParts"></div><div class="ciBand"><div class="ciLines"></div><div class="ciFlash"></div><img class="ciA" alt=""><img class="ciB" alt=""><img class="ciC" alt=""><div class="ciTxt"></div><div class="ciSub"></div></div></div>
 <div id="mb-ovPlace"><div id="mb-placeBar">
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:14px;color:#ffd86b;white-space:nowrap">配置</b><span id="mb-placeHint" style="font-size:12px;color:#cfe0ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span><span id="mb-placeCount" style="margin-left:auto;font-size:12px;color:#8ee0ff;white-space:nowrap"></span></div>
@@ -5854,9 +5896,9 @@ function startBattle(opts){
     try{ BT.fastPref=localStorage.getItem('mb_auto_fast')==='1'; }catch(e){ BT.fastPref=false; } BT.fast=false;
     setBoardSize(+opts.size||KD.size);
     const pl=opts.player||{}, en=opts.enemy||{};
-    BT.party=normParty(pl.party||pl); BT.enemyParty=normParty(en.party||en); applyStartStage(opts); ancientSetup(en);
+    BT.party=normParty(pl.party||pl); BT.enemyParty=normParty(en.party||en); applyStartStage(opts); setOwned(pl, en); ancientSetup(en); alignMinions(opts);   // 2026-10-31 覚えた姿を先に(古代の「挑む側の段」が前の戦いの覚えた姿で決まっていた)・手下の段
     if(!BT.party.length||!BT.enemyParty.length) throw new Error('startBattle: player/enemy の party が空');
-    BT.items=Object.assign({heal:0}, pl.items||{}); STORY.items=BT.items; setOwned(pl, en); BT.fed={};   // 2026-10-30 店の肉: BT.fed[enemyParty の idx]=足す確率
+    BT.items=Object.assign({heal:0}, pl.items||{}); STORY.items=BT.items; BT.fed={}; BT.guide={}; BT.guideLog=[];   // 2026-10-30 店の肉: BT.fed[enemyParty の idx]=足す確率
     BT.fusionOn=!!opts.fusionUnlocked; BT.tripleOn=!!opts.tripleUnlocked; BT.tune=Object.assign({}, TUNE, opts.tune||{});
     BT.diff=Object.assign({}, KD.ai, (kind==='wild'&&(BT.solo?BT.rules.ai:WILD_STAGE[BT.startStage]))||{}, en.ai||{}); BT.aiSkill=[ (pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1 ];
     BT.place=resolvePlace(opts.terrainTheme, opts.backdrop);
@@ -6248,8 +6290,8 @@ function simulate(opts){
   BT.kind=kind; BT.opts=opts; BT.v2=(opts.moveSystem?opts.moveSystem!=="v1":!(IS_NODE&&process.env.MOVESYS==="v1")); setStatMode(V2ON()); BT.fusedNew=[]; BT.auto=false; setBoardSize(+opts.size||KD.size);
   if(opts.rules){ BT.rules=Object.assign({},BT.rules,opts.rules); MAX_TURN=BT.rules.maxTurn; BT.dmgX=BT.rules.dmgX; }
   const pl=opts.player||{}, en=opts.enemy||{};
-  BT.party=normParty(pl.party||pl); BT.enemyParty=normParty(en.party||en); applyStartStage(opts); ancientSetup(en);
-  BT.items={heal:0}; STORY.items=BT.items; setOwned(pl, en);
+  BT.party=normParty(pl.party||pl); BT.enemyParty=normParty(en.party||en); applyStartStage(opts); setOwned(pl, en); ancientSetup(en); alignMinions(opts);
+  BT.items={heal:0}; STORY.items=BT.items;
   BT.fusionOn=!!opts.fusionUnlocked; BT.tripleOn=!!opts.tripleUnlocked; BT.tune=Object.assign({}, TUNE, opts.tune||{});
   BT.diff=Object.assign({}, KD.ai, (kind==='wild'&&(BT.solo?BT.rules.ai:WILD_STAGE[BT.startStage]))||{}, en.ai||{}); BT.aiSkill=[(pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1];
   BT.place=resolvePlace(opts.terrainTheme, opts.backdrop); BT.budget=+opts.budget||(BT.anc?ancientBudget():baseBudget());
@@ -6278,7 +6320,7 @@ const TIME_MODEL={perUnit:8, turnSwitch:2, cpuStart:1.0, cpuPerUnit:0.64, cutAtk
 function estSeconds(r){ const T=TIME_MODEL; return Math.round(T.setup + r.act[0]*T.perUnit + r.sideTurns[0]*T.turnSwitch + r.sideTurns[1]*T.cpuStart + r.act[1]*T.cpuPerUnit + r.atk[1]*T.cutAtk + (r.evo[0]+r.evo[1])*T.cutEvo + (r.fuse[0]+r.fuse[1])*T.cutFuse); }
 
 // ---- 外に出すもの ----
-const API={ init, startBattle, simulate, TACT, PVE_STAGE, PVE_EVO, get SERIES(){ return SERIES; }, seriesOf:(mid)=>seriesOf(+mid).map(s=>s.id),   /* 2026-10-28 戦術v3 */ V2, FINAL_V2, TYPE_TERR, TERR_FX, TERR_BONUS, TERR_WEAK, dropDominated:(ids)=>dropDominated(ids.map(id=>MV2[id]).filter(Boolean),null).map(m=>m.id), get MOVES2(){ return MV2; }, get v2Ready(){ return V2DATA; }, learnedIds:(mid,lv)=>learnedIds(mid,lv,false), estSeconds, TIME_MODEL, SIZE_RULES, KIND_DEFAULTS, ANCIENT, STAGE_HUMAN, TUNE, STAGE_DMGX, WILD_STAGE, packCount, PLACES, THEME_LOOK, BRIEF:{TERR_JP, TERR_HEX, TERR_X, CAMP_THEMES, THEME_JP, STRONG, WEAK, TYPES, TYPE_COL},   /* 2026-10-27 地図の案内(greece_town.html の briefing)が読むだけの表。ルールは変えない */ rankX, STACK_RANK, STACK_GEM, LV_MAX, lvRank, stageForm:(mid,stage,owned)=>stageForm(mid,stage,owned),
+const API={ init, startBattle, simulate, TACT, PVE_STAGE, PVE_EVO, get guideLog(){ return (BT.guideLog||[]).slice(); }, get minionStage(){ return BT.minionSt; }, get SERIES(){ return SERIES; }, seriesOf:(mid)=>seriesOf(+mid).map(s=>s.id),   /* 2026-10-28 戦術v3 */ V2, FINAL_V2, TYPE_TERR, TERR_FX, TERR_BONUS, TERR_WEAK, dropDominated:(ids)=>dropDominated(ids.map(id=>MV2[id]).filter(Boolean),null).map(m=>m.id), get MOVES2(){ return MV2; }, get v2Ready(){ return V2DATA; }, learnedIds:(mid,lv)=>learnedIds(mid,lv,false), estSeconds, TIME_MODEL, SIZE_RULES, KIND_DEFAULTS, ANCIENT, STAGE_HUMAN, TUNE, STAGE_DMGX, WILD_STAGE, packCount, PLACES, THEME_LOOK, BRIEF:{TERR_JP, TERR_HEX, TERR_X, CAMP_THEMES, THEME_JP, STRONG, WEAK, TYPES, TYPE_COL},   /* 2026-10-27 地図の案内(greece_town.html の briefing)が読むだけの表。ルールは変えない */ rankX, STACK_RANK, STACK_GEM, LV_MAX, lvRank, stageForm:(mid,stage,owned)=>stageForm(mid,stage,owned),
   get MID(){ return MID; }, get MONSTERS(){ return MONSTERS; }, baseFormId:(m)=>baseFormId(m), lineOf:(m)=>lineUpIds(m),
   setAuto(v){ if(v===2||v==='fast'){ BT.fastPref=true; setAutoMode(2); } else if(!!v!==BT.auto) toggleAuto(); return BT.auto; },
   // 確認用(test.html・puppeteer)

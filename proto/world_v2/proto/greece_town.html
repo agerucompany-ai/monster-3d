@@ -2962,6 +2962,7 @@ function grSpots(best,bd){ if(!D||!D.spots||!storyOn()) return {best,bd};
 // ---- 勝負の調整(startEncounter の opt を作ったあと) ----
 function grBattleOpt(e,opt){ if(!storyOn()) return;
   const r=e.n?(e.n.rule||ruleOf(e.n.o)):(e.m?e.m.o:null); if(!r) return;
+  if(e.n) storyStage(opt);   // 物語の人(野生・古代はここでは上げない=フィールドの古代は自分の覚えた姿のまま)
   const tt=r.terrain==='plain'?'meadow':r.terrain; if(tt){ opt.terrainTheme=tt; opt.backdrop=undefined; }
   if(e.n&&r.ai) opt.enemy.ai=Object.assign({},r.ai);
   const party=opt.player&&opt.player.party; if(!Array.isArray(party)||!party.length) return;
@@ -2971,6 +2972,9 @@ function grBattleOpt(e,opt){ if(!storyOn()) return;
     const own=new Set(opt.player.owned||[]); for(const g of r.guests){ if(g==='partner') continue; let m=+g; own.add(m); if(r.fuse&&MEVO[m]) own.add(MEVO[m]); } if(r.fuse){ own.add(1002); } opt.player.owned=[...own];
     if(r.fuse){ opt.fusionUnlocked=true; const fk=new Set(opt.player.fusionKnown||[]); fk.add(NARU_ID); opt.player.fusionKnown=[...fk]; } }
   else if(one){ party.length=0; party.push(enju); } }
+// 2026-10-31 オーナー「人が遊ぶとボス戦に勝てない」: 物語の戦いは 相手のボス(リーダー)1体だけ本来の段・手下はこちらの隊の段から(battle.js alignMinions)。
+//   こちらの借りる子・仲間は その戦いの開始の段まで 覚えていなくても上げて出す(stageFree)。戦いの中の進化は今までどおり覚えた姿だけ
+function storyStage(opt){ if(!opt||opt.kind==='wild') return; opt.alignMinions=true; if(opt.player) opt.player.stageFree=true; }
 // 止まっている間(第29話〜第30話の王の前)は、どの勝負もエンジュ一体。相棒がいない間(第15〜16話)は野生と勝負しない(encounterCheck)
 function grStoppedOne(e){ return !!(STOPPED29&&!(e.m&&e.m.o.ancient&&SAVE.flags.low30)); }
 function grWildOk(){ if(!storyOn()) return true; const f=SAVE.flags; if(!f.bond) return false; if(f.ep15&&!f.found16) return false; return true; }
@@ -6130,7 +6134,7 @@ sc(19,'c19_6',CA);
 // 第20話 都を守る(ランサム・リヴァイア＝セイリュ＋クロベク・メイリンの子を借りる)
 sc(20,'c20_1',CA,'*',{bg:'anime_cn_gate'});
 sc(20,'c20_2',CA);
-bt(20,'c20_b','c20_3',CA,{foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1067,lv:27,fixed:true},{mid:1060,lv:25},{mid:71,lv:25},{mid:1040,lv:25})}),R:{terrain:'ruins',guests:['partner',196,1012,1058],fuse:[2018],ai:{hpX:1.2,atkX:1.3}}});
+bt(20,'c20_b','c20_3',CA,{foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1067,lv:27,fixed:true},{mid:1060,lv:25},{mid:71,lv:25},{mid:1040,lv:25})}),R:{terrain:'ruins',guests:['partner',196,1012,1058],fuse:[2018],ai:{hpX:1.188,atkX:1.287}}});
 sc(20,'c20_4',CA,'*',{bg:'anime_cn_wall'});
 // 第21話 雪の高原
 sc(21,'c21_1',KU,'*',{bg:'anime_cn_gate',objAway:'都の北門から、雪の高原へ'});
@@ -6161,7 +6165,7 @@ bt(25,'c25_b','c25_2',TH,{foe:()=>cnFoe({n:'ログ＆パッチ',zeroday:1,party:
 sc(25,'c25_3',TH); sc(25,'c25_4',TH);
 // 第26話 首の輪(サジンオロチ・レンのヘラツノと並ぶ・フブキヤク＝ユキマダラ＋ソヨモモ)
 sc(26,'c26_1',TH); sc(26,'c26_2',TH);
-bt(26,'c26_b','c26_3',TH,{wild:2048,R:{terrain:'forest',guests:['partner',1034,1046,1029],fuse:[2049]}});
+bt(26,'c26_b','c26_3',TH,{wild:2048,R:{terrain:'forest',guests:['partner',1034,1046,1029],fuse:[2049],tune:{hp:3.088,atk:2.096}}});
 sc(26,'c26_4',TH); sc(26,'c26_5',TH);
 // 第27話 海の門(かけらを合わせる謎)
 go(27,'c27_g',TH,SE,'from_thunder',{tod:'dawn'});
@@ -6286,7 +6290,7 @@ function cnInit(){ Object.assign(SC,CN_SC); toastEl.style.zIndex=40;
   const _cg=contGame; contGame=async function(sv){ if(sv&&sv.flags){ const k=SAVE; SAVE=sv; try{ cnMigrate(); } finally{ SAVE=k; } } return _cg(sv); };
   window.CN_DBG={ cur:()=>{ const s=cnCur(); return s&&{id:s.id,map:s.map,at:s.at,kind:s.kind}; }, steps:CN_STEPS, run:()=>cnRun(), here:()=>cnHere(cnCur()), obj:()=>cnObjText(GF()) }; }
 function cnStepOf(e){ if(!e) return null; if(e.cn) return e.cn; const id=e.n&&e.n.o&&e.n.o.cnStep; if(id&&CN_BY[id]&&storyOn()&&!GF()[id]) return CN_BY[id]; return null; }
-function cnBattleOpt(e,opt,R){ if(R.terrain){ opt.terrainTheme=R.terrain; opt.backdrop=undefined; } if(R.size) opt.size=R.size; if(R.special) opt.special=Object.assign({},R.special);   // 2026-10-31 専用の盤(battle.js の opts.special)
+function cnBattleOpt(e,opt,R){ storyStage(opt); if(R.tune&&opt.enemy&&opt.enemy.ancient) opt.enemy.ancient.tune=Object.assign({},opt.enemy.ancient.tune||{},R.tune);   /* 2026-10-31 物語の古代の強さ(地図の古代と分けて合わせる) */ if(R.terrain){ opt.terrainTheme=R.terrain; opt.backdrop=undefined; } if(R.size) opt.size=R.size; if(R.special) opt.special=Object.assign({},R.special);   // 2026-10-31 専用の盤(battle.js の opts.special)
   const party=opt.player&&opt.player.party; if(!R.guests||!Array.isArray(party)||!party.length) return;
   const enju=party.find(p=>ENJU_LINE.includes(+p.mid))||party[0], own2=party.find(p=>CN_GRIF.includes(+p.mid));
   const L=[]; for(const g of R.guests){ if(g==='partner'){ if(enju&&!L.includes(enju)) L.push(enju); continue; } if(g==='own2'){ if(own2) L.push(own2); continue; } L.push({mid:+g,lv:enju.lv,guest:1}); }
@@ -6947,7 +6951,7 @@ function xStepOf(e){ if(!e) return null; if(e.x) return e.x; const c=xCur(); if(
   if(e.m&&s.wild&&+e.m.o.id===s.wild&&!e.m.stub) return s; return null; }
 
 // ---- 勝負の盤・借りる子・融合(cnBattleOpt に own3・keep2・triple・maxTurn を足したもの) ----
-function xBattleOpt(e,opt,R){ if(R.terrain){ opt.terrainTheme=R.terrain; opt.backdrop=undefined; } if(R.size) opt.size=R.size; if(R.maxTurn) opt.maxTurn=R.maxTurn; if(R.special) opt.special=Object.assign({},R.special);   /* 2026-10-31 専用の盤 */
+function xBattleOpt(e,opt,R){ storyStage(opt); if(R.tune&&opt.enemy&&opt.enemy.ancient) opt.enemy.ancient.tune=Object.assign({},opt.enemy.ancient.tune||{},R.tune);   /* 2026-10-31 物語の古代の強さ(地図の古代と分けて合わせる) */ if(R.terrain){ opt.terrainTheme=R.terrain; opt.backdrop=undefined; } if(R.size) opt.size=R.size; if(R.maxTurn) opt.maxTurn=R.maxTurn; if(R.special) opt.special=Object.assign({},R.special);   /* 2026-10-31 専用の盤 */
   if(e.m&&R.ai) opt.enemy.ai=Object.assign({},opt.enemy.ai||{},R.ai);
   const party=opt.player&&opt.player.party; const own=new Set(opt.player.owned||[]);
   if(R.guests&&Array.isArray(party)&&party.length){
@@ -7056,7 +7060,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(6,'e06_1',VA,'*',{bg:'anime_eg_tomb'}); sc(6,'e06_2',VA,'*',{bg:'anime_eg_tomb'}); sc(6,'e06_3',VA,'*',{bg:'anime_eg_tomb'});
   go(6,'e06_g',VA,TB,'from_valley');
   sc(6,'e06_4',TB,'玄室',{obj:'墓の奥、星の天井の部屋へ'});
-  bt(6,'e06_b','e06_5',TB,{wild:2068,must:1,R:{terrain:'tomb',guests:['partner',1012,'own2','own3'],fuse:[AMAKA_ID]}});
+  bt(6,'e06_b','e06_5',TB,{wild:2068,must:1,R:{terrain:'tomb',guests:['partner',1012,'own2','own3'],fuse:[AMAKA_ID],tune:{hp:1.433,atk:1.264}}});
   sc(6,'e06_6',TB,'*',{bg:'anime_eg_valley_dawn',tod:'dawn'});
   // 第7話 ルクソールの町(町の人から聞く→ネフェルと古印の勝負・勝つまで)
   go(7,'e07_g',TB,LU,'from_valley',{tod:'noon'});
@@ -7071,13 +7075,13 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(8,'e08_1',LU,'*',{bg:NB,tod:'night'}); sc(8,'e08_2',LU,'*',{bg:NB}); sc(8,'e08_3',LU,'*',{bg:NB});
   fn(8,'e08_q',LU,()=>xQuiz([['男の話',['最後まで聞く','言い返す'],0,'男は、話をやめた']],NB));
   sc(8,'e08_4b',LU,'*',{bg:NB}); sc(8,'e08_5',LU,'*',{bg:NB});
-  bt(8,'e08_b','e08_6',LU,{bg:NB,anc:{id:2030,tier:5,lv:39,flag:'eg_eleki',tune:{hp:2.63,atk:3.96}},R:{terrain:'stream',guests:['partner',1046,71,'own3'],fuse:[2044]}});
+  bt(8,'e08_b','e08_6',LU,{bg:NB,anc:{id:2030,tier:5,lv:39,flag:'eg_eleki',tune:{hp:2.63,atk:3.96}},R:{terrain:'stream',guests:['partner',1046,71,'own3'],fuse:[2044],tune:{hp:1.081,atk:1.627}}});
   sc(8,'e08_7',LU,'*',{bg:NB});
   // 第9話 ひびのオベリスク(アスワン西岸の石切り場・古代オベリオンから道を聞く・水門2/4)
   go(9,'e09_g',LU,AS,'from_boat',{tod:'morning'});
   sc(9,'e09_1',AS,'石切り場',{obj:'西岸の、赤い岩の石切り場へ'});
   sc(9,'e09_2',AS); sc(9,'e09_3',AS);
-  bt(9,'e09_b','e09_4',AS,{foe:()=>cnFoe({n:'ミラ＆ジョー',zeroday:1,party:P(1005,1043)}),R:{terrain:'rocky'}});
+  bt(9,'e09_b','e09_4',AS,{foe:()=>cnFoe({n:'ミラ＆ジョー',zeroday:1,party:P(1005,1043)}),R:{terrain:'rocky',ai:{hpX:0.814,atkX:0.814}}});
   sc(9,'e09_5a',AS,'*',{tod:'noon'});
   fn(9,'e09_q',AS,()=>xQuiz([['オベリオンの話',['口をはさまずに待つ','話しかける'],0,'オベリオンは、丸まった']]));
   sc(9,'e09_5b',AS);
@@ -7090,13 +7094,13 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(11,'e11_2',AB,'大神殿の前',{obj:'大神殿へ',bg:'anime_eg_temple_in'});
   sc(11,'e11_3',AB,'*',{bg:'anime_eg_temple_night',tod:'night',post:()=>xFuseAll()});
   sc(11,'e11_4',AB,'*',{bg:'anime_eg_temple_night'});
-  bt(11,'e11_b','e11_5',AB,{bg:'anime_eg_temple_night',foe:()=>cnFoe({n:'ログ＆パッチとミラ＆ジョー',zeroday:1,party:P(1007,1062,1005,1037)}),R:{terrain:'ruins',guests:['partner',71,'own2','own3']}});
+  bt(11,'e11_b','e11_5',AB,{bg:'anime_eg_temple_night',foe:()=>cnFoe({n:'ログ＆パッチとミラ＆ジョー',zeroday:1,party:P(1007,1062,1005,1037)}),R:{terrain:'ruins',guests:['partner',71,'own2','own3'],ai:{hpX:0.663,atkX:0.663}}});
   sc(11,'e11_6',AB,'*',{bg:'anime_eg_temple_night'});
   // 第12話 最初の光(鏡で光を運ぶ→守り②エクリオン・勝つまで。ブレイグリオ=エンレオ＋グリフォ)
   sc(12,'e12_1',AB,'*',{bg:'anime_eg_temple_night',tod:'dawn'});
   fn(12,'e12_m',AB,()=>xMirror('anime_eg_temple_night'));
   sc(12,'e12_2b',AB,'*',{bg:'anime_eg_temple_in'}); sc(12,'e12_3',AB,'*',{bg:'anime_eg_temple_in'});
-  bt(12,'e12_b','e12_4',AB,{bg:'anime_eg_temple_in',wild:2059,must:1,R:{terrain:'ruins',own:[1054],fuse:[2014]}});
+  bt(12,'e12_b','e12_4',AB,{bg:'anime_eg_temple_in',wild:2059,must:1,R:{terrain:'ruins',own:[1054],fuse:[2014],tune:{hp:1.045,atk:4.263}}});
   sc(12,'e12_5',AB,'*',{tod:'morning'});
   // 第13話 上がる水(空の船で下流の町=ルクソールの川岸へ・2026-10-31 水と時間の盤。新3ライゼンギガス=ピリムサ＋クロベク)
   go(13,'e13_g',AB,LU,'from_cairo',{tod:'noon'});
@@ -7116,20 +7120,20 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   bt(15,'e15_b','e15_3',AS,{bg:DI,foe:()=>cnFoe({n:'レン',party:P({mid:1034,lv:40,fixed:true},{mid:1040,lv:39})}),R:{terrain:'ruins',maxTurn:6,ai:{hpX:1.3,atkX:1.2}}});
   sc(15,'e15_4',AS,'*',{bg:DI});
   sc(16,'e16_1',AS,'*',{bg:DI}); sc(16,'e16_2',AS,'*',{bg:DI});
-  bt(16,'e16_b','e16_4',AS,{bg:DI,mid:'e16_3',foe:()=>cnFoe({n:'ミラ＆ジョー',zeroday:1,party:P(1005,1006,1038)}),R:{terrain:'ruins'}});
+  bt(16,'e16_b','e16_4',AS,{bg:DI,mid:'e16_3',foe:()=>cnFoe({n:'ミラ＆ジョー',zeroday:1,party:P(1005,1006,1038)}),R:{terrain:'ruins',ai:{hpX:0.769,atkX:0.769}}});
   sc(16,'e16_5',AS,'*',{bg:DI});
   sc(17,'e17_1',AS,'*',{bg:'anime_eg_control'}); sc(17,'e17_2',AS,'*',{bg:'anime_eg_control'});
-  bt(17,'e17_b','e17_3',AS,{bg:'anime_eg_control',foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1061,lv:40,fixed:true,leader:true,boss:true,circle:true},{mid:1005,lv:39,stage:2,evo:true},{mid:1006,lv:39,fixed:true},{mid:1013,lv:39,fixed:true},{mid:1012,lv:38,stage:2,evo:true})},'ランサム'),R:{terrain:'ruins',guests:['partner',1046,'own2','own3'],fuse:[2026],ai:{hpX:0.93,atkX:1.0}}});   // 2026-10-30 タイプ相性の作り直しのあと 0.89/0.96→0.93/1.0(tune_v4 e17 約67%)。2026-10-28 切り札ディアボーグ(ボス・1.75倍・魔法陣から出る)。シム sim/sim_e17.js 150戦: 勝率66%(前の hpX/atkX 1.2 では3%)。2026-10-30 ボスが奥にいるようになって53%→ 0.89/0.96 で約73%(tune_v4 360戦)
+  bt(17,'e17_b','e17_3',AS,{bg:'anime_eg_control',foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1061,lv:40,fixed:true,leader:true,boss:true,circle:true},{mid:1005,lv:39,stage:2,evo:true},{mid:1006,lv:39,fixed:true},{mid:1013,lv:39,fixed:true},{mid:1012,lv:38,stage:2,evo:true})},'ランサム'),R:{terrain:'ruins',guests:['partner',1046,'own2','own3'],fuse:[2026],ai:{hpX:0.73,atkX:0.785}}});   // 2026-10-30 タイプ相性の作り直しのあと 0.89/0.96→0.93/1.0(tune_v4 e17 約67%)。2026-10-28 切り札ディアボーグ(ボス・1.75倍・魔法陣から出る)。シム sim/sim_e17.js 150戦: 勝率66%(前の hpX/atkX 1.2 では3%)。2026-10-30 ボスが奥にいるようになって53%→ 0.89/0.96 で約73%(tune_v4 360戦)
   sc(17,'e17_4',AS,'*',{bg:'anime_eg_control',post:()=>flag('eg_ransom')});
   sc(18,'e18_1',AS,'*',{bg:'anime_eg_control',tod:'dawn'}); sc(18,'e18_2a',AS,'*',{bg:'anime_eg_control'});
   fn(18,'e18_q',AS,()=>xQuiz(EG_Q18,'anime_eg_control'));
   sc(18,'e18_2b',AS,'*',{bg:'anime_eg_control'}); sc(18,'e18_3',AS,'*',{bg:'anime_eg_control'}); sc(18,'e18_4',AS,'*',{bg:'anime_eg_control'});
   // 第19〜20話 湖の底(半分抜けた湖・沈んだ村と神殿・全画面。王ラーガ・勝つまで。サジンオロチ=セイリュ＋アルマガネ)
   sc(19,'e19_1',AS,'*',{bg:'anime_eg_lakebed',tod:'noon'}); sc(19,'e19_2',AS,'*',{bg:'anime_eg_lakebed'}); sc(19,'e19_3',AS,'*',{bg:'anime_eg_lakebed'});
-  bt(19,'e19_b','e19_4',AS,{bg:'anime_eg_lakebed',foe:()=>cnFoe({n:'ログ＆パッチ',zeroday:1,party:P(1007,1062)}),R:{terrain:'ruins'}});
+  bt(19,'e19_b','e19_4',AS,{bg:'anime_eg_lakebed',foe:()=>cnFoe({n:'ログ＆パッチ',zeroday:1,party:P(1007,1062)}),R:{terrain:'ruins',ai:{hpX:0.828,atkX:0.828}}});
   sc(19,'e19_5',AS,'*',{bg:'anime_eg_lakebed'});
   sc(20,'e20_1',AS,'*',{bg:'anime_eg_sunken',tod:'evening'}); sc(20,'e20_2',AS,'*',{bg:'anime_eg_sunken'}); sc(20,'e20_3',AS,'*',{bg:'anime_eg_sunken'}); sc(20,'e20_4',AS,'*',{bg:'anime_eg_sunken'}); sc(20,'e20_5',AS,'*',{bg:'anime_eg_sunken'});
-  bt(20,'e20_b','e20_6',AS,{bg:'anime_eg_sunken',must:1,anc:{id:2011,tier:5,lv:40,flag:'eg_raga',tune:{hp:2.07,atk:3.04}},R:{terrain:'ruins',guests:['partner','own3',1037,'own2'],fuse:[2048]}});
+  bt(20,'e20_b','e20_6',AS,{bg:'anime_eg_sunken',must:1,anc:{id:2011,tier:5,lv:40,flag:'eg_raga',tune:{hp:2.07,atk:3.04}},R:{terrain:'ruins',guests:['partner','own3',1037,'own2'],fuse:[2048],tune:{hp:1.088,atk:1.598}}});
   // 第21話 北の電話(カイロの病院→空の港・ナディアと別れる・父の電話)
   go(21,'e21_g',AS,CA,'from_china',{tod:'morning'});
   sc(21,'e21_1',CA,'*',{bg:'anime_eg_hospital_day'});
@@ -7171,7 +7175,7 @@ function egInit(){ Object.assign(SC,EG_SC,NR_SC,END_SC); xInsert();
     if(SAVE.unlock&&SAVE.unlock.fusion1) opt.fusionUnlocked=true;
     if(!f.e11_3) opt.enemyNoFuse=true;
     const s=xStepOf(e); if(s&&s.R) xBattleOpt(e,opt,s.R);
-    if(nrEnleo(f)){ const own=new Set(opt.player.owned||[]); own.delete(1003); opt.player.owned=[...own]; }
+    if(nrEnleo(f)){ const own=new Set(opt.player.owned||[]); own.delete(1003); opt.player.owned=[...own]; opt.player.holdForms=(opt.player.holdForms||[]).concat([1003]); }   // 2026-10-31 開始の段まで上げる時も エンオウには上げない
     if(!s&&nrStop(f)){ const party=opt.player&&opt.player.party; if(Array.isArray(party)&&party.length){ const keep=party.filter(p=>ENJU_LINE.includes(+p.mid)||(nrStop(f)===2&&CN_GRIF.includes(+p.mid))); if(keep.length){ party.length=0; keep.forEach(p=>party.push(p)); } } } };
   const _ab=grAfterBattle; grAfterBattle=function(e,win){ const s=storyOn()&&xStepOf(e);
     if(s){ const lb=WORLD.lastBattle||{}; SAVE.flags[s.id+'_b']=(s.draw&&lb.how==='timeout')?3:(win?2:1); return {after:null,next:()=>xRun(),keep:true}; }
@@ -7209,26 +7213,26 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   go(1,'n01_g',CA,LO,'from_egypt',{tod:'morning'});
   sc(1,'n01_1',LO,'*',{bg:'anime_nr_sky'});
   sc(1,'n01_2',LO); sc(1,'n01_3',LO);
-  bt(1,'n01_b','n01_4',LO,{foe:()=>cnFoe({n:'首の赤い海の子たち',party:P(1010,1052,1010)}),R:{terrain:'snowcoast'}});
+  bt(1,'n01_b','n01_4',LO,{foe:()=>cnFoe({n:'首の赤い海の子たち',party:P(1010,1052,1010)}),R:{terrain:'snowcoast',ai:{hpX:0.755,atkX:0.755}}});
   sc(1,'n01_5',LO,'*',{bg:'anime_nr_hut_night',tod:'night'}); sc(1,'n01_6',LO,'*',{bg:'anime_nr_hut_night'});
   // 第2話 話さない子(父の船でフィヨルドの町へ。リヴとポチャ・出張所のクロエ博士・氷の岸)
   go(2,'n02_g',LO,FJ,'from_lofoten',{tod:'noon'});
   sc(2,'n02_1',FJ); sc(2,'n02_2',FJ,'*',{bg:'anime_nr_office'});
   sc(2,'n02_3',FJ,'*',{tod:'evening'});
-  bt(2,'n02_b','n02_4',FJ,{foe:()=>cnFoe({n:'首の赤い氷の子たち',party:P(1050,1052,1050)}),R:{terrain:'snowcoast',guests:['partner','own2','own3',16]}});
+  bt(2,'n02_b','n02_4',FJ,{foe:()=>cnFoe({n:'首の赤い氷の子たち',party:P(1050,1052,1050)}),R:{terrain:'snowcoast',guests:['partner','own2','own3',16],ai:{hpX:0.654,atkX:0.654}}});
   sc(2,'n02_5',FJ,'*',{bg:'anime_nr_town_dusk'});
   // 第3話 止まった朝(全員止まる・エンジュ一体で教会まで)
   sc(3,'n03_1',FJ,'*',{bg:'anime_nr_room',tod:'morning'}); sc(3,'n03_2',FJ,'*',{bg:'anime_nr_room'});
   sc(3,'n03_3',FJ,'*',{bg:'anime_nr_office'}); sc(3,'n03_4',FJ,'*',{bg:'anime_nr_office'});
-  bt(3,'n03_b','n03_5',FJ,{bg:'anime_nr_slope',foe:()=>cnFoe({n:'首の赤い大きな子たち',party:P(1052,1050)}),R:{terrain:'snowrock',guests:['partner']}});
+  bt(3,'n03_b','n03_5',FJ,{bg:'anime_nr_slope',foe:()=>cnFoe({n:'首の赤い大きな子たち',party:P(1052,1050)}),R:{terrain:'snowrock',guests:['partner'],ai:{hpX:0.362,atkX:0.362}}});
   sc(3,'n03_6',FJ,'*',{bg:CH});
   // 第4話 古い子たち(加勢＝町の古い子・年寄りのラッコとアザラシ)
   sc(4,'n04_1',FJ,'*',{bg:CH,tod:'noon'}); sc(4,'n04_2',FJ,'*',{bg:CH,tod:'evening'});
-  bt(4,'n04_b','n04_3',FJ,{bg:CH,foe:()=>cnFoe({n:'ヴィクターの命令で生まれた子たち',zeroday:1,party:P(1050,1049)}),R:{terrain:'snowfield',guests:['partner',1010,1052]}});
+  bt(4,'n04_b','n04_3',FJ,{bg:CH,foe:()=>cnFoe({n:'ヴィクターの命令で生まれた子たち',zeroday:1,party:P(1050,1049)}),R:{terrain:'snowfield',guests:['partner',1010,1052],ai:{hpX:0.684,atkX:0.684}}});
   sc(4,'n04_4',FJ,'*',{bg:CN,tod:'night'});
   // 第5話 鎖の狼(氷河の洞・フェンガロが加勢)
   sc(5,'n05_1',FJ,'*',{bg:'anime_nr_mount',tod:'morning'}); sc(5,'n05_2',FJ,'*',{bg:'anime_nr_cave'}); sc(5,'n05_3',FJ,'*',{bg:'anime_nr_cave'}); sc(5,'n05_4',FJ,'*',{bg:'anime_nr_cave'});
-  bt(5,'n05_b','n05_5',FJ,{bg:'anime_nr_cave',foe:()=>cnFoe({n:'鎖の見張り',zeroday:1,party:P(1050,1052)}),R:{terrain:'snowrock',guests:['partner',2064]}});
+  bt(5,'n05_b','n05_5',FJ,{bg:'anime_nr_cave',foe:()=>cnFoe({n:'鎖の見張り',zeroday:1,party:P(1050,1052)}),R:{terrain:'snowrock',guests:['partner',2064],ai:{hpX:0.705,atkX:0.705}}});
   sc(5,'n05_6',FJ,'*',{bg:'anime_nr_mount',tod:'noon'});
   // 第6話 石の教会(2026-10-31 守る盤=教会の町の人・リヴのポチャと古い子)
   sc(6,'n06_1',FJ,'*',{bg:'anime_nr_ridge',tod:'evening'}); sc(6,'n06_2',FJ,'*',{bg:CH}); sc(6,'n06_3',FJ,'*',{bg:CN,tod:'night'});
@@ -7241,13 +7245,13 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   // 第8話 町の外(峠道=鷲の道・ユキ＆ハル)
   sc(8,'n08_1',FJ,'*',{tod:'noon'});
   sc(8,'n08_2',FJ,'鷲の道',{obj:'町の外の峠道（鷲の道）へ'}); sc(8,'n08_3',FJ); sc(8,'n08_4a',FJ);
-  bt(8,'n08_b','n08_4',FJ,{foe:()=>cnFoe({n:'ユキ＆ハル',zeroday:1,party:P(1050,1052)},'ユキ'),R:{terrain:'snowrock',guests:['partner',16]}});
+  bt(8,'n08_b','n08_4',FJ,{foe:()=>cnFoe({n:'ユキ＆ハル',zeroday:1,party:P(1050,1052)},'ユキ'),R:{terrain:'snowrock',guests:['partner',16],ai:{hpX:0.651,atkX:0.651}}});
   sc(8,'n08_5',FJ);
   // 第9話 鐘の下(総攻めの連戦・コグリフが戻る)
   sc(9,'n09_1',FJ,'*',{bg:'anime_nr_pass',tod:'evening'}); sc(9,'n09_2a',FJ,'*',{bg:CN,tod:'night'});
   bt(9,'n09_b1','n09_2',FJ,{bg:CN,foe:()=>cnFoe({n:'赤い目の子たち',zeroday:1,party:P(1050,1052,1049)}),R:{terrain:'snowfield',guests:['partner',16,1010],ai:{hpX:0.57,atkX:0.57},special:{mode:'guard',turns:8,look:'people',wardHp:1.2}}});   // 2026-10-31 守る盤(連戦の一戦目)
   sc(9,'n09_3',FJ,'*',{bg:CN}); sc(9,'n09_4',FJ,'*',{bg:'anime_nr_fog'});
-  bt(9,'n09_b2','n09_5',FJ,{bg:'anime_nr_fog',foe:()=>cnFoe({n:'赤い目の子たち',zeroday:1,party:P(1052,1050,1049)}),R:{terrain:'snowfield',guests:['partner',16,'own2']}});
+  bt(9,'n09_b2','n09_5',FJ,{bg:'anime_nr_fog',foe:()=>cnFoe({n:'赤い目の子たち',zeroday:1,party:P(1052,1050,1049)}),R:{terrain:'snowfield',guests:['partner',16,'own2'],ai:{hpX:0.505,atkX:0.505}}});
   sc(9,'n09_6',FJ,'*',{bg:CN});
   // 第10話 古い電話(町の外れの電話局・交換台の謎・じいちゃんとハナの声)
   sc(10,'n10_1',FJ,'*',{bg:CH,tod:'noon'}); sc(10,'n10_2a',FJ,'*',{bg:'anime_nr_exchange'});
@@ -7257,7 +7261,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   // 第11話 同じ時刻(四つの場所で歌う・全員戻る)
   sc(11,'n11_1',FJ,'*',{bg:CN,tod:'dawn'}); sc(11,'n11_2',FJ,'*',{bg:CN}); sc(11,'n11_3',FJ,'*',{bg:CN}); sc(11,'n11_4',FJ,'*',{bg:CH});
   sc(11,'n11_5a',FJ,'*',{bg:'anime_nr_square_dawn'});
-  bt(11,'n11_b','n11_5',FJ,{bg:'anime_nr_square_dawn',foe:()=>cnFoe({n:'赤い目の子たちと見回りの機械',zeroday:1,party:P(1050,1052,1049,1064)}),R:{terrain:'snowfield',guests:['partner','own2','own3',71,1012]}});
+  bt(11,'n11_b','n11_5',FJ,{bg:'anime_nr_square_dawn',foe:()=>cnFoe({n:'赤い目の子たちと見回りの機械',zeroday:1,party:P(1050,1052,1049,1064)}),R:{terrain:'snowfield',guests:['partner','own2','own3',71,1012],ai:{hpX:0.556,atkX:0.556}}});
   sc(11,'n11_6',FJ,'*',{bg:'anime_nr_square_dawn',tod:'morning'});
   // 第12話 四つの一行(並べる謎)
   sc(12,'n12_1',FJ,'*',{bg:CH,tod:'noon'}); sc(12,'n12_2',FJ,'*',{bg:CH}); sc(12,'n12_3a',FJ,'*',{bg:CH});
@@ -7267,24 +7271,24 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   sc(13,'n13_1',FJ,'*',{bg:'anime_nr_town_morning',tod:'morning'});
   go(13,'n13_g',FJ,GL,'from_svalbard',{tod:'morning'});
   sc(13,'n13_2',GL); sc(13,'n13_3a',GL);
-  bt(13,'n13_b','n13_3',GL,{foe:()=>cnFoe({n:'氷原の見張り',zeroday:1,party:P(1050,1052,1049,1064)}),R:{terrain:'snowfield',size:11}});
+  bt(13,'n13_b','n13_3',GL,{foe:()=>cnFoe({n:'氷原の見張り',zeroday:1,party:P(1050,1052,1049,1064)}),R:{terrain:'snowfield',size:11,ai:{hpX:0.746,atkX:0.746}}});
   sc(13,'n13_4',GL,'研究所の入口',{obj:'研究所の黒い壁へ',tod:'noon'});
   // 第14話 問題が、あります(外壁・ユキ＆ハル)
   sc(14,'n14_1',GL); sc(14,'n14_2',GL); sc(14,'n14_3a',GL);
-  bt(14,'n14_b','n14_3',GL,{foe:()=>cnFoe({n:'ユキ＆ハル',zeroday:1,party:P(1050,1052,290)},'ユキ'),R:{terrain:'snowrock'}});
+  bt(14,'n14_b','n14_3',GL,{foe:()=>cnFoe({n:'ユキ＆ハル',zeroday:1,party:P(1050,1052,290)},'ユキ'),R:{terrain:'snowrock',ai:{hpX:0.754,atkX:0.754}}});
   sc(14,'n14_4',GL,'*',{tod:'evening'}); sc(14,'n14_5',GL,'*',{bg:'anime_nr_stairs'});
   // 第15〜16話 研究所の下の神殿(全画面。王オーディガル=キマドラ(リュバーン＋エンレオ)・首輪の機械=ガイアドラ(リュバーン＋アルマガネ))
   const TE='anime_nr_temple';
   sc(15,'n15_1',GL,'*',{bg:TE,tod:'night'}); sc(15,'n15_2',GL,'*',{bg:TE}); sc(15,'n15_3',GL,'*',{bg:TE});
-  bt(15,'n15_b','n15_4',GL,{bg:TE,anc:{id:2069,tier:5,lv:59,flag:'nr_odin_s',tune:{hp:1.77,atk:2.3}},R:{terrain:'ruins',guests:['partner',199,'own2','own3'],fuse:[2020]}});
+  bt(15,'n15_b','n15_4',GL,{bg:TE,anc:{id:2069,tier:5,lv:59,flag:'nr_odin_s',tune:{hp:1.77,atk:2.3}},R:{terrain:'ruins',guests:['partner',199,'own2','own3'],fuse:[2020],tune:{hp:1.006,atk:1.308}}});
   sc(15,'n15_5',GL,'*',{bg:TE}); sc(15,'n15_6',GL,'*',{bg:TE});
   sc(16,'n16_1',GL,'*',{bg:TE}); sc(16,'n16_2a',GL,'*',{bg:TE});
-  bt(16,'n16_b','n16_2',GL,{bg:TE,foe:()=>cnFoe({n:'ヴィクターの大人たち',zeroday:1,party:P(1064,1067,1064,1050)}),R:{terrain:'ruins',guests:['partner',199,1037,'own2'],fuse:[2055]}});
+  bt(16,'n16_b','n16_2',GL,{bg:TE,foe:()=>cnFoe({n:'ヴィクターの大人たち',zeroday:1,party:P(1064,1067,1064,1050)}),R:{terrain:'ruins',guests:['partner',199,1037,'own2'],fuse:[2055],ai:{hpX:0.385,atkX:0.385}}});
   sc(16,'n16_3',GL,'*',{bg:TE}); sc(16,'n16_4',GL,'*',{bg:TE}); sc(16,'n16_5',GL,'*',{bg:TE});
   // 第17話 最後の守り(研究所の門からアークの中心へ・ボット。アラシドラ=リュバーン＋ソヨモモ)
   sc(17,'n17_1',CO,'*',{objAway:'研究所の門から、アークの中心へ',tod:'night'});
   sc(17,'n17_2',CO,'サーバーの部屋',{obj:'中心への長い通路へ'}); sc(17,'n17_3a',CO);
-  bt(17,'n17_b','n17_3',CO,{foe:()=>cnFoe({n:'ボット',zeroday:1,master:1,party:NR_BOT()}),R:{terrain:'arkcore',guests:['partner','own2',16,199,1029],fuse:[2052],ai:{hpX:1.2,atkX:1.15}}});
+  bt(17,'n17_b','n17_3',CO,{foe:()=>cnFoe({n:'ボット',zeroday:1,master:1,party:NR_BOT()}),R:{terrain:'arkcore',guests:['partner','own2',16,199,1029],fuse:[2052],ai:{hpX:0.827,atkX:0.792}}});
   sc(17,'n17_4',CO); sc(17,'n17_5',CO);
   // 第18〜23話 アークの中心の丸い部屋(ラグナディオ。また止まる→エンジュ一体の勝負を三度→やめよう→全員戻る)
   sc(18,'n18_1',CO,'アークの中心',{obj:'アークの中心の、丸い部屋へ'}); sc(18,'n18_2',CO); sc(18,'n18_3',CO); sc(18,'n18_4',CO); sc(18,'n18_5',CO);
@@ -7306,7 +7310,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   go(24,'n24_g',CO,GL,'from_core',{tod:'morning'});
   const IC='anime_nr_slope';   // 研究所の外の氷の上(全画面)
   sc(24,'n24_2',GL,'*',{bg:IC}); sc(24,'n24_3a',GL,'*',{bg:IC});
-  bt(24,'n24_b','n24_3',GL,{bg:IC,anc:()=>NR_RAGNA({tune:{hp:3.66,atk:5.6,escort:5}}),R:{terrain:'snowfield',size:13,guests:['partner','own2','own3',1025,1013,290],own:[1003],triple:[LOKI_ID]}});
+  bt(24,'n24_b','n24_3',GL,{bg:IC,anc:()=>NR_RAGNA({tune:{hp:3.66,atk:5.6,escort:5}}),R:{terrain:'snowfield',size:13,guests:['partner','own2','own3',1025,1013,290],own:[1003],triple:[LOKI_ID],tune:{hp:0.598,atk:0.915,escortX:0.163}}});
   sc(24,'n24_4',GL,'*',{bg:IC}); sc(24,'n24_5',GL,'*',{bg:IC,post:()=>nrTrio()}); sc(24,'n24_6',GL,'*',{bg:IC});
   // 第25話 古い電話の先(スペクターが捕まる・見張り小屋の古い電話・牢の窓)
   sc(25,'n25_1',GL,'*',{bg:'anime_nr_core'}); sc(25,'n25_2',GL,'*',{bg:IC,tod:'evening'});

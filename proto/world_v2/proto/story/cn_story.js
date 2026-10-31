@@ -144,7 +144,7 @@ sc(19,'c19_6',CA);
 // 第20話 都を守る(ランサム・リヴァイア＝セイリュ＋クロベク・メイリンの子を借りる)
 sc(20,'c20_1',CA,'*',{bg:'anime_cn_gate'});
 sc(20,'c20_2',CA);
-bt(20,'c20_b','c20_3',CA,{foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1067,lv:27,fixed:true},{mid:1060,lv:25},{mid:71,lv:25},{mid:1040,lv:25})}),R:{terrain:'ruins',guests:['partner',196,1012,1058],fuse:[2018],ai:{hpX:1.2,atkX:1.3}}});
+bt(20,'c20_b','c20_3',CA,{foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1067,lv:27,fixed:true},{mid:1060,lv:25},{mid:71,lv:25},{mid:1040,lv:25})}),R:{terrain:'ruins',guests:['partner',196,1012,1058],fuse:[2018],ai:{hpX:1.188,atkX:1.287}}});
 sc(20,'c20_4',CA,'*',{bg:'anime_cn_wall'});
 // 第21話 雪の高原
 sc(21,'c21_1',KU,'*',{bg:'anime_cn_gate',objAway:'都の北門から、雪の高原へ'});
@@ -175,7 +175,7 @@ bt(25,'c25_b','c25_2',TH,{foe:()=>cnFoe({n:'ログ＆パッチ',zeroday:1,party:
 sc(25,'c25_3',TH); sc(25,'c25_4',TH);
 // 第26話 首の輪(サジンオロチ・レンのヘラツノと並ぶ・フブキヤク＝ユキマダラ＋ソヨモモ)
 sc(26,'c26_1',TH); sc(26,'c26_2',TH);
-bt(26,'c26_b','c26_3',TH,{wild:2048,R:{terrain:'forest',guests:['partner',1034,1046,1029],fuse:[2049]}});
+bt(26,'c26_b','c26_3',TH,{wild:2048,R:{terrain:'forest',guests:['partner',1034,1046,1029],fuse:[2049],tune:{hp:3.088,atk:2.096}}});
 sc(26,'c26_4',TH); sc(26,'c26_5',TH);
 // 第27話 海の門(かけらを合わせる謎)
 go(27,'c27_g',TH,SE,'from_thunder',{tod:'dawn'});
@@ -300,7 +300,7 @@ function cnInit(){ Object.assign(SC,CN_SC); toastEl.style.zIndex=40;
   const _cg=contGame; contGame=async function(sv){ if(sv&&sv.flags){ const k=SAVE; SAVE=sv; try{ cnMigrate(); } finally{ SAVE=k; } } return _cg(sv); };
   window.CN_DBG={ cur:()=>{ const s=cnCur(); return s&&{id:s.id,map:s.map,at:s.at,kind:s.kind}; }, steps:CN_STEPS, run:()=>cnRun(), here:()=>cnHere(cnCur()), obj:()=>cnObjText(GF()) }; }
 function cnStepOf(e){ if(!e) return null; if(e.cn) return e.cn; const id=e.n&&e.n.o&&e.n.o.cnStep; if(id&&CN_BY[id]&&storyOn()&&!GF()[id]) return CN_BY[id]; return null; }
-function cnBattleOpt(e,opt,R){ if(R.terrain){ opt.terrainTheme=R.terrain; opt.backdrop=undefined; } if(R.size) opt.size=R.size; if(R.special) opt.special=Object.assign({},R.special);   // 2026-10-31 専用の盤(battle.js の opts.special)
+function cnBattleOpt(e,opt,R){ storyStage(opt); if(R.tune&&opt.enemy&&opt.enemy.ancient) opt.enemy.ancient.tune=Object.assign({},opt.enemy.ancient.tune||{},R.tune);   /* 2026-10-31 物語の古代の強さ(地図の古代と分けて合わせる) */ if(R.terrain){ opt.terrainTheme=R.terrain; opt.backdrop=undefined; } if(R.size) opt.size=R.size; if(R.special) opt.special=Object.assign({},R.special);   // 2026-10-31 専用の盤(battle.js の opts.special)
   const party=opt.player&&opt.player.party; if(!R.guests||!Array.isArray(party)||!party.length) return;
   const enju=party.find(p=>ENJU_LINE.includes(+p.mid))||party[0], own2=party.find(p=>CN_GRIF.includes(+p.mid));
   const L=[]; for(const g of R.guests){ if(g==='partner'){ if(enju&&!L.includes(enju)) L.push(enju); continue; } if(g==='own2'){ if(own2) L.push(own2); continue; } L.push({mid:+g,lv:enju.lv,guest:1}); }

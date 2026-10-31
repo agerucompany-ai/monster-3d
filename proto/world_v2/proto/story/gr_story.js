@@ -185,6 +185,7 @@ function grSpots(best,bd){ if(!D||!D.spots||!storyOn()) return {best,bd};
 // ---- 勝負の調整(startEncounter の opt を作ったあと) ----
 function grBattleOpt(e,opt){ if(!storyOn()) return;
   const r=e.n?(e.n.rule||ruleOf(e.n.o)):(e.m?e.m.o:null); if(!r) return;
+  if(e.n) storyStage(opt);   // 物語の人(野生・古代はここでは上げない=フィールドの古代は自分の覚えた姿のまま)
   const tt=r.terrain==='plain'?'meadow':r.terrain; if(tt){ opt.terrainTheme=tt; opt.backdrop=undefined; }
   if(e.n&&r.ai) opt.enemy.ai=Object.assign({},r.ai);
   const party=opt.player&&opt.player.party; if(!Array.isArray(party)||!party.length) return;
@@ -194,6 +195,9 @@ function grBattleOpt(e,opt){ if(!storyOn()) return;
     const own=new Set(opt.player.owned||[]); for(const g of r.guests){ if(g==='partner') continue; let m=+g; own.add(m); if(r.fuse&&MEVO[m]) own.add(MEVO[m]); } if(r.fuse){ own.add(1002); } opt.player.owned=[...own];
     if(r.fuse){ opt.fusionUnlocked=true; const fk=new Set(opt.player.fusionKnown||[]); fk.add(NARU_ID); opt.player.fusionKnown=[...fk]; } }
   else if(one){ party.length=0; party.push(enju); } }
+// 2026-10-31 オーナー「人が遊ぶとボス戦に勝てない」: 物語の戦いは 相手のボス(リーダー)1体だけ本来の段・手下はこちらの隊の段から(battle.js alignMinions)。
+//   こちらの借りる子・仲間は その戦いの開始の段まで 覚えていなくても上げて出す(stageFree)。戦いの中の進化は今までどおり覚えた姿だけ
+function storyStage(opt){ if(!opt||opt.kind==='wild') return; opt.alignMinions=true; if(opt.player) opt.player.stageFree=true; }
 // 止まっている間(第29話〜第30話の王の前)は、どの勝負もエンジュ一体。相棒がいない間(第15〜16話)は野生と勝負しない(encounterCheck)
 function grStoppedOne(e){ return !!(STOPPED29&&!(e.m&&e.m.o.ancient&&SAVE.flags.low30)); }
 function grWildOk(){ if(!storyOn()) return true; const f=SAVE.flags; if(!f.bond) return false; if(f.ep15&&!f.found16) return false; return true; }

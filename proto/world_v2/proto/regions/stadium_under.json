@@ -83,8 +83,8 @@
    "zeroday": 1,
    "scene": "belladonna",
    "ai": {
-    "hpX": 0.457,
-    "atkX": 0.457
+    "hpX": 0.753,
+    "atkX": 0.753
    },
    "after": "belladonna_win",
    "flagWin": "bella",
@@ -210,8 +210,8 @@
    "lv": 24,
    "tier": 6,
    "tune": {
-    "hp": 7.963,
-    "atk": 1.484
+    "hp": 21.271,
+    "atk": 3.964
    },
    "need": "low30",
    "lose": "godherak_lose",
