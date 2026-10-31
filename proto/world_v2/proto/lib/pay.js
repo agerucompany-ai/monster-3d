@@ -15,7 +15,7 @@ const isLocal=(u)=>{ try{ const h=new URL(u).hostname; return h==='localhost'||h
 const API=(()=>{ try{ const q=new URLSearchParams(location.search).get('payapi'); if(q&&isLocal(q)) return q.replace(/\/$/,''); }catch(e){} const g=root.THERION_PAY_API; return String(g||DEFAULT_API).replace(/\/$/,''); })();
 const HERE=(()=>{ try{ const s=document.currentScript&&document.currentScript.src; if(s) return s.replace(/lib\/pay\.js.*$/,''); }catch(e){} return ''; })();   // proto/
 const ICON=(n,c)=>`<img class="tp-ic${c?' '+c:''}" src="${HERE}../battle/img/ui/${n}.webp" alt="">`;
-const LEGAL={ tokusho: HERE+'legal/tokushoho.html', shikin: HERE+'legal/shikin.html' };
+const LEGAL={ tokusho: HERE+'legal/tokushoho.html', shikin: HERE+'legal/shikin.html', terms: HERE+'legal/terms.html', privacy: HERE+'legal/privacy.html' };
 const BANDS=[['u16','15さい以下'],['16_19','16〜19さい'],['20p','20さい以上']];
 const yen=(n)=>'¥'+(+n||0).toLocaleString('ja-JP');
 
@@ -30,8 +30,11 @@ async function api(method, path, body, ms){ const ac=new AbortController(); cons
   catch(e){ return {status:0, body:{error:'network'}}; } finally{ clearTimeout(tm); } }
 function config(force){ if(!cfgP||force) cfgP=api('GET','/config',null,45000).then(r=>{ CFG=r.status===200&&r.body&&r.body.enabled?r.body:null; if(!CFG) cfgP=null; return CFG; }); return cfgP; }   // 無料のサーバーは寝起きに数十秒かかる
 async function ensureDevice(){ const d=ls(); if(d&&d.token) return true; const r=await api('POST','/device'); if(r.status!==200||!r.body.token) return false; lsSet({deviceId:r.body.deviceId, token:r.body.token, t:Date.now()}); return true; }
-async function wallet(){ if(!(ls()||{}).token){ W={paidGems:0, ageBand:null, monthSpent:0, cap:null, capped:false, remaining:null, fresh:true}; return W; }
-  const r=await api('GET','/wallet'); if(r.status===200){ W=r.body; push(); return W; } return null; }
+function freshW(){ return {paidGems:0, ageBand:null, monthSpent:0, cap:null, capped:false, remaining:null, expiring:[], fresh:true}; }
+function dropToken(){ try{ localStorage.removeItem(LSK); }catch(e){} }   // 2026-10-31 引き継いで出ていった機種(古いトークン)は新しい番号で始める
+async function wallet(){ if(!(ls()||{}).token){ W=freshW(); return W; }
+  const r=await api('GET','/wallet'); if(r.status===200){ W=r.body; push(); return W; }
+  if(r.status===401){ dropToken(); W=freshW(); push(); return W; } return null; }
 function push(){ const P=root.Progress; if(P&&P.ui&&P.ui.refresh) try{ P.ui.refresh(); }catch(e){} }
 async function spend(n, reason){ const key=rid();
   for(let i=0;i<2;i++){ const r=await api('POST','/spend',{amount:n, reason, spendId:key}); if(r.status===200){ W=Object.assign(W||{}, {paidGems:r.body.paidGems}); push(); return {ok:true}; }
@@ -108,7 +111,9 @@ function el(t,c,h){ const e=document.createElement(t); if(c) e.className=c; if(h
 function mount(){ if(R) return; const st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);
   R=el('div'); R.id='tpRoot'; R.innerHTML=`<div id="tpSheet"><div id="tpHd"><h2>ジェムを買う</h2><span class="env" id="tpEnv" style="display:none">テスト環境</span><button id="tpX">${ICON('cancel')}</button></div><div id="tpBody"></div></div>`;
   document.body.appendChild(R); R.querySelector('#tpX').onclick=close; R.addEventListener('click',e=>{ if(e.target===R&&S!=='busy') close(); }); }
-function links(){ return `<div class="tpLinks"><a href="${LEGAL.tokusho}" target="_blank" rel="noopener">特定商取引法に基づく表記</a><a href="${LEGAL.shikin}" target="_blank" rel="noopener">資金決済法に基づく表示</a></div>`; }
+function links(){ return `<div class="tpLinks"><a href="${LEGAL.tokusho}" target="_blank" rel="noopener">特定商取引法に基づく表記</a><a href="${LEGAL.shikin}" target="_blank" rel="noopener">資金決済法に基づく表示</a><a href="${LEGAL.terms}" target="_blank" rel="noopener">利用規約</a><a href="${LEGAL.privacy}" target="_blank" rel="noopener">プライバシー</a></div>`; }
+function ymd(t){ const d=new Date(t); return isNaN(d)?'':`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`; }
+function expRow(){ const ex=(W&&W.expiring)||[]; if(!ex.length) return ''; return `<div class="tpCap">`+ex.map(x=>`<div class="r"><span>期限 ${ymd(x.at)}</span><b>${x.gems}</b></div>`).join('')+`</div>`; }   // 2026-10-31 有償ジェムに期限を付けた時だけ出る
 function walletRow(){ const P=root.Progress; const free=P&&P.gems?P.gems():0; const paid=W&&W.paidGems!=null?W.paidGems:'—'; return `<div class="tpW"><div>${ICON('gem')}無料<b>${free}</b></div><div>${ICON('gem')}有償<b>${paid}</b></div></div>`; }
 function prodRow(){ const p=(CFG&&CFG.product)||{gems:550, priceJpy:610}; return `<div class="tpProd">${ICON('gem')}<div class="g">${p.gems}<small>ジェム</small></div><div class="y">${p.priceJpy}円</div></div>`; }
 function capRow(){ if(!W||!W.ageBand) return ''; const price=(CFG&&CFG.product.priceJpy)||610;
@@ -126,7 +131,7 @@ function show(state, o){ S=state; o=o||{}; const B=R.querySelector('#tpBody'); R
     B.querySelector('#tpAgeOk').onclick=async()=>{ const bt=B.querySelector('#tpAgeOk'); bt.disabled=true; if(!(await ensureDevice())){ B.querySelector('#tpErr').textContent='通信エラー'; bt.disabled=false; return; }
       const r=await api('POST','/age',{band}); if(r.status===200||r.status===409){ await wallet(); return main(); } B.querySelector('#tpErr').textContent='通信エラー'; bt.disabled=false; };
     return; }
-  if(state==='buy'){ const full=capFull(); B.innerHTML=walletRow()+prodRow()+capRow()+(full?'':termsRow()+`<div id="tpCard"></div>`)+`<div class="tpErr" id="tpErr"></div><button class="tpBtn" id="tpGo" ${full?'disabled':''}>${full?'今月の上限です':'購入する'}</button>`+links();
+  if(state==='buy'){ const full=capFull(); B.innerHTML=walletRow()+expRow()+prodRow()+capRow()+(full?'':termsRow()+`<div id="tpCard"></div>`)+`<div class="tpErr" id="tpErr"></div><button class="tpBtn" id="tpGo" ${full?'disabled':''}>${full?'今月の上限です':'購入する'}</button>`+links();
     if(!full){ const go=B.querySelector('#tpGo'); go.disabled=true; mountCard().then(()=>{ if(S==='buy') go.disabled=false; }).catch(()=>{ if(S==='buy') show('off'); });
       go.onclick=()=>buy(); }
     return; }
@@ -155,8 +160,38 @@ async function send(){ if(!pendingBuy) return main(); show('busy');
 async function open(){ mount(); R.classList.add('on'); band=null; pendingBuy=null; show('loading'); const c=await config(); if(!R.classList.contains('on')) return; if(!c) return show('off'); await wallet(); main(); }
 function close(){ if(!R||S==='busy') return; R.classList.remove('on'); S=null; if(card){ card.destroy().catch(()=>{}); card=null; } push(); }
 
+// ---------------------------------------------------------------- 機種を変えた時の引き継ぎ(2026-10-31)
+//   出す: 合言葉を決めて コード(XXXX-XXXX-XXXX)をもらう。有償ジェム(サーバー)とセーブ(localStorage の w2_save_v1 だけ)を預ける。セーブはサーバーで暗号化・24時間で消える
+//   受け取る: コード＋合言葉 → この機種のトークンとセーブを書きかえて読み直す(前の機種の有償ジェムは使えなくなる)
+const XK='therion_xfer_v1';
+function saveKey(){ const P=root.Progress; return (P&&P.config&&P.config.cfg&&P.config.cfg.key)||'w2_save_v1'; }
+function issued(){ try{ const x=JSON.parse(localStorage.getItem(XK)||'null'); if(x&&x.code&&new Date(x.exp)>new Date()) return x; if(x) localStorage.removeItem(XK); }catch(e){} return null; }
+async function xIssue(pass){ if(!(await config())) return {ok:false, why:'off'};
+  for(let i=0;i<2;i++){ if(!(await ensureDevice())) return {ok:false, why:'net'};
+    try{ const P=root.Progress; if(P&&P.state&&P.state()&&P.save) P.save(); }catch(e){}   // 今の進み具合を書いてから預ける
+    let save=null; try{ save=localStorage.getItem(saveKey()); }catch(e){}
+    const r=await api('POST','/transfer/issue',{passcode:pass, save:save||undefined},60000);
+    if(r.status===200){ try{ localStorage.setItem(XK, JSON.stringify({code:r.body.code, exp:r.body.expiresAt})); }catch(e){} return {ok:true, code:r.body.code, expiresAt:r.body.expiresAt}; }
+    if(r.status===401){ dropToken(); continue; }
+    return {ok:false, why:r.status===0||r.status>=500?'net':(r.body.error||'net')}; }
+  return {ok:false, why:'net'}; }
+async function xCancel(){ if((ls()||{}).token){ const r=await api('POST','/transfer/cancel'); if(r.status!==200&&r.status!==401) return {ok:false, why:'net'}; } try{ localStorage.removeItem(XK); }catch(e){} return {ok:true}; }
+let frozen=false;
+function freeze(keys){ if(frozen) return; frozen=true; const S0=root.Storage&&root.Storage.prototype; if(!S0) return; const set=S0.setItem, rm=S0.removeItem;   // 読み直すまでに 画面を閉じる時のセーブ(pagehide)で上書きされないように
+  S0.setItem=function(k,v){ if(this===root.localStorage&&keys.includes(k)) return; return set.call(this,k,v); };
+  S0.removeItem=function(k){ if(this===root.localStorage&&keys.includes(k)) return; return rm.call(this,k); }; }
+async function xRedeem(code, pass){ if(!(await config())) return {ok:false, why:'off'};
+  const r=await api('POST','/transfer/redeem',{code, passcode:pass},60000);
+  if(r.status!==200) return {ok:false, why:r.status===0||r.status>=500?'net':(r.body.error||'net'), left:r.body.left, locked:r.body.locked};
+  const b=r.body; const sk=saveKey();
+  try{ localStorage.setItem(LSK, JSON.stringify({deviceId:b.deviceId, token:b.token, t:Date.now()})); if(b.save) localStorage.setItem(sk, b.save); localStorage.removeItem(XK); }catch(e){ return {ok:false, why:'storage'}; }
+  freeze([LSK, sk]); W=null; return {ok:true, paidGems:b.paidGems, hasSave:!!b.save}; }
+function deviceNo(){ const d=ls(); return d&&d.deviceId?String(d.deviceId).slice(0,8):''; }
+const transfer={ issue:xIssue, cancel:xCancel, redeem:xRedeem, issued, deviceNo, reload:()=>location.reload() };
+
 // ---------------------------------------------------------------- progress.js とつなぐ
-const Pay={ open, close, api:API, state:()=>({cfg:CFG, wallet:W, sheet:S, tokErr:lastTokErr}), refresh:wallet, isOpen:()=>!!(R&&R.classList.contains('on')) };
+const Pay={ open, close, api:API, state:()=>({cfg:CFG, wallet:W, sheet:S, tokErr:lastTokErr}), refresh:wallet, isOpen:()=>!!(R&&R.classList.contains('on')), transfer,
+  expiring:()=>((W&&W.expiring)||[]).map(x=>({d:ymd(x.at), gems:x.gems})) };
 root.TherionPay=Pay;
 function hook(){ const P=root.Progress; if(!P||!P.on||!P.setPaid) return false;
   P.on('buy',()=>open());

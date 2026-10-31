@@ -383,10 +383,15 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgMvR{display:flex;align-items:center;gap:4px;font-size:13px;padding:4px 0;border-top:1px solid rgba(255,255,255,.07)}
 .pgMvR .lvx{min-width:2.6em;font-size:11px;color:#9aa7c4}.pgMvR .sp{margin-left:auto;font-size:11px;color:#c8d4f0;white-space:nowrap}
 .pgMvR.lock{opacity:.45}
-#pgTabs{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:0 8px 8px}
-#pgTabs button{font:800 13px/1.1 inherit;font-family:inherit;min-height:58px;padding:6px 2px;border-radius:14px;border:2px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);color:#dfe6ff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
+#pgTabs{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:0 6px 8px}
+#pgTabs button{font:800 12px/1.1 inherit;white-space:nowrap;font-family:inherit;min-height:58px;padding:6px 2px;border-radius:14px;border:2px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);color:#dfe6ff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
 #pgTabs button img.ui-ic{width:26px;height:26px;margin:0}
 #pgTabs button.on{background:#2c3e66;border-color:#ffd977;color:#fff}
+.pgIn{display:block;width:100%;font:800 20px/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;text-align:center;padding:12px 10px;border-radius:12px;border:2px solid rgba(255,255,255,.35);background:#fff;color:#1b2448;margin:0 0 8px;-webkit-user-select:text;user-select:text}
+.pgIn:focus{outline:0;border-color:#ffd977}
+.pgLbl{font-size:12px;font-weight:800;color:#c9d2ea;margin:2px 2px 4px}
+.pgCode{font:900 28px/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;text-align:center;color:#fff;background:#2c3e66;border:2px solid #ffd977;border-radius:14px;padding:14px 6px;margin:0 0 8px;-webkit-user-select:text;user-select:text}
+.pgNo{text-align:center;font-size:12px;font-weight:800;color:#8a96b8;margin-top:14px}
 .pgDet{background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.16);border-radius:16px;padding:10px 10px 6px;margin:0 0 10px}
 .pgDet.lead{border-color:#ffd977}
 .pgDetHd{display:flex;gap:10px;align-items:center}
@@ -472,7 +477,7 @@ UI.isOpen=()=>!!cur; UI.tab=()=>cur==='menu'?tab:null;
 function card(c, opts){ const d=el('div','pgCard'+(opts.on?' on':'')+(opts.pend?' pend':'')); const need=CFG.expNeed(c.lv); const pct=c.lv>=LV_MAX?100:Math.min(100,Math.round(100*(c.exp||0)/need));
   d.innerHTML=`${opts.leader?'<i class="ld"></i>':''}${opts.tag?`<span class="tg">${opts.tag}</span>`:''}<img src="${IMG(c.mid)}" alt=""><div class="nm">${nameOf(c.mid)}</div><div class="lv">Lv${c.lv}</div><div class="bar"><i style="width:${pct}%"></i></div>`; d.dataset.uid=c.uid; return d; }
 // メニュー(2026-10-27 オーナー「ステータスとかパーティーの情報みれるタブのような画面欲しいな」): パーティ・牧場・ずかん・もちもの。ラベル・アイコン・数字だけ
-const TABS=[['party','パーティ','ally'],['ranch','牧場','terrain'],['dex','ずかん','evolve'],['fuse','融合','fuse'],['items','もちもの','potion']];
+const TABS=[['party','パーティ','ally'],['ranch','牧場','terrain'],['dex','ずかん','evolve'],['fuse','融合','fuse'],['items','もちもの','potion'],['move','引き継ぎ','move']];   // 2026-10-31 引き継ぎ(機種を変えた時・lib/pay.js の TherionPay.transfer)
 const ITEMJ={meat1:['ふつうの肉','meat1'], meat2:['上等な肉','meat2'], meat3:['特上の肉','meat3'], ki:['闘気の水晶','kicrystal']};   // 2026-10-29 盤 v4: 回復の水筒・おやつの材料・〇〇のおやつはなくした(古いセーブに残っていても出さない)。2026-10-30 店の肉・闘気の水晶
 function terrInfo(){ const MB=root.MonBattle; return MB&&MB.TYPE_TERR&&MB.BRIEF?{TT:MB.TYPE_TERR, J:MB.BRIEF.TERR_JP, H:MB.BRIEF.TERR_HEX, X:Math.round((MB.BRIEF.TERR_X||0.3)*100)}:null; }
 function tnB(t,I){ const h=I.H[t]; const hx=h!=null?'#'+(h>>>0&0xffffff).toString(16).padStart(6,'0'):'#777'; const lt=h!=null&&(((h>>16)&255)*0.299+((h>>8)&255)*0.587+(h&255)*0.114)>150; return `<span class="pgTn${lt?' lt':''}" style="background:${hx}">${I.J[t]||t}</span>`; }
@@ -496,6 +501,38 @@ UI.detail=function(c, o){ o=o||{}; const d=el('div','pgDet'+(o.leader?' lead':''
     return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${mvTyb(mv)}<b>${mv.name}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${pw}${rg?'・射程'+rg:''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
   h+=`<div class="pgSec"><span>技</span><span>${got.length}</span></div>`+got.map(e=>row(e,false)).join('')+next.map(e=>row(e,true)).join('');
   d.innerHTML=h; return d; };
+// 引き継ぎ(2026-10-31): この機種から=合言葉(4〜8けたの数字)を決めてコードを出す / ほかの機種から=コードと合言葉で受け取る(この機種のセーブは上書き → 読み直す)
+const XERR={wrong_passcode:'合言葉がちがう', no_code:'コードが見つからない', bad_code:'コードがちがう', bad_passcode:'合言葉は4〜8けたの数字', here_has_paid:'この機種に有償ジェムがあります', rate_limited:'しばらくしてから', off:'準備中', net:'通信エラー', storage:'保存できませんでした'};
+function xMsg(r){ if(r.why==='wrong_passcode') return r.locked?'コードが消えました':`合言葉がちがう（のこり${r.left}回）`; return XERR[r.why]||XERR.net; }
+function hm(t){ const d=new Date(t); return isNaN(d)?'':`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+function moveTab(B){ const T=root.TherionPay&&root.TherionPay.transfer; const X=UI._xf||(UI._xf={pass:'', code:'', rpass:'', sure:false, busy:false});
+  if(!T){ B.appendChild(el('div','pgItem','<span>準備中</span>')); return; }
+  const inp=(k,ph,num,max)=>{ const i=el('input','pgIn'); i.value=X[k]; i.placeholder=ph; i.maxLength=max; i.autocomplete='off'; i.spellcheck=false; if(num){ i.inputMode='numeric'; i.pattern='[0-9]*'; } else { i.autocapitalize='characters'; }
+    i.oninput=()=>{ X[k]=num?i.value.replace(/\D/g,''):i.value.toUpperCase(); if(i.value!==X[k]) i.value=X[k]; if(k!=='pass'&&X.sure){ X.sure=false; const g=B.querySelector('#pgXGet'); if(g) g.textContent='受け取る'; } }; return i; };
+  const passOk=(s)=>/^\d{4,8}$/.test(s);
+  // この機種から
+  B.appendChild(el('div','pgSec','<span>この機種から</span>'));
+  const iss=T.issued();
+  if(iss){ B.appendChild(el('div','pgCode',iss.code)); B.appendChild(el('div','pgItem',`${ICON('hint')}<span>期限</span><b>${hm(iss.exp)}</b>`));
+    const a=el('div','pgAct'); const bx=el('button','pgBtn','とりけす'); bx.onclick=async()=>{ if(X.busy) return; X.busy=true; bx.disabled=true; const r=await T.cancel(); X.busy=false; if(!r.ok) UI.toast(xMsg(r)); UI.render(); }; a.appendChild(bx); B.appendChild(a); }
+  else { B.appendChild(el('div','pgLbl','合言葉')); B.appendChild(inp('pass','0000',true,8));
+    const a=el('div','pgAct'); const b=el('button','pgBtn main','コードを出す'); b.id='pgXIssue';
+    b.onclick=async()=>{ if(X.busy) return; if(!passOk(X.pass)){ UI.toast(XERR.bad_passcode); return; } X.busy=true; b.disabled=true; const r=await T.issue(X.pass); X.busy=false; if(!r.ok){ b.disabled=false; UI.toast(xMsg(r)); return; } X.pass=''; UI.render(); };
+    a.appendChild(b); B.appendChild(a); }
+  // ほかの機種から
+  B.appendChild(el('div','pgSec','<span>ほかの機種から</span>'));
+  B.appendChild(el('div','pgLbl','コード')); B.appendChild(inp('code','XXXX-XXXX-XXXX',false,16));
+  B.appendChild(el('div','pgLbl','合言葉')); B.appendChild(inp('rpass','0000',true,8));
+  const a2=el('div','pgAct'); const g=el('button','pgBtn'+(X.sure?' main':''),X.sure?'上書きして受け取る':'受け取る'); g.id='pgXGet'; if(X.sure){ g.style.flex='2.4'; g.style.whiteSpace='nowrap'; g.style.fontSize='16px'; }
+  g.onclick=async()=>{ if(X.busy) return; if(X.code.replace(/[\s-]/g,'').length!==12){ UI.toast(XERR.bad_code); return; } if(!passOk(X.rpass)){ UI.toast(XERR.bad_passcode); return; }
+    if(!X.sure){ X.sure=true; UI.render(); return; }   // 2回押し: この機種のセーブは上書きされる
+    X.busy=true; g.disabled=true; const r=await T.redeem(X.code, X.rpass); X.busy=false;
+    if(!r.ok){ X.sure=false; UI.toast(xMsg(r)); UI.render(); return; }
+    UI.toast('受け取りました'); setTimeout(()=>T.reload(), 900); };
+  a2.appendChild(g); if(X.sure){ const n=el('button','pgBtn','やめる'); n.onclick=()=>{ X.sure=false; UI.render(); }; a2.appendChild(n); } B.appendChild(a2);
+  const no=T.deviceNo(); if(no) B.appendChild(el('div','pgNo','番号 '+no));
+}
+
 UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const T=R.querySelector('#pgTitle'); const TB=R.querySelector('#pgTabs');
   TB.style.display=cur==='menu'?'grid':'none';
   if(cur==='menu'){ T.textContent='メニュー'; TB.innerHTML=TABS.map(([k,n,ic])=>`<button data-t="${k}" class="${k===tab?'on':''}">${ICON(ic)}${n}</button>`).join('');
@@ -527,9 +564,11 @@ UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const 
       const ks=Object.keys(ITEMJ).filter(k=>+it[k]>0); for(const k of ks){ const j=ITEMJ[k]||[k,'potion']; B.appendChild(el('div','pgItem',`${ICON(j[1])}<span>${j[0]}</span><b>×${it[k]}</b>`)); } if(!ks.length) B.appendChild(el('div','pgItem','<span>—</span>'));
       B.appendChild(el('div','pgSec','<span>ジェム</span>')); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>無料ジェム</span><b>${P.gems()}</b>`));
       const pdv=P.paidGems(); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>有償ジェム</span><b>${pdv==null?'—':pdv}</b>`));
+      { const TP=root.TherionPay; for(const x of (TP&&TP.expiring?TP.expiring():[])) B.appendChild(el('div','pgItem',`${ICON('hint')}<span>期限 ${x.d}</span><b>${x.gems}</b>`)); }   // 2026-10-31 有償ジェムに期限を付けた時だけ
       const a=el('div','pgAct'); const b=el('button','pgBtn gem','ジェムを買う'); b.onclick=()=>{ if(!P.buyGems()) UI.toast('じゅんび中'); }; a.appendChild(b); B.appendChild(a);
       B.appendChild(el('div','pgSec','<span>きろく</span>'));
       const Lg=el('div','pgLog'); for(const g of (prog()?prog().log:[])) Lg.appendChild(el('div','',`<span>${reasonJP(g.r)}</span><span class="${g.n>=0?'p':'m'}">${g.n>=0?'+':''}${g.n}</span>`)); if(!Lg.children.length) Lg.appendChild(el('div','','<span>—</span>')); B.appendChild(Lg); }
+    else if(tab==='move') moveTab(B);
   }
   else if(cur==='shop'){ T.textContent='店'; TB.style.display='none';   // 2026-10-30
     B.appendChild(el('div','pgItem',`${ICON('gem')}<span>無料ジェム</span><b id="pgShopGem">${P.gems()}</b>`));

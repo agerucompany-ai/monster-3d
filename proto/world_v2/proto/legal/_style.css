@@ -11,3 +11,14 @@ th{width:34%;font-weight:700;background:rgba(127,127,160,.08)}
 tr:last-child th,tr:last-child td{border-bottom:0}
 .ph{color:var(--ph);background:var(--phbg);padding:0 4px;border-radius:4px;font-weight:700}
 @media (max-width:560px){th,td{display:block;width:auto}th{border-bottom:0;padding-bottom:2px}td{padding-top:2px}}
+/* 2026-10-31 下書きの印・本文・要確認 */
+:root{--draft:#7a4a00;--draftbg:#fff3d6;--chk:#8a4b00;--chkbg:#ffe7c2;--link:#1f4fbf}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--draft:#ffd58a;--draftbg:#3a2a08;--chk:#ffcf8a;--chkbg:#3d2a10;--link:#9fc3ff}}
+:root[data-theme="dark"]{--draft:#ffd58a;--draftbg:#3a2a08;--chk:#ffcf8a;--chkbg:#3d2a10;--link:#9fc3ff}
+.draft{background:var(--draftbg);color:var(--draft);border:2px dashed currentColor;border-radius:10px;padding:10px 12px;font-weight:700;font-size:14px;margin:0 0 16px}
+.chk{color:var(--chk);background:var(--chkbg);padding:0 5px;border-radius:4px;font-size:12px;font-weight:700;white-space:nowrap}
+h2{font-size:16px;margin:24px 0 6px;padding-top:4px;border-top:1px solid var(--line)}
+p,li{font-size:14px}
+ol,ul{padding-left:1.4em;margin:6px 0}
+a{color:var(--link)}
+nav.lg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;margin:28px 0 0;padding-top:12px;border-top:1px solid var(--line)}
