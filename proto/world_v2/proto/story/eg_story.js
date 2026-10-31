@@ -73,7 +73,7 @@ function xStepOf(e){ if(!e) return null; if(e.x) return e.x; const c=xCur(); if(
   if(e.m&&s.wild&&+e.m.o.id===s.wild&&!e.m.stub) return s; return null; }
 
 // ---- 勝負の盤・借りる子・融合(cnBattleOpt に own3・keep2・triple・maxTurn を足したもの) ----
-function xBattleOpt(e,opt,R){ if(R.terrain){ opt.terrainTheme=R.terrain; opt.backdrop=undefined; } if(R.size) opt.size=R.size; if(R.maxTurn) opt.maxTurn=R.maxTurn;
+function xBattleOpt(e,opt,R){ if(R.terrain){ opt.terrainTheme=R.terrain; opt.backdrop=undefined; } if(R.size) opt.size=R.size; if(R.maxTurn) opt.maxTurn=R.maxTurn; if(R.special) opt.special=Object.assign({},R.special);   /* 2026-10-31 専用の盤 */
   if(e.m&&R.ai) opt.enemy.ai=Object.assign({},opt.enemy.ai||{},R.ai);
   const party=opt.player&&opt.player.party; const own=new Set(opt.player.owned||[]);
   if(R.guests&&Array.isArray(party)&&party.length){
@@ -224,17 +224,17 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(12,'e12_2b',AB,'*',{bg:'anime_eg_temple_in'}); sc(12,'e12_3',AB,'*',{bg:'anime_eg_temple_in'});
   bt(12,'e12_b','e12_4',AB,{bg:'anime_eg_temple_in',wild:2059,must:1,R:{terrain:'ruins',own:[1054],fuse:[2014]}});
   sc(12,'e12_5',AB,'*',{tod:'morning'});
-  // 第13話 上がる水(空の船で下流の町=ルクソールの川岸へ・水と時間の盤の代わりにふつうの勝負。新3ライゼンギガス=ピリムサ＋クロベク)
+  // 第13話 上がる水(空の船で下流の町=ルクソールの川岸へ・2026-10-31 水と時間の盤。新3ライゼンギガス=ピリムサ＋クロベク)
   go(13,'e13_g',AB,LU,'from_cairo',{tod:'noon'});
   sc(13,'e13_1',LU,'*',{bg:'anime_eg_sky'}); sc(13,'e13_2',LU,'*',{bg:'anime_eg_flood'}); sc(13,'e13_3',LU,'*',{bg:'anime_eg_flood'}); sc(13,'e13_4',LU,'*',{bg:'anime_eg_flood',tod:'evening'});
-  bt(13,'e13_b','e13_5',LU,{bg:'anime_eg_flood',foe:()=>cnFoe({n:'ログ＆パッチとミラ＆ジョー',zeroday:1,party:P(1007,1062,1005,1043)}),R:{terrain:'stream',guests:['partner',71,1012,'own2'],fuse:[NARUMI_ID]}});
+  bt(13,'e13_b','e13_5',LU,{bg:'anime_eg_flood',foe:()=>cnFoe({n:'ログ＆パッチとミラ＆ジョー',zeroday:1,party:P(1007,1062,1005,1043)}),R:{terrain:'stream',guests:['partner',71,1012,'own2'],fuse:[NARUMI_ID],ai:{hpX:1.41,atkX:1.41},special:{mode:'flood',need:2,turns:10}}});
   sc(13,'e13_6',LU,'*',{bg:'anime_eg_flood_night',tod:'night'});
-  // 第14話 古い水路(アスワン・石切り場の下の口→暗い水路・全画面 水門3/4)
+  // 第14話 古い水路(アスワン・石切り場の下の口→暗い水路・全画面 水門3/4。2026-10-31 潜入の盤)
   go(14,'e14_g',LU,AS,'from_boat',{tod:'noon'});
   sc(14,'e14_1',AS,'*',{bg:'anime_eg_dam'});
   sc(14,'e14_2',AS,'石切り場',{obj:'石切り場の下の、砂にうもれた崖へ'});
   sc(14,'e14_3',AS,'*',{bg:'anime_eg_tunnel'});
-  bt(14,'e14_b','e14_4',AS,{bg:'anime_eg_tunnel',foe:()=>cnFoe({n:'ヴィクターの見張りの機械',zeroday:1,party:P(1064,1067)}),R:{terrain:'stream'}});
+  bt(14,'e14_b','e14_4',AS,{bg:'anime_eg_tunnel',foe:()=>cnFoe({n:'ヴィクターの見張りの機械',zeroday:1,party:P(1064,1067)}),R:{terrain:'stream',ai:{hpX:0.5,atkX:0.5},special:{mode:'sneak',turns:14,guardN:3,vis:5}}});
   sc(14,'e14_5',AS,'*',{bg:'anime_eg_tunnel',tod:'evening'});
   // 第15〜18話 ダムの中(地図は作らず全画面＋仮の相手)
   const DI='anime_eg_dam_in';

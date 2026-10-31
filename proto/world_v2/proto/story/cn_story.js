@@ -47,7 +47,7 @@ sc(1,'c01_5',B,'*',{bg:'anime_cn_lab_night'});
 tp(2,'c02_t',B,-47,33,-2.4,{tod:'night'});
 sc(2,'c02_1',B,'*',{tod:'night'});
 sc(2,'c02_2',B,'*',{tod:'night'});
-bt(2,'c02_b','c02_3',B,{foe:()=>cnFoe({n:'手下のシャオユー'},'手下のシャオユー',-50),R:{terrain:'castle',guests:['partner','own2',196]}});
+bt(2,'c02_b','c02_3',B,{foe:()=>cnFoe({n:'手下のシャオユー'},'手下のシャオユー',-50),R:{terrain:'castle',guests:['partner','own2',196],ai:{hpX:8,atkX:4.0},special:{mode:'escape',need:2,turns:10}}});   // 2026-10-31 逃げる盤(竜の子を連れて出口へ)
 sc(2,'c02_4',B,'*',{bg:'anime_cn_river_night'});
 // 第3話 竹の森の村
 sc(3,'c03_1',B,'*',{bg:'anime_cn_river_morning',tod:'morning'});
@@ -100,11 +100,11 @@ sc(10,'c10_2',KA,'月の峰',{obj:'月の峰へ'});
 bt(10,'c10_b','c10_3',KA,{foe:()=>cnFoe({n:'手下のチャオ',zeroday:1,party:P(1039,1060)}),R:{terrain:'rocky'}});
 sc(10,'c10_4',KA); sc(10,'c10_5',KA);
 sc(10,'c10_6',KA,'*',{post:()=>flag('guard_s')});
-// 第11話 追っ手のレン(逃げる盤の代わりにふつうの勝負。レンは強い)
+// 第11話 追っ手のレン(2026-10-31 逃げる盤。レンは倒しきれない強さ・橋をわたって出口へ)
 tp(11,'c11_t',KA,-46,30,1.5708,{tod:'morning'});
 sc(11,'c11_1',KA);
 sc(11,'c11_2',KA,'漓江の橋',{obj:'川ぞいの道を北へ、漓江の橋へ'});
-bt(11,'c11_b','c11_3',KA,{foe:()=>cnFoe({n:'レン',party:P({mid:1034,lv:25},{mid:1014,lv:24})}),R:{terrain:'stream',ai:{hpX:1.4,atkX:1.3}}});
+bt(11,'c11_b','c11_3',KA,{foe:()=>cnFoe({n:'レン',party:P({mid:1034,lv:25},{mid:1014,lv:24})}),R:{terrain:'stream',ai:{hpX:8,atkX:3.1},special:{mode:'escape',need:3,turns:10}}});
 sc(11,'c11_4',KA,'リニアの駅',{obj:'北の駅(リニアの駅)へ'});
 // 第12〜14話 列車(地図は作らず、全画面の場面と仮の相手。勝負の前後も全画面)
 sc(12,'c12_1',KA,'*',{bg:'anime_cn_train'}); sc(12,'c12_2',KA,'*',{bg:'anime_cn_train'}); sc(12,'c12_3',KA,'*',{bg:'anime_cn_train'}); sc(12,'c12_4',KA,'*',{bg:'anime_cn_train'});
@@ -122,9 +122,9 @@ go(15,'c15_g',KA,GO,'from_pillars',{tod:'noon'});
 sc(15,'c15_2',GO);
 sc(15,'c15_3',GO,'大河の岸',{obj:'大河の岸へ',bg:'anime_cn_frozen'});
 bt(15,'c15_b','c15_4',GO,{bg:'anime_cn_frozen',foe:()=>cnFoe({n:'手下のボー',zeroday:1,party:P(1014,1060)}),R:{terrain:'snowfield'}});
-// 第16話 氷の下の玄武(玄武とは戦わず、守りながら渡る)
+// 第16話 氷の下の玄武(玄武とは戦わず、守りながら渡る。2026-10-31 守る盤=玄武のこうら・手下を1体足した)
 sc(16,'c16_1',GO,'*',{bg:'anime_cn_frozen'}); sc(16,'c16_2',GO,'*',{bg:'anime_cn_frozen'});
-bt(16,'c16_b','c16_3',GO,{bg:'anime_cn_frozen',foe:()=>cnFoe({n:'手下のボー',zeroday:1,party:P(1014,1059)}),R:{terrain:'stream'}});
+bt(16,'c16_b','c16_3',GO,{bg:'anime_cn_frozen',foe:()=>cnFoe({n:'手下のボー',zeroday:1,party:P(1014,1059,1060)}),R:{terrain:'stream',ai:{hpX:2,atkX:2},special:{mode:'guard',turns:8,look:'shell',wardHp:1}}});
 sc(16,'c16_4',GO,'*',{bg:'anime_cn_frozen'}); sc(16,'c16_5',GO,'*',{bg:'anime_cn_river_dusk'});
 sc(16,'c16_6',GO,'*',{bg:'anime_cn_wall',post:()=>flag('guard_n')});
 // 第17話 古い都の門(2026-10-28 唐獅子の記憶の問い c17_2a/c17_q/c17_2b はオーナー判断で削除=白虎と被る。門の外の麒麟ジョウキリンは寄り道の古代テリオン)
@@ -300,7 +300,7 @@ function cnInit(){ Object.assign(SC,CN_SC); toastEl.style.zIndex=40;
   const _cg=contGame; contGame=async function(sv){ if(sv&&sv.flags){ const k=SAVE; SAVE=sv; try{ cnMigrate(); } finally{ SAVE=k; } } return _cg(sv); };
   window.CN_DBG={ cur:()=>{ const s=cnCur(); return s&&{id:s.id,map:s.map,at:s.at,kind:s.kind}; }, steps:CN_STEPS, run:()=>cnRun(), here:()=>cnHere(cnCur()), obj:()=>cnObjText(GF()) }; }
 function cnStepOf(e){ if(!e) return null; if(e.cn) return e.cn; const id=e.n&&e.n.o&&e.n.o.cnStep; if(id&&CN_BY[id]&&storyOn()&&!GF()[id]) return CN_BY[id]; return null; }
-function cnBattleOpt(e,opt,R){ if(R.terrain){ opt.terrainTheme=R.terrain; opt.backdrop=undefined; } if(R.size) opt.size=R.size;
+function cnBattleOpt(e,opt,R){ if(R.terrain){ opt.terrainTheme=R.terrain; opt.backdrop=undefined; } if(R.size) opt.size=R.size; if(R.special) opt.special=Object.assign({},R.special);   // 2026-10-31 専用の盤(battle.js の opts.special)
   const party=opt.player&&opt.player.party; if(!R.guests||!Array.isArray(party)||!party.length) return;
   const enju=party.find(p=>ENJU_LINE.includes(+p.mid))||party[0], own2=party.find(p=>CN_GRIF.includes(+p.mid));
   const L=[]; for(const g of R.guests){ if(g==='partner'){ if(enju&&!L.includes(enju)) L.push(enju); continue; } if(g==='own2'){ if(own2) L.push(own2); continue; } L.push({mid:+g,lv:enju.lv,guest:1}); }

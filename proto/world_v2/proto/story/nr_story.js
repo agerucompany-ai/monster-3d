@@ -40,9 +40,9 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   sc(5,'n05_1',FJ,'*',{bg:'anime_nr_mount',tod:'morning'}); sc(5,'n05_2',FJ,'*',{bg:'anime_nr_cave'}); sc(5,'n05_3',FJ,'*',{bg:'anime_nr_cave'}); sc(5,'n05_4',FJ,'*',{bg:'anime_nr_cave'});
   bt(5,'n05_b','n05_5',FJ,{bg:'anime_nr_cave',foe:()=>cnFoe({n:'鎖の見張り',zeroday:1,party:P(1050,1052)}),R:{terrain:'snowrock',guests:['partner',2064]}});
   sc(5,'n05_6',FJ,'*',{bg:'anime_nr_mount',tod:'noon'});
-  // 第6話 石の教会(守る盤の代わりにふつうの勝負・リヴのポチャと古い子)
+  // 第6話 石の教会(2026-10-31 守る盤=教会の町の人・リヴのポチャと古い子)
   sc(6,'n06_1',FJ,'*',{bg:'anime_nr_ridge',tod:'evening'}); sc(6,'n06_2',FJ,'*',{bg:CH}); sc(6,'n06_3',FJ,'*',{bg:CN,tod:'night'});
-  bt(6,'n06_b','n06_4',FJ,{bg:CN,foe:()=>cnFoe({n:'赤い目の子たち',zeroday:1,party:P(1050,1052,1049)}),R:{terrain:'snowfield',guests:['partner',16,1010]}});
+  bt(6,'n06_b','n06_4',FJ,{bg:CN,foe:()=>cnFoe({n:'赤い目の子たち',zeroday:1,party:P(1050,1052,1049)}),R:{terrain:'snowfield',guests:['partner',16,1010],ai:{hpX:0.57,atkX:0.57},special:{mode:'guard',turns:8,look:'people',wardHp:1.2}}});
   sc(6,'n06_5',FJ,'*',{bg:CN});
   // 第7話 図面(レンが来る・図面の謎)
   sc(7,'n07_1',FJ,'*',{bg:CH,tod:'morning'}); sc(7,'n07_2',FJ,'*',{bg:CH}); sc(7,'n07_3a',FJ,'*',{bg:CH});
@@ -55,7 +55,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   sc(8,'n08_5',FJ);
   // 第9話 鐘の下(総攻めの連戦・コグリフが戻る)
   sc(9,'n09_1',FJ,'*',{bg:'anime_nr_pass',tod:'evening'}); sc(9,'n09_2a',FJ,'*',{bg:CN,tod:'night'});
-  bt(9,'n09_b1','n09_2',FJ,{bg:CN,foe:()=>cnFoe({n:'赤い目の子たち',zeroday:1,party:P(1050,1052,1049)}),R:{terrain:'snowfield',guests:['partner',16,1010]}});
+  bt(9,'n09_b1','n09_2',FJ,{bg:CN,foe:()=>cnFoe({n:'赤い目の子たち',zeroday:1,party:P(1050,1052,1049)}),R:{terrain:'snowfield',guests:['partner',16,1010],ai:{hpX:0.57,atkX:0.57},special:{mode:'guard',turns:8,look:'people',wardHp:1.2}}});   // 2026-10-31 守る盤(連戦の一戦目)
   sc(9,'n09_3',FJ,'*',{bg:CN}); sc(9,'n09_4',FJ,'*',{bg:'anime_nr_fog'});
   bt(9,'n09_b2','n09_5',FJ,{bg:'anime_nr_fog',foe:()=>cnFoe({n:'赤い目の子たち',zeroday:1,party:P(1052,1050,1049)}),R:{terrain:'snowfield',guests:['partner',16,'own2']}});
   sc(9,'n09_6',FJ,'*',{bg:CN});
@@ -102,7 +102,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   bt(19,'n19_b',null,CO,{anc:()=>NR_RAGNA({tune:{hp:1.6,atk:1.4,escort:0}}),R:{terrain:'arkcore',guests:['partner']}});
   sc(19,'n19_2b',CO); sc(19,'n19_3',CO); sc(19,'n19_4',CO); sc(19,'n19_5',CO,'*',{br:'n19_b_b'}); sc(19,'n19_6',CO);
   sc(20,'n20_1',CO,'*',{tod:'noon'}); sc(20,'n20_2',CO); sc(20,'n20_3',CO); sc(20,'n20_4a',CO);
-  bt(20,'n20_b','n20_4',CO,{foe:()=>cnFoe({n:'見回りの機械',zeroday:1,party:P(1064,1067)}),R:{terrain:'arkcore',guests:['partner']}});
+  bt(20,'n20_b','n20_4',CO,{foe:()=>cnFoe({n:'見回りの機械',zeroday:1,party:P(1064,1067)}),R:{terrain:'arkcore',guests:['partner'],ai:{hpX:1,atkX:1},special:{mode:'sneak',turns:16,guardN:2,vis:3}}});   // 2026-10-31 潜入の盤(人を逃がす・見回りの機械に見つからずに出口へ)
   sc(20,'n20_5',CO);
   sc(21,'n21_1',CO,'*',{tod:'evening'});
   bt(21,'n21_b',null,CO,{anc:()=>NR_RAGNA({tune:{hp:1.6,atk:1.6,escort:0}}),R:{terrain:'arkcore',guests:['partner']}});

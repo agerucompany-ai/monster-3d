@@ -257,6 +257,20 @@ const SCENES=[
   {n:'スルヴァ戦', map:'nr_iceland', anc:2070},
   {n:'瘴気の古代 アヌビド', map:'eg_tomb', anc:2068},
 ];
+// 2026-10-31 専用の盤(物語の戦いと同じ相手・借りる子・決まり。story/*_story.js の R と同じ数)
+const SP_SCENES=[
+  {n:'逃げる 裏通り', map:'cn_bund', tt:'castle', guests:['partner',1053,196], foe:[1060,1059], ai:{hpX:8,atkX:2.915}, special:{mode:'escape', need:2, turns:10}},
+  {n:'守る 石の教会', map:'nr_fjord', tt:'snowfield', guests:['partner',16,1010], foe:[1050,1052,1049], ai:{hpX:0.57,atkX:0.57}, special:{mode:'guard', turns:8, look:'people', wardHp:1.2}},
+  {n:'水と時間 上がる水', map:'eg_luxor', tt:'stream', guests:['partner',71,1012,1053], fuse:[2074], foe:[1007,1062,1005,1043], ai:{hpX:1.41,atkX:1.41}, special:{mode:'flood', need:2, turns:10}},
+  {n:'潜入 古い水路', map:'eg_aswan', tt:'stream', foe:[1064,1067], ai:{hpX:0.5,atkX:0.5}, special:{mode:'sneak', turns:14, guardN:3, vis:5}},
+];
+const SP_JP={escape:'逃げる', guard:'守る', flood:'水と時間', sneak:'潜入'};
+function spSceneOpt(sc){ const band=mapLv(sc.map), st=mapStage(sc.map), PL=band[1]; const cn=/^cn_/.test(sc.map);
+  let party=[], owned=new Set();
+  if(sc.guests){ for(const g of sc.guests){ const m=g==='partner'?1001:+g; party.push({mid:m, lv:PL+1}); if(g==='partner'||m===1053){ for(const x of lineOf(m)) if(cn||x!==1003) owned.add(x); } else { owned.add(m); if(cn&&mon(m)&&mon(m).evolves_to!=null) owned.add(mon(m).evolves_to); } } }
+  else { const pf=partyFor(sc.map); party=pf.party; pf.owned.forEach(x=>owned.add(x)); }
+  const lv=()=>band[0]+Math.floor(Math.random()*(band[1]-band[0]+1))+1;
+  return { kind:'trainer', size:9, terrainTheme:sc.tt, startStage:st, player:{party, owned:[...owned], fusionKnown:sc.fuse||[], items:{}, rankCap:20}, enemy:{name:SP_JP[sc.special.mode], zeroday:true, party:sc.foe.map((m,i)=>Object.assign({mid:m, lv:lv()}, i===0?{leader:true}:{})), ai:Object.assign({}, sc.ai)}, fusionUnlocked:true, special:Object.assign({}, sc.special) }; }
 function sceneOpt(sc){ const D=REG[sc.map]; if(!D) return null; let opt;
   if(sc.wild){ const pool=wildPool(D); const band=mapLv(sc.map); const st=mapStage(sc.map); const pf=partyFor(sc.map);
     const want=arcRule(arcOf(sc.map)).pack||2; const n=Math.max(1,Math.min(want, MB.packCount(pf.party.map(p=>p.mid), st, pf.owned, 7)||1));
@@ -276,7 +290,10 @@ function renderScenes(){ const el=$('scenes'); el.innerHTML='';
   for(const sc of SCENES){ const D=REG[sc.map]; if(!D) continue; const B=sc.wild?null:BOSSES.find(b=>b.map===sc.map&&(sc.anc?(b.type==='anc'&&b.mid===sc.anc):(b.type==='npc'&&b.o.scene===sc.npc))); if(!sc.wild&&!B) continue;
     const mid=B?B.mid:(wildPool(D)[0]); const b=document.createElement('button'); b.className='scn';
     b.innerHTML=`<img src="${art(mid)}" alt="" loading="lazy"><span><b>${sc.n}</b><i>${sceneChips(sc)}</i></span>`;
-    b.onclick=()=>{ const opt=sceneOpt(sc); if(opt) run(opt, ()=>sceneOpt(sc)); }; el.appendChild(b); } }
+    b.onclick=()=>{ const opt=sceneOpt(sc); if(opt) run(opt, ()=>sceneOpt(sc)); }; el.appendChild(b); }
+  for(const sc of SP_SCENES){ if(!REG[sc.map]) continue; const b=document.createElement('button'); b.className='scn'; b.dataset.sp=sc.special.mode;
+    b.innerHTML=`<img src="${art(sc.foe[0])}" alt="" loading="lazy"><span><b>${sc.n}</b><i>${SP_JP[sc.special.mode]}・${placeJP(sc.tt)}・Lv${mapLv(sc.map).join('〜')}</i></span>`;
+    b.onclick=()=>run(spSceneOpt(sc), ()=>spSceneOpt(sc)); el.appendChild(b); } }
 
 // ---- 自分 / 相手のスロット ----
 function renderSlots(el, list, who){ el.innerHTML=''; for(let i=0;i<6;i++){ const id=list[i]; const d=document.createElement('button'); d.className='slot'+(id?' f':'');
@@ -441,7 +458,7 @@ perfShow();
   const ord={start:0, greece:1, china:2, egypt:3, norse:4, other:5, fuse:6, anc:7}; MON.sort((a,b)=>(ord[arcTag(a.id)]-ord[arcTag(b.id)])||(baseOf(a.id)-baseOf(b.id))||((a.level||1)-(b.level||1)));
   S.me.party=S.me.party.filter(canOwn); S.foe.party=S.foe.party.filter(id=>mon(id)); if(S.foe.boss&&!BOSSES.some(b=>b.key===S.foe.boss)) S.foe.boss=null;
   renderScenes(); renderAll(); $('load').style.display='none';
-  window.VS={S, buildOpt, sceneOpt, SCENES, BOSSES, REG, run, encounterOpt};
+  window.VS={S, buildOpt, sceneOpt, SCENES, SP_SCENES, spSceneOpt, BOSSES, REG, run, encounterOpt};
 }catch(e){ console.error(e); $('load').textContent='読み込みエラー'; } })();
 })();
 </script>
