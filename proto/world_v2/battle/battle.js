@@ -234,7 +234,7 @@ function usesLeft(u, mv){ let n = mv.mp>0 ? ((u.mp&&u.mp[mv.id]!=null)?u.mp[mv.i
 function usesMax(mv){ return mv.mp>0 ? mv.mp : Infinity; }
 function spendMove(u, mv){ if(state&&state.stats){ const mu=state.stats.mvUse||(state.stats.mvUse={}); const k=(u.anc?'A':u.owner)+':'+mv.id; mu[k]=(mu[k]||0)+1; } if(mv.mp>0){ if(!u.mp) u.mp={}; u.mp[mv.id]=Math.max(0, usesLeft(u,mv)-1); } if(mv.group==='heal') u.hg=Math.max(0,(u.hg!=null?u.hg:V2.HEAL_GROUP)-1); }
 // その技を今使えるか(回数・移動後・行動済み・潜行)。moved を渡すと「その位置まで動いた後なら」で見る(AI)
-function moveUsable(u, mv, moved){ if(!mv || u.acted || u.dug>0) return false; if(usesLeft(u,mv)<1) return false; if(isOffense(mv) && firstNoAtk(u)) return false; /* 戦術v3: 先手の1ターン目(TACT.first.mode='noatk') */ const mvd=(moved!=null)?moved:u.moved; if(mv.p===false && mvd && !(T3() && hasType(mon(u),'風'))) return false;   /* 戦術v3: 風は移動前だけの技も動いてから使える */ return true; }
+function moveUsable(u, mv, moved){ if(!mv || u.acted || u.wait || u.dug>0) return false; if(usesLeft(u,mv)<1) return false; if(isOffense(mv) && firstNoAtk(u)) return false; /* 戦術v3: 先手の1ターン目(TACT.first.mode='noatk') */ const mvd=(moved!=null)?moved:u.moved; if(mv.p===false && mvd && !(T3() && hasType(mon(u),'風'))) return false;   /* 戦術v3: 風は移動前だけの技も動いてから使える */ return true; }
 // ---- 強化・弱体(u.buf / u.dbf)。until = state.ht(半ターンの数)で切れる ----
 function bufOn(b){ return !!b && state && (state.ht||0) < b.until; }
 function statMod(u, k){ let v=0; const b=u.buf&&u.buf[k], d=u.dbf&&u.dbf[k]; if(bufOn(b)) v+=(b.x!=null?b.x:(b.add||0)); if(bufOn(d)) v+=(d.x!=null?d.x:(d.add||0)); return v; }
@@ -373,7 +373,7 @@ function enemyEvoLeft(){ const D=storyDiff(); if(!D||D.evo==null) return Infinit
 function evoNeed(u){ const m=mon(u); return m.evolves_to==null?null:(EVO_GAUGE[m.level]||GAUGE_MAX); }
 function gaugeReady(u){ const n=evoNeed(u); return n!=null && gaugeOf(u)>=n; }
 // 2026-10-29 オーナー「進化は2段構え」: (2) 闘気がたまったら どこでも自分で進化できる(マスに関係なく)。(1) 進化のマスに入ったら 闘気なしで必ず進化(zoneEvolve)
-function canEvolveHere(u){ return !!u && gaugeReady(u) && !u.acted && !(u.dug>0); }
+function canEvolveHere(u){ return !!u && gaugeReady(u) && !u.acted && !u.wait && !(u.dug>0); }
 // (1) 進化のマスに「入った」時(前のマスはその段の進化のマスでない)に1段だけ進化。その姿を覚えている時だけ(敵=今までの進化の決まり aiCanEvo)
 function zoneEvoOK(u, fr, fc){ if(!u || !state.units[u.uid] || u.anc) return false; const m=mon(u); if(m.evolves_to==null || m.role==='fusion') return false;
   if(!evoZoneOK(u,u.r,u.c) || evoZoneOK(u,fr,fc)) return false; return aiCanEvo(u); }
@@ -401,7 +401,7 @@ function gaugeMul(o){ const sh=hpShare(o); if(T3()){ const B=TACT.behind; return
 //   進化できない子(3段目・融合・進化先なし)は闘気MAXで「覚醒」(1戦1回・攻撃と守り+25%・3ターン)。2026-10-29 盤 v4: 覚醒と融合は どこでもできる
 const CENTER={gaugeX:1.5, tick:15, awake:{x:0.25, turns:3}};
 function canEvolveSomeday(u){ const m=mon(u); return m.evolves_to!=null && canEverEvolve(u.owner,u.mid,!!u.isBoss); }
-function canAwaken(u){ return V2ON() && !!u && !u.anc && !u.awoke && !canEvolveSomeday(u) && gaugeOf(u)>=GAUGE_MAX && !u.acted && !(u.dug>0); }
+function canAwaken(u){ return V2ON() && !!u && !u.anc && !u.awoke && !canEvolveSomeday(u) && gaugeOf(u)>=GAUGE_MAX && !u.acted && !u.wait && !(u.dug>0); }
 function doAwaken(u){ if(!canAwaken(u)) return false; u.awoke=true; u.g=0; setBuf(u,'buf',{stat:'atk',x:CENTER.awake.x,turns:CENTER.awake.turns},false); setBuf(u,'buf',{stat:'def',x:CENTER.awake.x,turns:CENTER.awake.turns},false); u.moved=true;
   if(state.stats){ const s=state.stats.awake||(state.stats.awake=[0,0]); s[u.owner]++; }
   if(!BT.headless){ evolveFx(u.r,u.c,{awake:true}); floatText(u.r,u.c,IC('evolve')+'覚醒','#ffe680','tag'); showBanner(`${IC('evolve')}覚醒！ ${mon(u).name}`); }
@@ -630,6 +630,7 @@ function addUnit(owner, mid, r, c){
   const m = MID[mid];
   const u = {uid:uidSeq++, owner, mid, hp:m.hp, maxhp:m.hp, r, c, moved:false, acted:false, evoLock:-1,
              poison:0, burn:0, freeze:0, para:0, dug:0, amp:atkMPMax(), hmp:MP_HEAL_MAX, ampMax:atkMPMax(), hmpMax:MP_HEAL_MAX, g:0, leader:false};
+  if(state.spd && state.phase==='battle'){ u.wait=true; u.sdone=true; u.moved=true; u.acted=true; }   // 2026-10-31 素早さ順: 途中で出た子は次のラウンドから
   state.units[u.uid]=u; state.board[r][c]=u.uid; return u;
 }
 function unitAt(r,c){ if(r<0||c<0||r>=NR||c>=NC)return null; const id=state.board[r][c]; return id?state.units[id]:null; }
@@ -787,7 +788,7 @@ function canAttack(u){
   if(!V2ON() && !canAtkMP(u)) return false;        // 攻撃MP切れ（ボスは無限）。技 v2 は技ごとの回数(moveUsable)
   return true;
 }
-function canMove(u){ return (!u.moved && !u.acted) || (u.away>0 && u.acted); }  // 攻撃/進化/融合後は移動できない(戦術v3: 風は攻撃のあと away マスまで下がれる)
+function canMove(u){ if(u.wait) return false; return (!u.moved && !u.acted) || (u.away>0 && u.acted); }  // 攻撃/進化/融合後は移動できない(戦術v3: 風は攻撃のあと away マスまで下がれる)
 function castleAdjacent(u){ return false; }   // 城は廃止
 
 function typeBonus(at,dt){ return (STRONG[at]||[]).includes(dt)?0.2:0; }
@@ -1278,7 +1279,7 @@ function tryFusion(a, b, r, c){
     fuseHpSet(nu, [a,b], s3, T, wasLeader); nu.atkX=ax*T.fuseAtk*s3; nu.rank=Math.round(((a.rank||1)+(b.rank||1))/2);
     nu.src=(a.src||[]).concat(b.src||[]); nu.isBoss=!!(a.isBoss||b.isBoss);
   }
-  nu.moved=true;                              // 融合は移動扱い＝この後すぐ攻撃できる
+  nu.moved=true; spdAdopt(nu);               // 融合は移動扱い＝この後すぐ攻撃できる
   (state.stats||(state.stats={evo:[0,0],fuse:[0,0]})).fuse[nu.owner]++;
   (state.stats.ev||(state.stats.ev=[])).push({k:'fuse', o:nu.owner, sh:hpShare(nu.owner), t:state.turn});
   fusionFx(r,c,ca,cb);
@@ -1305,7 +1306,7 @@ function tryTriple(a, b, c, r, cc){
     const T=BT.tune||TUNE; fuseHpSet(nu, [a,b,c], 1, T, wasLeader); nu.atkX=ax*T.fuseAtk; nu.rank=Math.round(((a.rank||1)+(b.rank||1)+(c.rank||1))/3);
     nu.src=(a.src||[]).concat(b.src||[],c.src||[]); nu.isBoss=!!(a.isBoss||b.isBoss||c.isBoss);
   }
-  nu.moved=true;                              // 融合は移動扱い＝この後すぐ攻撃できる
+  nu.moved=true; spdAdopt(nu);               // 融合は移動扱い＝この後すぐ攻撃できる
   (state.stats||(state.stats={evo:[0,0],fuse:[0,0]})).fuse[nu.owner]++;
   (state.stats.ev||(state.stats.ev=[])).push({k:'fuse', n:3, o:nu.owner, sh:hpShare(nu.owner), t:state.turn});
   fusionFx(r,cc,ca,cb);
@@ -1378,6 +1379,7 @@ function repairBoard(){
   return fixed;
 }
 function startTurn(side){
+  if(BT.order==='spd' && !state.spd && state.phase==='battle'){ spdBegin(); return; }   // 2026-10-31 素早さ順(試し)
   if(side===0 && !BT.headless){ const d=$id('ovDetail'); if(d) d.style.display='none'; }
   repairBoard();   // ターン開始ごとに盤を健全化(重なり/ゴースト/盤外を修復)
   state.cur=side; state.ht=(state.ht||0)+1;   // 技 v2: 半ターンの数(強化・弱体が切れる時)
@@ -1403,6 +1405,7 @@ function endTurn(){
   clearSel();
   if(isGuest()){ netGuestIntercept('endTurn',{}); return; }   // ゲストはホストへ依頼
   if(!state || state.phase!=='battle') return;
+  if(state.spd){ spdNext(); return; }   // 2026-10-31 素早さ順: 次の子の番
   if(state.cur===0){ startTurn(1); }
   else {
     state.turn++;
@@ -1427,9 +1430,53 @@ function finishByTimeout(){
   endGame(a>0.5?0:1, `時間切れ。残りHP 自${Math.round(a*100)}% / 敵${Math.round((1-a)*100)}%`);
 }
 
+// ======================= 2026-10-31 素早さ順（試し・opts.turnOrder:'spd'。渡さない戦いは今までの交互のまま） =======================
+// 先手・後手なし。盤の全員(敵も味方も)を 素早さの高い順に1体ずつ動かす。全員が1回動いたら1ラウンド(= state.turn・ターン数の決まりはラウンドで数える)。
+// 次に動く子 = まだ動いていない子の中で「今」いちばん速い子(途中の進化・まひ・こおり・移動の強化/弱体がそのラウンドのうちに効く)。
+// 同じ素早さ: ラウンドごとに 味方が先 / 敵が先 を入れかえる(同じ側どうしは盤に出た順)。
+// 状態異常(毒・やけど・まひ・こおりの数)・潜る・中央の闘気+15・古代の隙 は その子の番の始めに。水の盤の水位・決戦・強化/弱体の切れ目は ラウンドの始めに。
+const SPDT={mob:0.15, para:0.5, freeze:0.5, min:0.3};   // 素早さの順の値 = 素早さ ×(1+0.15×移動の強化/弱体) ×まひ0.5 ×こおり0.5
+function spdVal(u){ let v=spdOf(u); if(V2ON()) v*=Math.max(SPDT.min, 1+SPDT.mob*statMod(u,'mob')); if(u.para>0) v*=SPDT.para; if(u.freeze>0) v*=SPDT.freeze; return v; }
+function spdSort(list, tie){ return list.sort((a,b)=>(spdVal(b)-spdVal(a)) || (a.owner!==b.owner ? (a.owner===tie?-1:1) : (a.uid-b.uid))); }
+function spdMine(me){ const S=state.spd, u=S&&state.units[S.cur]; return (u&&u.owner===me)?[u]:[]; }
+function spdLeft(){ const S=state.spd; return spdSort(Object.values(state.units).filter(u=>!u.sdone && u.uid!==S.cur), S.tie); }
+function spdBlock(u){ return !!(state && state.spd && state.phase==='battle' && u && u.uid!==state.spd.cur); }
+function spdAdopt(nu){ const S=state&&state.spd; if(!S||state.phase!=='battle'||state.units[S.cur]||nu.owner!==state.cur) return; S.cur=nu.uid; nu.wait=false; nu.sdone=false; nu.acted=false; }
+function spdDone(){ const S=state&&state.spd; if(!S) return false; const u=state.units[S.cur]; return !u || (u.acted && !canMove(u)); }
+function spdQueue(n){ const S=state.spd, out=[]; const cu=state.units[S.cur]; if(cu) out.push({u:cu,cur:1}); for(const u of spdLeft()) out.push({u});
+  if(out.length<n){ out.push({sep:1}); for(const u of spdSort(Object.values(state.units), 1-S.tie)) out.push({u}); } return out.slice(0,n); }
+function spdRowHTML(){ return '<div class="qrow">'+spdQueue(10).map(x=>x.sep?'<i class="qs"></i>':`<img class="${x.u.owner===0?'me':'foe'}${x.cur?' cur':''}" src="${IMG[x.u.mid]}" alt="">`).join('')+'</div>'; }
+function spdBegin(){ state.spd={cur:null, tie:0, n:0, last:null}; state.ht=(state.ht||0)-1; spdRound(true); spdNext(); }
+function spdRound(first){ const S=state.spd; if(!first) S.tie=1-S.tie; state.ht=(state.ht||0)+2;   // 強化・弱体は「半ターン」で数えている → 1ラウンド=2
+  for(const u of Object.values(state.units)){ u.sdone=false; u.wait=true; u.moved=false; u.acted=false; }
+  if(state.sp) spTurnStart(0);   // 水の盤: ラウンドごとに水位
+  if(T3()){ const tot=Object.values(state.units).reduce((a,x)=>a+Math.max(0,x.hp),0)+Object.keys(state.units).length*1e6; state.idle=(state._idleHp===tot)?(state.idle||0)+2:0; state._idleHp=tot; }   // 交互の2手番ぶん
+  if(!BT.headless){ const fx=finalX(); if(fx>1){ showBanner(`${IC('warn')}決戦 ダメージ+${Math.round((fx-1)*100)}%`); if(state.turn===finalStart()) toast(`決戦！ 残り${MAX_TURN-state.turn+1}ターン・ダメージが上がる`); } } }
+function spdNext(){ const S=state.spd; if(!S||state.phase!=='battle') return;
+  const pu=state.units[S.cur]; if(pu){ pu.sdone=true; pu.wait=true; pu.moved=true; pu.acted=true; pu.away=0; }
+  S.cur=null;
+  for(let g=0; g<3; g++){ const nx=spdLeft()[0]; if(nx){ spdAct(nx); return; }
+    state.turn++; if(state.turn>MAX_TURN){ finishByTimeout(); return; } spdRound(false); } }
+function spdAct(u){ const S=state.spd;
+  repairBoard(); if(!state.units[u.uid]){ u.sdone=true; spdNext(); return; }
+  S.cur=u.uid; S.n++; state.cur=u.owner;
+  if(u.owner===0 && !BT.headless){ const d=$id('ovDetail'); if(d) d.style.display='none'; }
+  u.wait=false; u.moved=false; u.acted=false; if(u.ancTired) u.ancTired=false;
+  if(u.dug>0){ u.dug--; if(u.dug<=0){ floatText(u.r,u.c,IC('dig')+'浮上','#e0c060'); } else { floatText(u.r,u.c,`${IC('dig')}潜行(残${u.dug})`,'#c9a24a'); } }
+  applyStatusTick(u);
+  if(!state.units[u.uid]){ syncUnits(); if(checkWin()) return; spdNext(); return; }   // 毒・やけどで倒れた
+  if(T3()){ u.sr=u.r; u.sc=u.c; u.away=0; }
+  if(V2ON() && EVO_CELLS.length && gaugeZone(u) && !(u.dug>0)) addGauge(u, CENTER.tick);
+  ancCheck(); refreshEvoArea(); syncUnits();
+  if(checkWin()) return;
+  if(window._SIM || BT.headless) return;
+  const sw=S.last!==u.owner; S.last=u.owner;
+  if(u.owner===0){ undoStack=[]; if(sw) showBanner('あなたの番'); clearSel(); updateUI(); if(BT.auto) autoTurn(); else selectUnit(u); }
+  else { clearSel(); updateUI(); setTimeout(cpuTurn, 200); } }
+
 // ======================= AI（両陣営共通: リーダーを狙う・守る／進化エリア／融合） =======================
 function cpuTurn(){
-  showBanner('CPUのターン');
+  if(!state.spd) showBanner('CPUのターン');
   aiSideStart(1);
   syncUnits(); updateUI();
   const units=aiOrder(1);
@@ -1437,7 +1484,7 @@ function cpuTurn(){
   function step(){
     if(state.phase==='end' || checkWin()) return;
     if(animBusy()){ setTimeout(step, 90); return; }
-    if(i>=units.length){ setTimeout(endTurn, 450/SPD()); return; }
+    if(i>=units.length){ setTimeout(endTurn, (state.spd?300:450)/SPD()); return; }
     const u=units[i++];
     if(!state.units[u.uid]){ step(); return; }
     aiOneUnit(u);
@@ -1445,7 +1492,7 @@ function cpuTurn(){
     if(state.phase==='end') return;
     setTimeout(step, 640/SPD());     // 1体ずつ間を置いて見せる
   }
-  setTimeout(step, 550/SPD());
+  setTimeout(step, (state.spd?250:550)/SPD());
 }
 // 同期で片側を全部動かす(シム・テスト用)
 function aiSide(me){ aiSideStart(me); for(const u of aiOrder(me)){ if(state.phase==='end') break; if(state.units[u.uid]) aiOneUnit(u); } }
@@ -1478,8 +1525,8 @@ function refreshEvoArea(){ if(!state||BT.evoOn||state.phase!=='battle') return; 
 function aiZoneGo(u){ const me=u.owner; if(mon(u).level>=2 && TACT.ai.zone2===false) return false; return !u.anc && mon(u).evolves_to!=null && mon(u).role!=='fusion' && aiCanEvo(u) && !!EVO_CELLS.length && !evoZoneOK(u,u.r,u.c) && !(u.leader && mon(u).level>=2 && alive(me).length>1) && !bossHoldOn(u); }   // 2026-10-30: 相手のリーダー・ボスは進化のマスへ向かわない
 function aiZoneReach(u){ if(!aiZoneGo(u) || u.moved || !canMove(u)) return false; return moveTargets(u).move.some(([r,c])=>evoZoneOK(u,r,c)); }
 function aiGaugeEvo(u){ if(canEvolveHere(u) && aiCanEvo(u) && !aiZoneReach(u)){ evolveUnit(u,false); return true; } return false; }
-function aiSideStart(me){ for(const u of alive(me).slice()){ if(u.anc){ u._ancN=0; if(BT.anc&&BT.anc.cd>0) BT.anc.cd--; } if(!aiGaugeEvo(u) && canAwaken(u)) doAwaken(u); } }
-function aiOrder(me){ const fl=leaderOf(1-me); const us=alive(me).slice();
+function aiSideStart(me){ for(const u of (state.spd?spdMine(me):alive(me)).slice()){ if(u.anc){ u._ancN=0; if(BT.anc&&BT.anc.cd>0) BT.anc.cd--; } if(!aiGaugeEvo(u) && canAwaken(u)) doAwaken(u); } }
+function aiOrder(me){ const fl=leaderOf(1-me); const us=(state.spd?spdMine(me):alive(me)).slice();
   const d=u=>fl?Math.abs(u.r-fl.r)+Math.abs(u.c-fl.c):0;
   us.sort((a,b)=>((a.leader?1:0)-(b.leader?1:0)) || (d(a)-d(b)));   // リーダーは最後(味方の動きを見てから)
   if(BT.anc){ const out=[]; for(const u of us){ out.push(u); if(u.anc) for(let k=1;k<(BT.anc.T.actions||1);k++) out.push(u); } return out; }   // 古代テリオンは1ターンに actions 回
@@ -4558,7 +4605,7 @@ function handlePick(sc, tc){
   if(V2ON()){ const t=tc||sc; if(t && !unitAt(t[0],t[1])){ BT.tileInfo={r:t[0],c:t[1]}; addHL(t[0],t[1],0xffffff,0.55); updateUI(); } else if(BT.tileInfo){ BT.tileInfo=null; updateUI(); } }   // 地形の札
 }
 // 隣接する融合可能な味方（進化直後で移動済みでも、未行動なら融合できる）
-function adjFuse(u){ const out=[]; if(!u||u.acted) return out;
+function adjFuse(u){ const out=[]; if(!u||u.acted||u.wait) return out;
   for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){ const r=u.r+dr,c=u.c+dc; if(r<0||c<0||r>=NR||c>=NC)continue;
     const occ=unitAt(r,c); if(occ&&occ.owner===u.owner&&(fusionResult(u,occ)!=null||tripleResult(u,occ))) out.push([r,c]); }
   return out; }
@@ -4591,7 +4638,7 @@ function v2Tap(r,c){ if(!V2ON()||!sel||!selMove) return false; const mv=selMove;
   if(r===sel.r&&c===sel.c && noAimMove(mv)) return useSelMoveV2();
   return false; }
 function setSelGhost(uid){ for(const k in sprites){ const s=sprites[k]; const o=(+k===uid)?0.55:1; if(s.mat.opacity!==o) s.mat.opacity=o; } }
-function selectUnit(u){ sel=u; BT.tileInfo=null; selCombo=null; selMove=pickSelMove(u); selAim=null; if(V2ON()&&selMove&&selMove.target==='map'){ const b=aiMapBest(u,selMove); selAim=b?b.aim:null; } recompute(); selMode = canMove(u)?'move':'attack'; setSelGhost(u.uid); drawSelHL(); updateUI(); if(u.owner===0) camFocus(u.r,u.c); }
+function selectUnit(u){ if(spdBlock(u)){ showMonsterDetail(u.mid,u); return; } sel=u; BT.tileInfo=null; selCombo=null; selMove=pickSelMove(u); selAim=null; if(V2ON()&&selMove&&selMove.target==='map'){ const b=aiMapBest(u,selMove); selAim=b?b.aim:null; } recompute(); selMode = canMove(u)?'move':'attack'; setSelGhost(u.uid); drawSelHL(); updateUI(); if(u.owner===0) camFocus(u.r,u.c); }
 function setMode(mode){
   if(!sel) return;
   if(mode==='evolve'){ pushUndo(); if(evolveUnit(sel,false)) reselectAfter(); else undoStack.pop(); return; }
@@ -4600,7 +4647,7 @@ function setMode(mode){
   if(mode==='move' && selMoves.move.length===0 && selMoves.fuse.length===0) toast('移動できるマスがない');
   drawSelHL(); updateUI();
 }
-function reselectAfter(){ if(sel && state.units[sel.uid]) selectUnit(state.units[sel.uid]); else clearSel(); }
+function reselectAfter(){ if(sel && state.units[sel.uid]) selectUnit(state.units[sel.uid]); else { clearSel(); if(state.spd && state.cur===0 && state.units[state.spd.cur]) selectUnit(state.units[state.spd.cur]); } }
 function refreshSelAfterAct(){ reselectAfter(); }
 function drawSelHL(){
   clearHL();
@@ -4663,14 +4710,14 @@ function feedUnit(a, t, k){ if(!a||!t||!MEAT[k]||!((STORY.items[k]||0)>0)||a.act
   if(!(STORY.items[k]>0)) BT.meatSel=MEAT_KEYS.find(x=>(STORY.items[x]||0)>0); clearSel(); return true; }
 // ---- 待った（1手戻す）----
 let undoStack=[];
-function snapshot(){ return JSON.stringify({units:state.units, board:state.board, energy:state.energy, flags:state.flags, items:state.items, castleHP:state.castleHP, killLv:state.killLv||0, uidSeq, fed:Object.assign({},BT.fed||{}), sp:spSnap()}); }
+function snapshot(){ return JSON.stringify({units:state.units, board:state.board, energy:state.energy, flags:state.flags, items:state.items, castleHP:state.castleHP, killLv:state.killLv||0, uidSeq, fed:Object.assign({},BT.fed||{}), sp:spSnap(), spd:state.spd?state.spd.cur:null}); }
 function pushUndo(){ if(state.cur!==0||state.phase!=='battle')return; undoStack.push(snapshot()); if(undoStack.length>40)undoStack.shift(); }
 function doUndo(){
   if(!undoStack.length){ toast('待ったできる手がない'); return; }
   const s=JSON.parse(undoStack.pop());
-  state.units=s.units; state.board=s.board; state.energy=s.energy; state.flags=s.flags; state.items=s.items; state.castleHP=s.castleHP; state.killLv=s.killLv||0; uidSeq=s.uidSeq; if(s.fed) BT.fed=s.fed; if(s.sp) state.sp=s.sp;
+  state.units=s.units; state.board=s.board; state.energy=s.energy; state.flags=s.flags; state.items=s.items; state.castleHP=s.castleHP; state.killLv=s.killLv||0; uidSeq=s.uidSeq; if(s.fed) BT.fed=s.fed; if(s.sp) state.sp=s.sp; if(state.spd&&s.spd!=null) state.spd.cur=s.spd;
   sel=null; selMode='none'; selMoves=null; selAtks=null; selMove=null; clearHL();
-  buildStructures(); syncUnits(); updateUI();
+  buildStructures(); syncUnits(); updateUI(); if(state.spd){ const cu=state.units[state.spd.cur]; if(cu&&cu.owner===0) selectUnit(cu); }
   toast('待った（1手戻した）');
 }
 // ---- 降参 ----
@@ -4732,7 +4779,8 @@ function updateUI(){ if(BT.headless) return;
     tb.innerHTML = (state.phase==='battle'
       ? (state.sp?`<span class="tchip ${state.cur===0?'me':'foe'}">のこり<b>${Math.max(0,MAX_TURN-state.turn+1)}</b><i>${state.cur===0?'自分':'相手'}</i></span>`+spChip()+(state.sp.mode==='sneak'&&!state.sp.alert?'':lm(0)+lm(1)):`<span class="tchip ${state.cur===0?'me':'foe'}">T<b>${state.turn}</b>/${MAX_TURN}<i>${state.cur===0?'自分':(BT.kind==='wild'?'野生':'相手')}</i></span>`+lm(0)+lm(1))
       : `<span class="tchip">配置</span><span class="sp"></span>`)
-      +autoB+`<button class="tbb menu" data-m="menu" aria-label="メニュー">≡</button>`;
+      +autoB+`<button class="tbb menu" data-m="menu" aria-label="メニュー">≡</button>`+(state.phase==='battle'&&state.spd?spdRowHTML():'');
+    tb.classList.toggle('spdq', state.phase==='battle'&&!!state.spd);
     if(!tb._wired){ tb._wired=true; tb.addEventListener('click',(e)=>{ const b=e.target.closest('[data-m]'); if(!b) return; e.stopPropagation(); const k=b.dataset.m;
       if(k==='menu'){ menuOpen()?closeMenu():openMenu(); } else if(k==='cycleAuto'){ cycleAuto(); if(menuOpen()) renderMenu(); } }); }
   } else tb.innerHTML='';
@@ -4860,7 +4908,7 @@ function updateUI(){ if(BT.headless) return;
     ac.appendChild(mkbt(`${IC(MEAT_KEYS.find(k=>(STORY.items[k]||0)>0))}肉をあげる`,'evo', state.cur===0 && !sel.acted && feedTargets().length>0, ()=>{ selMode='feed'; if(!(STORY.items[BT.meatSel]>0)) BT.meatSel=MEAT_KEYS.find(k=>(STORY.items[k]||0)>0); drawSelHL(); updateUI(); }));
   { const row=document.createElement('div'); row.className='mainrow';
     if(!ONLINE) row.appendChild(mkbt(IC('undo')+'待った','', state.cur===0 && !BT.auto && undoStack.length>0, doUndo));
-    row.appendChild(mkbt('ターン終了','warn end', state.cur===0 && !BT.auto, endTurn));
+    row.appendChild(mkbt(state.spd?'次へ':'ターン終了','warn end'+(state.spd&&state.cur===0&&spdDone()?' guide':''), state.cur===0 && !BT.auto, endTurn));
     ac.appendChild(row); }
   // detail (相手等)
   $id('detail').style.display='none';
@@ -5238,7 +5286,7 @@ function doComboV3(u, c, t){
   const team=comboTeam(u,c); if(!team || !t || !state.units[t.uid] || cheby(t,u)>c.range || comboUsed(u.owner,c)){ if(u.owner===0) toast('合体できない'); return false; }
   const hits=comboHits(u,c,t); const o=u.owner, fx=c.fx||{};
   (state.comboUsed||(state.comboUsed=[{},{}]))[o][c.id]=true;
-  const cost=comboCost(c); for(const x of team){ x.acted=true; x.moved=true; x.g=Math.max(0,gaugeOf(x)-cost); }   // 闘気を分けあって使う
+  const cost=comboCost(c); for(const x of team){ x.acted=true; x.moved=true; x.g=Math.max(0,gaugeOf(x)-cost); if(state.spd) x.sdone=true; }   // 闘気を分けあって使う
   const st=state.stats; if(st){ (st.combo||(st.combo=[0,0]))[o]++; const cb=st.comboBy||(st.comboBy={}); cb[c.name]=(cb[c.name]||0)+1; if(st.atk) st.atk[o]++; }
   if(!BT.headless){ comboFx(u, team); const sp=u.spReady; u.spReady=false; attackFx(u, hits, t, {name:c.name, power:TACT.combo.power, type:mon(u).type, tier:3, big:true});   /* 2026-10-29: カットインをやめ 盤の上の大技(bigIntro) */ u.spReady=sp; showBanner(`${IC('combo')}${IC(c._s.icon||'combo')}${c.name}`); }
   let dealt=0, kills=0;
@@ -5633,6 +5681,12 @@ const CSS=`
 #mb-hud{background:linear-gradient(180deg,rgba(16,21,38,.96),rgba(10,13,24,.98));border-top:1px solid rgba(255,216,107,.28);box-shadow:0 -6px 20px rgba(0,0,0,.35);padding:7px 10px calc(8px + env(safe-area-inset-bottom));font-size:13px;flex:0 0 auto;max-height:46vh;overflow:auto}
 #mb-topbar{position:absolute;top:0;left:0;right:0;background:linear-gradient(180deg,rgba(10,13,24,.92),rgba(10,13,24,.72));border-bottom:1px solid rgba(255,255,255,.08);padding:calc(5px + env(safe-area-inset-top)) 8px 5px;font-size:12px;display:flex;gap:5px;align-items:center;flex-wrap:nowrap;z-index:25}
 #mb-topbar:empty{display:none}
+#mb-topbar.spdq{flex-wrap:wrap;row-gap:4px}
+#mb-topbar .qrow{flex:0 0 100%;display:flex;gap:4px;align-items:center;height:38px;overflow:hidden}
+#mb-topbar .qrow img{width:30px;height:30px;border-radius:50%;border:2px solid #4f8bff;background:#17284c;object-fit:contain;flex:0 0 auto;opacity:.9}
+#mb-topbar .qrow img.foe{border-color:#ff5a48;background:#4a1d22}
+#mb-topbar .qrow img.cur{width:36px;height:36px;border-width:3px;opacity:1;box-shadow:0 0 0 2px #ffd86b}
+#mb-topbar .qrow .qs{width:2px;height:24px;background:rgba(255,255,255,.35);flex:0 0 auto;margin:0 3px}
 #mb-topbar b{color:#ffd86b}
 #mb-topbar span{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:0 7px;height:30px;white-space:nowrap;flex:0 0 auto}
 #mb-topbar .tchip i{font-style:normal;font-size:11px;font-weight:800;margin-left:3px;color:#cfe0ff}
@@ -5892,7 +5946,7 @@ function startBattle(opts){
   opts=opts||{};
   return init(opts.init||{}).then(()=>new Promise((resolve)=>{
     const kind=KIND_DEFAULTS[opts.kind]?opts.kind:'trainer'; const KD=KIND_DEFAULTS[kind];
-    BT.kind=kind; BT.opts=opts; BT.v2=(opts.moveSystem?opts.moveSystem!=="v1":!(IS_NODE&&process.env.MOVESYS==="v1")); setStatMode(V2ON()); BT.onEnd=opts.onEnd||null; BT.resolve=resolve; BT.fusedNew=[]; BT.auto=false; BT._autoRun=false; BT.fxUntil=0;
+    BT.kind=kind; BT.opts=opts; BT.order=opts.turnOrder==='spd'?'spd':null; BT.v2=(opts.moveSystem?opts.moveSystem!=="v1":!(IS_NODE&&process.env.MOVESYS==="v1")); setStatMode(V2ON()); BT.onEnd=opts.onEnd||null; BT.resolve=resolve; BT.fusedNew=[]; BT.auto=false; BT._autoRun=false; BT.fxUntil=0;
     try{ BT.fastPref=localStorage.getItem('mb_auto_fast')==='1'; }catch(e){ BT.fastPref=false; } BT.fast=false;
     setBoardSize(+opts.size||KD.size);
     const pl=opts.player||{}, en=opts.enemy||{};
@@ -6287,7 +6341,7 @@ function simulate(opts){
   const prevHeadless=BT.headless; let res=null;
   BT.headless=true;
   const kind=KIND_DEFAULTS[opts.kind]?opts.kind:'trainer'; const KD=KIND_DEFAULTS[kind];
-  BT.kind=kind; BT.opts=opts; BT.v2=(opts.moveSystem?opts.moveSystem!=="v1":!(IS_NODE&&process.env.MOVESYS==="v1")); setStatMode(V2ON()); BT.fusedNew=[]; BT.auto=false; setBoardSize(+opts.size||KD.size);
+  BT.kind=kind; BT.opts=opts; BT.order=opts.turnOrder==='spd'?'spd':null; BT.v2=(opts.moveSystem?opts.moveSystem!=="v1":!(IS_NODE&&process.env.MOVESYS==="v1")); setStatMode(V2ON()); BT.fusedNew=[]; BT.auto=false; setBoardSize(+opts.size||KD.size);
   if(opts.rules){ BT.rules=Object.assign({},BT.rules,opts.rules); MAX_TURN=BT.rules.maxTurn; BT.dmgX=BT.rules.dmgX; }
   const pl=opts.player||{}, en=opts.enemy||{};
   BT.party=normParty(pl.party||pl); BT.enemyParty=normParty(en.party||en); applyStartStage(opts); setOwned(pl, en); ancientSetup(en); alignMinions(opts);
@@ -6300,9 +6354,9 @@ function simulate(opts){
   const hp=o=>alive(o).reduce((s,u)=>s+Math.max(0,u.hp),0);
   const log=[]; let guard=0; const tl={act:[0,0], turns:[0,0]};
   startTurn(0);
-  while(state.phase==='battle' && guard++<400){
+  while(state.phase==='battle' && guard++<(state.spd?8000:400)){
     log.push([state.turn,hp(0),hp(1)]);
-    const side=state.cur; tl.act[side]+=alive(side).length; tl.turns[side]++;
+    const side=state.cur; tl.act[side]+=state.spd?1:alive(side).length; tl.turns[side]++;
     aiSide(side); if(typeof opts.trace==='function') opts.trace(state, side);   // 2026-10-25: シムの観察用フック(半ターンごと)
     if(state.phase!=='battle') break; endTurn();
   }
@@ -6310,7 +6364,7 @@ function simulate(opts){
   let mn=1, st0=null; if(w>=0) for(const [t,h0,h1] of log){ const tot=h0+h1; if(!tot) continue; const sh=(w===0?h0:h1)/tot; if(st0==null) st0=sh; if(t<2) continue; mn=Math.min(mn,sh); }
   res={ w, how:state.endHow||'leader', turns:Math.min(state.turn, MAX_TURN), leaderKill:(state.endHow||'leader')==='leader' && w>=0,
     evo:state.stats.evo.slice(), fuse:state.stats.fuse.slice(), atk:state.stats.atk.slice(), act:tl.act, sideTurns:tl.turns,
-    comeback: w>=0 && mn<Math.min(0.4,(st0==null?0.5:st0)-0.1), ev:(state.stats.ev||[]).slice(), stage:{evo:BT.evoOn, fusion:BT.fusionOn, triple:!!BT.tripleOn}, /* 逆転=勝った側の体力の割合が2ターン目以降に40%未満かつ開始時より10ポイント以上低くなった */ n:[alive(0).length, alive(1).length], hp:[hp(0),hp(1)], combo:(state.stats.combo||[0,0]).slice(), comboBy:Object.assign({},state.stats.comboBy||{}), clutch:(state.stats.clutch||[0,0]).slice(), awake:(state.stats.awake||[0,0]).slice(), layout:BT.t3layout||null, cutins:{atk:state.stats.atk[0]+state.stats.atk[1], evo:state.stats.evo[0]+state.stats.evo[1], fuse:state.stats.fuse[0]+state.stats.fuse[1]} };
+    comeback: w>=0 && mn<Math.min(0.4,(st0==null?0.5:st0)-0.1), ev:(state.stats.ev||[]).slice(), stage:{evo:BT.evoOn, fusion:BT.fusionOn, triple:!!BT.tripleOn}, /* 逆転=勝った側の体力の割合が2ターン目以降に40%未満かつ開始時より10ポイント以上低くなった */ n:[alive(0).length, alive(1).length], hp:[hp(0),hp(1)], combo:(state.stats.combo||[0,0]).slice(), comboBy:Object.assign({},state.stats.comboBy||{}), clutch:(state.stats.clutch||[0,0]).slice(), awake:(state.stats.awake||[0,0]).slice(), layout:BT.t3layout||null, order:state.spd?'spd':'alt', acts:state.spd?state.spd.n:null, cutins:{atk:state.stats.atk[0]+state.stats.atk[1], evo:state.stats.evo[0]+state.stats.evo[1], fuse:state.stats.fuse[0]+state.stats.fuse[1]} };
   BT.headless=prevHeadless;
   return res;
 }

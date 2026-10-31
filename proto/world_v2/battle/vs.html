@@ -104,7 +104,9 @@ details .wrap{display:flex;flex-wrap:wrap;gap:6px;padding:0 8px 8px}
   <button class="tb" id="bPerf"><img class="ic" src="img/ui/hint.webp" alt="">重さ</button>
 </div>
 <main>
-  <section><h2><img src="img/ui/leader.webp" alt="">場面</h2><div class="scenes" id="scenes"></div></section>
+  <section><h2><img src="img/ui/leader.webp" alt="">場面</h2>
+    <div class="row"><span class="lab">順番</span><div class="seg" id="bOrder"><button data-v="alt">交互</button><button data-v="spd">素早さ順</button></div></div>
+    <div class="scenes" id="scenes"></div></section>
 
   <section><h2><img src="img/ui/ally.webp" alt="">自分</h2>
     <div class="slots" id="meSlots"></div>
@@ -180,7 +182,7 @@ const arcOf=id=>{ for(const a of ARCS) if(a[2].includes(id)) return a[0]; return
 const TYPE_COL={炎:'#e8503a',水:'#2f86c5',地:'#9c7a3c',風:'#4fa86a',雷:'#d6a915',闇:'#6a4a8c',氷:'#5cc8e0',光:'#f3d65a',竜:'#b15ad6',森:'#5cbf3a'};
 let MB, MON=[], MID={}, REG={}, ANC=new Set(), BOSSES=[], POOLS={}, STARTERS=[1001,178,1022], RECIPE2=[];
 const D0={ me:{party:[1001,178,1022], lv:50, stage:0}, foe:{mode:'random', n:3, party:[], lv:50, boss:null, wildMap:'cn_kunlun', wildN:2, str:1},
-  board:{kind:'trainer', size:9, turn:0, tier:6, place:{tt:'olive', bd:'olive'}}, rule:{fuse:true, triple:false, evo:true} };
+  board:{kind:'trainer', size:9, turn:0, tier:6, place:{tt:'olive', bd:'olive'}, order:'alt'}, rule:{fuse:true, triple:false, evo:true} };
 let S=load();
 function load(){ try{ const s=JSON.parse(localStorage.getItem(LSK)); if(s&&s.me&&s.foe&&s.board&&s.rule) return Object.assign(JSON.parse(JSON.stringify(D0)), s); }catch(e){} return JSON.parse(JSON.stringify(D0)); }
 function save(){ try{ localStorage.setItem(LSK, JSON.stringify(S)); }catch(e){} }
@@ -348,7 +350,7 @@ $('rules').addEventListener('click', e=>{ const b=e.target.closest('button'); if
 function renderSum(){ const k={wild:'野生',trainer:'人',master:'ボス',ancient:'古代'}[S.board.kind]; const f=S.foe.mode==='boss'?((BOSSES.find(b=>b.key===S.foe.boss)||{}).name||'—'):S.foe.mode==='wild'?((REG[S.foe.wildMap]||{}).name||'')+' 野生':S.foe.mode==='pick'?S.foe.party.length+'体':'ランダム'+S.foe.n+'体';
   const t=[`${S.me.party.length}体 Lv${S.me.lv}`, 'vs '+f, k, SZN(S.board.size), placeJP(S.board.place.tt), S.board.turn?S.board.turn+'ターン':null, S.rule.fuse?'融合':null, S.rule.triple?'3体融合':null, S.rule.evo?'進化':null].filter(Boolean);
   $('sum').innerHTML=t.map(x=>`<span>${x}</span>`).join(''); }
-function renderAll(){ renderMe(); renderFoe(); renderBoard(); renderRules(); renderSum(); }
+function renderAll(){ renderMe(); renderFoe(); renderBoard(); renderRules(); renderSum(); segOn('bOrder', S.board.order==='spd'?'spd':'alt'); }
 
 // ---- 選ぶ画面 ----
 const PF={q:'', ty:null, st:null, arc:null}; let PK=null;
@@ -388,6 +390,7 @@ segBind('foeStr', v=>S.foe.str=+v);
 segBind('bKind', v=>S.board.kind=v);
 segBind('bSize', v=>S.board.size=+v);
 segBind('bTurn', v=>S.board.turn=+v);
+segBind('bOrder', v=>S.board.order=v);   // 2026-10-31 順番: 交互 / 素早さ順(試し・場面・ボス・専用の盤も)
 segBind('bTier', v=>S.board.tier=+v);
 
 // ---- 設定 → startBattle の opts ----
@@ -427,7 +430,7 @@ function strApply(opt){ if(!opt||!opt.enemy) return opt; const st=STR[S.foe.str]
 // ---- たたかう / 結果 ----
 let LAST=null, RUNNING=false;
 async function run(opt, again){ if(RUNNING) return; RUNNING=true; LAST=again||(()=>buildOpt()); $('rs').classList.remove('on');
-  opt=Object.assign({ autoButton:true, recruit:()=>null }, opt);
+  opt=Object.assign({ autoButton:true, recruit:()=>null }, opt); if(S.board.order==='spd') opt.turnOrder='spd';
   window._vsLastOpt=JSON.parse(JSON.stringify(opt, (k,v)=>typeof v==='function'?undefined:v));
   let res=null; try{ res=await MB.startBattle(opt); }catch(e){ console.error('vs battle', e); }
   RUNNING=false; window._vsLastResult=res; showResult(res); }
