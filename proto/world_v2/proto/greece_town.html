@@ -194,7 +194,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 //  地形・建物・小物・草は regions/<マップ>.json から組み立てる。街(オリーヴァ村)と自然(オリーブの丘)は別のマップで、
 //  門に入ると暗転して切り替える(そのマップの分だけ読む)。マップの中は48m角の区画で、主人公の近くだけ細かく作る。
 //  テリオンモンスター ギリシャ編(2026-10-26 正本: world_v2/ギリシャ編_設定まとめ_2026-10-26.md)。生き物の呼び名は「テリオン」。
-//  タイトル → イントロ → 主人公の設定(ヤマト) → 東京のひまな夏(じいちゃん) → 空の港 → 飛行船(ピヨドルの群れ) → オリーヴァ村(エリー・エレナ博士・逃げた3体)
+//  タイトル → イントロ → 主人公の設定(ヤマト) → 東京のひまな夏(じいちゃん) → 空の港 → 飛行船(ピーグルの群れ) → オリーヴァ村(エリー・エレナ博士・逃げた3体)
 //  → 手のひらの約束で相棒を選ぶ → レン登場 → 丘でレン → ログ＆パッチの網(初バトル)→言い伝え「王は、四つの守りに認められた子の前でだけ、目をさます」
 //  → 丘の西の入口でアレク(最初は敵) → 丘の下の迷路(oliva_maze) → 守り①ミノタス(古代テリオン)。記録は localStorage(w2_save_v1)。
 //  人物は world_v2/v3(characters_v3・style_v3): 3D は v3/chars/{key}.glb(char_v3.js)、立ち絵は v3/portraits/{key}_{表情}.webp(全員右向き・右の枠は反転)。
@@ -2571,9 +2571,9 @@ const SC={
  // 第1話: 空の港(背景 tokyo_port)。ハナ・じいちゃん(古いルーペ)・母
  skyport:[ {todo:'story'},
   {w:null,t:''},{w:'hana',t:''},{w:'genichi',t:''},{w:'hero',f:'smile',t:''},{w:'misaki',f:'smile',t:''} ],
- // 第1話: 飛行船(背景 airship_v3)。夜明けのエーゲ海、並んで飛ぶピヨドルの群れ。初めて本物を見て大はしゃぎ
+ // 第1話: 飛行船(背景 airship_v3)。夜明けのエーゲ海、並んで飛ぶピーグルの群れ。初めて本物を見て大はしゃぎ
  airship:[ {todo:'story'},
-  {w:null,t:''},{w:'hero',f:'surprised',t:''},{w:'x',n:'乗客',t:''},{w:'x',n:'野生のピヨドル',t:''},{w:'hero',f:'smile',t:''} ],
+  {w:null,t:''},{w:'hero',f:'surprised',t:''},{w:'x',n:'乗客',t:''},{w:'x',n:'野生のピーグル',t:''},{w:'hero',f:'smile',t:''} ],
  // 第1〜2話: オリーヴァ村に着く(村の中・立ち絵)。エレナ博士の電話→逃げる炎の狐→石板の前のエリー→「テリオン」の名の由来→エレナ博士
  arrive:[ {todo:'story'},
   {w:null,t:''},{w:'elena',ph:1,t:''},{w:'hero',f:'surprised',t:''},{w:'elly',f:'surprised',t:''},{w:'hero',t:''},{w:'elly',f:'smile',t:''},{w:'x',n:'炎の狐',t:''},{w:'elena',f:'normal',t:''},{w:'elly',t:''},{w:'elena',f:'serious',t:''} ],
@@ -2592,10 +2592,10 @@ const SC={
   {w:'dimi',t:''},{w:'hero',f:'surprised',t:''},{w:'dimi',f:'serious',t:''},{w:'hero',f:'serious',t:''} ],
  // 第4話: 競技場の跡でログ＆パッチの網(初バトルの前)。パッチ=スミヤモ
  patch:[ {todo:'story'},
-  {w:null,t:''},{w:'x',n:'ピヨドル',t:''},{w:'hero',f:'angry',t:''},{w:'patch',t:''},{w:'log',t:''},{w:'elly',f:'serious',t:''},{w:'patch',t:''},{w:'partner',t:''},{w:'hero',f:'serious',t:''} ],
- // 第4〜5話: 勝ったあと。撤収の決まり文句→ピヨドルがエリーの相棒に→石の言い伝え「王は、四つの守りに認められた子の前でだけ、目をさます」→エレナ博士のミッション→守り①は丘の下の迷路
+  {w:null,t:''},{w:'x',n:'ピーグル',t:''},{w:'hero',f:'angry',t:''},{w:'patch',t:''},{w:'log',t:''},{w:'elly',f:'serious',t:''},{w:'patch',t:''},{w:'partner',t:''},{w:'hero',f:'serious',t:''} ],
+ // 第4〜5話: 勝ったあと。撤収の決まり文句→ピーグルがエリーの相棒に→石の言い伝え「王は、四つの守りに認められた子の前でだけ、目をさます」→エレナ博士のミッション→守り①は丘の下の迷路
  patch_win:[ {todo:'story'},
-  {w:'patch',t:''},{w:'log',t:''},{w:'patch',t:''},{w:null,t:''},{w:'x',n:'ピヨドル',t:''},{w:'elly',f:'surprised',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'sad',t:''},{w:'partner',t:''},
+  {w:'patch',t:''},{w:'log',t:''},{w:'patch',t:''},{w:null,t:''},{w:'x',n:'ピーグル',t:''},{w:'elly',f:'surprised',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'sad',t:''},{w:'partner',t:''},
   {w:null,t:''},{w:'elly',f:'serious',t:''},{w:'hero',t:''},{w:'elena',ph:1,t:''},{w:'hero',f:'serious',t:''},{w:'elly',t:''} ],
  // 第8話: 町いちばんの使い手ヤニス(オリーブの冠の古印)。絵は仮(stavros)
  stavros:[ {todo:'story'},
@@ -3791,7 +3791,7 @@ GR_SC.patch=[
  {w:null,t:'丘の道のわき。網をかぶせた箱が三つ。どの箱にも、同じ小さな印。'},
  {fn:async()=>monShow(1030,{x:60,y:8,w:15})},
  {w:null,t:'箱の中で、風の鳥と、小さな黄色い子が、もがいていた。'},
- {w:'x',n:'ピヨドル',t:'出せ！　出せって言ってんだろ、この網！'},
+ {w:'x',n:'ピーグル',t:'出せ！　出せって言ってんだろ、この網！'},
  {fn:async()=>monShow(1026,{x:70,y:8,w:12})},
  {w:'x',n:'トールキッド',t:'ダシテー！！　ダ・シ・テー！！'},
  {w:'hero',f:'surprised',t:'……声、でかっ。'},
@@ -3849,19 +3849,19 @@ GR_SC.patch_win=[
  {w:'hero',f:'surprised',t:'……礼を言いながら逃げるの、初めて見た。'},
  {fn:async()=>monShow(1030,{x:62,y:8,w:15})},
  {w:null,t:'風の鳥は、逃げなかった。網の切れはしを、くちばしでほどいている。'},
- {w:'x',n:'ピヨドル',t:'……助けたのは、そっちの狐だろ。'},
+ {w:'x',n:'ピーグル',t:'……助けたのは、そっちの狐だろ。'},
  {w:'elly',f:'normal',t:'うん。そうだよ。'},
- {w:'x',n:'ピヨドル',t:'網、ほどいたの、おまえだろ。'},
+ {w:'x',n:'ピーグル',t:'網、ほどいたの、おまえだろ。'},
  {w:'elly',f:'surprised',t:'え？　わたし、ほどくの下手だったよ。'},
- {w:'x',n:'ピヨドル',t:'下手すぎて、羽が三本ぬけた。'},
+ {w:'x',n:'ピーグル',t:'下手すぎて、羽が三本ぬけた。'},
  {fn:async()=>monShow(1030,{x:74,y:40,w:13})},
  {w:null,t:'風の鳥は、エリーの肩に、一度だけとまった。'},
  {w:'elly',f:'surprised',t:'……え。え、わたし？'},
- {w:'x',n:'ピヨドル',t:'勘ちがいするなよ。肩がちょうどいいだけだ。'},
+ {w:'x',n:'ピーグル',t:'勘ちがいするなよ。肩がちょうどいいだけだ。'},
  {w:'partner',t:'……どこかで聞いた言い方だ。'},
  {w:'hero',f:'smile',t:'おまえの言い方だよ。'},
- {w:'elly',f:'smile',t:'研究所で、登録してもらう？　名前は、ピヨドル！'},
- {w:'x',n:'ピヨドル',t:'それ、もとから、おれの名前だ。'},
+ {w:'elly',f:'smile',t:'研究所で、登録してもらう？　名前は、ピーグル！'},
+ {w:'x',n:'ピーグル',t:'それ、もとから、おれの名前だ。'},
  {w:null,t:'風の鳥は、肩をけって、オリーブの木の上へ飛んでいった。'},
  {w:'elly',f:'sad',t:'……ふられた。'},
  {w:'x',n:'ピリポン',t:'ピリッ。'},
@@ -4563,7 +4563,7 @@ GR_SC.dimi2_win=[
  {w:'dimi',f:'normal',if:()=>!lastWin(),t:'……うるさい。'},
  {w:'partner',if:()=>!lastWin(),t:'……くそ。'},
  {w:'dimi',f:'serious',if:()=>lastWin(),t:'……カブッコ一体に、それだけかかるのか。'},
- {w:null,if:()=>lastWin(),t:'肩のハヤクスは、一度も飛ばなかった。'},
+ {w:null,if:()=>lastWin(),t:'肩のディーグルは、一度も飛ばなかった。'},
  {w:'hero',f:'surprised',if:()=>lastWin(),t:'……二体目、出してない。'},
  {w:'dimi',f:'normal',if:()=>lastWin(),t:'……いらない。'},
  {w:'dimi',f:'serious',t:'……じゃあな。'},
@@ -5655,7 +5655,7 @@ GR_SC.final27_after=[
  {w:'dimi',f:'serious',if:()=>!lastWin(),t:'……出なかったな。'},
  {w:'hero',f:'sad',if:()=>!lastWin(),t:'……わかってる。'},
  {w:'partner',if:()=>!lastWin(),t:'……次は、焼く。'},
- {w:null,if:()=>lastWin(),t:'旗が、ヤマトの方へ上がった。でも、レンの肩のハヤクスは、一度も飛ばなかった。'},
+ {w:null,if:()=>lastWin(),t:'旗が、ヤマトの方へ上がった。でも、レンの肩のディーグルは、一度も飛ばなかった。'},
  {w:'hero',f:'serious',if:()=>lastWin(),t:'……二体目、出してないだろ。'},
  {w:'dimi',f:'normal',if:()=>lastWin(),t:'決勝で、出すまでもなかった。'},
  {w:'hero',f:'angry',if:()=>lastWin(),t:'次は、出させる。'},
@@ -5972,7 +5972,7 @@ GR_SC.ep1_flash=[
  {fn:async()=>{ SAVE.items=SAVE.items||{}; SAVE.items.loupe=1; }},
  {fn:async()=>bgPan('anime_ep1_07','tb',4.0)},
  {w:null,t:'一晩の空の旅。窓の下は、エーゲ海だった。'},
- {fn:async()=>{ bgPan('anime_ep1_08','rl',4.0); }},   // ピヨドルの群れは絵に描きこみ済み
+ {fn:async()=>{ bgPan('anime_ep1_08','rl',4.0); }},   // ピーグルの群れは絵に描きこみ済み
  {w:null,t:'窓の外を、風の鳥のテリオンが並んで飛んでいく。一羽が、窓をつついた。'},
  {w:'x',n:'野生のテリオン',t:'……なか、だれかいる。うるさい。'},
  {w:'hero',f:'surprised',t:'しゃべった！　しかも、うるさいって言われた！'},
