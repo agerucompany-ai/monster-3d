@@ -5579,7 +5579,7 @@ const WILD_STAGE={1:{hpX:1.1, atkX:1.1}, 2:{hpX:1.05, atkX:1.05}, 3:{hpX:0.7, at
 //   野生・古代テリオン・7×7・1段目/2段目(ギリシャ・中国・エジプト前半)は今のまま。startBattle/simulate の stageHuman:{…} で上書き・stageHuman:false で切る
 const STAGE_HUMAN={3:{dmgX:{9:1.7, 11:1.4, 13:1.4}, atkMP:20, push:{turn:3, ahead:0.5}, final:{left:5, step:0.3}}};
 function applyStartStage(opts){ BT.startStage=Math.max(1,Math.min(3,+(opts&&opts.startStage)||1));
-  { const pl=(opts&&opts.player)||{}; BT.stageFree=!!pl.stageFree; BT.holdForms=new Set((pl.holdForms||[]).map(Number)); }   // 2026-10-31 物語の借りる子・仲間: その戦いの開始の段まで 覚えていなくても上げて出す(holdForms=上げない姿・北欧のフォルラン)。戦いの中の進化は覚えた姿だけ
+  { const pl=(opts&&opts.player)||{}; BT.stageFree=!!pl.stageFree; BT.holdForms=new Set((pl.holdForms||[]).map(Number)); }   // 2026-10-31 物語の借りる子・仲間: その戦いの開始の段まで 覚えていなくても上げて出す(holdForms=上げない姿・北欧のフォルコン)。戦いの中の進化は覚えた姿だけ
   // 2026-10-27 野生の1対1(群れが1体=自分も1体)は、群れの前の決まり(SIZE_RULES[7].solo)のまま
   BT.solo=!!(BT.kind==='wild' && BT.enemyParty.length===1 && BT.rules.solo); if(BT.solo){ BT.rules=Object.assign({}, BT.rules, BT.rules.solo); if(!(opts&&opts.rules&&opts.rules.dmgX!=null)) BT.dmgX=BT.rules.dmgX; }
   const SD=(BT.solo&&BT.rules.stageDmgX)||STAGE_DMGX;

@@ -88,7 +88,7 @@ function xBattleOpt(e,opt,R){ storyStage(opt); if(R.tune&&opt.enemy&&opt.enemy.a
   if(R.triple) opt.tripleUnlocked=true; }
 // 北欧編の「止まる」(第3話〜第11話・第18話〜第23話): 動けるのはフォルンだけ(第9話からはコグリフも)
 function nrStop(f){ f=f||GF(); if(!storyOn()||!f.e21) return 0; if(f.n03_2&&!f.n11_4) return f.n09_4?2:1; if(f.n18_4&&!f.n23_3) return 1; return 0; }
-// エジプト編・北欧編のあいだ(終章1でフォルレオンになるまで)、勝負のフォルンはフォルランの姿(三段目の姿は持っていない扱い)
+// エジプト編・北欧編のあいだ(終章1でフォルレオンになるまで)、勝負のフォルンはフォルコンの姿(三段目の姿は持っていない扱い)
 const nrEnleo=f=>!!(storyOn()&&f.c30&&!f.z01_5);
 
 // ---- 選ぶ画面(聞く・謎・鏡・図面・交換台・四つの一行)。まちがえても選び直せる ----
@@ -178,7 +178,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(5,'e05_2',VA,'王家の谷',{obj:'西の谷の、明かりのついた墓の穴へ',tod:'night'});
   bt(5,'e05_b','e05_3',VA,{foe:()=>cnFoe({n:'墓の番の子たち',party:P(1037,1043)}),R:{terrain:'kingsvalley'}});
   sc(5,'e05_4',VA,'*',{bg:'anime_eg_tomb'});
-  // 第6話 本当のこと(扉の前・全画面→王の墓の玄室で守り①アヌビド。新2グレンカイザー=フォルラン＋アレクのクロベク)
+  // 第6話 本当のこと(扉の前・全画面→王の墓の玄室で守り①アヌビド。新2グレンカイザー=フォルコン＋アレクのクロベク)
   sc(6,'e06_1',VA,'*',{bg:'anime_eg_tomb'}); sc(6,'e06_2',VA,'*',{bg:'anime_eg_tomb'}); sc(6,'e06_3',VA,'*',{bg:'anime_eg_tomb'});
   go(6,'e06_g',VA,TB,'from_valley');
   sc(6,'e06_4',TB,'玄室',{obj:'墓の奥、星の天井の部屋へ'});
@@ -218,7 +218,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(11,'e11_4',AB,'*',{bg:'anime_eg_temple_night'});
   bt(11,'e11_b','e11_5',AB,{bg:'anime_eg_temple_night',foe:()=>cnFoe({n:'ログ＆パッチとミラ＆ジョー',zeroday:1,party:P(1007,1062,1005,1037)}),R:{terrain:'ruins',guests:['partner',71,'own2','own3'],ai:{hpX:0.663,atkX:0.663}}});
   sc(11,'e11_6',AB,'*',{bg:'anime_eg_temple_night'});
-  // 第12話 最初の光(鏡で光を運ぶ→守り②エクリオン・勝つまで。ブレイグリオ=フォルラン＋グリフォ)
+  // 第12話 最初の光(鏡で光を運ぶ→守り②エクリオン・勝つまで。ブレイグリオ=フォルコン＋グリフォ)
   sc(12,'e12_1',AB,'*',{bg:'anime_eg_temple_night',tod:'dawn'});
   fn(12,'e12_m',AB,()=>xMirror('anime_eg_temple_night'));
   sc(12,'e12_2b',AB,'*',{bg:'anime_eg_temple_in'}); sc(12,'e12_3',AB,'*',{bg:'anime_eg_temple_in'});

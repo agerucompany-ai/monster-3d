@@ -83,7 +83,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   sc(14,'n14_1',GL); sc(14,'n14_2',GL); sc(14,'n14_3a',GL);
   bt(14,'n14_b','n14_3',GL,{foe:()=>cnFoe({n:'ユキ＆ハル',zeroday:1,party:P(1050,1052,290)},'ユキ'),R:{terrain:'snowrock',ai:{hpX:0.754,atkX:0.754}}});
   sc(14,'n14_4',GL,'*',{tod:'evening'}); sc(14,'n14_5',GL,'*',{bg:'anime_nr_stairs'});
-  // 第15〜16話 研究所の下の神殿(全画面。王オーディガル=キマドラ(リュバーン＋フォルラン)・首輪の機械=ガイアドラ(リュバーン＋アルマガネ))
+  // 第15〜16話 研究所の下の神殿(全画面。王オーディガル=キマドラ(リュバーン＋フォルコン)・首輪の機械=ガイアドラ(リュバーン＋アルマガネ))
   const TE='anime_nr_temple';
   sc(15,'n15_1',GL,'*',{bg:TE,tod:'night'}); sc(15,'n15_2',GL,'*',{bg:TE}); sc(15,'n15_3',GL,'*',{bg:TE});
   bt(15,'n15_b','n15_4',GL,{bg:TE,anc:{id:2069,tier:5,lv:59,flag:'nr_odin_s',tune:{hp:1.77,atk:2.3}},R:{terrain:'ruins',guests:['partner',199,'own2','own3'],fuse:[2020],tune:{hp:1.006,atk:1.308}}});
