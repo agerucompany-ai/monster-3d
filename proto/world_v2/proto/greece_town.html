@@ -2472,7 +2472,7 @@ function objText(){ const f=SAVE?SAVE.flags:{}; if(!f.arrived||TESTMODE) return 
   if(!f.cn_setsu) return '氷河の奥で、雪の竜セツリュウをしずめる'; if(!f.cn_sea) return '空の船で都市へ戻り、外灘の船着き場から東の海へ'; if(!f.cn_ransom) return '海の上の台で、ランサムを止める'; if(!f.cn_dragon) return '青龍の眠る岩で、セイリュと青龍の前に立つ';
   // 第3期 エジプト編(2026-10-26 regions/make_egypt_arc.py)
   if(!f.eg_cairo) return '青龍の岩の北の桟橋から、空の船でカイロへ'; if(!f.eg_giza) return 'ナイルの橋を西へ渡り、ギザの台地へ'; if(!f.eg_sphinga) return 'スフィンクスの前で、スフィンガに会う';
-  if(!f.eg_delta) return 'カイロの船着き場から、ナイルデルタへ'; if(!f.eg_doroka) return '湿地の奥で、ドロカバをしずめる'; if(!f.eg_luxor) return 'カイロのリニアの駅から、ルクソールへ';
+  if(!f.eg_delta) return 'カイロの船着き場から、ナイルデルタへ'; if(!f.eg_doroka) return '湿地の奥で、ポタミオスをしずめる'; if(!f.eg_luxor) return 'カイロのリニアの駅から、ルクソールへ';
   if(!f.eg_osira) return 'カルナック神殿の前庭で、オシラントに会う'; if(!f.eg_valley) return 'ナイルの渡し場から、王家の谷へ'; if(!f.eg_tomb) return '王家の谷の墓の入口から、王の墓の回廊へ'; if(!f.eg_anubid) return '玄室で、アヌビドに会う';
   if(!f.eg_aswan) return '谷の空の船乗り場から、アスワンへ'; if(!f.eg_ransom) return 'ハイダムの上で、ランサムを止める'; if(!f.eg_eleki) return 'ダムの上で、エレキナギをしずめる'; if(!f.eg_abusimbel) return 'ナセル湖の船着き場から、アブ・シンベルへ';
   if(!f.eg_raga) return '大神殿の前で、朝の光のラーガに会う'; if(!f.eg_white) return '空の船で、白砂漠へ'; if(!f.eg_ekuri) return '水晶の山で、日食のエクリオンをしずめる'; if(!f.eg_redsea) return '空の船で、紅海の珊瑚の岸へ'; if(!f.eg_levia) return 'サンゴの台で、リヴァイアに会う';
@@ -2482,7 +2482,7 @@ function objText(){ const f=SAVE?SAVE.flags:{}; if(!f.arrived||TESTMODE) return 
   if(!f.nr_uppsala) return '空の船でオスロへ戻り、リニアでウプサラへ'; if(!f.nr_odin) return '王の塚の上で、オーディガルに会う'; if(!f.nr_sleip) return '木の教会の前で、スレイプニアに会う';
   if(!f.nr_lapland) return '北のリニアで、ラップランドへ'; if(!f.nr_aurora) return 'オーロラの見はらし台で、オーロフに会う'; if(!f.nr_fenrir) return '凍った湖の島で、フェンガロをしずめる';
   if(!f.nr_ygg) return 'ラップランドの門を北へぬけ、世界樹の森へ'; if(!f.nr_nidhogg) return '世界樹の根もとで、ニドグラをしずめる'; if(!f.nr_svalbard) return '森の空の船乗り場から、スヴァールバルへ';
-  if(!f.nr_narwhal) return '海の氷の先で、イッカクオウに会う'; if(!f.nr_glacier) return '海の氷をわたり、氷の研究所へ'; if(!f.nr_ransom3) return '研究所の前の広場で、ランサムを止める'; if(!f.nr_bot) return '研究所の入口で、ボットを止める';
+  if(!f.nr_narwhal) return '海の氷の先で、モノケロスに会う'; if(!f.nr_glacier) return '海の氷をわたり、氷の研究所へ'; if(!f.nr_ransom3) return '研究所の前の広場で、ランサムを止める'; if(!f.nr_bot) return '研究所の入口で、ボットを止める';
   if(!f.nr_core) return '研究所の門から、アークの中心へ'; if(!f.nr_bella3) return 'サーバーの部屋で、ベラドンナを止める'; if(!f.nr_adrian) return 'アークの中心の前で、スペクターと向き合う'; if(!f.nr_ragna) return 'アークの中心で、ラグナディオの前に立つ';
   return 'ゲームクリア。空の船で東京へ(エンディングは未作成)'; }
 function objUpdate(){ const t=objText(); objEl.textContent=t; objEl.style.display=t&&!STORY&&!TRANS?'block':'none'; }
@@ -2624,9 +2624,9 @@ const SC={
  luminador_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ルミナドール',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''},{w:'alek',t:''} ],
  // 第20話: 町いちばんの使い手ミハリス(地。竜は使わない)・古印=ペガサスの銀貨
  mihalis:[ {todo:'story'}, {w:'mihalis',t:''},{w:'hero',f:'serious',t:''},{w:'x',n:'ユスフ',t:''} ],
- // 第21話: 丘の上のとりで、守り③テンマライ(天馬)。ヴィクターと奪い合い
- tenmarai:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'テンマライ',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'partner',t:''} ],
- tenmarai_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'テンマライ',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
+ // 第21話: 丘の上のとりで、守り③ペガライ(天馬)。ヴィクターと奪い合い
+ tenmarai:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ペガライ',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'partner',t:''} ],
+ tenmarai_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ペガライ',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
  // 第22話: 雲の山道で遭難。雷の嵐の主トールガ(野生のボス)。レンと組まざるを得ない
  thunder:[ {todo:'story'}, {w:null,t:''},{w:'dimi',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'x',n:'トールガ',t:''},{w:'partner',t:''} ],
  thunder_win:[ {todo:'story'}, {w:null,t:''},{w:'dimi',t:''},{w:'hero',f:'smile',t:''} ],
@@ -2691,8 +2691,8 @@ const SC={
  // ギザ: スフィンクスの前のスフィンガ
  sphinga:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'スフィンガ',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'nadia',t:''},{w:'partner',t:''} ],
  sphinga_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'スフィンガ',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
- // ナイルデルタ: 湿地の奥のドロカバ
- doroka:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ドロカバ',t:''},{w:'hero',f:'surprised',t:''},{w:'alek',t:''},{w:'partner',t:''} ],
+ // ナイルデルタ: 湿地の奥のポタミオス
+ doroka:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ポタミオス',t:''},{w:'hero',f:'surprised',t:''},{w:'alek',t:''},{w:'partner',t:''} ],
  doroka_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'elly',t:''} ],
  // ルクソール: 使い手(古印)・カルナックのオシラント
  luxor_champ:[ {todo:'story'}, {w:'x',n:'ルクソールの使い手',t:''},{w:'hero',f:'serious',t:''},{w:'elly',t:''} ],
@@ -2726,10 +2726,10 @@ const SC={
  liv:[ {todo:'story'}, {w:'liv',t:''},{w:'hero',f:'surprised',t:''},{w:'elly',t:''},{w:'liv',t:''} ],
  oslo_champ:[ {todo:'story'}, {w:'x',n:'オスロの使い手',t:''},{w:'hero',f:'serious',t:''},{w:'liv',t:''} ],
  oslo_champ_win:[ {todo:'story'}, {w:'x',n:'オスロの使い手',t:''},{w:'hero',f:'smile',t:''},{w:'elly',t:''} ],
- // フィヨルド: 説教壇の岩のミツガルム・フィヨルドの島のクビナガオウ
+ // フィヨルド: 説教壇の岩のミツガルム・フィヨルドの島のドリコサウル
  mitsu:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ミツガルム',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'liv',t:''},{w:'partner',t:''} ],
  mitsu_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ミツガルム',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
- kubi:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'クビナガオウ',t:''},{w:'hero',f:'surprised',t:''},{w:'alek',t:''},{w:'partner',t:''} ],
+ kubi:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ドリコサウル',t:''},{w:'hero',f:'surprised',t:''},{w:'alek',t:''},{w:'partner',t:''} ],
  kubi_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'liv',t:''} ],
  // ロフォーテン: 渦潮のクラーク
  kraken:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'クラーク',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'partner',t:''} ],
@@ -2754,11 +2754,11 @@ const SC={
  nidhogg_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ニドグラ',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
  unicorn:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'クリスユニ',t:''},{w:'hero',f:'surprised',t:''},{w:'liv',t:''},{w:'partner',t:''} ],
  unicorn_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'liv',t:''} ],
- // スヴァールバル: 種の貯蔵庫のゲンシマンモ・海の氷のイッカクオウ・使い手(古印)
+ // スヴァールバル: 種の貯蔵庫のゲンシマンモ・海の氷のモノケロス・使い手(古印)
  mammoth:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'ゲンシマンモ',t:''},{w:'hero',f:'surprised',t:''},{w:'elly',t:''},{w:'partner',t:''} ],
  mammoth_win:[ {todo:'story'}, {w:null,t:''},{w:'hero',f:'smile',t:''},{w:'elly',t:''} ],
- narwhal:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'イッカクオウ',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'liv',t:''},{w:'partner',t:''} ],
- narwhal_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'イッカクオウ',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
+ narwhal:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'モノケロス',t:''},{w:'elly',f:'serious',t:''},{w:'hero',f:'surprised',t:''},{w:'liv',t:''},{w:'partner',t:''} ],
+ narwhal_win:[ {todo:'story'}, {w:null,t:''},{w:'x',n:'モノケロス',t:''},{w:'elly',f:'smile',t:''},{w:'hero',f:'smile',t:''} ],
  sval_champ:[ {todo:'story'}, {w:'x',n:'スヴァールバルの使い手',t:''},{w:'hero',f:'serious',t:''},{w:'liv',t:''} ],
  sval_champ_win:[ {todo:'story'}, {w:'x',n:'スヴァールバルの使い手',t:''},{w:'hero',f:'smile',t:''},{w:'elly',t:''} ],
  // 氷の研究所: 幹部ランサム・幹部ボット(ユキ＆ハル)(氷河の門のオベリオンは 2026-10-28 アスワンの石切り場へ移した)
@@ -4563,7 +4563,7 @@ GR_SC.dimi2_win=[
  {w:'dimi',f:'normal',if:()=>!lastWin(),t:'……うるさい。'},
  {w:'partner',if:()=>!lastWin(),t:'……くそ。'},
  {w:'dimi',f:'serious',if:()=>lastWin(),t:'……カブッコ一体に、それだけかかるのか。'},
- {w:null,if:()=>lastWin(),t:'肩のハヤタカは、一度も飛ばなかった。'},
+ {w:null,if:()=>lastWin(),t:'肩のヒエラクスは、一度も飛ばなかった。'},
  {w:'hero',f:'surprised',if:()=>lastWin(),t:'……二体目、出してない。'},
  {w:'dimi',f:'normal',if:()=>lastWin(),t:'……いらない。'},
  {w:'dimi',f:'serious',t:'……じゃあな。'},
@@ -5187,7 +5187,7 @@ GR_SC.fort21=[
  {w:null,t:'上の方から、パッチの声が聞こえた。'},
  {fn:async()=>flag('fort21')},
 ];
-// 第21話 2: 守り③テンマライ（corinth の wild の ancient・x62・z-60）に近づいた時。勝負の前（今の tenmarai の枠を置きかえ）
+// 第21話 2: 守り③ペガライ（corinth の wild の ancient・x62・z-60）に近づいた時。勝負の前（今の tenmarai の枠を置きかえ）
 GR_SC.tenmarai=[
  {fn:async()=>monShow(2045,{x:60,y:10,w:30})},
  {w:null,t:'崩れた塔の上に、白い翼の馬が立っていた。'},
@@ -5594,7 +5594,7 @@ GR_SC.bella26_after=[
  {w:'x',n:'ピリポン',t:'ピリッ。'},
  {w:null,t:'ヤマトは、谷の向こうを見た。日傘のかげに、バジリクの尾が見えた。'},
  {w:'hero',f:'surprised',t:'……あれも、二体が一つになった子？'},
- {w:'elly',f:'serious',t:'……テンマライの、羽とたてがみ。アトラードも。'},
+ {w:'elly',f:'serious',t:'……ペガライの、羽とたてがみ。アトラードも。'},
  {w:'elly',f:'serious',t:'二つの子が、まざってるみたいだった。'},
  {w:'alek',t:'昔の人も、その形を見た。……理由は、まだ分からない。'},
  {w:'hero',f:'normal',t:'……なんで、まざってんだろ。'},
@@ -5655,7 +5655,7 @@ GR_SC.final27_after=[
  {w:'dimi',f:'serious',if:()=>!lastWin(),t:'……出なかったな。'},
  {w:'hero',f:'sad',if:()=>!lastWin(),t:'……わかってる。'},
  {w:'partner',if:()=>!lastWin(),t:'……次は、焼く。'},
- {w:null,if:()=>lastWin(),t:'旗が、ヤマトの方へ上がった。でも、レンの肩のハヤタカは、一度も飛ばなかった。'},
+ {w:null,if:()=>lastWin(),t:'旗が、ヤマトの方へ上がった。でも、レンの肩のヒエラクスは、一度も飛ばなかった。'},
  {w:'hero',f:'serious',if:()=>lastWin(),t:'……二体目、出してないだろ。'},
  {w:'dimi',f:'normal',if:()=>lastWin(),t:'決勝で、出すまでもなかった。'},
  {w:'hero',f:'angry',if:()=>lastWin(),t:'次は、出させる。'},
@@ -6437,7 +6437,7 @@ CN_SC.c21_2=[{w:null,t:"登るにつれて、風が強くなった。足もと�
 CN_DIR.c21_2={"k": "勝負", "t": "ヴィクターの手下・盤＝雪原・覚えること＝雪原。雪の上では、氷の子と光の子が強く、竜は弱る（`TYPE_TERR` の竜：雪で下がる）。光のコグリフを前に。"};
 CN_SC.c21_3w=[{w:"x",n:"手下のチー",t:"くそっ、寒い！　車に戻れ！"},{w:null,t:"手下が引いていく。雪の丘の上に、白い影がいくつも並んでいた。"},{w:null,t:"大きな雪の豹の群れだった。先頭の一頭は、ひときわ大きい。"},{w:"x",n:"手下のチー",t:"……あれ、野生の長だ。逃げろ！"},{w:null,t:"手下たちの車は、雪けむりを上げて、下へ走っていった。"}];
 CN_SC.c21_3l=[{w:"x",n:"手下のチー",t:"はい、竜をよこせ。"},{w:null,t:"手下が近づいた時、雪の丘の上に、白い影がいくつも並んだ。"},{w:null,t:"大きな雪の豹の群れだった。先頭の一頭は、ひときわ大きい。"},{w:"x",n:"手下のチー",t:"……あれ、野生の長だ。逃げろ！"},{w:null,t:"手下たちの車は、雪けむりを上げて、下へ走っていった。"}];
-CN_SC.c21_4=[{w:null,t:"大きな豹が、ゆっくり五人の前に下りてきた。"},{w:"hao",f:"surprised",t:"……ユキヒョウガだ。雪の高原の長。"},{w:"partner",t:"……こっち見てない。セイリュを見てる。"},{w:null,t:"長は、セイリュのにおいをかいだ。それから、くるりと背を向けた。"},{w:null,t:"少し歩いて、ふり返る。また少し歩いて、ふり返る。"},{w:"elly",f:"surprised",t:"……ついてこいって？"},{w:"alek",f:"normal",t:"たぶんな。"}];
+CN_SC.c21_4=[{w:null,t:"大きな豹が、ゆっくり五人の前に下りてきた。"},{w:"hao",f:"surprised",t:"……ユキパルダだ。雪の高原の長。"},{w:"partner",t:"……こっち見てない。セイリュを見てる。"},{w:null,t:"長は、セイリュのにおいをかいだ。それから、くるりと背を向けた。"},{w:null,t:"少し歩いて、ふり返る。また少し歩いて、ふり返る。"},{w:"elly",f:"surprised",t:"……ついてこいって？"},{w:"alek",f:"normal",t:"たぶんな。"}];
 CN_SC.c21_5=[{w:null,t:"連れていかれたのは、大きな岩の穴だった。中に、豹の子どもたちが丸まっている。"},{w:null,t:"豹の子たちは、セイリュのまわりに、ぎゅっと集まってきた。"},{w:"lifa",f:"surprised",t:"……ここ、外より五度は高い。"},{w:"hero",f:"normal",t:"……おまえら、湯たんぽか。"},{w:null,t:"いちばん小さな豹の子が、アレクの上着の中に、もぐりこんだ。ユキマダラだ。"},{w:"alek",f:"normal",t:"……出ろ。"},{w:"elly",f:"smile",t:"出ないって。"},{w:null,t:"穴の外で、風の音が強くなった。雪が、横に流れていく。"},{w:null,t:"その夜から、吹雪は、三日やまなかった。"},{w:null,t:"第21話　おわり"}];
 CN_SC.c22_1=[{w:null,t:"第22話　吹雪の穴"},{w:null,t:"吹雪の三日目。岩の穴の中は、豹の子たちの寝息と、風の音だけ。"},{w:"hao",f:"angry",t:"……三日だぞ。干し肉、あと二枚。"},{w:"alek",f:"normal",t:"一枚ずつ半分だ。"},{w:"elly",f:"normal",t:"豹の子にも、あげていい？"},{w:"hao",f:"angry",t:"……半分の半分かよ。"},{w:null,t:"セイリュは、豹の子にはさまれて、じっと目を閉じていた。"}];
 CN_SC.c22_2=[{w:"hero",f:"normal",t:"薪、取ってくる。穴の外に、枯れ木があった。"},{w:"lifa",f:"serious",t:"すぐ戻ってね。"},{w:null,t:"ヤマトが立ち上がって、穴の入口へ向かった。"},{w:null,t:"うしろで、ずる、と音がした。"},{w:null,t:"セイリュが、豹の子の間からはい出て、ヤマトの方へ、体を引きずってきた。"},{w:"elly",f:"surprised",t:"セイリュ、動いちゃだめ！"},{w:null,t:"ヤマトは、入口で止まった。ふり返って、しばらくセイリュを見ていた。"},{w:null,t:"セイリュの首のチップが、外の風の音に合わせるように、かすかに光っていた。"},{w:"hero",f:"normal",t:"……こいつ、おれが出ると、ついてくる。"},{w:"partner",t:"昨日も、そうだった。"},{w:"hero",f:"surprised",t:"……言えよ。"},{w:"partner",t:"見てると思った。"},{w:null,t:"ヤマトは、上着をぬいで、セイリュにかけた。それから、その横に座った。"},{w:"hero",f:"normal",t:"……薪、あとでいいや。"},{w:"alek",f:"normal",t:"じゃあ、おれが行く。"},{w:null,t:"アレクが、だまって外へ出ていった。"}];

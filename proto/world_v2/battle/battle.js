@@ -5487,7 +5487,7 @@ const ANCIENT={
   tiers:{   // シム(sim_ancient.js 60・その土地のレベル帯のパーティ・相棒3系統・AI同士・各180戦・2026-10-26): 勝率 守り①89% ②75% ③73% ボス82% ④69% 王63%・時間切れ ①1.7% ②5% ③2% ボス3% ④2% 王0%・平均9〜11ターン
     1:{hp:1.48, atk:1.78, actions:1, phases:2, big:{from:1, every:3, rng:1, x:2.0, shape:'area'},  minions:0, rageAtk:0.10},   // 守り① ミノタス(迷路・Lv4〜6・3体・進化なし): 1回行動・目覚めてから大技
     2:{hp:2.4, atk:1.05, actions:2, phases:2, big:{from:0, every:3, rng:1, x:2.0, shape:'area'},  minions:1, rageAtk:0.10},   // 守り② ルミナドール(アルカディア・Lv5〜8・3体・進化なし): 2回行動(1回は軽い)
-    3:{hp:6.24, atk:2.33, actions:2, phases:3, big:{from:0, every:3, rng:2, x:3.0, shape:'area'},  minions:1, rageAtk:0.12},   // 守り③ テンマライ(コリンタ・Lv7〜10・5体・進化あり): 序盤を耐えて進化で逆転
+    3:{hp:6.24, atk:2.33, actions:2, phases:3, big:{from:0, every:3, rng:2, x:3.0, shape:'area'},  minions:1, rageAtk:0.12},   // 守り③ ペガライ(コリンタ・Lv7〜10・5体・進化あり): 序盤を耐えて進化で逆転
     4:{hp:7.11, atk:2.32, actions:2, phases:3, big:{from:0, every:3, rng:2, x:3.0, shape:'area'},  minions:2, rageAtk:0.12},   // ボス トールガ(雲の山道・Lv9〜12)
     5:{hp:4.68, atk:1.64, actions:2, phases:3, big:{from:0, every:3, rng:4, x:3.0, shape:'cross'}, minions:2, rageAtk:0.15},   // 守り④ アトラード(デルフィナ・Lv11〜14): 大技が十字(幅3)で広い
     6:{hp:5.31, atk:0.99, actions:2, phases:3, big:{from:0, every:2, rng:4, x:3.0, shape:'cross'}, minions:2, rageAtk:0.15},   // 王 ゴッドヘラク(競技場の下・Lv13〜16・融合あり): 移動3の近接・大技が2ターンおき・目覚めで攻撃+15%ずつ

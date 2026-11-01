@@ -1345,7 +1345,7 @@ GR_SC.dimi2_win=[
  {w:'dimi',f:'normal',if:()=>!lastWin(),t:'……うるさい。'},
  {w:'partner',if:()=>!lastWin(),t:'……くそ。'},
  {w:'dimi',f:'serious',if:()=>lastWin(),t:'……カブッコ一体に、それだけかかるのか。'},
- {w:null,if:()=>lastWin(),t:'肩のハヤタカは、一度も飛ばなかった。'},
+ {w:null,if:()=>lastWin(),t:'肩のヒエラクスは、一度も飛ばなかった。'},
  {w:'hero',f:'surprised',if:()=>lastWin(),t:'……二体目、出してない。'},
  {w:'dimi',f:'normal',if:()=>lastWin(),t:'……いらない。'},
  {w:'dimi',f:'serious',t:'……じゃあな。'},
@@ -1969,7 +1969,7 @@ GR_SC.fort21=[
  {w:null,t:'上の方から、パッチの声が聞こえた。'},
  {fn:async()=>flag('fort21')},
 ];
-// 第21話 2: 守り③テンマライ（corinth の wild の ancient・x62・z-60）に近づいた時。勝負の前（今の tenmarai の枠を置きかえ）
+// 第21話 2: 守り③ペガライ（corinth の wild の ancient・x62・z-60）に近づいた時。勝負の前（今の tenmarai の枠を置きかえ）
 GR_SC.tenmarai=[
  {fn:async()=>monShow(2045,{x:60,y:10,w:30})},
  {w:null,t:'崩れた塔の上に、白い翼の馬が立っていた。'},
@@ -2376,7 +2376,7 @@ GR_SC.bella26_after=[
  {w:'x',n:'ピリポン',t:'ピリッ。'},
  {w:null,t:'ヤマトは、谷の向こうを見た。日傘のかげに、バジリクの尾が見えた。'},
  {w:'hero',f:'surprised',t:'……あれも、二体が一つになった子？'},
- {w:'elly',f:'serious',t:'……テンマライの、羽とたてがみ。アトラードも。'},
+ {w:'elly',f:'serious',t:'……ペガライの、羽とたてがみ。アトラードも。'},
  {w:'elly',f:'serious',t:'二つの子が、まざってるみたいだった。'},
  {w:'alek',t:'昔の人も、その形を見た。……理由は、まだ分からない。'},
  {w:'hero',f:'normal',t:'……なんで、まざってんだろ。'},
@@ -2437,7 +2437,7 @@ GR_SC.final27_after=[
  {w:'dimi',f:'serious',if:()=>!lastWin(),t:'……出なかったな。'},
  {w:'hero',f:'sad',if:()=>!lastWin(),t:'……わかってる。'},
  {w:'partner',if:()=>!lastWin(),t:'……次は、焼く。'},
- {w:null,if:()=>lastWin(),t:'旗が、ヤマトの方へ上がった。でも、レンの肩のハヤタカは、一度も飛ばなかった。'},
+ {w:null,if:()=>lastWin(),t:'旗が、ヤマトの方へ上がった。でも、レンの肩のヒエラクスは、一度も飛ばなかった。'},
  {w:'hero',f:'serious',if:()=>lastWin(),t:'……二体目、出してないだろ。'},
  {w:'dimi',f:'normal',if:()=>lastWin(),t:'決勝で、出すまでもなかった。'},
  {w:'hero',f:'angry',if:()=>lastWin(),t:'次は、出させる。'},
