@@ -6050,7 +6050,7 @@ function buildDom(){
 // ---- 自分のパーティ・相手のパーティを盤に出す ----
 // party の1件 = {mid, rank(成長ランク・既定1), stack(重ねた回数・表示だけ)} または mid の数だけ
 function normParty(list){ return (list||[]).map((p,i)=>{ const o=(typeof p==='number')?{mid:p}:Object.assign({},p); o.mid=+o.mid; if(o.lv!=null){ o.lv=Math.max(1,Math.min(LV_MAX,Math.round(+o.lv||1))); o.rank=lvRank(o.lv); } else o.rank=Math.max(1,Math.min(20,+(o.rank||1))); o.idx=i; return o; }).filter(o=>MID[o.mid]); }   // lv(1〜99) があれば rank は lv から(連続値)
-const DRAGON_S3={ids:[1070,291,290], hp:2.5, atk:1.45};   // 2026-11-01 竜の3段目は融合クラス(stats_v2 で 体力×2.5・攻撃×1.45・守り×1.15)。野生の敵の時だけ この分を戻す(unitMul)
+const DRAGON_S3={ids:[1070,291,290], hp:2.4, atk:1.4};   // 2026-11-01 竜の3段目は融合クラス(stats_v2 で 体力×2.4・攻撃×1.4・守り×1.12。同じ日に 2.5/1.45/1.15 から少し弱く)。野生の敵の時だけ この分を戻す(unitMul)
 const FUSE_UNIT={hp:2.0, atk:1.125};   // 融合の姿で盤に出る子の 体力・攻撃の倍率(戦いの中の融合 TUNE.fuseHpX・fuseAtk 1.8/1.6 に合わせた)
 function unitMul(u, rank, extraHp, extraAtk){   // 出撃時の体力・攻撃の倍率(成長ランク×盤の大きさの補正×敵の強さ)
   const fz=(mon(u)&&mon(u).role==="fusion")?FUSE_UNIT:null;   // 2026-10-29 盤 v4: はじめから融合の姿で出る子も 体力は圧倒的・攻撃も上げる(戦いの中の融合と同じ考え)
