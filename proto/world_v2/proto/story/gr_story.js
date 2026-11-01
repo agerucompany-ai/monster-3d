@@ -119,7 +119,7 @@ const NPC_RULE={
 };
 // (6) 勝負の人を旗で分ける(地図の NPC に rule:'キー')。null=今のまま / {off:1,line}=勝負しない(話すと line)
 //   scene=勝負の前 after=勝った時 lose=負けた時 keep=勝っても倒した印を立てない next=after/lose の場面のあとに呼ぶ
-//   terrain=盤 ai=強さ one:'partner'=相棒(エンジュ)一体だけ guests=こちらの盤に出す子(エリー・アレクの子を借りる)
+//   terrain=盤 ai=強さ one:'partner'=相棒(フォルン)一体だけ guests=こちらの盤に出す子(エリー・アレクの子を借りる)
 const TRAINER_RULE={
   alek_night: f=>!f.ep6 ? {scene:'alek6',after:'alek6_after',lose:'alek6_after',keep:1,terrain:'nightwood',ai:{hpX:1.25,atkX:1.2}} : {off:1},   // 第6話
   alek_dawn:  f=>!f.alek ? {after:'alek7_win',lose:'alek7_lose',keep:1,terrain:DAWN_BOARD} : {off:1},                                      // 第7話
@@ -198,7 +198,7 @@ function grBattleOpt(e,opt){ if(!storyOn()) return;
 // 2026-10-31 オーナー「人が遊ぶとボス戦に勝てない」: 物語の戦いは 相手のボス(リーダー)1体だけ本来の段・手下はこちらの隊の段から(battle.js alignMinions)。
 //   こちらの借りる子・仲間は その戦いの開始の段まで 覚えていなくても上げて出す(stageFree)。戦いの中の進化は今までどおり覚えた姿だけ
 function storyStage(opt){ if(!opt||opt.kind==='wild') return; opt.alignMinions=true; if(opt.player) opt.player.stageFree=true; }
-// 止まっている間(第29話〜第30話の王の前)は、どの勝負もエンジュ一体。相棒がいない間(第15〜16話)は野生と勝負しない(encounterCheck)
+// 止まっている間(第29話〜第30話の王の前)は、どの勝負もフォルン一体。相棒がいない間(第15〜16話)は野生と勝負しない(encounterCheck)
 function grStoppedOne(e){ return !!(STOPPED29&&!(e.m&&e.m.o.ancient&&SAVE.flags.low30)); }
 function grWildOk(){ if(!storyOn()) return true; const f=SAVE.flags; if(!f.bond) return false; if(f.ep15&&!f.found16) return false; return true; }
 // 勝負のあとの場面(endEncounter から)。戻り値 {after, next, keep}
@@ -211,7 +211,7 @@ function grAfterBattle(e,win){ if(!storyOn()) return null;
 const GR_FN={ep22Hut:()=>ep22Hut()};   // 地図の JSON から名前で呼ぶ関数(トールガの next)
 function grNext(n){ return typeof n==='string'?GR_FN[n]:n; }
 
-// ---- 連れ歩き(第15〜16話はエンジュがいない・第29話は止まった子＝エンジュだけ歩く) ----
+// ---- 連れ歩き(第15〜16話はフォルンがいない・第29話は止まった子＝フォルンだけ歩く) ----
 let STOPPED29=false;
 function stopAll29(on){ STOPPED29=!!on; followersSet(); }
 function grFollow(ids){ if(!storyOn()) return ids; const f=SAVE.flags;
@@ -327,7 +327,7 @@ async function marbleStub(){ const f=SAVE.flags;
 function grObjText(f){ const beat=k=>Object.keys(f).some(x=>x.startsWith('beat_'+k));
   if(!f.temple1||!f.ep1) return '神殿の丘へ（クロエ博士との待ち合わせ）';
   if(!f.chase2) return '神殿の大きな石を調べる';
-  if(!f.bond) return 'エンジュを追って、研究所の裏へ';
+  if(!f.bond) return 'フォルンを追って、研究所の裏へ';
   if(!f.morning3) return '研究所の裏へ';
   if(!f.ep3){ if(!f.elly3) return '広場のエリーに会う'; const n=(f.petra3?1:0)+(f.tasos?1:0)+(f.farmer3?1:0);
     if(n<3) return '村の人と話す（'+n+'/3）'; if(!f.elly3b) return '広場のエリーに話す'; if(!f.grandma3) return '神殿の丘で、エリーのおばあちゃんに会う'; return '神殿の大きな石を調べる'; }
@@ -406,7 +406,7 @@ function grObjText(f){ const beat=k=>Object.keys(f).some(x=>x.startsWith('beat_'
   if(!f.fuse28) return 'いこいの広場で、アレクと勝負';
   if(!f.ep28) return '夜、神殿の丘へ';
   if(!f.stop29) return 'いこいの広場へ';
-  if(!f.ep29) return 'エンジュ一体で、広場を守る';
+  if(!f.ep29) return 'フォルン一体で、広場を守る';
   if(!f.tun30) return '競技場の跡の下へ';
   if(!f.bella) return '走り道の広間で、ベラドンナを止める';
   if(!f.low30) return '王の広間へ';

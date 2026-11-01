@@ -8,7 +8,7 @@
 //   kind: scene=場面(bg があれば全画面・無ければ地図の上。br=前の勝負の結果で w/l/d を足す) / battle=勝負(key=あとの場面。mid=勝負の途中の場面) / go=地図を移る / fn=しかけ
 //   map+at: その地図のその場所に入った時(at '*' はどこでも=前の段に続けて流す)。obj=目的の表示(その段を待っている間)・objAway=ほかの地図にいる時
 //   勝負: foe=人(仮の相手) / wild=地図の古代テリオン / anc=仮の古代テリオン(全画面の場面の中の勝負)。prox=地図の人に近づくと始まる・must=勝つまで(負けたらもう一度)
-//   R: terrain=盤 size=盤の大きさ ai=強さ guests=こちらの盤('partner'=エンジュ・'own2'=コグリフ系・'own3'=セイリュ系・数=借りる子) fuse=覚えている融合(借りる子との融合)
+//   R: terrain=盤 size=盤の大きさ ai=強さ guests=こちらの盤('partner'=フォルン・'own2'=コグリフ系・'own3'=セイリュ系・数=借りる子) fuse=覚えている融合(借りる子との融合)
 //      triple=3体融合 keep2=その子の先の姿を持たない扱い(2段目のまま) maxTurn=手数(時間切れ=引き分け・draw:1 の段)
 // ============================================================================
 const AMAKA_ID=2073, NARUMI_ID=2074, LOKI_ID=2075;   // 新2グレンカイザー・新3ライゼンギガス・新4ゴルドレクス(2026-10-28 オーナー決定で改名・絵と3Dあり)
@@ -86,9 +86,9 @@ function xBattleOpt(e,opt,R){ storyStage(opt); if(R.tune&&opt.enemy&&opt.enemy.a
   opt.player.owned=[...own];
   if(R.fuse||R.triple){ opt.fusionUnlocked=true; const fk=new Set(opt.player.fusionKnown||[]); for(const id of (R.fuse||[]).concat(R.triple||[])) fk.add(id); opt.player.fusionKnown=[...fk]; }
   if(R.triple) opt.tripleUnlocked=true; }
-// 北欧編の「止まる」(第3話〜第11話・第18話〜第23話): 動けるのはエンジュだけ(第9話からはコグリフも)
+// 北欧編の「止まる」(第3話〜第11話・第18話〜第23話): 動けるのはフォルンだけ(第9話からはコグリフも)
 function nrStop(f){ f=f||GF(); if(!storyOn()||!f.e21) return 0; if(f.n03_2&&!f.n11_4) return f.n09_4?2:1; if(f.n18_4&&!f.n23_3) return 1; return 0; }
-// エジプト編・北欧編のあいだ(終章1でエンオウになるまで)、勝負のエンジュはエンレオの姿(三段目の姿は持っていない扱い)
+// エジプト編・北欧編のあいだ(終章1でフォルレオンになるまで)、勝負のフォルンはフォルランの姿(三段目の姿は持っていない扱い)
 const nrEnleo=f=>!!(storyOn()&&f.c30&&!f.z01_5);
 
 // ---- 選ぶ画面(聞く・謎・鏡・図面・交換台・四つの一行)。まちがえても選び直せる ----
@@ -178,7 +178,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(5,'e05_2',VA,'王家の谷',{obj:'西の谷の、明かりのついた墓の穴へ',tod:'night'});
   bt(5,'e05_b','e05_3',VA,{foe:()=>cnFoe({n:'墓の番の子たち',party:P(1037,1043)}),R:{terrain:'kingsvalley'}});
   sc(5,'e05_4',VA,'*',{bg:'anime_eg_tomb'});
-  // 第6話 本当のこと(扉の前・全画面→王の墓の玄室で守り①アヌビド。新2グレンカイザー=エンレオ＋アレクのクロベク)
+  // 第6話 本当のこと(扉の前・全画面→王の墓の玄室で守り①アヌビド。新2グレンカイザー=フォルラン＋アレクのクロベク)
   sc(6,'e06_1',VA,'*',{bg:'anime_eg_tomb'}); sc(6,'e06_2',VA,'*',{bg:'anime_eg_tomb'}); sc(6,'e06_3',VA,'*',{bg:'anime_eg_tomb'});
   go(6,'e06_g',VA,TB,'from_valley');
   sc(6,'e06_4',TB,'玄室',{obj:'墓の奥、星の天井の部屋へ'});
@@ -218,7 +218,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(11,'e11_4',AB,'*',{bg:'anime_eg_temple_night'});
   bt(11,'e11_b','e11_5',AB,{bg:'anime_eg_temple_night',foe:()=>cnFoe({n:'ログ＆パッチとミラ＆ジョー',zeroday:1,party:P(1007,1062,1005,1037)}),R:{terrain:'ruins',guests:['partner',71,'own2','own3'],ai:{hpX:0.663,atkX:0.663}}});
   sc(11,'e11_6',AB,'*',{bg:'anime_eg_temple_night'});
-  // 第12話 最初の光(鏡で光を運ぶ→守り②エクリオン・勝つまで。ブレイグリオ=エンレオ＋グリフォ)
+  // 第12話 最初の光(鏡で光を運ぶ→守り②エクリオン・勝つまで。ブレイグリオ=フォルラン＋グリフォ)
   sc(12,'e12_1',AB,'*',{bg:'anime_eg_temple_night',tod:'dawn'});
   fn(12,'e12_m',AB,()=>xMirror('anime_eg_temple_night'));
   sc(12,'e12_2b',AB,'*',{bg:'anime_eg_temple_in'}); sc(12,'e12_3',AB,'*',{bg:'anime_eg_temple_in'});
@@ -292,17 +292,17 @@ function egInit(){ Object.assign(SC,EG_SC,NR_SC,END_SC); xInsert();
   for(const k of ['e17','e21']) TRAINER_RULE['eg_off:'+k]=f=>(storyOn()&&f.c30&&!f[k])?{off:1,line:'……'}:null;
   TRAINER_RULE['nr_off:n25']=f=>(storyOn()&&f.e21&&!f.n25)?{off:1,line:'……'}:null;
   TRAINER_RULE.eg_nefer=f=>{ if(!storyOn()||!f.c30) return null; const c=xCur(); if(c&&c.s.id==='e07_b'&&!f.e07_b_b) return {scene:'e07_4',keep:1,terrain:'ruins'}; return {off:1,line:'……'}; };
-  // 勝負の盤・借りる子・融合(分けた解禁)・止まっている間はエンジュ一体
+  // 勝負の盤・借りる子・融合(分けた解禁)・止まっている間はフォルン一体
   const _bo=grBattleOpt; grBattleOpt=function(e,opt){ _bo(e,opt); if(!storyOn()) return; const f=GF();
     if(SAVE.unlock&&SAVE.unlock.fusion1) opt.fusionUnlocked=true;
     if(!f.e11_3) opt.enemyNoFuse=true;
     const s=xStepOf(e); if(s&&s.R) xBattleOpt(e,opt,s.R);
-    if(nrEnleo(f)){ const own=new Set(opt.player.owned||[]); own.delete(1003); opt.player.owned=[...own]; opt.player.holdForms=(opt.player.holdForms||[]).concat([1003]); }   // 2026-10-31 開始の段まで上げる時も エンオウには上げない
+    if(nrEnleo(f)){ const own=new Set(opt.player.owned||[]); own.delete(1003); opt.player.owned=[...own]; opt.player.holdForms=(opt.player.holdForms||[]).concat([1003]); }   // 2026-10-31 開始の段まで上げる時も フォルレオンには上げない
     if(!s&&nrStop(f)){ const party=opt.player&&opt.player.party; if(Array.isArray(party)&&party.length){ const keep=party.filter(p=>ENJU_LINE.includes(+p.mid)||(nrStop(f)===2&&CN_GRIF.includes(+p.mid))); if(keep.length){ party.length=0; keep.forEach(p=>party.push(p)); } } } };
   const _ab=grAfterBattle; grAfterBattle=function(e,win){ const s=storyOn()&&xStepOf(e);
     if(s){ const lb=WORLD.lastBattle||{}; SAVE.flags[s.id+'_b']=(s.draw&&lb.how==='timeout')?3:(win?2:1); return {after:null,next:()=>xRun(),keep:true}; }
     const r=_ab(e,win); if(storyOn()&&!r&&xCur()) setTimeout(()=>{ if(!STORY&&!ENC&&!TRANS) xRun(); },1500); return r; };   // 物語のあいだの寄り道の勝負のあとも、今の段がここなら続ける
-  // 連れ歩き: 北欧編の「止まる」間はエンジュだけ(第9話からはコグリフも)
+  // 連れ歩き: 北欧編の「止まる」間はフォルンだけ(第9話からはコグリフも)
   const _fo=grFollow; grFollow=function(ids){ ids=_fo(ids); const st=nrStop(); if(!st) return ids; return ids.filter(id=>ENJU_LINE.includes(+id)||(st===2&&CN_GRIF.includes(+id))); };
   // 融合の解禁を二つに・北欧に着いたら北欧編
   const _of=onFlag; onFlag=function(k){ _of(k); if(!storyOn()||!(window.Progress&&Progress.state())) return;

@@ -2,7 +2,7 @@
 // 北欧編(25話)の段の表(2026-10-28 Windows)。しかけは eg_story.js(xArc・xRun)。台詞は story/nr_scenes.js(egnr_extract.py)。
 //  地図の順(背骨・日にち表): カイロの空の港→北の海の風車の島(ロフォーテン)→フィヨルドの町(石の教会・氷河の洞・峠・電話局は全画面)→氷原→研究所の外壁(氷の研究所)
 //   →研究所の下の神殿(全画面)→アークの中心→研究所の外の黒い塔(氷の研究所)→アークの中心の奥の空の船(終章へ)
-//  止まり方(日にち表): 第3話で全員止まる(エンジュだけ)→第9話でコグリフ→第11話で全員戻る→第18話でまた止まる→第23話で全員戻る(nrStop)
+//  止まり方(日にち表): 第3話で全員止まる(フォルンだけ)→第9話でコグリフ→第11話で全員戻る→第18話でまた止まる→第23話で全員戻る(nrStop)
 // ============================================================================
 const NR_MAPJ={nr_oslo:'オスロ',nr_fjord:'フィヨルドの町',nr_lofoten:'北の海の風車の島',nr_iceland:'火の島',nr_uppsala:'ウプサラ',nr_lapland:'ラップランド',nr_ygg:'世界樹の森',nr_svalbard:'スヴァールバル',nr_glacier:'氷の研究所',nr_core:'アークの中心'};
 const NR_Q07=[['図面',['一階の、入口の部屋','屋上の、機械の部屋','地下の、いちばん下の部屋'],2]];
@@ -27,7 +27,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   sc(2,'n02_3',FJ,'*',{tod:'evening'});
   bt(2,'n02_b','n02_4',FJ,{foe:()=>cnFoe({n:'首の赤い氷の子たち',party:P(1050,1052,1050)}),R:{terrain:'snowcoast',guests:['partner','own2','own3',16],ai:{hpX:0.654,atkX:0.654}}});
   sc(2,'n02_5',FJ,'*',{bg:'anime_nr_town_dusk'});
-  // 第3話 止まった朝(全員止まる・エンジュ一体で教会まで)
+  // 第3話 止まった朝(全員止まる・フォルン一体で教会まで)
   sc(3,'n03_1',FJ,'*',{bg:'anime_nr_room',tod:'morning'}); sc(3,'n03_2',FJ,'*',{bg:'anime_nr_room'});
   sc(3,'n03_3',FJ,'*',{bg:'anime_nr_office'}); sc(3,'n03_4',FJ,'*',{bg:'anime_nr_office'});
   bt(3,'n03_b','n03_5',FJ,{bg:'anime_nr_slope',foe:()=>cnFoe({n:'首の赤い大きな子たち',party:P(1052,1050)}),R:{terrain:'snowrock',guests:['partner'],ai:{hpX:0.362,atkX:0.362}}});
@@ -83,7 +83,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   sc(14,'n14_1',GL); sc(14,'n14_2',GL); sc(14,'n14_3a',GL);
   bt(14,'n14_b','n14_3',GL,{foe:()=>cnFoe({n:'ユキ＆ハル',zeroday:1,party:P(1050,1052,290)},'ユキ'),R:{terrain:'snowrock',ai:{hpX:0.754,atkX:0.754}}});
   sc(14,'n14_4',GL,'*',{tod:'evening'}); sc(14,'n14_5',GL,'*',{bg:'anime_nr_stairs'});
-  // 第15〜16話 研究所の下の神殿(全画面。王オーディガル=キマドラ(リュバーン＋エンレオ)・首輪の機械=ガイアドラ(リュバーン＋アルマガネ))
+  // 第15〜16話 研究所の下の神殿(全画面。王オーディガル=キマドラ(リュバーン＋フォルラン)・首輪の機械=ガイアドラ(リュバーン＋アルマガネ))
   const TE='anime_nr_temple';
   sc(15,'n15_1',GL,'*',{bg:TE,tod:'night'}); sc(15,'n15_2',GL,'*',{bg:TE}); sc(15,'n15_3',GL,'*',{bg:TE});
   bt(15,'n15_b','n15_4',GL,{bg:TE,anc:{id:2069,tier:5,lv:59,flag:'nr_odin_s',tune:{hp:1.77,atk:2.3}},R:{terrain:'ruins',guests:['partner',199,'own2','own3'],fuse:[2020],tune:{hp:1.006,atk:1.308}}});
@@ -96,7 +96,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   sc(17,'n17_2',CO,'サーバーの部屋',{obj:'中心への長い通路へ'}); sc(17,'n17_3a',CO);
   bt(17,'n17_b','n17_3',CO,{foe:()=>cnFoe({n:'ボット',zeroday:1,master:1,party:NR_BOT()}),R:{terrain:'arkcore',guests:['partner','own2',16,199,1029],fuse:[2052],ai:{hpX:0.693,atkX:0.663}}});
   sc(17,'n17_4',CO); sc(17,'n17_5',CO);
-  // 第18〜23話 アークの中心の丸い部屋(ラグナディオ。また止まる→エンジュ一体の勝負を三度→やめよう→全員戻る)
+  // 第18〜23話 アークの中心の丸い部屋(ラグナディオ。また止まる→フォルン一体の勝負を三度→やめよう→全員戻る)
   sc(18,'n18_1',CO,'アークの中心',{obj:'アークの中心の、丸い部屋へ'}); sc(18,'n18_2',CO); sc(18,'n18_3',CO); sc(18,'n18_4',CO); sc(18,'n18_5',CO);
   sc(19,'n19_1',CO,'*',{tod:'morning'});
   bt(19,'n19_b',null,CO,{anc:()=>NR_RAGNA({tune:{hp:1.6,atk:1.4,escort:0}}),R:{terrain:'arkcore',guests:['partner']}});
@@ -111,7 +111,7 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   bt(22,'n22_b',null,CO,{anc:()=>NR_RAGNA({tune:{hp:1.6,atk:1.6,escort:0}}),R:{terrain:'arkcore',guests:['partner']}});
   sc(22,'n22_2b',CO); sc(22,'n22_3',CO); sc(22,'n22_4',CO); sc(22,'n22_5',CO);
   sc(23,'n23_1',CO,'*',{tod:'dawn'}); sc(23,'n23_2',CO,'*',{bg:'anime_nr_stairs'}); sc(23,'n23_3',CO,'*',{bg:'anime_nr_stairs'}); sc(23,'n23_4',CO); sc(23,'n23_5',CO);
-  // 第24話 予備の装置(研究所の外の黒い塔・最後の総力戦・新4ゴルドレクス=エンオウ＋ナルカミ＋クロコドンの三体融合。2026-10-28 オーナー: 3体融合は3体とも3段目)
+  // 第24話 予備の装置(研究所の外の黒い塔・最後の総力戦・新4ゴルドレクス=フォルレオン＋ナルカミ＋クロコドンの三体融合。2026-10-28 オーナー: 3体融合は3体とも3段目)
   sc(24,'n24_1',CO,'*',{tod:'morning'});
   go(24,'n24_g',CO,GL,'from_core',{tod:'morning'});
   const IC='anime_nr_slope';   // 研究所の外の氷の上(全画面)

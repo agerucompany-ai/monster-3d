@@ -10,10 +10,10 @@ async function xEnding(){ flag('end_clear'); flag('nr_ragna'); if(SAVE){ SAVE.cl
   flag('z04_end'); flag('z04'); saveGame(); toTitle(); }   // 段の旗もここで立ててから(タイトルのあとに立てると記録に残らない)
 xArc('end','z',f=>!!f.n25,{oliva_town:'オリーヴァ村'},({sc,bt,go,fn})=>{
   const OT='oliva_town';
-  // 終章1 ネシ島の海(最初の一体・エンジュがエンオウの姿に)
+  // 終章1 ネシ島の海(最初の一体・フォルンがフォルレオンの姿に)
   sc(1,'z01_1',OT,'*',{bg:'anime_end_sea',tod:'evening',objAway:'アークの中心の奥の、空の船へ'});
   sc(1,'z01_2',OT,'*',{bg:'anime_end_sea'}); sc(1,'z01_3',OT,'*',{bg:'anime_end_sea_dusk'}); sc(1,'z01_4',OT,'*',{bg:'anime_end_sea_dusk'}); sc(1,'z01_5',OT,'*',{bg:'anime_end_sea_dusk'});
-  // 終章2 浜(アレクとクロエ・レンとの最後の勝負(エンオウの姿で初めて)・母への電話)
+  // 終章2 浜(アレクとクロエ・レンとの最後の勝負(フォルレオンの姿で初めて)・母への電話)
   sc(2,'z02_1',OT,'*',{bg:'anime_end_beach',tod:'morning'}); sc(2,'z02_2',OT,'*',{bg:'anime_end_beach'}); sc(2,'z02_3',OT,'*',{bg:'anime_end_beach'}); sc(2,'z02_4a',OT,'*',{bg:'anime_end_beach'});
   bt(2,'z02_b','z02_4',OT,{bg:'anime_end_beach',foe:()=>cnFoe({n:'レン',party:[{mid:1034,lv:xLv(2),fixed:true,leader:true},{mid:1040,lv:xLv(0)}]}),R:{terrain:'seaside',guests:['partner'],ai:{hpX:1.2,atkX:1.1}}});
   sc(2,'z02_5',OT,'*',{bg:'anime_end_beach_day'}); sc(2,'z02_6',OT,'*',{bg:'anime_end_beach_dusk'});
