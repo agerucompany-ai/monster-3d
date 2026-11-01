@@ -1801,10 +1801,10 @@ function camRun(dFull, polar, yLo, yHi, xLim, topPx, ch){
   const now=performance.now(), dt=Math.min(0.1, CAMV.last?(now-CAMV.last)/1000:0.016); CAMV.last=now;
   camBtnPlace(topPx); CAMV.yLo=yLo; CAMV.yHi=yHi; CAMV.xLim=xLim; CAMV.dFull=dFull; CAMV.polar=polar;
   if(!CAMV.init){ CAMV.init=true; const p=camHomeOf(); CAMV.tx=CAMV.cx=p[0]; CAMV.tz=CAMV.cz=p[1]; CAMV.cZ=CAMV.uz; }
-  const locked=camLocked(now); if(!locked){ CAMV.showZ=null; CAMV.lockFx=false; }
+  const locked=camLocked(now); if(!locked){ if(CAMV.showIn){ const p=camHomeOf(); CAMV.tx=CAMV.homeX!=null?CAMV.homeX:p[0]; CAMV.tz=CAMV.homeZ!=null?CAMV.homeZ:p[1]; } CAMV.showZ=null; CAMV.lockFx=false; CAMV.showIn=false; }
   // 動いている子を追う(攻撃・進化の見せ場の間は動かさない)
   let fol=false; if(!locked && !CAMV.drag && !CAMV.pinch && camZoomed() && state && state.phase==='battle'){ for(const uid in sprites){ const s=sprites[uid]; if(s.move && now-s.move.t0<s.move.dur+60){ CAMV.tx=s.grp.position.x; CAMV.tz=s.grp.position.z; fol=true; break; } } }
-  const tZ=Math.max(1, Math.min(CAMV.uz, CAMV.showZ||CAMV.uz));
+  const tZ=(CAMV.showIn&&CAMV.showZ!=null)?CAMV.showZ:Math.max(1, Math.min(CAMV.uz, CAMV.showZ||CAMV.uz));   // showIn=攻撃の見せ場で 全体の時も少し寄る(2026-11-01)
   if(CAMV.drag&&CAMV.drag.on||CAMV.pinch){ CAMV.cZ=tZ; CAMV.cx=CAMV.tx; CAMV.cz=CAMV.tz; }
   else { const k=1-Math.exp(-dt*(fol?9:5.5)); CAMV.cZ+=(tZ-CAMV.cZ)*k; CAMV.cx+=(CAMV.tx-CAMV.cx)*k; CAMV.cz+=(CAMV.tz-CAMV.cz)*k; }
   const d=dFull/CAMV.cZ; const c=camClamp(d,polar,CAMV.cx,CAMV.cz,yLo,yHi,xLim); CAMV.cx=c[0]; CAMV.cz=c[1];
@@ -1818,15 +1818,17 @@ function camZoomed(){ return CAMV.uz>1.05; }   // 全体の時は自動で動か
 // 1マスへ寄る(選んだ子)。lock の間は 動く子を追わない
 function camFocus(r,c,lock){ if(!camOn()||!camZoomed()) return; const w=cell2world(r,c); CAMV.tx=w.x; CAMV.tz=w.z; CAMV.showZ=null; CAMV.lockFx=false; CAMV.lockUntil=lock?performance.now()+lock:0; }
 // 見せ場: cells(とその上の高さ)が全部入るように 真ん中へ寄り、要れば引く。o.fx=true の間(BT.fxUntil まで)と o.hold ミリ秒は動かさない
-function camShow(cells, o){ if(!camOn()||!camZoomed()||!CAMV.dFull||!cells||!cells.length) return; o=o||{};
+const CAM_FXIN=1.55;   // 2026-11-01 オーナー「演出が小さい」: 全体の時も 攻撃の間だけ この倍率まで寄って 終わったら戻す
+function camShow(cells, o){ o=o||{}; const fxIn=!!o.fx && !camZoomed(); if(!camOn()||(!camZoomed()&&!fxIn)||!CAMV.dFull||!cells||!cells.length) return;
   let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9; for(const p of cells){ if(!p) continue; const r=p.r!=null?p.r:p[0], c=p.c!=null?p.c:p[1]; if(r==null||r<0) continue; const w=cell2world(r,c); x0=Math.min(x0,w.x); x1=Math.max(x1,w.x); z0=Math.min(z0,w.z); z1=Math.max(z1,w.z); }
   if(x0>x1) return; const m=o.pad!=null?o.pad:0.9; x0-=m; x1+=m; z0-=m; z1+=m; const fx=(x0+x1)/2, fz=(z0+z1)/2;
-  const {yLo,yHi,xLim,dFull,polar}=CAMV; let z=CAMV.uz; const keepOff=CAMV.off;
+  const {yLo,yHi,xLim,dFull,polar}=CAMV; let z=fxIn?CAM_FXIN:CAMV.uz; const keepOff=CAMV.off;
+  if(fxIn && !CAMV.showIn){ CAMV.homeX=CAMV.tx; CAMV.homeZ=CAMV.tz; }
   for(let i=0;i<16 && z>1.0001;i++){ const d=dFull/z; const c=camClamp(d,polar,fx,fz,yLo,yHi,xLim); camAt(d,polar,c[0],c[1]);
     const pts=[[x0,0,z0],[x1,0,z0],[x0,0,z1],[x1,0,z1],[x0,1.6,z0],[x1,1.6,z0]]; let ok=true;
     for(const q of pts){ const v=camPY(q[0],q[1],q[2]); if(v.y>yHi-0.02||v.y<yLo+0.02||v.x<-xLim||v.x>xLim){ ok=false; break; } }
     if(ok) break; z=Math.max(1,z*0.9); }
-  CAMV.off=keepOff; CAMV.tx=fx; CAMV.tz=fz; CAMV.showZ=z<CAMV.uz-0.001?z:null;
+  CAMV.off=keepOff; CAMV.tx=fx; CAMV.tz=fz; if(fxIn){ CAMV.showIn=z>1.05; CAMV.showZ=CAMV.showIn?z:null; } else CAMV.showZ=z<CAMV.uz-0.001?z:null;
   CAMV.lockUntil=performance.now()+(o.hold||0); CAMV.lockFx=!!o.fx; }
 // 盤を指で動かす・2本指で寄せ/引き(タップ・長押しとは 動いた量で分ける)
 function camPxPerUnit(){ const {dFull,polar}=CAMV; if(!dFull) return [40,40]; const keep=CAMV.off; const d=dFull/CAMV.cZ; camAt(d,polar,CAMV.cx,CAMV.cz);
@@ -3415,7 +3417,7 @@ void main(){ vec2 p=gl_PointCoord*2.0-1.0; p.y=-p.y; float kind=floor(vMisc.x+0.
   else { a=exp(-pow((r-0.8)*6.0,2.0))*0.8+exp(-dot(p-vec2(-0.3,0.3),p-vec2(-0.3,0.3))*30.0); }
   a*=vCol.a; if(a<0.008) discard; gl_FragColor=vec4(col,a); }`;
 const TP={N:0, ok:false, peak:0, live:0};
-function tpInit(){ if(TP.ok||BT.headless||typeof THREE==='undefined'||!fxGroup) return TP.ok; const N=TP.N=IS_MOBILE?2400:4000;
+function tpInit(){ if(TP.ok||BT.headless||typeof THREE==='undefined'||!fxGroup) return TP.ok; const N=TP.N=IS_MOBILE?3600:4000;
   const F=()=>new Float32Array(N);
   Object.assign(TP,{px:F(),py:F(),pz:F(),vx:F(),vy:F(),vz:F(),age:F(),life:F(),s0:F(),s1:F(),a0:F(),gr:F(),dr:F(),rot:F(),spn:F(),st:F(),fi:F(),kd:F(),
     orb:F(),ocx:F(),ocz:F(),ocvx:F(),ocvz:F(),orad:F(),ovr:F(),ang:F(),flo:F(),c:new Float32Array(N*9), lay:new Uint8Array(N), idx:new Int32Array(N), free:new Int32Array(N), nfree:N, n:0});
@@ -3436,19 +3438,19 @@ function _rgb(h,o,k){ _tc.setHex(h); o[k]=_tc.r; o[k+1]=_tc.g; o[k+2]=_tc.b; }
 function tp(o, shot){ if(!TP.ok&&!tpInit()) return false; if(TP.nfree<=0) return false; if(shot){ if(shot.left<=0) return false; shot.left--; }
   const i=TP.free[--TP.nfree]; TP.idx[TP.n++]=i;
   TP.px[i]=o.x; TP.py[i]=o.y; TP.pz[i]=o.z; TP.vx[i]=o.vx||0; TP.vy[i]=o.vy||0; TP.vz[i]=o.vz||0; TP.age[i]=-(o.delay||0); TP.life[i]=o.life||500;
-  TP.s0[i]=o.s0!=null?o.s0:0.3; TP.s1[i]=o.s1!=null?o.s1:TP.s0[i]; TP.a0[i]=o.a!=null?o.a:1; TP.gr[i]=o.g||0; TP.dr[i]=o.dr||0; TP.rot[i]=o.rot!=null?o.rot:((o.k===1||o.k===13)?0:Math.random()*6.28); TP.spn[i]=o.sp||0; TP.st[i]=o.st||0; TP.fi[i]=o.fi||0;
+  TP.s0[i]=(o.s0!=null?o.s0:0.3)*TFX.szX; TP.s1[i]=o.s1!=null?o.s1*TFX.szX:TP.s0[i]; TP.a0[i]=o.a!=null?o.a:1; TP.gr[i]=o.g||0; TP.dr[i]=o.dr||0; TP.rot[i]=o.rot!=null?o.rot:((o.k===1||o.k===13)?0:Math.random()*6.28); TP.spn[i]=o.sp||0; TP.st[i]=o.st||0; TP.fi[i]=o.fi||0;
   const k=o.k||0; TP.kd[i]=k+Math.random()*0.9; TP.lay[i]=o.L!=null?o.L:(TFX_ADD[k]?0:1); TP.flo[i]=o.flo!=null?o.flo:-99;
   TP.orb[i]=o.orb||0; if(o.orb){ TP.ocx[i]=o.ocx; TP.ocz[i]=o.ocz; TP.ocvx[i]=o.ocvx||0; TP.ocvz[i]=o.ocvz||0; TP.orad[i]=o.orad||0.3; TP.ovr[i]=o.ovr||0; TP.ang[i]=o.ang!=null?o.ang:Math.random()*6.28; TP.px[i]=o.ocx+Math.cos(TP.ang[i])*TP.orad[i]; TP.pz[i]=o.ocz+Math.sin(TP.ang[i])*TP.orad[i]; }
   const c=o.c, b=i*9; if(Array.isArray(c)){ _rgb(c[0],TP.c,b); _rgb(c[1]!=null?c[1]:c[0],TP.c,b+3); _rgb(c[2]!=null?c[2]:(c[1]!=null?c[1]:c[0]),TP.c,b+6); } else { _rgb(c!=null?c:0xffffff,TP.c,b); TP.c[b+3]=TP.c[b]; TP.c[b+4]=TP.c[b+1]; TP.c[b+5]=TP.c[b+2]; TP.c[b+6]=TP.c[b]; TP.c[b+7]=TP.c[b+1]; TP.c[b+8]=TP.c[b+2]; }
   if(_tfxTint && Math.random()<_tfxTint.p){ const T=_tfxTint; for(let q=0;q<9;q+=3){ TP.c[b+q]+=(T.r-TP.c[b+q])*T.k; TP.c[b+q+1]+=(T.g-TP.c[b+q+1])*T.k; TP.c[b+q+2]+=(T.b-TP.c[b+q+2])*T.k; } }   // 2つのタイプの技: 粒の一部をもう1つのタイプの色に
   return true; }
 // 時間の流れ(実ms・オート×2で速い・ヒットストップで止まる)の中の 出す係(emitter)
-const TFX={em:[], clock:0, last:0, q:1, fpsE:60, fpsB:60, slowT:0, shot:null, get shotCap(){ return (IS_MOBILE?700:1200); }, get on(){ return !window._TFX_OFF; }};
+const TFX={em:[], clock:0, last:0, q:1, fpsE:60, fpsB:60, slowT:0, shot:null, nX:IS_MOBILE?1.7:1, szX:IS_MOBILE?1.6:1, get shotCap(){ return (IS_MOBILE?1200:1200); },   /* 2026-11-01 スマホは粒の数 ×1.7・大きさ ×1.6 */ get on(){ return !window._TFX_OFF; }};
 // e={delay, dur, rate(1秒あたり), fn(e,k) 1つ出す, tick(e,k) 毎フレーム}
 let _tfxLite=false;
 function tfxEm(e){ if(BT.headless) return; e.lite=_tfxLite; e.tint=_tfxTint; e.t0=TFX.clock+(e.delay||0); e.acc=0; TFX.em.push(e); return e; }
 function tfxAt(ms, fn){ tfxEm({delay:ms, dur:0, once:fn}); }
-function tfxN(n){ const v=n*TFX.q; const f=Math.floor(v); return f+(Math.random()<v-f?1:0); }   // 数×品質(端数は確率で)
+function tfxN(n){ const v=n*TFX.q*TFX.nX; const f=Math.floor(v); return f+(Math.random()<v-f?1:0); }   // 数×品質(端数は確率で)
 function tfxUpdate(){ if(BT.headless||!TP.ok&&!TFX.em.length) return; const now=performance.now(); let dtr=TFX.last?Math.min(50,now-TFX.last):16; TFX.last=now;
   // 重さの見張り: 演出が出ている間に fps が落ちたら量を減らす・戻ったら少しずつ増やす
   TFX.fpsE+=((1000/Math.max(4,dtr))-TFX.fpsE)*0.08;
@@ -3460,7 +3462,7 @@ function tfxUpdate(){ if(BT.headless||!TP.ok&&!TFX.em.length) return; const now=
   for(let j=TFX.em.length-1;j>=0;j--){ const e=TFX.em[j]; if(TFX.clock<e.t0) continue; if(e.once){ TFX.em.splice(j,1); const pl=_tfxLite, pt=_tfxTint; _tfxLite=!!e.lite; _tfxTint=e.tint||null; try{ e.once(); }catch(err){ console.error(err); } finally{ _tfxLite=pl; _tfxTint=pt; } continue; }
     const k=Math.min(1,(TFX.clock-e.t0)/Math.max(1,e.dur)); const pt=_tfxTint; _tfxTint=e.tint||null;
     try{ if(e.tick) e.tick(e,k);
-    if(e.rate&&e.fn){ e.acc+=e.rate*ds*TFX.q; let n=Math.floor(e.acc); e.acc-=n; n=Math.min(n,40); for(let i=0;i<n;i++) e.fn(e,k,i/n); } } finally{ _tfxTint=pt; }
+    if(e.rate&&e.fn){ e.acc+=e.rate*ds*TFX.q*TFX.nX; let n=Math.floor(e.acc); e.acc-=n; n=Math.min(n,40); for(let i=0;i<n;i++) e.fn(e,k,i/n); } } finally{ _tfxTint=pt; }
     if(k>=1){ TFX.em.splice(j,1); if(e.end) try{ e.end(); }catch(err){ console.error(err); } } }
   if(!TP.ok) return; for(const L of TP.L) if(L.pts.parent!==fxGroup) fxGroup.add(L.pts);
   const cnt=[0,0]; const LA=TP.L; const P0=LA[0].P.array, C0=LA[0].C.array, M0=LA[0].M.array, V0=LA[0].V.array, P1=LA[1].P.array, C1=LA[1].C.array, M1=LA[1].M.array, V1=LA[1].V.array;
@@ -4004,7 +4006,8 @@ function hitImpact(r,c,ty,tier,adv,res,noFlat){ const w=WP(r,c,0.55); w.z+=0.3; 
   _fx2Hit={ty,tier,adv,res,t:performance.now()};
   if(!noFlat){ _fxSz=res?0.8:1.1; try{ (HIT_FX[ty]||HIT_FX['光'])(r,c,w,k*0.8); } finally{ _fxSz=1; } }   // 2026-10-30: タイプの演出(TFX)の時は 前の平たい粒は出さない   // 2026-10-29: 平たい粒は控えめに(主役は hit3 の3D)
   if(!noFlat) fxP({x:w.x,y:w.y+0.25,z:w.z,n:1,kind:'glow',color:0xffffff,size:1.1*k,sizeEnd:1.4,life:140,grav:0,vel:()=>[0,0,0]});   // 当たりの白い光(タイプの演出の時は出さない)
-  fxHitStar(r,c,TYPE_HEX[ty]||0xffffff,0.6*(res?0.7:1)*(1+0.2*(tier-1))*(adv?1.4:1)*(noFlat?0.55:1),true);
+  fxHitStar(r,c,TYPE_HEX[ty]||0xffffff,0.6*(res?0.7:1)*(1+0.2*(tier-1))*(adv?1.4:1)*(noFlat?0.9:1),true);
+  if(noFlat){ const wg=cell2world(r,c), yg=cellH(r,c), gx=(IS_MOBILE?1.35:1)*k; glow3(wg.x,yg+0.7,wg.z,TYPE_HEX[ty]||0xffffff,0.5*gx,2.3*gx,340,{op:0.8,top:true}); glow3(wg.x,yg+0.7,wg.z,0xffffff,0.3*gx,1.2*gx,200,{op:0.95,top:true}); }   // 2026-11-01 当たった所の光(タイプの色の大きい光＋白い芯)
   fxTerrain(r,c,res?0.6:(adv?1.4:1),false);
   if(adv){ const wa=cell2world(r,c), ya=cellH(r,c); glow3(wa.x,ya+0.6,wa.z,0xffe070,0.4,2.0,360,{op:0.7}); ring3(wa.x,ya,wa.z,0xffe070,2.6,520); fxShock(r,c,0xffffff,{max:2.0,dur:280}); }   // 弱点: 金の光の玉と波
   if(!res){ hitStop(adv?110:(tier>=3?80:45)); camPunch(r,c,adv?0.75:(tier>=3?0.55:0.3),adv?260:200); }
