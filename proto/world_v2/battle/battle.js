@@ -4689,7 +4689,7 @@ function drawSelHLV2(){
     const hits=mapUnits(sel,mv,selAim); for(const x of hits) addReticle(x.r,x.c, x.owner===sel.owner?0xffe020:0xff2820); addAffTags(hits, mv); return; }
   if(isOffense(mv)){ if(!moveUsable(sel,mv)) return; const [a,b]=moveRange(sel,mv); const terr=isAreaTerrainMv(sel,mv);
     if(terr){ for(const k of terrAreaSet(sel,mv)){ const p=k.split(','); addHL(+p[0],+p[1],0xff7a30, strong?0.30:0.18); } }
-    else if(strong || mv.target==='area'){ for(let r=Math.max(0,sel.r-b);r<=Math.min(NR-1,sel.r+b);r++) for(let c=Math.max(0,sel.c-b);c<=Math.min(NC-1,sel.c+b);c++){ const d=Math.max(Math.abs(r-sel.r),Math.abs(c-sel.c)); if(d<a||d>b||d===0) continue; addHL(r,c,0xff7a30, mv.target==='area'?(strong?0.30:0.2):0.16); } }
+    else if(strong || mv.target==='area'){ for(let r=Math.max(0,sel.r-b);r<=Math.min(NR-1,sel.r+b);r++) for(let c=Math.max(0,sel.c-b);c<=Math.min(NC-1,sel.c+b);c++){ const d=Math.max(Math.abs(r-sel.r),Math.abs(c-sel.c)); if(d<a||d>b||d===0) continue; addHL(r,c, mv.target==='area'?0xa070e0:0x8a96ac, mv.target==='area'?(strong?0.34:0.24):0.16); } }
     let hits=selAtks||[]; if(terr){ const set=terrAreaSet(sel,mv); hits=Object.values(state.units).filter(x=>x.uid!==sel.uid && set.has(x.r+','+x.c)); }
     for(const x of hits) addReticle(x.r,x.c, x.owner===sel.owner?0xffe020:0xff2820); addAffTags(hits, mv); return; }
   if(!strong) return;
@@ -4938,6 +4938,21 @@ function mvBadges(mv){ return mvTypes(mv).map(typeBadge).join('') || typeBadge(m
 function statusChips(u){ const st=[]; if(u.poison>0)st.push(icTag('poison')); if(u.burn>0)st.push(icTag('burn')); if(u.freeze>0)st.push(icTag('freeze')); if(u.para>0)st.push(icTag('para')); if(u.dug>0) st.push(icTag('dig')); return st.length?' '+st.join(''):''; }
 const CAT_LB={heal:'回復', cure:'浄化', revive:'蘇生', buff:'強化', debuff:'弱体', move:'移動', ailment:'状態'};
 function rangeStr(mv){ if(mv.target==='map'||mv.target==='self'||mv.target==='fallen') return ''; const [a,b]=mv.range; const a2=(mv.target==='ally'||mv.target==='ally_all')?0:a; return a2===b?`${b}`:`${a2}-${b}`; }
+// 2026-11-01 技の札の当たり方: 1体(single/ally)・みんな(area/ally_all)・マップ(map)。射程は今の場所で(地形の+1・まひ/こおりの1 を入れる)
+function rangeStrU(u, mv){ if(mv.target==='map'||mv.target==='self'||mv.target==='fallen') return ''; const [a,b]=u?moveRange(u,mv):mv.range; const a2=(mv.target==='ally'||mv.target==='ally_all')?0:a; return a2===b?`${b}`:`${a2}〜${b}`; }
+function mvHitKind(mv){ const t=mv.target; return t==='map'?'M':((t==='area'||t==='ally_all')?'A':((t==='single'||t==='ally')?'1':'')); }
+function mapShapeWord(mv){ const S=mv.shape||{}; if(S.shape==='line') return 'まっすぐ'+(S.len||4); if(S.shape==='cross') return '十字'+(S.r||2);
+  if(S.shape==='blast') return '〜'+(S.reach||3)+'マス先のまわり'; return 'まわり'+(S.r||2); }
+// 形の小さな点の図(3×3〜5×5): ●=当たる・◇=自分・・=当たらない
+function mapShapeDots(mv){ const S=mv.shape||{}; let W, H, me, hit;
+  if(S.shape==='line'){ const L=Math.min(4,S.len||4); W=3; H=L+1; me=[H-1,1]; hit=(r,c)=>c===1&&r<H-1; }
+  else if(S.shape==='blast'){ const R=Math.min(1,S.r||1); W=3; H=5; me=[4,1]; hit=(r,c)=>Math.abs(r-1)<=R&&Math.abs(c-1)<=R; }
+  else { const R=Math.min(2,S.r||2); W=H=2*R+1; me=[R,R]; hit=(S.shape==='cross')?((r,c)=>r===R||c===R):(()=>true); }
+  let h=`<span class="mvdots" style="grid-template-columns:repeat(${W},1fr)">`;
+  for(let r=0;r<H;r++) for(let c=0;c<W;c++) h+= (r===me[0]&&c===me[1]) ? '<i class="me"></i>' : (hit(r,c)?'<i class="on"></i>':'<i></i>');
+  return h+'</span>'; }
+function mvHitChip(mv, hk){ if(hk==='M') return `<span class="mvkind">${icTag('map')}マップ<span class="mvsh">${mapShapeWord(mv)}</span>${mapShapeDots(mv)}</span>`;
+  return hk==='A' ? `<span class="mvkind">${icTag('area')}みんな</span>` : `<span class="mvkind">${icTag('single')}1体</span>`; }
 // 技の札: タイプ・名前・威力・射程・残り回数。使えない時は暗く(理由は色だけ)。弱点を突ける相手が射程にいれば金の縁と弱点のアイコン
 function moveReady(u, mv){ if(isOffense(mv)){ if(mv.target==='map'){ if(!moveUsable(u,mv)) return false; const b=aiMapBest(u,mv); return !!b && b.sc>-1e8; } return attackTargetsV2(u,mv).length>0; } return supportReady(u,mv); }
 function moveMenuV2(){ const box=document.createElement('div'); box.className='mvgrid';
@@ -4947,10 +4962,11 @@ function moveMenuV2(){ const box=document.createElement('div'); box.className='m
     const weak = tg.some(e=>mvBonusT(mv,mon(e))>0);
     const res = !weak && tg.length>0 && tg.every(e=>mvPenaltyT(mv,mon(e))<0);
     const b=document.createElement('button'); b.className='bt mvb'+(on?' on':'')+(weak?' wk':''); b.disabled=!ok;
-    const kind = mv.target==='map'?icTag('map'):(mv.target==='area'?icTag('area'):'');
-    const stat = isOffense(mv)&&mv.power>0 ? `威${mv.power}` : (CAT_LB[mv.category]||'');
-    const rg=rangeStr(mv);
-    b.innerHTML=`<span class="mvn">${mvBadges(mv)}${escH(mvName(mv))}${weak?icTag('weak'):(res?icTag('resist'):'')}</span><span class="mvs">${kind}${stat}${rg?`・${rg}`:''}・${left===Infinity?'∞':left+'/'+mx}${mv.p===false?'・移動前':''}</span>`;
+    const hk=mvHitKind(mv); if(hk) b.classList.add('k'+hk);
+    const stat = isOffense(mv)&&mv.power>0 ? `威力${mv.power}` : (CAT_LB[mv.category]||'');
+    const rg=rangeStrU(sel,mv); const spr=isOffense(mv)&&isAreaTerrainMv(sel,mv);
+    b.innerHTML=`<span class="mvt"><span class="mvn">${mvBadges(mv)}${escH(mvName(mv))}${weak?icTag('weak'):(res?icTag('resist'):'')}</span><span class="mvu">${left===Infinity?'∞':left+'/'+mx}</span></span>`
+      +`<span class="mvk">${hk?mvHitChip(mv,hk):''}${spr?`<span class="mvspr">${icTag('terrain')}広がる</span>`:''}</span><span class="mvs">${stat}${rg?`${stat?'・':''}射程${rg}`:''}${mv.p===false?'・移動前':''}</span>`;
     b.onclick=()=>{ if(on && (mv.target==='map'||noAimMove(mv))){ useSelMoveV2(); return; } selectMoveV2(mv); };
     box.appendChild(b); }
   return box; }
@@ -5725,12 +5741,34 @@ const CSS=`
 #mbRoot div.floatdmg.num.res{font-size:17px;animation:mbFnum .9s ease-out forwards}
 #mbRoot div.floatdmg.tag{font-size:12px;animation-duration:.95s}
 #mbRoot .tyb{display:inline-block;min-width:1.35em;padding:0 .18em;margin-right:.18em;border-radius:5px;font-size:11px;font-weight:900;line-height:1.35em;text-align:center;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.6);vertical-align:.08em}
-#mb-actions .mvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:4px;width:100%;margin-bottom:4px}
-#mbRoot button.bt.mvb{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:4px 6px;font-size:12px;min-height:42px;text-align:left;letter-spacing:-.02em}
-#mbRoot button.bt.mvb .mvn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-#mbRoot button.bt.mvb .mvs{font-size:10.5px;color:#c8d4f0;font-weight:700;white-space:nowrap}
+#mb-actions .mvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));grid-auto-flow:row dense;gap:4px;width:100%;margin-bottom:4px}
+#mbRoot button.bt.mvb{display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;padding:2px 5px 2px 6px;font-size:13px;line-height:1.2;min-height:40px;text-align:left;letter-spacing:-.02em}
+#mbRoot button.bt.mvb .mvt{display:flex;align-items:center;gap:4px;min-width:0}
+#mbRoot button.bt.mvb .mvn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+#mbRoot button.bt.mvb .tyb{font-size:12px;line-height:1.25em}
+#mbRoot button.bt.mvb img.ui-ic{width:1.1em;height:1.1em;vertical-align:-.2em}
+#mbRoot button.bt.mvb .mvs{font-size:12px;color:#c8d4f0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mbRoot button.bt.mvb .mvk{display:flex;flex-wrap:nowrap;overflow:hidden;align-items:center;column-gap:4px;row-gap:0;font-size:12px;font-weight:800;white-space:nowrap;min-height:1.25em}
+#mbRoot button.bt.mvb .mvkind{display:inline-flex;align-items:center;gap:2px;color:var(--mvk,#c8d4f0)}
+#mbRoot button.bt.mvb .mvsh{margin-left:2px;color:#e6dccb}
+#mbRoot button.bt.mvb .mvspr{display:inline-flex;align-items:center;color:#f2c48a;letter-spacing:-.06em}
+#mbRoot button.bt.mvb .mvu{flex:none;font-size:12px;color:#c8d4f0;font-weight:700}
+#mbRoot .mvdots{display:inline-grid;gap:1px;margin-left:3px;vertical-align:middle}
+#mbRoot .mvdots i{display:block;width:3px;height:3px;border-radius:1px;background:rgba(255,255,255,.18)}
+#mbRoot .mvdots i.on{background:var(--mvk,#d2945a)}
+#mbRoot .mvdots i.me{background:#fff;border-radius:50%}
+#mbRoot button.bt.mvb.kM{position:relative}
+#mbRoot button.bt.mvb.kM .mvdots{position:absolute;right:9px;top:50%;transform:translateY(-50%);gap:2px}
+#mbRoot button.bt.mvb.kM .mvt{padding-right:44px}
+#mbRoot button.bt.mvb.kM .mvdots i{width:5px;height:5px}
+#mbRoot button.bt.mvb.k1{--mvk:#a3adbf;border-color:rgba(163,173,191,.55);border-left:4px solid #a3adbf}
+#mbRoot button.bt.mvb.kA{--mvk:#b79be4;border-color:rgba(183,155,228,.55);border-left:4px solid #b79be4}
+#mbRoot button.bt.mvb.kM{grid-column:span 2;--mvk:#dca06a;border-color:rgba(220,160,106,.6);border-left:4px solid #dca06a}
 #mbRoot button.bt.mvb.wk{border-color:#ffd24a;box-shadow:0 0 0 1px rgba(255,210,74,.5),0 2px 6px rgba(0,0,0,.35)}
 #mbRoot button.bt.mvb.on{background:linear-gradient(180deg,#2f6fd0,#22468a);border-color:#8fb4ff}
+#mbRoot button.bt.mvb.k1.wk,#mbRoot button.bt.mvb.k1.on{border-left-color:#a3adbf}
+#mbRoot button.bt.mvb.kA.wk,#mbRoot button.bt.mvb.kA.on{border-left-color:#b79be4}
+#mbRoot button.bt.mvb.kM.wk,#mbRoot button.bt.mvb.kM.on{border-left-color:#dca06a}
 #mbRoot .tinfo{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;font-size:13px;font-weight:800}
 #mbRoot .tinfo .up{color:#ffe680}#mbRoot .tinfo .dn{color:#a8a2b8}#mbRoot .tinfo .ex{color:#9fe0ff;font-size:12px}
 #mb-actions .mainrow .bt{flex:1 1 0;padding:10px 8px;font-size:14px}
