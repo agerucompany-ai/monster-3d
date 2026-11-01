@@ -5182,7 +5182,7 @@ const TACT={ on:true,
   first:{mode:null, turns:1, gauge:{1:0, 2:0, 3:0}, guard:{1:0, 2:0, 3:0}, skip:['wild','ancient']},   // 2026-10-31 オーナー「先手が絶対有利・後手が有利はあり得ない」: 後手を助ける決まり(後手の闘気50/30・3段目の守り+50%)はなくした(前＝mode:'guard+gauge' gauge{1:50,2:30} guard{3:0.5})。'noatk'(先手の1ターン目攻撃なし)も使わない。   // 段ごと(BT.startStage): 1段目=闘気50・2段目=闘気30(2026-10-29 進化の2段構えで 闘気でどこでも進化できるので 70→30・40→50。sim_tactics3 A 150試合で先手 53/46/48%)・3段目=最初の相手の手番だけ守り+50%   // 先手と後手(sim_tactics3.js A で決めた 2026-10-28): 後手(相手)の子は闘気40から(3段目から始まる戦いはなし=もとから後手が少し有利)。'noatk'=先手は1ターン目攻撃なし / 'guard'=後手は turns 回目の手番まで守り+guard / 'guard+gauge' / null=なし
   behind:{share:0.45, gaugeMax:1.8, gaugeK:3.0, healX:1.3, evoHeal:0.45, evoAtk:0.2, evoTurns:2, selfHp:0.5},   // 背水・土壇場進化
   healGauge:10,                                           // 回復の技を使った子の闘気
-  combo:{gather:2, power:100, mult2:1.15, mult3:1.35, small:{1:0.2, 2:0.1}, gauge:0, cost:{2:35, 3:25}},   // cost=参加する子それぞれが使う闘気(2体の合体/3体の合体)
+  combo:{k:0.85, gather:2, power:100, mult2:1.15, mult3:1.35, small:{1:0.2, 2:0.1}, gauge:0, cost:{2:35, 3:25}},   // cost=参加する子それぞれが使う闘気(2体の合体/3体の合体)
   bal:{光:{atk:1,def:1}, 水:{atk:1.45,def:1.12}, 氷:{atk:1.45,def:1.12}, 森:{atk:1.28,def:1.06}, 地:{atk:1.25,def:1.05}, 闇:{atk:1.3,def:1.05}, 竜:{atk:1.2,def:1.03}, 炎:{atk:0.95}, 雷:{atk:1.04}, 風:{atk:1.03}},   // タイプごとの {atk, def} の倍率(バランスのつまみ)。2026-10-30 タイプ相性の作り直しのあと sim/study_types.js(タイプだけの隊)で合わせた。2つのタイプの子は 両方を掛ける。2026-10-31 オーナー「光 弱すぎちゃう？」: 光は atk0.7/def0.88→1/1(体の数の攻撃×0.92も戻した)
   ai:{formation:10, cover:8, healLeader:0.75, zoneEvo:600},   // zoneEvo=進化のマスに入る点(2026-10-29 進化の2段構え)
   final:{left:8, step:0.35},
@@ -5294,8 +5294,21 @@ function comboTeam(u, c){ const s=c._s; if(!s || !s._ids.has(u.mid) || !comboOk(
 function comboTargets(u, c){ return alive(1-u.owner).filter(e=>!(e.dug>0) && cheby(e,u)<=c.range); }
 function comboHits(u, c, t){ if(!c.area) return [t]; return alive(1-u.owner).filter(e=>!(e.dug>0) && cheby(e,t)<=c.area); }
 function comboMult(c, team){ let m=c.mult!=null?c.mult:((c.n||2)>=3?TACT.combo.mult3:TACT.combo.mult2);
-  if(c.small!==false) for(const x of team){ const mm=mon(x); if(mm.role!=='fusion') m+=(TACT.combo.small[mm.level]||0); } return m*((TACT.combo.seriesX&&TACT.combo.seriesX[c._s.id])||1); }   // seriesX=シリーズごとのつまみ
-function comboDmg(c, team, t){ const mult=comboMult(c,team); let d=0; for(const x of team){ const mv={power:TACT.combo.power, type:mon(x).type, hit:100, effect:{pierce:(c.fx&&c.fx.pierce)||0}, _combo:true}; d+=calcDamage(x,t,mv); } return Math.max(1,Math.round(d*mult)); }
+  if(c.small!==false) for(const x of team){ const mm=mon(x); if(mm.role!=='fusion') m+=(TACT.combo.small[mm.level]||0); } m*=((TACT.combo.seriesX&&TACT.combo.seriesX[c._s.id])||1); return V2ON()?Math.max(1, m*(TACT.combo.k!=null?TACT.combo.k:1)):m; }   // 2026-11-01 k=全体のつまみ(1より下げても 1倍より下にはしない=合体は 参加した子の単独の技より必ず強い)   // seriesX=シリーズごとのつまみ
+// 2026-11-01 オーナー「合体攻撃は 全員の1番強い攻撃を同時に打ち込むもの。タイプもそれぞれの技のタイプ」:
+//   参加した子それぞれが その相手に一番ダメージの大きい攻撃の技(回数が残っている・マップの技も含む・射程は合体の決まりで当たる前提)を撃ち、
+//   技のタイプ(2つのタイプの技はよく効く方)・その子の攻撃力で calcDamageV2 → 足して 合体の倍率(comboMult)を掛ける。前は 1体あたり威力100・その子のタイプ だった
+function comboMvDmg(x, t, mv, c){ const pc=(c&&c.fx&&c.fx.pierce)||0, ef=mv.effect||{};
+  const m2=Object.assign({}, mv, {_combo:true, hit:100, effect:Object.assign({}, ef, {pierce:Math.max(pc, ef.pierce||0)})});
+  return calcDamageV2(x,t,m2)*(ef.hits||1)*(1+chargeX(x,mv)); }   // _combo=かげ・突進の判定を外す(突進はその子の技として足す)
+function comboPick(x, t, c){ let best=null;
+  for(const mv of movesV2(x)){ if(!isOffense(mv) || !(mv.power>0) || usesLeft(x,mv)<1) continue; const d=comboMvDmg(x,t,mv,c); if(!best||d>best.d) best={x, mv, d}; }
+  if(best) return best; const mv={id:'_combo', power:TACT.combo.power, type:mon(x).type, hit:100, effect:{}}; return {x, mv, d:comboMvDmg(x,t,mv,c), base:true}; }   // 攻撃の技がない子(回復役など)は 前の決まり(威力100・その子のタイプ)
+function comboPicks(team, t, c){ return team.map(x=>comboPick(x,t,c)); }
+function comboDmg(c, team, t, main){ if(!V2ON()){ const mult=comboMult(c,team); let d=0; for(const x of team){ const mv={power:TACT.combo.power, type:mon(x).type, hit:100, effect:{pierce:(c.fx&&c.fx.pierce)||0}, _combo:true}; d+=calcDamage(x,t,mv); } return Math.max(1,Math.round(d*mult)); }
+  return comboDmgP(c, team, t, comboPicks(team, main||t, c)); }
+function comboDmgP(c, team, t, picks){ const mult=comboMult(c,team); let d=0; for(const p of picks) d+=comboMvDmg(p.x,t,p.mv,c); return Math.max(1,Math.round(d*mult)); }
+function comboMvLabel(p){ return p.base?'体当たり':mvName(p.mv); }
 // 今 u が呼べる合体の一覧 [{c, team, tg}]
 function comboReady(u){ if(!T3() || !u || !comboOk(u)) return []; const out=[];
   for(const s of seriesOf(u.mid)) for(const c of (s.combos||[])){ if(comboUsed(u.owner,c)) continue; const team=comboTeam(u,c); if(!team) continue; const tg=comboTargets(u,c); if(!tg.length) continue; out.push({c, team, tg}); }
@@ -5303,12 +5316,21 @@ function comboReady(u){ if(!T3() || !u || !comboOk(u)) return []; const out=[];
 function doComboV3(u, c, t){
   const team=comboTeam(u,c); if(!team || !t || !state.units[t.uid] || cheby(t,u)>c.range || comboUsed(u.owner,c)){ if(u.owner===0) toast('合体できない'); return false; }
   const hits=comboHits(u,c,t); const o=u.owner, fx=c.fx||{};
+  const picks=V2ON()?comboPicks(team,t,c):null; const dmgOf=e=>picks?comboDmgP(c,team,e,picks):comboDmg(c,team,e);
+  const dmgs=hits.map(e=>dmgOf(e));   // 回数を使う前に きめる
   (state.comboUsed||(state.comboUsed=[{},{}]))[o][c.id]=true;
+  if(picks) for(const p of picks) if(!p.base) spendMove(p.x, p.mv);   // 回数は それぞれの技から1つずつ
   const cost=comboCost(c); for(const x of team){ x.acted=true; x.moved=true; x.g=Math.max(0,gaugeOf(x)-cost); if(state.spd) x.sdone=true; }   // 闘気を分けあって使う
   const st=state.stats; if(st){ (st.combo||(st.combo=[0,0]))[o]++; const cb=st.comboBy||(st.comboBy={}); cb[c.name]=(cb[c.name]||0)+1; if(st.atk) st.atk[o]++; }
-  if(!BT.headless){ comboFx(u, team); const sp=u.spReady; u.spReady=false; attackFx(u, hits, t, {name:c.name, power:TACT.combo.power, type:mon(u).type, tier:3, big:true});   /* 2026-10-29: カットインをやめ 盤の上の大技(bigIntro) */ u.spReady=sp; showBanner(`${IC('combo')}${IC(c._s.icon||'combo')}${c.name}`); }
+  if(!BT.headless){ comboFx(u, team); const sp=u.spReady; u.spReady=false;
+    if(picks){ const tg1=hits.length>1?'area':'single';   // 参加した子それぞれの技のタイプの演出を 少しずらして
+      picks.forEach((p,i)=>{ const mvF=Object.assign({}, p.mv, {name:i===0?c.name:comboMvLabel(p), role:'combo_part', target:tg1, tier:3, big:i===0});   /* 大技の名前は合体の名前(1回だけ) */ const x=p.x;
+        const go=()=>{ if(!state||!state.units[x.uid]) return; const live=hits.filter(e=>state.units[e.uid]); attackFx(x, live.length?live:hits.map(e=>({r:e.r,c:e.c})), state.units[t.uid]?t:{r:t.r,c:t.c}, mvF); };
+        if(i===0) go(); else setTimeout(go, i*240/SPD()); }); }
+    else attackFx(u, hits, t, {name:c.name, power:TACT.combo.power, type:mon(u).type, tier:3, big:true});   /* 2026-10-29: カットインをやめ 盤の上の大技(bigIntro) */
+    u.spReady=sp; showBanner(`${IC('combo')}${IC(c._s.icon||'combo')}${c.name}`+(picks?`　${picks.map(p=>comboMvLabel(p)).join('＋')}`:'')); }
   let dealt=0, kills=0;
-  for(const e of hits){ if(!state.units[e.uid]) continue; const dmg=comboDmg(c,team,e); e.hp-=dmg; dealt+=Math.min(dmg, dmg+Math.min(0,e.hp)); floatText(e.r,e.c,`-${dmg}`,'#ffd24a','num weak');
+  for(let hi=0; hi<hits.length; hi++){ const e=hits[hi]; if(!state.units[e.uid]) continue; const dmg=dmgs[hi]; e.hp-=dmg; dealt+=Math.min(dmg, dmg+Math.min(0,e.hp)); floatText(e.r,e.c,`-${dmg}`,'#ffd24a','num weak');
     if(e.hp<=0){ const wasLeader=!!e.leader; if(killUnit(e)){ kills++; if(e.owner===1) state.killLv=(state.killLv||0)+mon(e).level; toast(`${wasLeader?'リーダーの ':''}${mon(e).name} を撃破！`); } }
     else { addGauge(e,(e.hp<=e.maxhp/2)?GAUGE_TAKEN_LOW:GAUGE_TAKEN);
       if(fx.ail) inflictStatusV2(u, e, {effect:{ail:fx.ail, chance:fx.chance!=null?fx.chance:0.5}});
@@ -5317,12 +5339,12 @@ function doComboV3(u, c, t){
   if(fx.heal && dealt>0){ const share=Math.round(dealt*fx.heal*sustainX()/team.length); for(const x of team){ if(!state.units[x.uid]) continue; const h=Math.min(x.maxhp-x.hp, share); if(h>0){ x.hp+=h; healFx(x.r,x.c); floatText(x.r,x.c,`+${h}`,'#7be0a0'); } } }
   if(fx.buff) for(const x of team){ if(state.units[x.uid]){ setBuf(x,'buf',fx.buff,false); floatText(x.r,x.c,'強化','#ffe680','tag'); } }
   if(TACT.combo.gauge) for(const x of team) addGauge(x, TACT.combo.gauge);
-  toast(`${IC('combo')}${c.name}！ ${team.map(x=>mon(x).name).join('＋')}${hits.length>1?` 敵${hits.length}体`:''}`);
+  toast(`${IC('combo')}${c.name}！ 合体：${picks?picks.map(p=>`${comboMvLabel(p)}(${(p.base?[p.mv.type]:mvTypes(p.mv)).join('・')})`).join('＋'):team.map(x=>mon(x).name).join('＋')}${hits.length>1?` 敵${hits.length}体`:''}`);
   afterAction(); return true; }
 // AI: 合体のほうが「それぞれが攻撃する」より良い時だけ(倒せる・リーダーに大きい・まとめて当たる)
 function aiComboPlan(u){ const list=comboReady(u); if(!list.length) return null; let best=null;
   for(const {c,team,tg} of list) for(const t of tg){ const hits=comboHits(u,c,t); let sc=0, dm=0;
-    for(const e of hits){ const d=comboDmg(c,team,e), hp=Math.max(1,e.hp); dm+=Math.min(d,hp); sc+=Math.min(d,hp)+(d>=hp?(e.leader?5000:400):0)+(e.leader?Math.min(d,hp)*0.6:0); }
+    for(const e of hits){ const d=comboDmg(c,team,e,t), hp=Math.max(1,e.hp); dm+=Math.min(d,hp); sc+=Math.min(d,hp)+(d>=hp?(e.leader?5000:400):0)+(e.leader?Math.min(d,hp)*0.6:0); }
     if(c.fx&&c.fx.heal) sc+=team.reduce((a,x)=>a+Math.min(x.maxhp-x.hp, dm*c.fx.heal/team.length),0)*0.6;
     if(!best||sc>best.sc) best={c,team,t,sc,dm}; }
   if(!best) return null;
@@ -5357,11 +5379,14 @@ function drawComboHL(){ if(!sel||!selCombo) return; const {c}=selCombo; const te
   for(const x of team) if(x.uid!==sel.uid) addReticle(x.r,x.c,0xffe27a);
   for(let r=Math.max(0,sel.r-c.range);r<=Math.min(NR-1,sel.r+c.range);r++) for(let cc=Math.max(0,sel.c-c.range);cc<=Math.min(NC-1,sel.c+c.range);cc++) if(!(r===sel.r&&cc===sel.c)) addHL(r,cc,0xffd070,0.16);
   for(const e of comboTargets(sel,c)){ addReticle(e.r,e.c,0xff2820); const d=comboDmg(c,team,e); const sp=sprites[e.uid]; const h=(sp&&sp.m3d?sp.m3d.h:(sp?sp.sc:1.4))+0.55;
-    const adv=team.some(x=>typeBonusT(mon(x).type,mon(e))>0); addTag(e.r,e.c,`${IC('combo')}${adv?IC('weak'):''}-${d}${d>=e.hp?' KO':''}`, 'weak', h); } }
+    const adv=V2ON()?comboPicks(team,e,c).some(p=>typeBonusT(bestTypeT(p.mv,mon(e),p.mv.type),mon(e))>0):team.some(x=>typeBonusT(mon(x).type,mon(e))>0); addTag(e.r,e.c,`${IC('combo')}${adv?IC('weak'):''}-${d}${d>=e.hp?' KO':''}`, 'weak', h); } }
 function comboTapTarget(r,c){ if(!sel||!selCombo) return false; const e=unitAt(r,c); if(!e||e.owner===sel.owner) return false; if(!comboTargets(sel,selCombo.c).includes(e)) return false;
   pushUndo(); const ok=doComboV3(sel, selCombo.c, e); if(!ok) undoStack.pop(); selCombo=null; reselectAfter(); return true; }
 function comboButtons(ac){ if(!T3()||!sel||sel.owner!==0) return; for(const it of comboReady(sel)){ const c=it.c;
-  const b=mkbt(`${IC('combo')}${IC(c._s.icon||'combo')}${c.name}`, 'fuse'+(selCombo&&selCombo.c===c?' on':''), true, ()=>{ selCombo={c}; selMode='combo'; recompute(); drawSelHL(); updateUI(); }); ac.appendChild(b); } }
+  const b=mkbt(`${IC('combo')}${IC(c._s.icon||'combo')}${c.name}`, 'fuse'+(selCombo&&selCombo.c===c?' on':''), true, ()=>{ selCombo={c}; selMode='combo'; recompute(); drawSelHL(); updateUI(); });
+  if(V2ON()){ let bt=it.tg[0], bd=-1; for(const e of it.tg){ const d=comboDmg(c,it.team,e); if(d>bd){ bd=d; bt=e; } } const picks=comboPicks(it.team,bt,c);
+    b.classList.add('cbb'); b.innerHTML=`<span class="ic-l">${icHTML(IC('combo')+IC(c._s.icon||'combo')+c.name)}</span><span class="cbm">合体：${picks.map(p=>(p.base?typeBadge(p.mv.type):mvBadges(p.mv))+escH(comboMvLabel(p))).join('＋')}</span>`; }
+  ac.appendChild(b); } }
 function IC_STEP(){ return icTag('move'); }
 // ---- 突進(動いたマスの分だけ強い) ----
 function chargeSteps(u){ if(!T3()||u.sr==null||!state||state.cur!==u.owner) return 0; return Math.abs(u.r-u.sr)+Math.abs(u.c-u.sc); }
@@ -5745,6 +5770,9 @@ const CSS=`
 #mbRoot .tyb{display:inline-block;min-width:1.35em;padding:0 .18em;margin-right:.18em;border-radius:5px;font-size:11px;font-weight:900;line-height:1.35em;text-align:center;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.6);vertical-align:.08em}
 #mb-actions .mvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));grid-auto-flow:row dense;gap:4px;width:100%;margin-bottom:4px}
 #mbRoot button.bt.mvb{display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:0;padding:2px 5px 2px 6px;font-size:13px;line-height:1.2;min-height:40px;text-align:left;letter-spacing:-.02em}
+#mbRoot button.bt.cbb{display:inline-flex;flex-direction:column;align-items:flex-start;gap:1px}
+#mbRoot button.bt.cbb .cbm{font-size:12px;font-weight:700;color:#f3e6c4;white-space:normal;text-align:left}
+#mbRoot button.bt.cbb .tyb{font-size:12px}
 #mbRoot button.bt.mvb .mvt{display:flex;align-items:center;gap:4px;min-width:0}
 #mbRoot button.bt.mvb .mvn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
 #mbRoot button.bt.mvb .tyb{font-size:12px;line-height:1.25em}
