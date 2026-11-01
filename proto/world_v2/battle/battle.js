@@ -6050,10 +6050,12 @@ function buildDom(){
 // ---- 自分のパーティ・相手のパーティを盤に出す ----
 // party の1件 = {mid, rank(成長ランク・既定1), stack(重ねた回数・表示だけ)} または mid の数だけ
 function normParty(list){ return (list||[]).map((p,i)=>{ const o=(typeof p==='number')?{mid:p}:Object.assign({},p); o.mid=+o.mid; if(o.lv!=null){ o.lv=Math.max(1,Math.min(LV_MAX,Math.round(+o.lv||1))); o.rank=lvRank(o.lv); } else o.rank=Math.max(1,Math.min(20,+(o.rank||1))); o.idx=i; return o; }).filter(o=>MID[o.mid]); }   // lv(1〜99) があれば rank は lv から(連続値)
+const DRAGON_S3={ids:[1070,291,290], hp:2.5, atk:1.45};   // 2026-11-01 竜の3段目は融合クラス(stats_v2 で 体力×2.5・攻撃×1.45・守り×1.15)。野生の敵の時だけ この分を戻す(unitMul)
 const FUSE_UNIT={hp:2.0, atk:1.125};   // 融合の姿で盤に出る子の 体力・攻撃の倍率(戦いの中の融合 TUNE.fuseHpX・fuseAtk 1.8/1.6 に合わせた)
 function unitMul(u, rank, extraHp, extraAtk){   // 出撃時の体力・攻撃の倍率(成長ランク×盤の大きさの補正×敵の強さ)
   const fz=(mon(u)&&mon(u).role==="fusion")?FUSE_UNIT:null;   // 2026-10-29 盤 v4: はじめから融合の姿で出る子も 体力は圧倒的・攻撃も上げる(戦いの中の融合と同じ考え)
-  const hx=rankX(rank)*(BT.rules?BT.rules.hpX:1)*(extraHp||1)*(fz?fz.hp:1), ax=rankX(rank)*(extraAtk||1)*(fz?fz.atk:1);
+  const dw=(BT.kind==='wild' && u.owner===1 && DRAGON_S3.ids.includes(+u.mid))?DRAGON_S3:null;   // 2026-11-01 野生の竜の3段目(敵)は 前の強さのまま(仲間にして育てた竜が融合クラス)
+  const hx=rankX(rank)*(BT.rules?BT.rules.hpX:1)*(extraHp||1)*(fz?fz.hp:1)/(dw?dw.hp:1), ax=rankX(rank)*(extraAtk||1)*(fz?fz.atk:1)/(dw?dw.atk:1);
   u.rank=rank; u.hx=hx; u.atkX=ax; u.maxhp=u.hp=Math.max(1,Math.round(mon(u).hp*hx));
   return u;
 }

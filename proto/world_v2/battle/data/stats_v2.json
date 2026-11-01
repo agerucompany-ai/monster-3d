@@ -3994,6 +3994,10 @@
     {
      "move": "dragon_ladder3",
      "lv": 15
+    },
+    {
+     "move": "dragon_map",
+     "lv": 3
     }
    ]
   },
@@ -4037,6 +4041,10 @@
     {
      "move": "dragon_ladder4",
      "lv": 34
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
     }
    ]
   },
@@ -4047,9 +4055,9 @@
    "stage": 3,
    "line": "dino",
    "archetype": "竜型",
-   "hp": 1380,
-   "atk": 155,
-   "def": 79,
+   "hp": 3450,
+   "atk": 225,
+   "def": 91,
    "mob": 2,
    "spd": 40,
    "red": 0.441,
@@ -4091,8 +4099,13 @@
      "move": "dragon_ladder4",
      "lv": 34,
      "from": 1069
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
     }
-   ]
+   ],
+   "note_1101": "2026-11-01 竜の3段目は融合クラス(オーナー決定): 体力×2.5・攻撃×1.45・守り×1.15 前 体1380 攻155 守79"
   },
   "195": {
    "name": "セイリュン",
@@ -4122,6 +4135,10 @@
     {
      "move": "dragon_ladder3",
      "lv": 15
+    },
+    {
+     "move": "dragon_map",
+     "lv": 3
     }
    ]
   },
@@ -4165,6 +4182,10 @@
     {
      "move": "dragon_ladder4",
      "lv": 34
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
     }
    ]
   },
@@ -4175,9 +4196,9 @@
    "stage": 3,
    "line": "seiryu",
    "archetype": "竜型",
-   "hp": 1420,
-   "atk": 144,
-   "def": 79,
+   "hp": 3550,
+   "atk": 209,
+   "def": 91,
    "mob": 2,
    "spd": 40,
    "red": 0.441,
@@ -4219,6 +4240,10 @@
      "move": "dragon_ladder4",
      "lv": 34,
      "from": 196
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
     }
    ],
    "ancient": [
@@ -4232,7 +4257,8 @@
     "dragon_ladder2",
     "dragon_ladder3",
     "dragon_ladder4"
-   ]
+   ],
+   "note_1101": "2026-11-01 竜の3段目は融合クラス(オーナー決定): 体力×2.5・攻撃×1.45・守り×1.15 前 体1420 攻144 守79"
   },
   "198": {
    "name": "リュッコ",
@@ -4262,6 +4288,10 @@
     {
      "move": "dragon_ladder3",
      "lv": 15
+    },
+    {
+     "move": "dragon_map",
+     "lv": 3
     }
    ]
   },
@@ -4305,6 +4335,10 @@
     {
      "move": "dragon_ladder4",
      "lv": 34
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
     }
    ]
   },
@@ -4315,9 +4349,9 @@
    "stage": 3,
    "line": "lind",
    "archetype": "竜型",
-   "hp": 1535,
-   "atk": 149,
-   "def": 79,
+   "hp": 3838,
+   "atk": 216,
+   "def": 91,
    "mob": 2,
    "spd": 40,
    "red": 0.441,
@@ -4359,8 +4393,13 @@
      "move": "dragon_ladder4",
      "lv": 34,
      "from": 199
+    },
+    {
+     "move": "dragon_map",
+     "lv": 1
     }
-   ]
+   ],
+   "note_1101": "2026-11-01 竜の3段目は融合クラス(オーナー決定): 体力×2.5・攻撃×1.45・守り×1.15 前 体1535 攻149 守79"
   },
   "2061": {
    "name": "ゴッドヘラク",

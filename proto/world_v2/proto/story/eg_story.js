@@ -222,7 +222,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(12,'e12_1',AB,'*',{bg:'anime_eg_temple_night',tod:'dawn'});
   fn(12,'e12_m',AB,()=>xMirror('anime_eg_temple_night'));
   sc(12,'e12_2b',AB,'*',{bg:'anime_eg_temple_in'}); sc(12,'e12_3',AB,'*',{bg:'anime_eg_temple_in'});
-  bt(12,'e12_b','e12_4',AB,{bg:'anime_eg_temple_in',wild:2059,must:1,R:{terrain:'ruins',own:[1054],fuse:[2014],tune:{hp:1.045,atk:4.263}}});
+  bt(12,'e12_b','e12_4',AB,{bg:'anime_eg_temple_in',wild:2059,must:1,R:{terrain:'ruins',own:[1054],fuse:[2014],tune:{hp:0.882,atk:3.596}}});
   sc(12,'e12_5',AB,'*',{tod:'morning'});
   // 第13話 上がる水(空の船で下流の町=ルクソールの川岸へ・2026-10-31 水と時間の盤。新3ライゼンギガス=ピリムサ＋クロベク)
   go(13,'e13_g',AB,LU,'from_cairo',{tod:'noon'});

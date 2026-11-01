@@ -128,8 +128,8 @@
    "final": 1,
    "ai": {
     "winAll": true,
-    "hpX": 0.283,
-    "atkX": 0.217,
+    "hpX": 0.236,
+    "atkX": 0.181,
     "rage": 0.5
    },
    "scene": "bella3",
@@ -187,8 +187,8 @@
    "final": 1,
    "ai": {
     "winAll": true,
-    "hpX": 0.409,
-    "atkX": 0.257,
+    "hpX": 0.297,
+    "atkX": 0.187,
     "rage": 0.38
    },
    "scene": "adrian",
@@ -261,9 +261,9 @@
    "lv": 73,
    "tier": 6,
    "tune": {
-    "escortX": 0.287,
-    "hp": 0.642,
-    "atk": 0.691,
+    "escortX": 0.237,
+    "hp": 0.53,
+    "atk": 0.57,
     "escort": 5
    },
    "size": 13,
