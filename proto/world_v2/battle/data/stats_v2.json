@@ -1890,7 +1890,7 @@
    ]
   },
   "1030": {
-   "name": "ヒヨドル",
+   "name": "ピヨドル",
    "type": "風",
    "type2": null,
    "stage": 1,
@@ -5766,6 +5766,10 @@
     },
     {
      "move": "light_revive",
+     "lv": 1
+    },
+    {
+     "move": "forest_sun",
      "lv": 1
     }
    ],
