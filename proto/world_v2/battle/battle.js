@@ -109,7 +109,7 @@ const TERR_HEX = {plain:0x83c258, forest:0x2c6a3a, wasteland:0xc39a57, sea:0x265
 //   up=得意(攻撃+TERR_X) / dn=苦手(攻撃−TERR_X) / fx=とくちょう(その地形に立っている時だけ): evade=よけ+ / guard=受けるダメージ− / mob=移動+ / range=その地形で射程+1(技のタイプ) / heal=回復の技×
 const TYPE_TERR = {
   炎:{up:['forest','lava'],     dn:['water','sea'], fx:{range:['forest']},           tx:'森で 射程+1・燃え広がる'},
-  水:{up:['water','sea'],       dn:['wasteland'],   fx:{mob:['water','sea'], range:['sea']}, tx:'水の上で 移動+1・海で 射程+1・海と水辺に 波'},
+  水:{up:['water','sea'],       dn:['wasteland'],   fx:{mob:['water','sea']}, tx:'水の上で 移動+1・水から2マス以内で 水の技は 射程+2・みんなに当たる'},   // 2026-11-01 水の技の決まり(wetMv)
   森:{up:['forest','water'],    dn:['wasteland'],   fx:{evade:['forest'], range:['forest']}, tx:'森で よけやすい・射程+1・森に つる'},
   雷:{up:['sea','ruins'],       dn:['forest'],      fx:{range:['ruins']},            tx:'海・水辺で 通電・遺跡で 射程+1'},
   風:{up:['plain'],             dn:['ruins'],       fx:{mob:['plain']},              tx:'平原で 移動+1'},
@@ -192,7 +192,7 @@ function setStatMode(v2){ for(const k in MID){ const m=MID[k]; if(!m._v1) m._v1=
     const s=(v2&&m._v2)?m._v2:null; m.hp=s?s.hp:m._v1.hp; m.atk=s?s.atk:m._v1.atk; m.move=s?s.mob:m._v1.move; m.def=s?s.def:null; m.spd=s?s.spd:null; } }
 function applyV2Data(stats, moves){ try{
     const C=(stats&&stats.creatures)||stats||{}, M=(moves&&moves.moves)||moves||{};
-    for(const k in MV2) delete MV2[k]; for(const id in M){ if(id[0]==='_') continue; MV2[id]=Object.assign({id}, M[id]); }
+    for(const k in MV2) delete MV2[k]; for(const k in _WET) delete _WET[k]; for(const id in M){ if(id[0]==='_') continue; MV2[id]=Object.assign({id}, M[id]); }
     let n=0; for(const id in C){ const m=MID[+id]; if(!m) continue; const s=C[id]; if(!m._v1) m._v1={hp:m.hp, atk:m.atk, move:m.move};
       m._v2={hp:s.hp, atk:s.atk, def:s.def, spd:s.spd, mob:s.mob, learnset:s.learnset||[], fixed:!!s.fixed, ancient_set:s.ancient_set||null, god:s.god||null}; n++; }
     V2DATA = n>0 && Object.keys(MV2).length>0; setStatMode(V2DATA);
@@ -205,7 +205,21 @@ function ancGateOk(id, lv){ const mv=MV2[id]; if(!mv) return false; const k=mv.r
 function learnedIds(mid, lv, anc){ const m=MID[+mid]; const L=m&&m._v2; if(!L) return [];
   if(anc && L.ancient_set) return L.ancient_set.filter(id=>MV2[id] && MV2[id].enabled!==false && ancGateOk(id,lv));
   const out=[]; for(const e of L.learnset){ if(!MV2[e.move] || MV2[e.move].enabled===false || out.includes(e.move)) continue; if((L.fixed && !anc) || (L.fixed && anc && ancGateOk(e.move,lv)) || (!L.fixed && (e.lv||1)<=lv)) out.push(e.move); } return out; }
-function movesV2(u){ return dropDominated(slotPick(learnedIds(u.mid, lvOf(u), !!u.anc).map(id=>MV2[id]).filter(mv=>!(mv.noWild && BT.kind==='wild'))), u); }
+function movesV2(u){ return dropDominated(slotPick(learnedIds(u.mid, lvOf(u), !!u.anc).map(id=>MV2[id]).filter(mv=>!(mv.noWild && BT.kind==='wild'))), u).map(mv=>wetOn(u,mv)?wetMv(mv):mv); }
+// ---- 2026-11-01 オーナー決定「光・風・水の技の決まり」 ----
+//  光: 射程内みんな(area)・マップ(map)の攻撃なし / 風: area の攻撃なし(マップは残す) / 水: ふつうのマスでは area・map なし。
+//  水の攻撃の技は 撃つ子が水のマス(海・水辺)から WET.near マス以内の時だけ 射程+WET.rng・1体の技も みんな(area)。
+//  2つのタイプの技は 光・風・水 以外のタイプがあれば そのタイプの決まり(今までどおり)。
+const WET={near:2, rng:2, aiPos:20};
+function nearWetRC(r, c, R){ if(!state||!state.terrain||r==null) return false; R=R==null?WET.near:R; for(let rr=Math.max(0,r-R);rr<=Math.min(NR-1,r+R);rr++) for(let cc=Math.max(0,c-R);cc<=Math.min(NC-1,c+R);cc++){ const t=state.terrain[rr][cc]; if(t==='sea'||t==='water') return true; } return false; }
+function nearWet(u){ return !!u && nearWetRC(u.r,u.c); }
+function wideKind(mv){ if(!mv||mv.category!=='attack'||(mv.target!=='area'&&mv.target!=='map')) return 'ok'; const T=mvTypes(mv); if(T.some(t=>t!=='光'&&t!=='風'&&t!=='水')) return 'ok';
+  if(mv.target==='map' && T.includes('風')) return 'ok'; if(T.includes('水')) return 'wet'; return 'no'; }   // ok=いつでも / wet=水の近くだけ / no=使えない
+function wetOn(u, mv){ return !!mv && mv.category==='attack' && mvTypes(mv).includes('水') && !!u && u.r!=null && nearWet(u); }
+const _WET={};
+function wetMv(mv){ return _WET[mv.id]||(_WET[mv.id]=Object.assign({}, mv, {target:mv.target==='single'?'area':mv.target, range:mv.target==='map'?mv.range:[mv.range[0], mv.range[1]+WET.rng], _wet:true, _base:mv})); }
+function mvNow(u, mv){ if(!mv||!V2ON()) return mv; const b=mv._base||mv; return wetOn(u,b)?wetMv(b):b; }
+function wideBlocked(u, mv){ if(!V2ON()||!isOffense(mv)||mv._wet) return false; const k=wideKind(mv); return k==='no' || (k==='wet' && !nearWet(u)); }
 // 2026-10-28 オーナー「技が多すぎて個性がない」: 技の枠 = はしご(タイプごとに一番上の段だけ)・届く技(リングがあればショット/ランス/ダブルは出さない)・必殺(系統の技があれば相棒の技は出さない)・持ち味
 function slotPick(list){ const top={}; for(const mv of list) if(mv.role==='ladder'){ const k=mv.type; if(!top[k]||(mv.rank||0)>(top[k].rank||0)) top[k]=mv; }
   const ringT=new Set(list.filter(m=>m.role==='ring').map(m=>m.type)); const hasLine=list.some(m=>m.role==='sig_line');
@@ -234,7 +248,7 @@ function usesLeft(u, mv){ let n = mv.mp>0 ? ((u.mp&&u.mp[mv.id]!=null)?u.mp[mv.i
 function usesMax(mv){ return mv.mp>0 ? mv.mp : Infinity; }
 function spendMove(u, mv){ if(state&&state.stats){ const mu=state.stats.mvUse||(state.stats.mvUse={}); const k=(u.anc?'A':u.owner)+':'+mv.id; mu[k]=(mu[k]||0)+1; } if(mv.mp>0){ if(!u.mp) u.mp={}; u.mp[mv.id]=Math.max(0, usesLeft(u,mv)-1); } if(mv.group==='heal') u.hg=Math.max(0,(u.hg!=null?u.hg:V2.HEAL_GROUP)-1); }
 // その技を今使えるか(回数・移動後・行動済み・潜行)。moved を渡すと「その位置まで動いた後なら」で見る(AI)
-function moveUsable(u, mv, moved){ if(!mv || u.acted || u.wait || u.dug>0) return false; if(usesLeft(u,mv)<1) return false; if(isOffense(mv) && firstNoAtk(u)) return false; /* 戦術v3: 先手の1ターン目(TACT.first.mode='noatk') */ const mvd=(moved!=null)?moved:u.moved; if(mv.p===false && mvd && !(T3() && hasType(mon(u),'風'))) return false;   /* 戦術v3: 風は移動前だけの技も動いてから使える */ return true; }
+function moveUsable(u, mv, moved){ if(!mv || u.acted || u.wait || u.dug>0) return false; if(usesLeft(u,mv)<1) return false; if(wideBlocked(u,mv)) return false;   /* 2026-11-01 光・風・水の決まり */ if(isOffense(mv) && firstNoAtk(u)) return false; /* 戦術v3: 先手の1ターン目(TACT.first.mode='noatk') */ const mvd=(moved!=null)?moved:u.moved; if(mv.p===false && mvd && !(T3() && hasType(mon(u),'風'))) return false;   /* 戦術v3: 風は移動前だけの技も動いてから使える */ return true; }
 // ---- 強化・弱体(u.buf / u.dbf)。until = state.ht(半ターンの数)で切れる ----
 function bufOn(b){ return !!b && state && (state.ht||0) < b.until; }
 function statMod(u, k){ let v=0; const b=u.buf&&u.buf[k], d=u.dbf&&u.dbf[k]; if(bufOn(b)) v+=(b.x!=null?b.x:(b.add||0)); if(bufOn(d)) v+=(d.x!=null?d.x:(d.add||0)); return v; }
@@ -246,7 +260,7 @@ function terrRangeUpMv(u, mv){ for(const t of mvTypes(mv)) if(terrRangeUp(u,t)) 
 function moveRange(u, mv){ let a=mv.range[0], b=mv.range[1]; if(isOffense(mv) && mv.target!=='map') b+=terrRangeUpMv(u, mv); if(isOffense(mv) && (u.freeze>0||u.para>0)) b=Math.min(b,1); return [a,b]; }
 // 地形の範囲(雷×海の通電・炎×森の延焼・闇×瘴気)は技のタイプで(攻撃の技だけ・2つのタイプの技は どれかで)
 // 2026-10-30 オーナー: 森×森(つる)・水×海/水辺(波)・雷×水辺(海と同じく電気)・氷×海/水辺(水が凍る=こおりの判定)・地×荒地(地割れ) を足した。'wet'=海と水辺のひと続き
-const SPREAD_T = {雷:'wet', 炎:'forest', 闇:'gloom', 森:'forest', 水:'wet', 氷:'wet', 地:'wasteland'};
+const SPREAD_T = {雷:'wet', 炎:'forest', 闇:'gloom', 森:'forest', 氷:'wet', 地:'wasteland'};   // 2026-11-01 水は 広がる→「水の近くで みんな」(wetMv)に
 const TERR_GRP = {wet:['sea','water']};
 function terrIn(k, t){ const g=TERR_GRP[k]; return g ? g.includes(t) : t===k; }
 function nearTerrK(u, k){ const g=TERR_GRP[k]; if(!g) return nearTerrain(u,k); return g.some(t=>nearTerrain(u,t)); }
@@ -256,7 +270,7 @@ function isAreaTerrainMv(u, mv){ if(!mv || mv.category!=='attack' || mv.target==
 function terrAreaSet(u, mv){ return connectedTerr(u, areaTerrOf(u, mv)||'gloom'); }
 function attackTargetsV2(u, mv){
   if(!mv){ const all=new Set(); for(const m2 of movesV2(u)) if(isOffense(m2) && m2.target!=='map') for(const e of attackTargetsV2(u,m2)) all.add(e); return [...all]; }
-  if(!isOffense(mv) || mv.target==='map' || !moveUsable(u,mv)) return [];
+  mv=mvNow(u,mv); if(!isOffense(mv) || mv.target==='map' || !moveUsable(u,mv)) return [];
   const [a,b]=moveRange(u,mv), res=[]; const thunderSea=(mvHas(mv,'雷') && mv.category==='attack' && nearTerrain(u,'sea')); const sea=thunderSea?connectedSea(u):null;
   for(const e of alive(1-u.owner)){ if(e.dug>0) continue; if(mv.target==='single' && isHidden(e)) continue;
     const d=cheby(e,u); let ok=d>=a && d<=b; if(!ok && thunderSea && sea.has(e.r+','+e.c)) ok=true; if(ok) res.push(e); }
@@ -906,7 +920,7 @@ function hitOne(att, t, mv, area, sure){   // 1体に当てる。戻り値 {dmg,
     if(isFoe){ inflictStatusV2(att,t,mv); const ef=mv.effect||{}; if(ef.debuff){ setBuf(t,'dbf',ef.debuff,true); if(ef.debuff2) setBuf(t,'dbf',ef.debuff2,true); floatText(t.r,t.c,'弱体','#c8b0ff','tag'); } if(ef.knock) knockBack(att,t,ef.knock); } }
   return {dmg, crit, kill, adv, res, isFoe}; }
 function doAttackV2(att, def, mv){
-  if(!mv) mv=defaultMoveV2(att);
+  if(!mv) mv=defaultMoveV2(att); mv=mvNow(att,mv);   // 2026-11-01 水の近くか で 技の当たり方を今の場所に
   if(!mv || !moveUsable(att,mv)){ if(att.owner===0) toast('その技は使えない'); return; }
   if(mv.target==='map') return doMapAttack(att, mv, null);
   const m=mon(att); const terr=isAreaTerrainMv(att,mv); let targets;
@@ -1647,6 +1661,7 @@ function aiBestMove(u){
     if(V2ON() && EVO_CELLS.length && inCenterRow(r)) sc+=25;   // 中央をとりあう
     if(mode==='fuse' && goal && man(r,c,goal.r,goal.c)===1) sc+=160;
     sc+=terrBonusM(mon(u), terrAt(r,c))*120;
+    if(V2ON() && hasType(mon(u),'水') && nearWetRC(r,c)) sc+=WET.aiPos;   // 2026-11-01 水の子は 水の近くに陣取る
     if(T3()){ if(TACT.cover.terr.includes(terrAt(r,c))) sc+=TACT.ai.cover*(u.leader?2:1); sc+=aiFormationScore(u,r,c); }   // 戦術v3: かげ・合体の陣形
     const th=threat(r,c)*(idle?Math.max(0.25,1-idle*0.25):1);
     if(u.dug>0 && u.digWhy==='flee') sc-=th*0.4;   // 2026-10-30: にげるために潜った子は 浮かぶ所も相手から離れる
@@ -4971,9 +4986,9 @@ function moveMenuV2(){ const box=document.createElement('div'); box.className='m
     const b=document.createElement('button'); b.className='bt mvb'+(on?' on':'')+(weak?' wk':''); b.disabled=!ok;
     const hk=mvHitKind(mv); if(hk) b.classList.add('k'+hk);
     const stat = isOffense(mv)&&mv.power>0 ? `威力${mv.power}` : (CAT_LB[mv.category]||'');
-    const rg=rangeStrU(sel,mv); const spr=isOffense(mv)&&isAreaTerrainMv(sel,mv);
+    const rg=rangeStrU(sel,mv); const spr=isOffense(mv)&&isAreaTerrainMv(sel,mv); const wetC=mv._wet?`<span class="mvspr">${icTag('terrain')}${mv.target==='map'?'水の近く':'射程+'+WET.rng}</span>`:(wideKind(mv)==='wet'?`<span class="mvspr">${icTag('terrain')}水の近く</span>`:'');
     b.innerHTML=`<span class="mvt"><span class="mvn">${mvBadges(mv)}${escH(mvName(mv))}${weak?icTag('weak'):(res?icTag('resist'):'')}</span><span class="mvu">${left===Infinity?'∞':left+'/'+mx}</span></span>`
-      +`<span class="mvk">${hk?mvHitChip(mv,hk):''}${spr?`<span class="mvspr">${icTag('terrain')}広がる</span>`:''}</span><span class="mvs">${stat}${rg?`${stat?'・':''}射程${rg}`:''}${mv.p===false?'・移動前':''}</span>`;
+      +`<span class="mvk">${hk?mvHitChip(mv,hk):''}${spr?`<span class="mvspr">${icTag('terrain')}広がる</span>`:''}${wetC}</span><span class="mvs">${stat}${rg?`${stat?'・':''}射程${rg}`:''}${mv.p===false?'・移動前':''}</span>`;
     b.onclick=()=>{ if(on && (mv.target==='map'||noAimMove(mv))){ useSelMoveV2(); return; } selectMoveV2(mv); };
     box.appendChild(b); }
   return box; }
@@ -5188,7 +5203,7 @@ const TACT={ on:true,
   behind:{share:0.45, gaugeMax:1.8, gaugeK:3.0, healX:1.3, evoHeal:0.45, evoAtk:0.2, evoTurns:2, selfHp:0.5},   // 背水・土壇場進化
   healGauge:10,                                           // 回復の技を使った子の闘気
   combo:{k:0.55, minX:1.1, reach:3, gather:2, power:100, mult2:1.15, mult3:1.35, small:{1:0.2, 2:0.1}, gauge:0, cost:{2:35, 3:25}},   // cost=参加する子それぞれが使う闘気(2体の合体/3体の合体)
-  bal:{光:{atk:1,def:1}, 水:{atk:1.45,def:1.12}, 氷:{atk:1.45,def:1.12}, 森:{atk:1.28,def:1.06}, 地:{atk:1.25,def:1.05}, 闇:{atk:1.3,def:1.05}, 竜:{atk:1.2,def:1.03}, 炎:{atk:0.95}, 雷:{atk:1.04}, 風:{atk:1.03}},   // タイプごとの {atk, def} の倍率(バランスのつまみ)。2026-10-30 タイプ相性の作り直しのあと sim/study_types.js(タイプだけの隊)で合わせた。2つのタイプの子は 両方を掛ける。2026-10-31 オーナー「光 弱すぎちゃう？」: 光は atk0.7/def0.88→1/1(体の数の攻撃×0.92も戻した)
+  bal:{光:{atk:1.15,def:1.05}, 水:{atk:1.45,def:1.12}, 氷:{atk:1.45,def:1.12}, 森:{atk:1.45,def:1.08}, 地:{atk:1.25,def:1.05}, 闇:{atk:1.3,def:1.05}, 竜:{atk:1.2,def:1.03}, 炎:{atk:0.95}, 雷:{atk:1.04}, 風:{atk:1.2,def:1.05}},   // 2026-11-01 光・風・水の決まりのあと study_types で 光1/1→1.15/1.05・風1.03→1.2/1.05・森1.28/1.06→1.45/1.08   // タイプごとの {atk, def} の倍率(バランスのつまみ)。2026-10-30 タイプ相性の作り直しのあと sim/study_types.js(タイプだけの隊)で合わせた。2つのタイプの子は 両方を掛ける。2026-10-31 オーナー「光 弱すぎちゃう？」: 光は atk0.7/def0.88→1/1(体の数の攻撃×0.92も戻した)
   ai:{formation:10, cover:8, healLeader:0.75, zoneEvo:600},   // zoneEvo=進化のマスに入る点(2026-10-29 進化の2段構え)
   final:{left:8, step:0.35},
   flag:{on:false},   // 2026-10-29 盤 v4: 旗はなくした(旗を取る決まり・旗のアイコン・説明も)。旧   // 古代テリオン(ボス)の戦いは旗なし   // second='center'|'flanks'=後手が最初から持つ旗 / openTurn=このターンから取れる   // 旗(2026-10-28 オーナー「風の売りは機動力・中間地点にいかに早く到達して進化ポイントを上げるか」): 真ん中の行の3本(中央・左右)。乗ると自分の旗・相手が乗ると取られる・手番の始めに旗1本につき味方全員 闘気+gauge

@@ -3425,7 +3425,7 @@
   },
   "godherak_cross": {
    "name": "オウジャクロス",
-   "type": "光",
+   "type": "風",
    "category": "attack",
    "role": "sig_boss",
    "rank": null,
@@ -3448,7 +3448,8 @@
    "ff": 0.3,
    "range_class": "shape",
    "cost": "few",
-   "yomi": "おうじゃくろす"
+   "yomi": "おうじゃくろす",
+   "note_1101": "光のマップをなくす決まりで 光→風(ゴッドヘラクのもう1つのタイプ)"
   },
   "fsig_2004": {
    "name": "クリムゾンフェザー",
@@ -4708,7 +4709,7 @@
    "category": "attack",
    "role": "sig_fusion",
    "rank": null,
-   "target": "area",
+   "target": "single",
    "range": [
     1,
     2
@@ -4722,10 +4723,11 @@
     "drain": 0.3,
     "knock": 1
    },
-   "desc": "千の目の羽が光る",
+   "desc": "千の目の羽が光る(1体)",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ぴーこっくれい"
+   "yomi": "ぴーこっくれい",
+   "note_1101": "光・風の決まりで 射程内みんな→1体"
   },
   "fsig_2051": {
    "name": "ヤタガラスダイブ",
@@ -5382,6 +5384,34 @@
    "range_class": "far",
    "cost": "few",
    "yomi": "みつどもえ"
+  },
+  "water_tide": {
+   "name": "オーシャンレイジ",
+   "type": "水",
+   "category": "attack",
+   "role": "map",
+   "rank": null,
+   "target": "map",
+   "range": [
+    0,
+    0
+   ],
+   "p": false,
+   "mp": 2,
+   "power": 190,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "shape": {
+    "shape": "around",
+    "r": 2
+   },
+   "ff": 0.3,
+   "desc": "水の近くでだけ 大波でまわり2マスをのみこむ",
+   "range_class": "shape",
+   "cost": "few",
+   "yomi": "おーしゃんれいじ",
+   "note_1101": "2026-11-01 水の近くでだけ使える強いマップの技"
   }
  }
 }

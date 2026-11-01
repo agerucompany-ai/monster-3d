@@ -590,6 +590,11 @@
      "move": "water_ladder4",
      "lv": 34,
      "from": 111
+    },
+    {
+     "move": "water_tide",
+     "lv": 1,
+     "evo": true
     }
    ]
   },
@@ -718,6 +723,11 @@
      "move": "water_ladder4",
      "lv": 34,
      "from": 1012
+    },
+    {
+     "move": "water_tide",
+     "lv": 1,
+     "evo": true
     }
    ]
   },
@@ -846,6 +856,11 @@
      "move": "water_ladder4",
      "lv": 34,
      "from": 1015
+    },
+    {
+     "move": "water_tide",
+     "lv": 1,
+     "evo": true
     }
    ]
   },
@@ -1848,11 +1863,6 @@
      "from": 1029
     },
     {
-     "move": "wind_ring",
-     "lv": 1,
-     "evo": true
-    },
-    {
      "move": "sig_momonga",
      "lv": 1,
      "evo": true
@@ -1976,11 +1986,6 @@
      "from": 1031
     },
     {
-     "move": "wind_ring",
-     "lv": 1,
-     "evo": true
-    },
-    {
      "move": "sig_taka",
      "lv": 1,
      "evo": true
@@ -2102,11 +2107,6 @@
      "move": "wind_combo",
      "lv": 1,
      "from": 1034
-    },
-    {
-     "move": "wind_ring",
-     "lv": 1,
-     "evo": true
     },
     {
      "move": "sig_kabuto",
@@ -3139,11 +3139,6 @@
      "from": 167
     },
     {
-     "move": "light_ring",
-     "lv": 1,
-     "evo": true
-    },
-    {
      "move": "light_revive",
      "lv": 1,
      "evo": true
@@ -3344,11 +3339,6 @@
      "from": 1054
     },
     {
-     "move": "light_ring",
-     "lv": 1,
-     "evo": true
-    },
-    {
      "move": "light_revive",
      "lv": 1,
      "evo": true
@@ -3547,11 +3537,6 @@
      "move": "light_toss",
      "lv": 1,
      "from": 1057
-    },
-    {
-     "move": "light_ring",
-     "lv": 1,
-     "evo": true
     },
     {
      "move": "light_revive",
@@ -4399,10 +4384,6 @@
      "lv": 1
     },
     {
-     "move": "light_ring",
-     "lv": 1
-    },
-    {
      "move": "fsig_2061",
      "lv": 1
     },
@@ -4533,10 +4514,6 @@
      "lv": 1
     },
     {
-     "move": "wind_ring",
-     "lv": 1
-    },
-    {
      "move": "fsig_2006",
      "lv": 1
     },
@@ -4566,10 +4543,6 @@
    "learnset": [
     {
      "move": "dragon_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "wind_ring",
      "lv": 1
     },
     {
@@ -5394,10 +5367,6 @@
      "lv": 1
     },
     {
-     "move": "wind_ring",
-     "lv": 1
-    },
-    {
      "move": "fsig_2031",
      "lv": 1
     }
@@ -5731,10 +5700,6 @@
      "lv": 1
     },
     {
-     "move": "light_ring",
-     "lv": 1
-    },
-    {
      "move": "fsig_2040",
      "lv": 1
     },
@@ -6063,10 +6028,6 @@
      "lv": 1
     },
     {
-     "move": "wind_ring",
-     "lv": 1
-    },
-    {
      "move": "fsig_2049",
      "lv": 1
     }
@@ -6092,10 +6053,6 @@
    "learnset": [
     {
      "move": "wind_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "light_ring",
      "lv": 1
     },
     {
@@ -6168,10 +6125,6 @@
    "learnset": [
     {
      "move": "dragon_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "wind_ring",
      "lv": 1
     },
     {
@@ -6327,10 +6280,6 @@
    "learnset": [
     {
      "move": "ice_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "light_ring",
      "lv": 1
     },
     {
