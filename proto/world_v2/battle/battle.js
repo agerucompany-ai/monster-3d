@@ -210,14 +210,14 @@ function movesV2(u){ return dropDominated(slotPick(learnedIds(u.mid, lvOf(u), !!
 //  光: 射程内みんな(area)・マップ(map)の攻撃なし / 風: area の攻撃なし(マップは残す) / 水: ふつうのマスでは area・map なし。
 //  水の攻撃の技は 撃つ子が水のマス(海・水辺)から WET.near マス以内の時だけ 射程+WET.rng・1体の技も みんな(area)。
 //  2つのタイプの技は 光・風・水 以外のタイプがあれば そのタイプの決まり(今までどおり)。
-const WET={near:2, rng:2, aiPos:20};
+const WET={near:2, rng:2, aiPos:20, areaX:0.5};   // areaX=1体の技が みんなになる時の威力の倍率(みんなの技は1体の技より弱い・2026-11-01 盤に水を足したら水が強すぎた)
 function nearWetRC(r, c, R){ if(!state||!state.terrain||r==null) return false; R=R==null?WET.near:R; for(let rr=Math.max(0,r-R);rr<=Math.min(NR-1,r+R);rr++) for(let cc=Math.max(0,c-R);cc<=Math.min(NC-1,c+R);cc++){ const t=state.terrain[rr][cc]; if(t==='sea'||t==='water') return true; } return false; }
 function nearWet(u){ return !!u && nearWetRC(u.r,u.c); }
 function wideKind(mv){ if(!mv||mv.category!=='attack'||(mv.target!=='area'&&mv.target!=='map')) return 'ok'; const T=mvTypes(mv); if(T.some(t=>t!=='光'&&t!=='風'&&t!=='水')) return 'ok';
   if(mv.target==='map' && T.includes('風')) return 'ok'; if(T.includes('水')) return 'wet'; return 'no'; }   // ok=いつでも / wet=水の近くだけ / no=使えない
 function wetOn(u, mv){ return !!mv && mv.category==='attack' && mvTypes(mv).includes('水') && !!u && u.r!=null && nearWet(u); }
 const _WET={};
-function wetMv(mv){ return _WET[mv.id]||(_WET[mv.id]=Object.assign({}, mv, {target:mv.target==='single'?'area':mv.target, range:mv.target==='map'?mv.range:[mv.range[0], mv.range[1]+WET.rng], _wet:true, _base:mv})); }
+function wetMv(mv){ return _WET[mv.id]||(_WET[mv.id]=Object.assign({}, mv, {target:mv.target==='single'?'area':mv.target, power:mv.target==='single'&&mv.power>0?Math.round(mv.power*WET.areaX):mv.power, range:mv.target==='map'?mv.range:[mv.range[0], mv.range[1]+WET.rng], _wet:true, _base:mv})); }
 function mvNow(u, mv){ if(!mv||!V2ON()) return mv; const b=mv._base||mv; return wetOn(u,b)?wetMv(b):b; }
 function wideBlocked(u, mv){ if(!V2ON()||!isOffense(mv)||mv._wet) return false; const k=wideKind(mv); return k==='no' || (k==='wet' && !nearWet(u)); }
 // 2026-10-28 オーナー「技が多すぎて個性がない」: 技の枠 = はしご(タイプごとに一番上の段だけ)・届く技(リングがあればショット/ランス/ダブルは出さない)・必殺(系統の技があれば相棒の技は出さない)・持ち味
@@ -588,7 +588,7 @@ function genTheme(name){
 function genTerrain(){
   if(BT.grid && BT.grid.length===NR){ return grid((r,c)=>(BT.grid[r]&&BT.grid[r][c])||'plain'); }   // world_v2: 盤をそのまま渡された
   if(BT.mix){ return (T3()&&TACT.board.gen!==false) ? genTactical(BT.mix, BT.place||{}) : genMix(BT.mix, BT.place||{}); }          // world_v2: 出会った場所の地形の割合(戦術v3: 鏡うつしで地形をまぜる)
-  if(campTheme && CAMP_THEMES[campTheme]){ if(T3()&&TACT.board.gen!==false){ const mx=themeMix(campTheme); if(mx) return genTactical(mx, {river:CAMP_THEMES[campTheme].river?'sea':null}); } const t=genTheme(campTheme); if(t) return t; }
+  if(campTheme && CAMP_THEMES[campTheme]){ if(T3()&&TACT.board.gen!==false){ const mx=themeMix(campTheme); if(mx) return genTactical(mx, {river:CAMP_THEMES[campTheme].river?'sea':null, indoor:INDOOR_THEMES.includes(campTheme), look:campTheme, sp:!!(BT.place&&BT.place.sp)}); } const t=genTheme(campTheme); if(t) return t; }
   if(mapType==='volcano') return genVolcano();
   // 通常：川(海)が中央を蛇行して横断＋森/荒地の塊
   const t = grid(()=> 'plain');
@@ -5203,7 +5203,7 @@ const TACT={ on:true,
   behind:{share:0.45, gaugeMax:1.8, gaugeK:3.0, healX:1.3, evoHeal:0.45, evoAtk:0.2, evoTurns:2, selfHp:0.5},   // 背水・土壇場進化
   healGauge:10,                                           // 回復の技を使った子の闘気
   combo:{k:0.55, minX:1.1, reach:3, gather:2, power:100, mult2:1.15, mult3:1.35, small:{1:0.2, 2:0.1}, gauge:0, cost:{2:35, 3:25}},   // cost=参加する子それぞれが使う闘気(2体の合体/3体の合体)
-  bal:{光:{atk:1.15,def:1.05}, 水:{atk:1.45,def:1.12}, 氷:{atk:1.45,def:1.12}, 森:{atk:1.45,def:1.08}, 地:{atk:1.25,def:1.05}, 闇:{atk:1.3,def:1.05}, 竜:{atk:1.2,def:1.03}, 炎:{atk:0.95}, 雷:{atk:1.04}, 風:{atk:1.2,def:1.05}},   // 2026-11-01 光・風・水の決まりのあと study_types で 光1/1→1.15/1.05・風1.03→1.2/1.05・森1.28/1.06→1.45/1.08   // タイプごとの {atk, def} の倍率(バランスのつまみ)。2026-10-30 タイプ相性の作り直しのあと sim/study_types.js(タイプだけの隊)で合わせた。2つのタイプの子は 両方を掛ける。2026-10-31 オーナー「光 弱すぎちゃう？」: 光は atk0.7/def0.88→1/1(体の数の攻撃×0.92も戻した)
+  bal:{光:{atk:1.15,def:1.05}, 水:{atk:0.8,def:0.92}, 氷:{atk:1.45,def:1.12}, 森:{atk:1.45,def:1.08}, 地:{atk:1.25,def:1.05}, 闇:{atk:1.3,def:1.05}, 竜:{atk:1.2,def:1.03}, 炎:{atk:0.95}, 雷:{atk:1.25}, 風:{atk:1.2,def:1.05}},   // 2026-11-01 盤に水を足したあと 水1.45/1.12→0.8/0.92・雷1.04→1.25(study_types 海の盤・水の少ない盤・ぜんぶ)。2026-11-01 光・風・水の決まりのあと study_types で 光1/1→1.15/1.05・風1.03→1.2/1.05・森1.28/1.06→1.45/1.08   // タイプごとの {atk, def} の倍率(バランスのつまみ)。2026-10-30 タイプ相性の作り直しのあと sim/study_types.js(タイプだけの隊)で合わせた。2つのタイプの子は 両方を掛ける。2026-10-31 オーナー「光 弱すぎちゃう？」: 光は atk0.7/def0.88→1/1(体の数の攻撃×0.92も戻した)
   ai:{formation:10, cover:8, healLeader:0.75, zoneEvo:600},   // zoneEvo=進化のマスに入る点(2026-10-29 進化の2段構え)
   final:{left:8, step:0.35},
   flag:{on:false},   // 2026-10-29 盤 v4: 旗はなくした(旗を取る決まり・旗のアイコン・説明も)。旧   // 古代テリオン(ボス)の戦いは旗なし   // second='center'|'flanks'=後手が最初から持つ旗 / openTurn=このターンから取れる   // 旗(2026-10-28 オーナー「風の売りは機動力・中間地点にいかに早く到達して進化ポイントを上げるか」): 真ん中の行の3本(中央・左右)。乗ると自分の旗・相手が乗ると取られる・手番の始めに旗1本につき味方全員 闘気+gauge
@@ -5226,6 +5226,7 @@ function T3(){ return TACT.on && V2ON(); }
 const T3_FALLBACK={plain:['forest','ruins','wasteland','water'], forest:['water','plain','ruins'], wasteland:['ruins','plain','forest'], ruins:['wasteland','plain','forest'], snow:['forest','wasteland','plain'], gloom:['ruins','wasteland','forest'], water:['plain','forest'], sea:['plain','wasteland']};
 function genTactical(mix, o){
   o=o||{}; mix=normMix(mix);
+  if(!o.sp && !o.coast && (mix.water||0)>WETMIX.cap){ mix=Object.assign({},mix,{water:WETMIX.cap}); mix=normMix(mix); }   // 2026-11-01 水は多くても cap まで(専用の盤はそのまま)
   const R=(a,b)=>a+((Math.random()*(b-a+1))|0), pick=a=>a[(Math.random()*a.length)|0];
   const keys=Object.keys(mix).sort((a,b)=>mix[b]-mix[a]);
   const isLand=k=>k!=='sea'&&k!=='water'&&k!=='lava';
@@ -5234,8 +5235,9 @@ function genTactical(mix, o){
   const coast=!!(o.coast && mix.sea);
   const mirrorPt=!coast;   // 海岸の盤は上下の折り返し(片側の縁が海のまま)・ほかは点対称(回復の泉と同じ)
   // 1) 海岸
-  if(coast){ const left=Math.random()<0.5; const w=Math.max(1,Math.min(NC<=7?1:2,Math.round(mix.sea*NC*0.8)));
-    for(let r=0;r<=H;r++){ const ww=Math.max(1,Math.min(NC-4,w+(r%3===0?R(-1,1):0))); for(let i=0;i<ww;i++){ const c=left?i:NC-1-i; t[r][c]='sea'; lock.add(K(r,c)); } } }
+  BT.t3wet=null; const halfSea=coast && !o.sp && o.half>0 && Math.random()<o.half; BT.t3half=halfSea;   // 2026-11-01 海辺: 半分海・半分陸(上下の折り返しなので 両陣とも同じ側が海)
+  if(coast){ const left=Math.random()<0.5; const w=halfSea?Math.floor(NC/2):Math.max(1,Math.min(NC<=7?1:2,Math.round(mix.sea*NC*0.8)));
+    for(let r=0;r<=H;r++){ const ww=halfSea?Math.max(3,Math.min(NC-4,w+(r%4===1?R(-1,0):0))):Math.max(1,Math.min(NC-4,w+(r%3===0?R(-1,1):0))); for(let i=0;i<ww;i++){ const c=left?i:NC-1-i; t[r][c]='sea'; lock.add(K(r,c)); } } }
   // 2) 陣地2つ(相手の陣の奥=上。下へは折り返しで写る): その場所の地形から、得意なタイプのちがう2種類
   const cand=keys.filter(k=>isLand(k)&&k!==base).concat(mix.water?['water']:[]).concat((T3_FALLBACK[base]||['forest','ruins'])).filter((k,i,a)=>a.indexOf(k)===i && k!==base);
   const wpick=(list)=>{ const ws=list.map(k=>(mix[k]?2+mix[k]*4:1)); let x=Math.random()*ws.reduce((a,b)=>a+b,0); for(let i=0;i<list.length;i++){ x-=ws[i]; if(x<=0) return list[i]; } return list[0]; };   // 盤にある地形ほど選ばれやすい(毎回同じ地形の陣地にしない)
@@ -5270,11 +5272,37 @@ function genTactical(mix, o){
   // 5) 写す(点対称 か 上下の折り返し)。真ん中の行は左右の鏡
   for(let r=0;r<H;r++) for(let c=0;c<NC;c++){ if(mirrorPt) t[NR-1-r][NC-1-c]=t[r][c]; else t[NR-1-r][c]=t[r][c]; }
   if(!coast) for(let c=0;c<CC;c++) t[H][NC-1-c]=t[H][c];
+  // 5b) 2026-11-01 オーナー「単一の地形は面白くない・普通のマップでも川・エジプトはオアシス」: 水が少ない盤に 川・湖・オアシスを足す(屋内・専用の盤は足さない)
+  if(!o.indoor && !o.sp) addWet(t, mix, o, mirrorPt, lock, base);
   // 6) 足場: 中央のしるし(1マス・川の橋にもなる)
   const foot=isLand(base)?base:'plain'; const evoFoot=(mix.ruins||0)>=0.3?'ruins':foot;
   t[MIDR][CC]=evoFoot;
   BT.base=foot;
   return t; }
+// ---- 2026-11-01 盤に水を足す(川・湖・オアシス)。水(海+水辺)が盤の WETMIX.min 未満なら、鏡うつしのまま足して min〜max に ----
+const WETMIX={min:0.08, max:0.15, cap:0.15};
+const INDOOR_THEMES=['castle','gloom','underworld'];   // 屋根のある所(石の迷宮・瘴気の冥室・冥界): 足さない
+function addWet(t, mix, o, mirrorPt, lock, base){ const H=MIDR, N=NR*NC; const K=(r,c)=>r+','+c; const R=(a,b)=>a+((Math.random()*(b-a+1))|0);
+  const wetN=()=>{ let n=0; for(const row of t) for(const v of row) if(v==='sea'||v==='water') n++; return n; };
+  BT.t3wet=null; if(wetN()>=WETMIX.min*N) return;
+  const mir=(r,c)=>mirrorPt?[NR-1-r,NC-1-c]:[NR-1-r,c];
+  const back=START_ROWS[1].length?Math.max(...START_ROWS[1]):2;   // 敵の陣の行(ここには足さない=並べる所を残す)
+  const okC=(r,c)=>r>back && r<NR-1-back && c>=0 && c<NC && !(r===MIDR&&c===CC) && !lock.has(K(r,c));
+  const set=(r,c,k)=>{ if(!okC(r,c)) return false; if(k==='water' && wetN()+2>WETMIX.max*N) return false; if(r===H){ t[r][c]=k; t[r][NC-1-c]=k; return true; } const [r2,c2]=mir(r,c); t[r][c]=k; t[r2][c2]=k; return true; };
+  const look=String(o.look||''); const desert=look==='desert';   // 砂漠・王家の谷・黄金の砂漠
+  const snow=(mix.snow||0)>0 || look==='snow';
+  let kind=desert?'oasis':(snow?(Math.random()<0.5?'lake':'river'):(Math.random()<0.65?'river':'lake'));
+  const target=Math.round(N*(WETMIX.min+Math.random()*(WETMIX.max-WETMIX.min)*0.5));
+  if(kind==='river'){   // 盤を横切る水辺の帯(左半分の上を作って点対称で写す=右半分の下へ続く。真ん中の十字のマスが渡り場)
+    let r=H-R(0,1); for(let c=0;c<CC;c++){ set(r,c,'water'); const nr=Math.max(H-2,Math.min(H,r+R(-1,1))); if(nr!==r){ set(nr,c,'water'); r=nr; } }
+    set(H,CC-1,'water'); }
+  else if(kind==='lake'){ const r0=R(back+1,H-2), c0=R(1,NC-3); for(const [dr,dc] of [[0,0],[0,1],[1,0],[1,1]]) set(r0+dr,c0+dc,'water'); }
+  else {   // オアシス: 水のかたまり(2×2)＋まわりに森/草の小さな島
+    const r0=R(back+1,H-2), c0=R(1,NC-3); const cells=[[0,0],[0,1],[1,0],[1,1]]; for(const [dr,dc] of cells) set(r0+dr,c0+dc,'water');
+    let nf=0; for(let dr=-1;dr<=2;dr++) for(let dc=-1;dc<=2;dc++){ if(cells.some(([a,b])=>a===dr&&b===dc)) continue; const r=r0+dr, c=c0+dc; if(r<0||c<0||r>=NR||c>=NC||t[r][c]==='water'||t[r][c]==='sea') continue; if(Math.random()<0.55) set(r,c,nf++<3?'forest':'plain'); } }
+  // まだ少なければ 小さな池(2マス)を
+  let guard=0; while(wetN()<target && guard++<12){ const r=R(back+1,H), c=R(0,NC-1); if(t[r][c]==='water'||t[r][c]==='sea') continue; if(set(r,c,'water')){ const c2=c+(c<NC-1?1:-1); if(wetN()<target) set(r,c2,'water'); } }
+  BT.t3wet=kind; }
 // 本番の章テーマ(castle/mountain/coast…)は、作った盤の割合から
 function themeMix(name){ const t=genTheme(name); if(!t) return null; const f={}; for(const row of t) for(const v of row) f[v]=(f[v]||0)+1; return f; }
 // ---- 歩数・かげ ----
@@ -5592,7 +5620,7 @@ const PLACES={
   olive:   {jp:'オリーブ畑', mix:{plain:0.55, forest:0.33, wasteland:0.12},            look:'olive'},
   pasture: {jp:'牧草地',     mix:{plain:0.78, forest:0.10, wasteland:0.12},            look:'olive'},
   stream:  {jp:'小川',       mix:{plain:0.46, water:0.28, forest:0.16, wasteland:0.10}, river:'water', look:'olive'},
-  seaside: {jp:'海辺',       mix:{sea:0.34, plain:0.36, wasteland:0.30},               coast:true, look:'aegean'},
+  seaside: {jp:'海辺',       mix:{sea:0.34, plain:0.36, wasteland:0.30},               coast:true, half:0.5, look:'aegean'},   // half=半分海・半分陸の盤になる割合(2026-11-01)
   forest:  {jp:'森',         mix:{forest:0.58, plain:0.30, water:0.12},                look:'grove'},
   ruins:   {jp:'遺跡',       mix:{ruins:0.50, plain:0.32, wasteland:0.18},             look:'agora'},
   stadium: {jp:'競技場の跡', mix:{ruins:0.42, plain:0.38, wasteland:0.12, forest:0.08}, look:'agora'},
@@ -5602,12 +5630,14 @@ const PLACES={
   snowfield: {jp:'雪原',     mix:{plain:0.42, snow:0.28, wasteland:0.18, forest:0.12},  look:'snow'},
   snowforest:{jp:'雪の森',   mix:{forest:0.45, snow:0.25, plain:0.30},                 look:'snow'},
   snowrock:  {jp:'雪の岩場', mix:{wasteland:0.50, snow:0.24, plain:0.26},              look:'snow'},
-  snowcoast: {jp:'氷の海辺', mix:{sea:0.32, snow:0.24, plain:0.22, wasteland:0.22},    coast:true, look:'snow'},
+  snowcoast: {jp:'氷の海辺', mix:{sea:0.32, snow:0.24, plain:0.22, wasteland:0.22},    coast:true, half:0.5, look:'snow'},
   volcanic:  {jp:'火山',     mix:{wasteland:0.55, lava:0.15, plain:0.30},              look:'volcano'},
-  tomb:      {jp:'墓所',     mix:{ruins:0.50, gloom:0.20, wasteland:0.15, plain:0.15}, look:'gloom'},
+  tomb:      {jp:'墓所',     mix:{ruins:0.50, gloom:0.20, wasteland:0.15, plain:0.15}, indoor:true, look:'gloom'},
   kingsvalley:{jp:'王家の谷', mix:{wasteland:0.58, ruins:0.16, gloom:0.12, plain:0.14}, look:'desert'},
   nightwood: {jp:'夜の森',   mix:{forest:0.50, gloom:0.18, plain:0.32},                look:'grove'},
-  arkcore:   {jp:'アークの中心', mix:{ruins:0.45, gloom:0.22, wasteland:0.18, plain:0.15}, look:'gloom'},
+  arkcore:   {jp:'アークの中心', mix:{ruins:0.45, gloom:0.22, wasteland:0.18, plain:0.15}, indoor:true, look:'gloom'},
+  maze:      {jp:'迷宮',     mix:{ruins:0.50, plain:0.32, wasteland:0.18},             indoor:true, look:'agora'},   // 2026-11-01 迷宮・地下(川・湖を足さない)
+  undercroft:{jp:'地下の回廊', mix:{ruins:0.42, plain:0.38, wasteland:0.12, forest:0.08}, indoor:true, look:'agora'},
 };
 const TERR_ALL=['plain','forest','wasteland','sea','water','ruins','lava','snow','gloom'];
 function normMix(m){ const o={}; let s=0; for(const k in m){ if(TERR_ALL.includes(k) && m[k]>0){ o[k]=+m[k]; s+=o[k]; } } if(!s) return {plain:1}; for(const k in o) o[k]/=s; return o; }
@@ -6053,7 +6083,7 @@ function startBattle(opts){
     BT.items=Object.assign({heal:0}, pl.items||{}); STORY.items=BT.items; BT.fed={}; BT.guide={}; BT.guideLog=[];   // 2026-10-30 店の肉: BT.fed[enemyParty の idx]=足す確率
     BT.fusionOn=!!opts.fusionUnlocked; BT.tripleOn=!!opts.tripleUnlocked; BT.tune=Object.assign({}, TUNE, opts.tune||{});
     BT.diff=Object.assign({}, KD.ai, (kind==='wild'&&(BT.solo?BT.rules.ai:WILD_STAGE[BT.startStage]))||{}, en.ai||{}); BT.aiSkill=[ (pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1 ];
-    BT.place=resolvePlace(opts.terrainTheme, opts.backdrop);
+    BT.place=resolvePlace(opts.terrainTheme, opts.backdrop); BT.place.sp=!!opts.special;
     BT.budget=+opts.budget||(BT.anc?ancientBudget():baseBudget());   // 2段目/3段目から出す地方は出せる段の合計も×段(=出せる体の数は変えない)。古代テリオン戦は全パーティ
     if(+opts.maxTurn>0){ MAX_TURN=Math.round(+opts.maxTurn); BT.rules=Object.assign({}, BT.rules, {maxTurn:MAX_TURN}); }   // 2026-10-27 CPU対戦(vs.html)のターン数。省略=今まで通り
     BT.headless=IS_NODE||!!opts.headless; ancClearMarks();
@@ -6446,7 +6476,7 @@ function simulate(opts){
   BT.items={heal:0}; STORY.items=BT.items;
   BT.fusionOn=!!opts.fusionUnlocked; BT.tripleOn=!!opts.tripleUnlocked; BT.tune=Object.assign({}, TUNE, opts.tune||{});
   BT.diff=Object.assign({}, KD.ai, (kind==='wild'&&(BT.solo?BT.rules.ai:WILD_STAGE[BT.startStage]))||{}, en.ai||{}); BT.aiSkill=[(pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1];
-  BT.place=resolvePlace(opts.terrainTheme, opts.backdrop); BT.budget=+opts.budget||(BT.anc?ancientBudget():baseBudget());
+  BT.place=resolvePlace(opts.terrainTheme, opts.backdrop); BT.place.sp=!!opts.special; BT.budget=+opts.budget||(BT.anc?ancientBudget():baseBudget());
   applyPlace(); state=newBattleState(); uidSeq=1; spInit(opts.special);
   spawnEnemy(); ancientEscort(); spPlace(); preparePlaceList(); autoPlace(); state.phase='battle'; ensureLeaders(); firstSetup(); spReady(); setEvoArea(V2ON()||evoNeededNow(), false); state.turn=1; state.cur=0;
   const hp=o=>alive(o).reduce((s,u)=>s+Math.max(0,u.hp),0);

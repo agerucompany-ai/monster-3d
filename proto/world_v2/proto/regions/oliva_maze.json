@@ -350,7 +350,7 @@
  ],
  "battle": {
   "default": {
-   "terrainTheme": "ruins",
+   "terrainTheme": "maze",
    "backdrop": "agora"
   }
  },

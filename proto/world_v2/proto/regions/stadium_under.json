@@ -369,7 +369,7 @@
  ],
  "battle": {
   "default": {
-   "terrainTheme": "stadium",
+   "terrainTheme": "undercroft",
    "backdrop": "agora"
   }
  },
