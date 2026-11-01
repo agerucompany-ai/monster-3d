@@ -5412,6 +5412,36 @@
    "cost": "few",
    "yomi": "おーしゃんれいじ",
    "note_1101": "2026-11-01 水の近くでだけ使える強いマップの技"
+  },
+  "forest_sun": {
+   "name": "サンリーフバスター",
+   "type": "森",
+   "category": "attack",
+   "role": "map",
+   "rank": null,
+   "target": "map",
+   "range": [
+    0,
+    0
+   ],
+   "p": false,
+   "mp": 2,
+   "power": 127,
+   "hit": 100,
+   "crit": 0,
+   "effect": {},
+   "shape": {
+    "shape": "line",
+    "len": 5
+   },
+   "ff": 0.3,
+   "desc": "えりで太陽の光を集めて まっすぐ5マスに光線を撃つ(屋内では使えない)",
+   "range_class": "shape",
+   "cost": "few",
+   "yomi": "さんりーふばすたー",
+   "sun": true,
+   "big": true,
+   "note_1101": "2026-11-01 オーナー決定の新しい技: 森のマップの技・屋内の盤では使えない(battle.js sunBlocked)・威力は森の3段目の系統の技と同じ127"
   }
  }
 }

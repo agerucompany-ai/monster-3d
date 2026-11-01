@@ -221,6 +221,10 @@ const _WET={};
 function wetMv(mv){ return _WET[mv.id]||(_WET[mv.id]=Object.assign({}, mv, {target:mv.target==='single'?'area':mv.target, power:mv.target==='single'&&mv.power>0?Math.round(mv.power*WET.areaX):mv.power, range:mv.target==='map'?mv.range:[mv.range[0], mv.range[1]+WET.rng], _wet:true, _base:mv})); }
 function mvNow(u, mv){ if(!mv||!V2ON()) return mv; const b=mv._base||mv; return wetOn(u,b)?wetMv(b):b; }
 function wideBlocked(u, mv){ if(!V2ON()||!isOffense(mv)||mv._wet) return false; const k=wideKind(mv); return k==='no' || (k==='wet' && !nearWet(u)); }
+// 2026-11-01 オーナー決定「サンリーフバスター」: 太陽の光を集める技(moves.json の sun:true)は 屋内の盤(屋根のある所)では使えない(札は暗く「屋内」・AI も使わない)
+//   屋内＝PLACES の indoor:true(墓所・アークの中心・迷宮・地下の回廊)と INDOOR_THEMES(石の迷宮 castle・瘴気の冥室・冥界)
+function indoorBoard(){ const P=BT.place; if(P && P.indoor) return true; return !!(campTheme && INDOOR_THEMES.includes(campTheme)); }
+function sunBlocked(mv){ return !!mv && !!(mv.sun || (mv._base && mv._base.sun)) && indoorBoard(); }
 // 2026-10-28 オーナー「技が多すぎて個性がない」: 技の枠 = はしご(タイプごとに一番上の段だけ)・届く技(リングがあればショット/ランス/ダブルは出さない)・必殺(系統の技があれば相棒の技は出さない)・持ち味
 function slotPick(list){ const top={}; for(const mv of list) if(mv.role==='ladder'){ const k=mv.type; if(!top[k]||(mv.rank||0)>(top[k].rank||0)) top[k]=mv; }
   const ringT=new Set(list.filter(m=>m.role==='ring').map(m=>m.type)); const hasLine=list.some(m=>m.role==='sig_line');
@@ -249,7 +253,7 @@ function usesLeft(u, mv){ let n = mv.mp>0 ? ((u.mp&&u.mp[mv.id]!=null)?u.mp[mv.i
 function usesMax(mv){ return mv.mp>0 ? mv.mp : Infinity; }
 function spendMove(u, mv){ if(state&&state.stats){ const mu=state.stats.mvUse||(state.stats.mvUse={}); const k=(u.anc?'A':u.owner)+':'+mv.id; mu[k]=(mu[k]||0)+1; } if(mv.mp>0){ if(!u.mp) u.mp={}; u.mp[mv.id]=Math.max(0, usesLeft(u,mv)-1); } if(mv.group==='heal') u.hg=Math.max(0,(u.hg!=null?u.hg:V2.HEAL_GROUP)-1); }
 // その技を今使えるか(回数・移動後・行動済み・潜行)。moved を渡すと「その位置まで動いた後なら」で見る(AI)
-function moveUsable(u, mv, moved){ if(!mv || u.acted || u.wait || u.dug>0) return false; if(usesLeft(u,mv)<1) return false; if(wideBlocked(u,mv)) return false;   /* 2026-11-01 光・風・水の決まり */ if(isOffense(mv) && firstNoAtk(u)) return false; /* 戦術v3: 先手の1ターン目(TACT.first.mode='noatk') */ const mvd=(moved!=null)?moved:u.moved; if(mv.p===false && mvd && !(T3() && hasType(mon(u),'風'))) return false;   /* 戦術v3: 風は移動前だけの技も動いてから使える */ return true; }
+function moveUsable(u, mv, moved){ if(!mv || u.acted || u.wait || u.dug>0) return false; if(usesLeft(u,mv)<1) return false; if(wideBlocked(u,mv)) return false;   /* 2026-11-01 光・風・水の決まり */ if(sunBlocked(mv)) return false;   /* 2026-11-01 太陽の技は屋内で使えない */ if(isOffense(mv) && firstNoAtk(u)) return false; /* 戦術v3: 先手の1ターン目(TACT.first.mode='noatk') */ const mvd=(moved!=null)?moved:u.moved; if(mv.p===false && mvd && !(T3() && hasType(mon(u),'風'))) return false;   /* 戦術v3: 風は移動前だけの技も動いてから使える */ return true; }
 // ---- 強化・弱体(u.buf / u.dbf)。until = state.ht(半ターンの数)で切れる ----
 function bufOn(b){ return !!b && state && (state.ht||0) < b.until; }
 function statMod(u, k){ let v=0; const b=u.buf&&u.buf[k], d=u.dbf&&u.dbf[k]; if(bufOn(b)) v+=(b.x!=null?b.x:(b.add||0)); if(bufOn(d)) v+=(d.x!=null?d.x:(d.add||0)); return v; }
@@ -3777,6 +3781,32 @@ function tfxAttack(mode, ty, a, ar,ac, cells, mapAim, mapCells, onHit, lungeMs){
     return last; }
   const S={left:cap}; const x=cells[0]; if(!x) return 0; const dl=mode==='melee'?Math.max(0,lungeMs*0.55):0;
   if(dl>0){ tfxAt(dl, ()=>one(x,a,S)); return dl+400; } one(x,a,S); return 650; }
+// ---- 2026-11-01 サンリーフバスター(森のマップ・まっすぐ5): えり(頭の上)に 太陽の金の光と葉が集まる → 太い緑と金の光線が一直線に走る(森の色＋太陽の金) ----
+function tfxSun(a, ar,ac, cells, mapAim, mapCells, onHit, auid){ const F=TFX_T['森'], Lt=TFX_T['光']; const cap=TFX.shotCap*TFX.q; const R=_R(a);
+  const at=(r,c,h)=>{ const w=cell2world(r,c); return {x:w.x, y:cellH(r,c)+h, z:w.z}; };
+  const sp0=sprites[auid]; const hh=(sp0&&sp0.m3d&&sp0.m3d.h)?sp0.m3d.h:1.1; const H=at(ar,ac,hh*0.88);   // えりのあたり
+  const G=640, S0={left:cap*0.3}, GOLD=[0xfffbe0,0xffe060,0xffb020], LEAF=[0x5cb82e,0x8fd34a,0x3f9a2a,0xb6e070];
+  // 1) 集める: まわりから 金の光の粒と葉が えりへ吸いこまれ、えりの光がふくらむ
+  tfxEm({dur:G-90, rate:110+80*a, fn:()=>{ const an=Math.random()*6.28, rr=_rn(1.1,1.9)*R; const px=H.x+Math.cos(an)*rr, py=H.y+_rn(-0.5,0.9)*R, pz=H.z+Math.sin(an)*rr; const lf=_rn(0.3,0.45); const lv=Math.random()<0.3;
+      tp({x:px,y:py,z:pz,vx:(H.x-px)/lf,vy:(H.y-py)/lf,vz:(H.z-pz)/lf,life:lf*1000,s0:(lv?0.17:0.15)*R,s1:0.05,k:lv?TFXK.leaf:TFXK.star,c:lv?_pick(LEAF):GOLD,sp:lv?_rn(-8,8):0},S0); },
+    tick:(e,k)=>{ tp({x:H.x,y:H.y,z:H.z,life:70,s0:(0.25+0.6*k)*R,s1:(0.22+0.55*k)*R,k:TFXK.glow,c:k<0.45?0xd8ff90:0xfff0a0,a:0.3+0.35*k}); }});
+  tfxAt(G-120, ()=>{ tp({x:H.x,y:H.y,z:H.z,life:360,s0:0.5*R,s1:2.2*R,k:TFXK.ring,c:0xfff0a0,a:0.85},S0); });
+  // 2) 光線: えり → 線のいちばん先のマス(太い緑の光＋金の芯＋白い芯)
+  const list=(mapCells&&mapCells.length?mapCells.map(p=>Array.isArray(p)?{r:p[0],c:p[1]}:{r:p.r,c:p.c}):cells.map(x=>({r:x.r,c:x.c})));
+  for(const x of cells) if(!list.some(p=>p.r===x.r&&p.c===x.c)) list.push({r:x.r,c:x.c});
+  const dist=p=>Math.max(Math.abs(p.r-ar),Math.abs(p.c-ac)); list.sort((p,q)=>dist(p)-dist(q)); const end=list[list.length-1]||{r:ar,c:ac};
+  const E=at(end.r,end.c,0.45); const dx=E.x-H.x, dz=E.z-H.z, dd=Math.hypot(dx,dz)||1; const B={x:E.x+dx/dd*0.45, y:E.y, z:E.z+dz/dd*0.45};
+  const BD=760+120*a;
+  tfxAt(G, ()=>{ beam3(H,B,0x52d838,{rad:0.26+0.08*a, dur:BD}); beam3(H,B,0xffe070,{rad:0.11+0.04*a, dur:BD*0.9}); addShake(0.03*a); });
+  tfxEm({delay:G, dur:BD*0.8, rate:1, fn:()=>{}, tick:(e,k)=>{ for(let i=1;i<=6;i++){ const q=i/6; tp({x:H.x+(B.x-H.x)*q,y:H.y+(B.y-H.y)*q,z:H.z+(B.z-H.z)*q,life:70,s0:(0.5+0.2*Math.sin(k*30+i))*R,s1:0.45*R,k:TFXK.glow,c:i%2?0x7cf050:0xffe680,a:0.32*(1-k*0.6)}); } }});   // 光線のまわりの緑と金の光
+  tfxEm({delay:G, dur:BD*0.85, rate:150+110*a, fn:()=>{ const k=Math.random(); const lv=Math.random()<0.35; tp({x:H.x+(B.x-H.x)*k+_rn(-0.2,0.2)*R,y:H.y+(B.y-H.y)*k+_rn(-0.2,0.2)*R,z:H.z+(B.z-H.z)*k+_rn(-0.2,0.2)*R,vx:_rn(-0.4,0.4),vy:_rn(0,0.8),vz:_rn(-0.4,0.4),life:_rn(350,600),s0:(lv?0.16:0.13)*R,s1:0.04,k:lv?TFXK.leaf:TFXK.star,c:lv?_pick(LEAF):GOLD,sp:lv?_rn(-9,9):0},{left:cap*0.25}); }});
+  cellGlow3(list, 0x9ee060, G+BD+500);
+  // 3) 当たり: 近い順に(光線が走る速さで)・子のいるマスは 森の当たり(つる・葉)＋光のきらめき
+  const unitAt={}; for(const x of cells) unitAt[x.r+','+x.c]=x; const nU=Math.max(1,cells.filter(x=>x.uid!=null).length); let last=G;
+  list.forEach(p=>{ const d=dist(p); const dl=G+40+d*55; const u=unitAt[p.r+','+p.c]; const uu=u&&u.uid!=null?u:null; const P=at(p.r,p.c,0);
+    const S={left:cap*(uu?0.45/nU:0.4/list.length)+(uu?40:14)};
+    tfxAt(dl, ()=>{ if(uu){ F.hit(P,a*0.8,S); Lt.hit(P,a*0.45,S,{small:true}); } else { _tfxLite=TFX.q<0.6; Lt.rain(P,a*0.5,S,null); _tfxLite=false; } if(u) onHit(u); }); last=Math.max(last, dl+300); });
+  return last; }
 // ---- 大技(系統・融合・ボスの技・進化/融合のあとの必殺技): カットインの代わりに盤の上で ----
 // 撃つ子の足元に魔法陣・光の柱・集まる光・盤が少し暗くなる・技の名前の帯(画面の上の方・左右に分けない)。約0.8秒
 function bigIntro(att, move, ty, fz, then){ if(BT.headless){ then(); return; } fx2InjectCss(); const r=att.r, c=att.c, w=cell2world(r,c), y=cellH(r,c); const col=TYPE_HEX[ty]||0xffffff; const sp=SPD(); const T=820/sp;
@@ -3883,7 +3913,8 @@ function attackFx(att, targets, def, move){ if(BT.headless) return;
       if(--seq.left<=0) setTimeout(finish, 120); };
     let last=0;
     if(spread && spread.cells.length) spreadFx(spread, ar, ac, cells, amt, useT, sp);   // 2026-10-30: 地形で広がったマス全部に そのタイプの演出
-    if(useT) last=tfxAttack(mode, tyFx, amt, ar, ac, cells, mapAim, mapCells, onHit, lungeMs);
+    if(useT && move && move.sun && mode==='map') last=tfxSun(amt, ar, ac, cells, mapAim, mapCells, onHit, auid);   // 2026-11-01 サンリーフバスター
+    else if(useT) last=tfxAttack(mode, tyFx, amt, ar, ac, cells, mapAim, mapCells, onHit, lungeMs);
     else if(mode==='map') last=map3(ty, mapAim, mapCells, cells, tier, S, onHit);
     else if(mode==='area') last=area3(ty, ar, ac, cells, tier, S, onHit);
     else if(mode==='melee' && t0) last=melee3(ty, ar, ac, t0.r, t0.c, tier, S, ()=>onHit(t0), lungeMs);
@@ -4987,7 +5018,7 @@ function moveMenuV2(){ const box=document.createElement('div'); box.className='m
     const b=document.createElement('button'); b.className='bt mvb'+(on?' on':'')+(weak?' wk':''); b.disabled=!ok;
     const hk=mvHitKind(mv); if(hk) b.classList.add('k'+hk);
     const stat = isOffense(mv)&&mv.power>0 ? `威力${mv.power}` : (CAT_LB[mv.category]||'');
-    const rg=rangeStrU(sel,mv); const spr=isOffense(mv)&&isAreaTerrainMv(sel,mv); const wetC=mv._wet?`<span class="mvspr">${icTag('terrain')}${mv.target==='map'?'水の近く':'射程+'+WET.rng}</span>`:(wideKind(mv)==='wet'?`<span class="mvspr">${icTag('terrain')}水の近く</span>`:'');
+    const rg=rangeStrU(sel,mv); const spr=isOffense(mv)&&isAreaTerrainMv(sel,mv); const wetC=mv._wet?`<span class="mvspr">${icTag('terrain')}${mv.target==='map'?'水の近く':'射程+'+WET.rng}</span>`:(wideKind(mv)==='wet'?`<span class="mvspr">${icTag('terrain')}水の近く</span>`:'')+(sunBlocked(mv)?`<span class="mvspr">${icTag('terrain')}屋内</span>`:'');
     b.innerHTML=`<span class="mvt"><span class="mvn">${mvBadges(mv)}${escH(mvName(mv))}${weak?icTag('weak'):(res?icTag('resist'):'')}</span><span class="mvu">${left===Infinity?'∞':left+'/'+mx}</span></span>`
       +`<span class="mvk">${hk?mvHitChip(mv,hk):''}${spr?`<span class="mvspr">${icTag('terrain')}広がる</span>`:''}${wetC}</span><span class="mvs">${stat}${rg?`${stat?'・':''}射程${rg}`:''}${mv.p===false?'・移動前':''}</span>`;
     b.onclick=()=>{ if(on && (mv.target==='map'||noAimMove(mv))){ useSelMoveV2(); return; } selectMoveV2(mv); };

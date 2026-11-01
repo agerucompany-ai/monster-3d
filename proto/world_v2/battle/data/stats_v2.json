@@ -1154,6 +1154,11 @@
      "move": "forest_ladder4",
      "lv": 34,
      "from": 185
+    },
+    {
+     "move": "forest_sun",
+     "lv": 1,
+     "evo": true
     }
    ]
   },
@@ -3579,6 +3584,11 @@
     {
      "move": "forest_ladder4",
      "lv": 34
+    },
+    {
+     "move": "forest_sun",
+     "lv": 1,
+     "evo": true
     }
    ]
   },
@@ -4653,6 +4663,10 @@
     },
     {
      "move": "fsig_2009",
+     "lv": 1
+    },
+    {
+     "move": "forest_sun",
      "lv": 1
     }
    ],
