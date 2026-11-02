@@ -2618,7 +2618,7 @@
    "yomi": "わいばーんろあ"
   },
   "sig_enou": {
-   "name": "フォックスブレイド",
+   "name": "灼熱地獄",
    "type": "炎",
    "category": "attack",
    "role": "sig_line",
@@ -2640,7 +2640,7 @@
    "desc": "きつね火の刃で切りさく",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ふぉっくすぶれいど"
+   "yomi": "しゃくねつじごく"
   },
   "starter_enou": {
    "name": "フレイムラッシュ",
@@ -2668,7 +2668,7 @@
    "yomi": "ふれいむらっしゅ"
   },
   "sig_sasori": {
-   "name": "スティンガーフォール",
+   "name": "流星メテオ",
    "type": "炎",
    "category": "attack",
    "role": "sig_line",
@@ -2690,7 +2690,7 @@
    "desc": "流れ星のようなしっぽの一撃",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "すてぃんがーふぉーる"
+   "yomi": "りゅうせいメテオ"
   },
   "sig_sala": {
    "name": "マグマスライダー",
@@ -2718,7 +2718,7 @@
    "yomi": "まぐますらいだー"
   },
   "sig_otter": {
-   "name": "メイルストローム",
+   "name": "ハイドロパンチ",
    "type": "水",
    "category": "attack",
    "role": "sig_line",
@@ -2737,10 +2737,10 @@
    "desc": "大きなうずで敵をのみこむ",
    "range_class": "near",
    "cost": "few",
-   "yomi": "めいるすとろーむ"
+   "yomi": "はいどろぱんち"
   },
   "sig_croc": {
-   "name": "ジョーズクラッシュ",
+   "name": "波動キャノン",
    "type": "水",
    "category": "attack",
    "role": "sig_line",
@@ -2759,10 +2759,10 @@
    "desc": "大きなあごでかみくだく",
    "range_class": "near",
    "cost": "few",
-   "yomi": "じょーずくらっしゅ"
+   "yomi": "はどうキャノン"
   },
   "sig_whale": {
-   "name": "ギガウェーブ",
+   "name": "ジャイアントウェーブ",
    "type": "水",
    "category": "attack",
    "role": "sig_line",
@@ -2781,10 +2781,10 @@
    "desc": "大きな波でおしながす",
    "range_class": "near",
    "cost": "few",
-   "yomi": "ぎがうぇーぶ"
+   "yomi": "じゃいあんとうぇーぶ"
   },
   "sig_kuma": {
-   "name": "ワイルドバーサーク",
+   "name": "ソウルテイククロー",
    "type": "森",
    "category": "attack",
    "role": "sig_line",
@@ -2807,7 +2807,7 @@
    "desc": "怒りの爪で切りさく",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "わいるどばーさーく"
+   "yomi": "そうるていくくろー"
   },
   "starter_kuma": {
    "name": "ベアナックル",
@@ -2836,7 +2836,7 @@
    "yomi": "べあなっくる"
   },
   "sig_aloe": {
-   "name": "エバーグリーンドレイン",
+   "name": "ソウルドレイン",
    "type": "森",
    "category": "attack",
    "role": "sig_line",
@@ -2859,10 +2859,10 @@
    "desc": "大樹の力で体力をすいとる",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "えばーぐりーんどれいん"
+   "yomi": "そうるどれいん"
   },
   "sig_mantis": {
-   "name": "マンティスエッジ",
+   "name": "疾風烈風斬",
    "type": "森",
    "category": "attack",
    "role": "sig_line",
@@ -2885,10 +2885,10 @@
    "desc": "鋭いかまで切りさく",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "まんてぃすえっじ"
+   "yomi": "しっぷうれっぷうざん"
   },
   "sig_tora": {
-   "name": "ビャッコサンダー",
+   "name": "ライトニングサンダー",
    "type": "雷",
    "category": "attack",
    "role": "sig_line",
@@ -2910,7 +2910,7 @@
    "desc": "白い虎の雷をおとす",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "びゃっこさんだー"
+   "yomi": "らいとにんぐさんだー"
   },
   "starter_tora": {
    "name": "サンダーラッシュ",
@@ -2938,7 +2938,7 @@
    "yomi": "さんだーらっしゅ"
   },
   "sig_piri": {
-   "name": "ストームボルト",
+   "name": "かみなりおとし",
    "type": "雷",
    "category": "attack",
    "role": "sig_line",
@@ -2960,10 +2960,10 @@
    "desc": "大きな雷をおとす",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "すとーむぼると"
+   "yomi": "かみなりおとし"
   },
   "sig_thor": {
-   "name": "ミョルニルスマッシュ",
+   "name": "ギガボルト・ハンマー",
    "type": "雷",
    "category": "attack",
    "role": "sig_line",
@@ -2985,7 +2985,7 @@
    "desc": "雷のつちをふりおろす",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "みょるにるすまっしゅ"
+   "yomi": "ぎがぼるとはんまー"
   },
   "sig_momonga": {
    "name": "ナイトグライダー",
@@ -3032,7 +3032,7 @@
    "yomi": "いーぐるだいぶ"
   },
   "sig_kabuto": {
-   "name": "ホーンブレイカー",
+   "name": "サイクロン・ビートル",
    "type": "風",
    "category": "attack",
    "role": "sig_line",
@@ -3051,10 +3051,10 @@
    "desc": "ツノをかまえて突進する",
    "range_class": "near",
    "cost": "few",
-   "yomi": "ほーんぶれいかー"
+   "yomi": "さいくろんびーとる"
   },
   "sig_armad": {
-   "name": "ギガローリング",
+   "name": "ダイヤモンドロール",
    "type": "地",
    "category": "attack",
    "role": "sig_line",
@@ -3073,10 +3073,10 @@
    "desc": "まるくなって ころがって ぶつかる",
    "range_class": "near",
    "cost": "few",
-   "yomi": "ぎがろーりんぐ"
+   "yomi": "だいやもんどろーる"
   },
   "sig_kuwa": {
-   "name": "クロスシザー",
+   "name": "シザーギロチン",
    "type": "地",
    "category": "attack",
    "role": "sig_line",
@@ -3095,10 +3095,10 @@
    "desc": "大あごではさみ切る",
    "range_class": "near",
    "cost": "few",
-   "yomi": "くろすしざー"
+   "yomi": "しざーぎろちん"
   },
   "sig_zou": {
-   "name": "タイタンストンプ",
+   "name": "マンモス地割り",
    "type": "地",
    "category": "attack",
    "role": "sig_line",
@@ -3117,10 +3117,10 @@
    "desc": "大地をふみならす",
    "range_class": "near",
    "cost": "few",
-   "yomi": "たいたんすとんぷ"
+   "yomi": "マンモスじわり"
   },
   "sig_yuki": {
-   "name": "コンロンファング",
+   "name": "クリスタルファング",
    "type": "氷",
    "category": "attack",
    "role": "sig_line",
@@ -3142,10 +3142,10 @@
    "desc": "氷の牙でかみつく",
    "range_class": "near",
    "cost": "few",
-   "yomi": "こんろんふぁんぐ"
+   "yomi": "くりすたるふぁんぐ"
   },
   "sig_pen": {
-   "name": "フロストスライダー",
+   "name": "アイストルネード",
    "type": "氷",
    "category": "attack",
    "role": "sig_line",
@@ -3167,10 +3167,10 @@
    "desc": "氷のよろいで すべってぶつかる",
    "range_class": "near",
    "cost": "few",
-   "yomi": "ふろすとすらいだー"
+   "yomi": "あいすとるねーど"
   },
   "sig_seal": {
-   "name": "タスクブレイカー",
+   "name": "ツインアイスファング",
    "type": "氷",
    "category": "attack",
    "role": "sig_line",
@@ -3192,10 +3192,10 @@
    "desc": "大きなキバでつく",
    "range_class": "near",
    "cost": "few",
-   "yomi": "たすくぶれいかー"
+   "yomi": "ついんあいすふぁんぐ"
   },
   "sig_prism": {
-   "name": "プリズムレイ",
+   "name": "レインボー・ブラスター",
    "type": "光",
    "category": "attack",
    "role": "sig_line",
@@ -3214,7 +3214,7 @@
    "desc": "にじ色の光線をうつ",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ぷりずむれい"
+   "yomi": "れいんぼーぶらすたー"
   },
   "sig_grif": {
    "name": "ゴールデンクロー",
@@ -3239,7 +3239,7 @@
    "yomi": "ごーるでんくろー"
   },
   "sig_hotaru": {
-   "name": "ガイディングライト",
+   "name": "100万ルクス",
    "type": "光",
    "category": "attack",
    "role": "sig_line",
@@ -3258,10 +3258,10 @@
    "desc": "まっすぐな光線でうつ",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "がいでぃんぐらいと"
+   "yomi": "ひゃくまんルクス"
   },
   "sig_ghost": {
-   "name": "ファントムブロウ",
+   "name": "魔界への誘い",
    "type": "闇",
    "category": "attack",
    "role": "sig_line",
@@ -3283,10 +3283,10 @@
    "desc": "影から飛び出して不意打ちする",
    "range_class": "near",
    "cost": "few",
-   "yomi": "ふぁんとむぶろう"
+   "yomi": "まかいへのいざない"
   },
   "sig_owl": {
-   "name": "ルナティックアイ",
+   "name": "シャドウムーンショット",
    "type": "闇",
    "category": "attack",
    "role": "sig_line",
@@ -3308,10 +3308,10 @@
    "desc": "月の目で見つめ、弱点を見ぬいて打つ",
    "range_class": "near",
    "cost": "few",
-   "yomi": "るなてぃっくあい"
+   "yomi": "しゃどうむーんしょっと"
   },
   "sig_bat": {
-   "name": "ブラッドファング",
+   "name": "きゅうけつキバ",
    "type": "闇",
    "category": "attack",
    "role": "sig_line",
@@ -3333,7 +3333,7 @@
    "desc": "やみの牙でかみつく",
    "range_class": "near",
    "cost": "few",
-   "yomi": "ぶらっどふぁんぐ"
+   "yomi": "きゅうけつきば"
   },
   "sig_dino": {
    "name": "ダイノラッシュ",
@@ -3358,7 +3358,7 @@
    "yomi": "だいのらっしゅ"
   },
   "sig_seiryu": {
-   "name": "アズールストリーム",
+   "name": "青龍弾",
    "type": "竜",
    "category": "attack",
    "role": "sig_line",
@@ -3377,7 +3377,7 @@
    "desc": "青い龍の水流でおしながす",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "あずーるすとりーむ"
+   "yomi": "せいりゅうだん"
   },
   "sig_lind": {
    "name": "ゴールドブレス",

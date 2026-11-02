@@ -113,6 +113,11 @@ P.init=function(o){ o=o||{}; BASE=o.base||scriptBase(); if(o.arc) CFG.arc=o.arc;
   return ready; };
 // ---------------------------------------------------------------- 技(2026-10-27 Phase B): stats_v2.json の覚える技・moves.json。battle.js が読んでいればそれを使う
 let LS={}, MV={}, STV={};
+// 2026-11-02 技名の読みがな(moves.json の yomi・battle.js の rubyParts と同じ決まり)
+const RB_K=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]/, RB_S=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+|[^\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+/g; function rbHira(s){ return String(s).replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60)); } function rubyParts(name,yomi){ name=String(name||''); if(!yomi || !RB_K.test(name)) return [[name,'']]; const segs=name.match(RB_S); const m=new RegExp('^'+segs.map(x=>RB_K.test(x)?'(.+?)':rbHira(x).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('')+'$').exec(rbHira(yomi)); if(!m) return [[name,String(yomi)]]; let i=1; return segs.map(x=>RB_K.test(x)?[x,m[i++]]:[x,'']); }
+const rbEsc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function rubyH(name,yomi){ return rubyParts(name,yomi).map(([t,r])=>r?`<ruby>${rbEsc(t)}<rt>${rbEsc(r)}</rt></ruby>`:rbEsc(t)).join(''); }
+function rubyByName(n){ for(const k in MV){ if(MV[k]&&MV[k].name===n) return rubyH(n,MV[k].yomi); } return rbEsc(n); }
 function loadMoves(){ const MB=root.MonBattle;
   if(MB && MB.v2Ready && MB.MOVES2){ MV=MB.MOVES2; for(const id in MB.MID){ const m=MB.MID[id]; if(m._v2){ LS[id]=m._v2; } } return Promise.resolve(); }
   if(typeof fetch!=='function') return Promise.resolve();
@@ -280,7 +285,7 @@ P.applyResult=function(res, ctx){ const rows=[]; const pg=prog(); if(!pg) return
   const total=Math.round(ctx.enemy.reduce((s,e)=>s+CFG.expGain(e.lv||1, stage(e.mid), ctx.kind)*(e.pack?CFG.packExp:1),0))||CFG.expGain(1,1,ctx.kind);
   (res.party||[]).forEach((p,i)=>{ const ent=ctx.party[i]; const c=ent&&P.get(ent.uid); if(!c) return; const n=Math.max(1,Math.round(total*(p.out?1:CFG.benchExp))); const r=addExp(c,n); res.progress.exp.push(r);
     rows.push(`${nameOf(c.mid)}　EXP +${n}`); if(r.after>r.before){ res.progress.lvup.push(r); rows.push(`<span class="lvup">${nameOf(c.mid)}　Lv${r.before} → Lv${r.after}</span>`);
-      const f=formFor(c); const nw=newMovesBetween(f, r.before, r.after); if(nw.length){ const L={uid:c.uid, mid:f, name:nameOf(f), moves:nw.map(x=>x.name)}; (res.progress.learn||(res.progress.learn=[])).push(L); rows.push(`<span class="lvup">新しい技を覚えた　${nameOf(f)}「${L.moves.join('」「')}」</span>`); } } });
+      const f=formFor(c); const nw=newMovesBetween(f, r.before, r.after); if(nw.length){ const L={uid:c.uid, mid:f, name:nameOf(f), moves:nw.map(x=>x.name)}; (res.progress.learn||(res.progress.learn=[])).push(L); rows.push(`<span class="lvup">新しい技を覚えた　${nameOf(f)}「${L.moves.map(rubyByName).join('」「')}」</span>`); } } });
   if(res.progress.learn&&res.progress.learn.length) UI.learnNotice(res.progress.learn);
   if(res.rewards){ if(ctx.zeroday&&ctx.kind!=='wild'){ res.progress.gems=res.rewards.gems; if(res.rewards.gems) P.addGems(res.rewards.gems,'zeroday'); } else res.rewards.gems=0; }   // ジェムはヴィクター(手下・幹部)を倒した時だけ(G2)
   const K=res.caught; if(K&&K.isNew){ if(K.forms&&K.forms.length) rows.push(`<span class="lvup">${formTag(K.forms)}</span>`); if(K.fusion) rows.push(`<span class="lvup">融合の仕方を覚えた：${nameOf(K.fusion)}</span>`);
@@ -383,6 +388,7 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgMvR{display:flex;align-items:center;gap:4px;font-size:13px;padding:4px 0;border-top:1px solid rgba(255,255,255,.07)}
 .pgMvR .lvx{min-width:2.6em;font-size:11px;color:#9aa7c4}.pgMvR .sp{margin-left:auto;font-size:11px;color:#c8d4f0;white-space:nowrap}
 .pgMvR.lock{opacity:.45}
+.pgMvR rt,.lvup rt,#pgLearn rt{font-size:11px;font-weight:700}
 #pgTabs{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:0 6px 8px}
 #pgTabs button{font:800 12px/1.1 inherit;white-space:nowrap;font-family:inherit;min-height:58px;padding:6px 2px;border-radius:14px;border:2px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);color:#dfe6ff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
 #pgTabs button img.ui-ic{width:26px;height:26px;margin:0}
@@ -456,14 +462,14 @@ UI.movesCard=function(c){ const d=el('div','pgMv'); if(!c) return d; const f=for
   if(L) h+=`<div class="pgSt"><span>HP<b>${Math.round(L.hp*x)}</b></span><span>攻撃<b>${Math.round(L.atk*x)}</b></span><span>防御<b>${Math.round(L.def*x)}</b></span><span>素早さ<b>${Math.round(L.spd*x)}</b></span><span>移動<b>${L.mob}</b></span></div>`;
   const all=learnAt(f); const keep=new Set(dropDom(all.map(e=>MV[e.move])).map(m=>m.id)); const gotIds=new Set(movesAt(f,c.lv).map(m=>m.id));
   const got=all.filter(e=>gotIds.has(e.move)), next=all.filter(e=>!(L&&L.fixed)&&(e.lv||1)>c.lv&&keep.has(e.move)).slice(0,3);   // 下位互換の技は出さない
-  const row=(e,lock)=>{ const mv=MV[e.move]; return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${mvTyb(mv)}<b>${mv.name}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${(mv.category==='attack'||mv.category==='ailment')&&mv.power>0?'威'+mv.power:(CATL[mv.category]||'')}${rngS(mv)?'・'+rngS(mv):''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
+  const row=(e,lock)=>{ const mv=MV[e.move]; return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${mvTyb(mv)}<b>${rubyH(mv.name,mv.yomi)}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${(mv.category==='attack'||mv.category==='ailment')&&mv.power>0?'威'+mv.power:(CATL[mv.category]||'')}${rngS(mv)?'・'+rngS(mv):''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
   h+=`<div class="pgSec"><span>技</span><span>${got.length}</span></div>`+got.map(e=>row(e,false)).join('')+next.map(e=>row(e,true)).join('');
   d.innerHTML=h; return d; };
 // レベルアップで覚えた技のお知らせ(フィールドに戻ってから・タップで閉じる)
 UI.learnNotice=function(list){ if(typeof document==='undefined') return; if(!R) UI.mount({bar:false}); UI._learnQ=(UI._learnQ||[]).concat(list);
   const show=()=>{ const br=document.getElementById('mbRoot'); if(br && br.style.display!=='none'){ setTimeout(show,300); return; }
     let n=R.querySelector('#pgLearn'); if(!n){ n=el('div'); n.id='pgLearn'; R.appendChild(n); n.onclick=()=>{ n.style.display='none'; }; }
-    const q=UI._learnQ.splice(0); if(!q.length) return; n.innerHTML=`<div class="t">新しい技を覚えた</div>`+q.map(L=>`<div class="r"><img src="${IMG(L.mid)}" alt=""><b>${L.name}</b><span>${L.moves.map(m=>'「'+m+'」').join('')}</span></div>`).join('');
+    const q=UI._learnQ.splice(0); if(!q.length) return; n.innerHTML=`<div class="t">新しい技を覚えた</div>`+q.map(L=>`<div class="r"><img src="${IMG(L.mid)}" alt=""><b>${L.name}</b><span>${L.moves.map(m=>'「'+rubyByName(m)+'」').join('')}</span></div>`).join('');
     n.style.display='block'; clearTimeout(UI._lt); UI._lt=setTimeout(()=>{ n.style.display='none'; },5200); emit('learn',q); };
   setTimeout(show,400); };
 UI.showBar=(v)=>{ if(R) R.querySelector('#pgBar').style.display=v===false?'none':'flex'; };
@@ -498,7 +504,7 @@ UI.detail=function(c, o){ o=o||{}; const d=el('div','pgDet'+(o.leader?' lead':''
   const all=learnAt(f); const keep=new Set(dropDom(all.map(e=>MV[e.move])).map(q=>q.id)); const gotIds=new Set(movesAt(f,c.lv).map(q=>q.id));
   const got=all.filter(e=>gotIds.has(e.move)), next=all.filter(e=>!(L&&L.fixed)&&(e.lv||1)>c.lv&&keep.has(e.move)).slice(0,2);
   const row=(e,lock)=>{ const mv=MV[e.move]; const pw=(mv.category==='attack'||mv.category==='ailment')&&mv.power>0?'威力'+mv.power:(CATL[mv.category]||''); const rg=rngS(mv);
-    return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${mvTyb(mv)}<b>${mv.name}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${pw}${rg?'・射程'+rg:''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
+    return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${mvTyb(mv)}<b>${rubyH(mv.name,mv.yomi)}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${pw}${rg?'・射程'+rg:''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
   h+=`<div class="pgSec"><span>技</span><span>${got.length}</span></div>`+got.map(e=>row(e,false)).join('')+next.map(e=>row(e,true)).join('');
   d.innerHTML=h; return d; };
 // 引き継ぎ(2026-10-31): この機種から=合言葉(4〜8けたの数字)を決めてコードを出す / ほかの機種から=コードと合言葉で受け取る(この機種のセーブは上書き → 読み直す)

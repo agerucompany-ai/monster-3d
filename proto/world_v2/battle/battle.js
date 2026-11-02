@@ -25,8 +25,8 @@ function icSrc(n){ return CFG.base+CFG.img+'ui/'+n+'.webp'; }
 function LMK(){ return `<i class="lmk" style="background-image:url(${icSrc('leader')})"></i>`; }
 function icTag(n){ return `<img class="ui-ic" src="${icSrc(n)}" alt="">`; }
 function escH(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function icHTML(s){ return escH(s).replace(/\u0001(\w+)\u0002/g,(_,n)=>icTag(n)); }
-function setIc(el,s){ s=String(s); if(s.indexOf('\u0001')>=0) el.innerHTML='<span class="ic-l">'+icHTML(s)+'</span>'; else el.textContent=s; }   // 1つの span に包む(flex のボタンでアイコンと文字が離れないように)
+function icHTML(s){ return escH(s).replace(/\u0001(\w+)\u0002/g,(_,n)=>icTag(n)).replace(/\u0003([^\u0004]*)\u0004([^\u0005]*)\u0005/g,'<ruby>$1<rt>$2</rt></ruby>'); }
+function setIc(el,s){ s=String(s); if(/[\u0001\u0003]/.test(s)) el.innerHTML='<span class="ic-l">'+icHTML(s)+'</span>'; else el.textContent=s; }   // 1つの span に包む(flex のボタンでアイコンと文字が離れないように)
 const _icImg={}, _icWait=[]; let _icT=0;
 function icImg(n){ if(IS_NODE) return null; let im=_icImg[n];
   if(!im){ im=_icImg[n]=new Image(); im.decoding='async';
@@ -187,6 +187,10 @@ const V2={ EVADE:{base:0.08, k:0.30, min:0.03, max:0.25, areaX:0.5}, CRIT:{base:
 function V2ON(){ return V2DATA && BT.v2!==false; }
 try{ if(IS_NODE && process.env.V2K) Object.assign(V2, JSON.parse(process.env.V2K)); }catch(e){}   // シムのつまみ: V2K='{"dmgX":1.06,"ancX":0.9}'
 function mvName(mv){ return mv ? (mv.name||mv.n||'') : ''; }
+// 2026-11-02 技名の読みがな(moves.json の yomi): 漢字のかたまりの上に小さく。画面に出す所は mvNameR(印つき→icHTML で <ruby>)・mvNameH(HTML)。mvName はそのまま(シム・確認用)
+const RB_K=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]/, RB_S=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+|[^\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+/g; function rbHira(s){ return String(s).replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60)); } function rubyParts(name,yomi){ name=String(name||''); if(!yomi || !RB_K.test(name)) return [[name,'']]; const segs=name.match(RB_S); const m=new RegExp('^'+segs.map(x=>RB_K.test(x)?'(.+?)':rbHira(x).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('')+'$').exec(rbHira(yomi)); if(!m) return [[name,String(yomi)]]; let i=1; return segs.map(x=>RB_K.test(x)?[x,m[i++]]:[x,'']); }
+function mvNameR(mv){ return rubyParts(mvName(mv), mv&&mv.yomi).map(([t,r])=>r?'\u0003'+t+'\u0004'+r+'\u0005':t).join(''); }
+function mvNameH(mv){ return icHTML(mvNameR(mv)); }
 // 体の数を v1(monsters.json)/v2(stats_v2.json)で切り替える(MID の hp・atk・move・def・spd)
 function setStatMode(v2){ for(const k in MID){ const m=MID[k]; if(!m._v1) m._v1={hp:m.hp, atk:m.atk, move:m.move};
     const s=(v2&&m._v2)?m._v2:null; m.hp=s?s.hp:m._v1.hp; m.atk=s?s.atk:m._v1.atk; m.move=s?s.mob:m._v1.move; m.def=s?s.def:null; m.spd=s?s.spd:null; } }
@@ -948,8 +952,8 @@ function doAttackV2(att, def, mv){
   const dr=(mv.effect&&mv.effect.drain)||0;
   if(dealt>0 && dr>0 && !att.anc && state.units[att.uid] && att.hp>0){ const heal=Math.min(att.maxhp-att.hp, Math.round(dealt*dr*sustainX())); if(heal>0){ att.hp+=heal; floatText(att.r,att.c,`+${heal}`,'#7ee08a'); } }
   awayArm(att);   // 戦術v3: 風は攻撃のあと下がれる
-  if(first) toast(`${m.name}の「${mvName(mv)}」→ ${mon(first.t).name} に ${first.r.dmg}`+(first.r.adv?' '+IC('weak')+'弱点!':'')+(first.r.res?' '+IC('resist')+'いまひとつ':'')+(advTerr?' '+IC('terrain')+'地形+':'')+(targets.length>1?` 他${targets.length-1}体`:''));
-  else toast(`${m.name}の「${mvName(mv)}」は よけられた`);
+  if(first) toast(`${m.name}の「${mvNameR(mv)}」→ ${mon(first.t).name} に ${first.r.dmg}`+(first.r.adv?' '+IC('weak')+'弱点!':'')+(first.r.res?' '+IC('resist')+'いまひとつ':'')+(advTerr?' '+IC('terrain')+'地形+':'')+(targets.length>1?` 他${targets.length-1}体`:''));
+  else toast(`${m.name}の「${mvNameR(mv)}」は よけられた`);
   afterAction(); }
 // マップの技: 形のマスにいる子みんな(味方は ×ff)。よけられない
 function doMapAttack(att, mv, aim){
@@ -965,7 +969,7 @@ function doMapAttack(att, mv, aim){
   if(mvHas(mv,'炎')) cureBurnByFire(att, targets);
   const dr=(mv.effect&&mv.effect.drain)||0; if(dealt>0 && dr>0 && !att.anc && state.units[att.uid]){ const heal=Math.min(att.maxhp-att.hp, Math.round(dealt*dr*sustainX())); if(heal>0){ att.hp+=heal; floatText(att.r,att.c,`+${heal}`,'#7ee08a'); } }
   awayArm(att);
-  toast(`${IC('map')}${mon(att).name}の「${mvName(mv)}」！ 敵${n}体${targets.length>n?`・味方${targets.length-n}体`:''}`);
+  toast(`${IC('map')}${mon(att).name}の「${mvNameR(mv)}」！ 敵${n}体${targets.length>n?`・味方${targets.length-n}体`:''}`);
   afterAction(); }
 // 支えの技(回復・浄化・蘇生・潜行。データには強化・移動も)。必ず効く
 function supportTargets(u, mv){ const R=mv.range[1]; const al=alive(u.owner).filter(a=>cheby(a,u)<=R && !(a.dug>0));
@@ -987,16 +991,16 @@ function doSupport(u, mv, tgt, cell){
     const hx=(terrFx(mon(u), state.terrain[u.r][u.c], 'heal')?TERR_FX.heal:1)*(behindOf(u.owner)?TACT.behind.healX:1);   // 光: 遺跡で回復の技+50%・戦術v3: 背水は+30%
     let tot=0; for(const a of list){ if(!a) continue; const h=Math.min(a.maxhp-a.hp, Math.min((e.cap||9999)*hx, Math.round(a.maxhp*e.heal*sustainX()*hx))); if(h>0){ a.hp+=h; tot+=h; healFx(a.r,a.c); floatText(a.r,a.c,`+${h}`,'#7be0a0'); } }
     if(tot>0 && T3()) addGauge(u, TACT.healGauge);   // 戦術v3: 回復役も闘気(進化・覚醒にとどく)
-    msg=`${nm}の「${mvName(mv)}」 ${IC('heal')}+${tot}`; }
-  else if(mv.category==='heal' && e.regen){ u.regen={x:e.regen.x, n:e.regen.turns}; healFx(u.r,u.c); msg=`${nm}の「${mvName(mv)}」`; }
-  else if(mv.category==='cure'){ const L=e.cure||[]; const c=supportTargets(u,mv); const t=(tgt&&c.includes(tgt))?tgt:c[0]; for(const k of L) t[k]=0; healFx(t.r,t.c); floatText(t.r,t.c,IC('cure')+'浄化','#bfffe0'); msg=`${nm}の「${mvName(mv)}」→ ${mon(t).name}`; }
+    msg=`${nm}の「${mvNameR(mv)}」 ${IC('heal')}+${tot}`; }
+  else if(mv.category==='heal' && e.regen){ u.regen={x:e.regen.x, n:e.regen.turns}; healFx(u.r,u.c); msg=`${nm}の「${mvNameR(mv)}」`; }
+  else if(mv.category==='cure'){ const L=e.cure||[]; const c=supportTargets(u,mv); const t=(tgt&&c.includes(tgt))?tgt:c[0]; for(const k of L) t[k]=0; healFx(t.r,t.c); floatText(t.r,t.c,IC('cure')+'浄化','#bfffe0'); msg=`${nm}の「${mvNameR(mv)}」→ ${mon(t).name}`; }
   else if(mv.category==='revive'){ const fl=state.fallen[u.owner].shift(); const cl=freeCastleCell(u.owner); const baseId=baseFormId(fl.mid);
     u.g=gaugeOf(u)-(e.gauge||REVIVE_GAUGE); const nu=addUnit(u.owner,baseId,cl[0],cl[1]); unitMul(nu, fl.rank, u.owner===1&&BT.diff?BT.diff.hpX:1, u.owner===1&&BT.diff?BT.diff.atkX:1); if(fl.lv) nu.lv=fl.lv; nu.src=(fl.src||[]).slice(); nu.mid0=baseId;
-    healFx(cl[0],cl[1]); floatText(cl[0],cl[1],IC('revive')+'蘇生','#ffe6a0'); msg=`${nm}の「${mvName(mv)}」→ ${MID[baseId].name} が復活！`; }
-  else if(e.dig){ u.dug=e.dig; spendMove(u,mv); healFx(u.r,u.c); floatText(u.r,u.c,IC('dig')+'潜行！','#c9a24a'); toast(`${nm}の「${mvName(mv)}」 ${e.dig}ターン無敵`);
+    healFx(cl[0],cl[1]); floatText(cl[0],cl[1],IC('revive')+'蘇生','#ffe6a0'); msg=`${nm}の「${mvNameR(mv)}」→ ${MID[baseId].name} が復活！`; }
+  else if(e.dig){ u.dug=e.dig; spendMove(u,mv); healFx(u.r,u.c); floatText(u.r,u.c,IC('dig')+'潜行！','#c9a24a'); toast(`${nm}の「${mvNameR(mv)}」 ${e.dig}ターン無敵`);
     syncUnits(); updateUI(); return true; }   // 潜行は今まで通り行動を終えない(地中を移動できる)
-  else if(e.jump){ const cs=jumpCells(u,mv); const to=cell&&cs.find(p=>p[0]===cell[0]&&p[1]===cell[1]); if(!to) return false; const fr=u.r, fc=u.c; state.board[u.r][u.c]=null; u.r=to[0]; u.c=to[1]; state.board[to[0]][to[1]]=u.uid; u.moved=true; msg=`${nm}の「${mvName(mv)}」`; spendMove(u,mv); u.acted=true; zoneEvolve(u,fr,fc); toast(msg); afterAction(); return true; }
-  else if(e.buff){ const list = mv.target==='ally_all' ? alive(u.owner).filter(a=>cheby(a,u)<=mv.range[1]) : [u]; for(const a of list){ setBuf(a,'buf',e.buff,false); if(e.buff2) setBuf(a,'buf',e.buff2,false); floatText(a.r,a.c,'強化','#ffe680','tag'); } msg=`${nm}の「${mvName(mv)}」`; }
+  else if(e.jump){ const cs=jumpCells(u,mv); const to=cell&&cs.find(p=>p[0]===cell[0]&&p[1]===cell[1]); if(!to) return false; const fr=u.r, fc=u.c; state.board[u.r][u.c]=null; u.r=to[0]; u.c=to[1]; state.board[to[0]][to[1]]=u.uid; u.moved=true; msg=`${nm}の「${mvNameR(mv)}」`; spendMove(u,mv); u.acted=true; zoneEvolve(u,fr,fc); toast(msg); afterAction(); return true; }
+  else if(e.buff){ const list = mv.target==='ally_all' ? alive(u.owner).filter(a=>cheby(a,u)<=mv.range[1]) : [u]; for(const a of list){ setBuf(a,'buf',e.buff,false); if(e.buff2) setBuf(a,'buf',e.buff2,false); floatText(a.r,a.c,'強化','#ffe680','tag'); } msg=`${nm}の「${mvNameR(mv)}」`; }
   u.acted=true; spendMove(u,mv); toast(msg); afterAction(); return true; }
 function defaultMoveV2(u){ const p=aiPlanAt(u, u.moved, true); return p?p.mv:(movesV2(u).find(mv=>isOffense(mv)&&moveUsable(u,mv))||null); }
 function doCastleAttack(att){
@@ -1339,7 +1343,7 @@ function tryTriple(a, b, c, r, cc){
 // 進化: 闘気が溜まった状態で盤中央の進化エリアにいれば(移動後でも、攻撃前なら)進化できる
 // 技 v2: 進化・融合で覚えた技(自分の子だけ「〇〇を覚えた」)
 function learnedNote(u, before){ if(!V2ON() || !before || u.owner!==0 || BT.headless) return ''; const nw=movesV2(u).filter(x=>!before.includes(x.id)); if(!nw.length) return '';
-  const pick = before.length ? nw : nw.filter(x=>/^sig_/.test(x.role||'')).concat(nw.filter(x=>!/^sig_/.test(x.role||''))); const names=pick.slice(0,2).map(mvName);
+  const pick = before.length ? nw : nw.filter(x=>/^sig_/.test(x.role||'')).concat(nw.filter(x=>!/^sig_/.test(x.role||''))); const names=pick.slice(0,2).map(mvNameR);
   return ` ・「${names.join('」「')}」${pick.length>2?`ほか${pick.length-2}つ`:''}を覚えた`; }
 function evolveUnit(u, free, why){
   if(!free && netGuestIntercept('evolve',{uid:u.uid})) return false;
@@ -3817,7 +3821,7 @@ function bigIntro(att, move, ty, fz, then){ if(BT.headless){ then(); return; } f
   for(let i=0;i<6;i++){ const a=i/6*6.283; fx3('sphL', m3(cols.length>1?cols[i%cols.length]:(i%2?0xffffff:col),{op:0.95}), {x:w.x,y,z:w.z,delay:i*40,dur:780,ro:7},(t,m,mt)=>{ const aa=a+t*7, rr=0.9*(1-t*0.7); m.position.set(w.x+Math.cos(aa)*rr,y+0.2+t*1.8,w.z+Math.sin(aa)*rr); m.scale.setScalar(0.09*(1-t*0.4)); mt.opacity=0.95*(1-t*0.5); }); }
   if(state.units[att.uid]) animUnit(att.uid,'cast',{dur:700,flash:true});
   camPunch(r,c,0.55,T*sp); SFX.play('evoCharge');
-  const el=$id('bigName'); if(el){ el.style.setProperty('--tc', TYPE_COL[ty]||'#ffd977'); el.style.setProperty('--tc2', tys.length>1?(TYPE_COL[tys[1]]||'#ffd977'):(TYPE_COL[ty]||'#ffd977')); el.style.setProperty('--tc3', tys.length>2?(TYPE_COL[tys[2]]||'#ffd977'):(tys.length>1?(TYPE_COL[tys[1]]||'#ffd977'):(TYPE_COL[ty]||'#ffd977'))); el.classList.toggle('fz',!!fz); el.querySelector('.bn1').textContent=mvName(move)||move&&move.name||''; el.querySelector('.bn2').textContent=(MID[att.mid]||{}).name||''; el.className='on'+(fz?' fz':'')+(att.owner===1?' foe':'')+(tys.length>1?' mx':''); clearTimeout(bigIntro._t); bigIntro._t=setTimeout(()=>{ el.className=''; }, 1500/sp); }
+  const el=$id('bigName'); if(el){ el.style.setProperty('--tc', TYPE_COL[ty]||'#ffd977'); el.style.setProperty('--tc2', tys.length>1?(TYPE_COL[tys[1]]||'#ffd977'):(TYPE_COL[ty]||'#ffd977')); el.style.setProperty('--tc3', tys.length>2?(TYPE_COL[tys[2]]||'#ffd977'):(tys.length>1?(TYPE_COL[tys[1]]||'#ffd977'):(TYPE_COL[ty]||'#ffd977'))); el.classList.toggle('fz',!!fz); el.querySelector('.bn1').innerHTML=mvNameH(move)||escH(move&&move.name||''); el.querySelector('.bn2').textContent=(MID[att.mid]||{}).name||''; el.className='on'+(fz?' fz':'')+(att.owner===1?' foe':'')+(tys.length>1?' mx':''); clearTimeout(bigIntro._t); bigIntro._t=setTimeout(()=>{ el.className=''; }, 1500/sp); }
   const dim=$id('bigDim'); if(dim){ dim.className='on'; clearTimeout(bigIntro._d); bigIntro._d=setTimeout(()=>{ dim.className=''; }, 1100/sp); }
   BT.fxUntil=performance.now()+60000;
   setTimeout(()=>{ if(!state||state.phase==='end'){ then(); return; } then(); }, T); }
@@ -4881,7 +4885,7 @@ function updateUI(){ if(BT.headless) return;
       ac.appendChild(mkbt(IC('cancel')+'解除','',true,()=>{ selCombo=null; selMode=canMove(sel)?'move':'attack'; recompute(); drawSelHL(); updateUI(); }));
     } else if(V2ON() && selMode==='attack'){
       if(selMove && !sel.acted && (selMove.target==='map' || noAimMove(selMove))){ const okU = selMove.target==='map' ? (moveUsable(sel,selMove) && mapUnits(sel,selMove,selAim).some(x=>x.owner!==sel.owner)) : supportReady(sel,selMove);
-        ac.appendChild(mkbt(`${IC(selMove.target==='map'?'map':'atk')}${mvName(selMove)}`,'go', !!okU, ()=>{ useSelMoveV2(); })); }
+        ac.appendChild(mkbt(`${IC(selMove.target==='map'?'map':'atk')}${mvNameR(selMove)}`,'go', !!okU, ()=>{ useSelMoveV2(); })); }
       if(!sel.acted) ac.appendChild(moveMenuV2());
       comboButtons(ac);   // 戦術v3
       appendFuseBtns();
@@ -5016,10 +5020,10 @@ function moveMenuV2(){ const box=document.createElement('div'); box.className='m
     const weak = tg.some(e=>mvBonusT(mv,mon(e))>0);
     const res = !weak && tg.length>0 && tg.every(e=>mvPenaltyT(mv,mon(e))<0);
     const b=document.createElement('button'); b.className='bt mvb'+(on?' on':'')+(weak?' wk':''); b.disabled=!ok;
-    const hk=mvHitKind(mv); if(hk) b.classList.add('k'+hk);
+    const hk=mvHitKind(mv); if(hk) b.classList.add('k'+hk); if(rubyParts(mvName(mv),mv.yomi).some(x=>x[1])) b.classList.add('rbW');   // 読みがなの付く技は2列ぶん
     const stat = isOffense(mv)&&mv.power>0 ? `威力${mv.power}` : (CAT_LB[mv.category]||'');
     const rg=rangeStrU(sel,mv); const spr=isOffense(mv)&&isAreaTerrainMv(sel,mv); const wetC=mv._wet?`<span class="mvspr">${icTag('terrain')}${mv.target==='map'?'水の近く':'射程+'+WET.rng}</span>`:(wideKind(mv)==='wet'?`<span class="mvspr">${icTag('terrain')}水の近く</span>`:'')+(sunBlocked(mv)?`<span class="mvspr">${icTag('terrain')}屋内</span>`:'');
-    b.innerHTML=`<span class="mvt"><span class="mvn">${mvBadges(mv)}${escH(mvName(mv))}${weak?icTag('weak'):(res?icTag('resist'):'')}</span><span class="mvu">${left===Infinity?'∞':left+'/'+mx}</span></span>`
+    b.innerHTML=`<span class="mvt"><span class="mvn">${mvBadges(mv)}${mvNameH(mv)}${weak?icTag('weak'):(res?icTag('resist'):'')}</span><span class="mvu">${left===Infinity?'∞':left+'/'+mx}</span></span>`
       +`<span class="mvk">${hk?mvHitChip(mv,hk):''}${spr?`<span class="mvspr">${icTag('terrain')}広がる</span>`:''}${wetC}</span><span class="mvs">${stat}${rg?`${stat?'・':''}射程${rg}`:''}${mv.p===false?'・移動前':''}</span>`;
     b.onclick=()=>{ if(on && (mv.target==='map'||noAimMove(mv))){ useSelMoveV2(); return; } selectMoveV2(mv); };
     box.appendChild(b); }
@@ -5046,7 +5050,7 @@ function detailV2(id, u, unitRow, recipeHtml, fuseHtml, chain, isFusion){ const 
   const allLs=(L.learnset||[]).filter(e=>MV2[e.move]&&MV2[e.move].enabled!==false); const keep=new Set(dropDominated(slotPick(allLs.filter(e=>!u||(L.fixed||(e.lv||1)<=lv)).map(e=>MV2[e.move])), null).map(x=>x.id).concat(allLs.filter(e=>u&&!L.fixed&&(e.lv||1)>lv).map(e=>e.move)));   // 下位互換の技は出さない
   const rows=allLs.filter(e=>keep.has(e.move)).map(e=>{ const mv=MV2[e.move]; const got = own ? own.has(mv.id) : true; const left=u&&got?usesLeft(u,mv):usesMax(mv);
     const lab = L.fixed ? '' : (e.evo ? '進化' : `Lv${e.lv}`);
-    return `<div class="mvi ${got?'':'lock'}"><span class="muted" style="display:inline-block;min-width:3.2em">${lab}</span>${mvBadges(mv)}<b>${escH(mvName(mv))}</b> <span class="muted">${mv.target==='map'?icTag('map'):(mv.target==='area'?icTag('area'):'')}${isOffense(mv)&&mv.power>0?'威'+mv.power:(CAT_LB[mv.category]||'')}${rangeStr(mv)?'・射程'+rangeStr(mv):''}・${left===Infinity?'∞':(u&&got?left+'/'+usesMax(mv):usesMax(mv)+'回')}${mv.p===false?'・移動前':''}</span></div>`; }).join('');
+    return `<div class="mvi ${got?'':'lock'}"><span class="muted" style="display:inline-block;min-width:3.2em">${lab}</span>${mvBadges(mv)}<b>${mvNameH(mv)}</b> <span class="muted">${mv.target==='map'?icTag('map'):(mv.target==='area'?icTag('area'):'')}${isOffense(mv)&&mv.power>0?'威'+mv.power:(CAT_LB[mv.category]||'')}${rangeStr(mv)?'・射程'+rangeStr(mv):''}・${left===Infinity?'∞':(u&&got?left+'/'+usesMax(mv):usesMax(mv)+'回')}${mv.p===false?'・移動前':''}</span></div>`; }).join('');
   return `<div class="hd"><img src="${IMG[id]}"><div><h3>${m.name}${m.archetype?` <span style="font-size:12px;color:#9be1ff;font-weight:700">${m.archetype}</span>`:''}</h3>`
     +`<div class="muted">${typeBadges(m)}・${DAN[m.level]}${u?'・'+rkStr(u):''}</div></div></div>`
     +((m.desc||m.profile)?`<div class="chain" style="color:#e0d2a4;font-style:italic;margin:6px 0 0">${m.desc||('「'+m.profile+'」')}</div>`:'')
@@ -5397,6 +5401,7 @@ function comboDmg(c, team, t, main){ if(!V2ON()){ const mult=comboMult(c,team); 
   return comboDmgP(c, team, t, comboPicks(team, main||t, c)); }
 function comboDmgP(c, team, t, picks){ const mult=comboMult(c,team); let d=0, top=0; for(const p of picks){ const v=comboMvDmg(p.x,t,p.mv,c); d+=v; if(v>top) top=v; } return Math.max(1,Math.round(Math.max(d*mult, top*(TACT.combo.minX||1.1)))); }   // 2026-11-01 複数攻撃: 合わせ×倍率×k・下は その敵への一番の単独×minX
 function comboMvLabel(p){ return p.base?'体当たり':mvName(p.mv); }
+function comboMvLabelR(p){ return p.base?'体当たり':mvNameR(p.mv); }
 // 今 u が呼べる合体の一覧 [{c, team, tg}]
 function comboReady(u){ if(!T3() || !u || !comboOk(u)) return []; const out=[];
   for(const s of seriesOf(u.mid)) for(const c of (s.combos||[])){ if(comboUsed(u.owner,c)) continue; const team=comboTeam(u,c); if(!team) continue; const tg=comboTargets(u,c); if(!tg.length) continue; out.push({c, team, tg}); }
@@ -5415,12 +5420,12 @@ function doComboV3(u, c, t){
     if(pickE){ const R=comboReach(c); const box=[{r:Math.max(0,u.r-R),c:Math.max(0,u.c-R)},{r:Math.min(NR-1,u.r+R),c:Math.min(NC-1,u.c+R)}];   // カメラ=範囲(中心±R)が入るように
       // 参加した子それぞれ: 当たる敵を「その子が撃つ技」ごとに分けて その技のタイプの演出。子ごと・技ごとに 少しずらす
       let k=0; team.forEach((x,i)=>{ const grp=new Map(); hits.forEach((e,hi)=>{ const p=pickE[hi][i]; const key=p.base?'_b':p.mv.id; if(!grp.has(key)) grp.set(key,{p,es:[]}); grp.get(key).es.push(e); });
-        for(const {p,es} of grp.values()){ const first=k===0; const mvF=Object.assign({}, p.mv, {name:first?c.name:comboMvLabel(p), role:'combo_part', target:es.length>1?'area':'single', tier:3, big:first});   /* 大技の名前は合体の名前(1回だけ) */
+        for(const {p,es} of grp.values()){ const first=k===0; const mvF=Object.assign({}, p.mv, {name:first?c.name:comboMvLabel(p), yomi:first||p.base?'':p.mv.yomi, role:'combo_part', target:es.length>1?'area':'single', tier:3, big:first});   /* 大技の名前は合体の名前(1回だけ) */
           const main=es.includes(t)?t:es[0];
           const go=()=>{ if(!state||!state.units[x.uid]) return; const live=es.filter(e=>state.units[e.uid]); _fxCamAdd=box; try{ attackFx(x, live.length?live:es.map(e=>({r:e.r,c:e.c})), state.units[main.uid]?main:{r:main.r,c:main.c}, mvF); } finally{ _fxCamAdd=null; } };
           if(first) go(); else setTimeout(go, k*240/SPD()); k++; } }); }
     else attackFx(u, hits, t, {name:c.name, power:TACT.combo.power, type:mon(u).type, tier:3, big:true});   /* 2026-10-29: カットインをやめ 盤の上の大技(bigIntro) */
-    u.spReady=sp; showBanner(`${IC('combo')}${IC(c._s.icon||'combo')}${c.name}`+(picks?`　${picks.map(p=>comboMvLabel(p)).join('＋')}`:'')+(hits.length>1?`　敵${hits.length}体`:'')); }
+    u.spReady=sp; showBanner(`${IC('combo')}${IC(c._s.icon||'combo')}${c.name}`+(picks?`　${picks.map(p=>comboMvLabelR(p)).join('＋')}`:'')+(hits.length>1?`　敵${hits.length}体`:'')); }
   let dealt=0, kills=0;
   for(let hi=0; hi<hits.length; hi++){ const e=hits[hi]; if(!state.units[e.uid]) continue; const dmg=dmgs[hi]; e.hp-=dmg; dealt+=Math.min(dmg, dmg+Math.min(0,e.hp)); floatText(e.r,e.c,`-${dmg}`,'#ffd24a','num weak');
     if(e.hp<=0){ const wasLeader=!!e.leader; if(killUnit(e)){ kills++; if(e.owner===1) state.killLv=(state.killLv||0)+mon(e).level; toast(`${wasLeader?'リーダーの ':''}${mon(e).name} を撃破！`); } }
@@ -5431,7 +5436,7 @@ function doComboV3(u, c, t){
   if(fx.heal && dealt>0){ const share=Math.round(dealt*fx.heal*sustainX()/team.length); for(const x of team){ if(!state.units[x.uid]) continue; const h=Math.min(x.maxhp-x.hp, share); if(h>0){ x.hp+=h; healFx(x.r,x.c); floatText(x.r,x.c,`+${h}`,'#7be0a0'); } } }
   if(fx.buff) for(const x of team){ if(state.units[x.uid]){ setBuf(x,'buf',fx.buff,false); floatText(x.r,x.c,'強化','#ffe680','tag'); } }
   if(TACT.combo.gauge) for(const x of team) addGauge(x, TACT.combo.gauge);
-  toast(`${IC('combo')}${c.name}！ 合体：${picks?picks.map(p=>`${comboMvLabel(p)}(${(p.base?[p.mv.type]:mvTypes(p.mv)).join('・')})`).join('＋'):team.map(x=>mon(x).name).join('＋')}${hits.length>1?` 敵${hits.length}体`:''}`);
+  toast(`${IC('combo')}${c.name}！ 合体：${picks?picks.map(p=>`${comboMvLabelR(p)}(${(p.base?[p.mv.type]:mvTypes(p.mv)).join('・')})`).join('＋'):team.map(x=>mon(x).name).join('＋')}${hits.length>1?` 敵${hits.length}体`:''}`);
   afterAction(); return true; }
 // AI: 合体のほうが「それぞれが攻撃する」より良い時だけ(倒せる・リーダーに大きい・まとめて当たる)
 function aiComboPlan(u){ const list=comboReady(u); if(!list.length) return null; let best=null;
@@ -5477,7 +5482,7 @@ function comboTapTarget(r,c){ if(!sel||!selCombo) return false; const e=unitAt(r
 function comboButtons(ac){ if(!T3()||!sel||sel.owner!==0) return; for(const it of comboReady(sel)){ const c=it.c;
   const b=mkbt(`${IC('combo')}${IC(c._s.icon||'combo')}${c.name}`, 'fuse'+(selCombo&&selCombo.c===c?' on':''), true, ()=>{ selCombo={c}; selMode='combo'; recompute(); drawSelHL(); updateUI(); comboCam(sel,c); });
   if(V2ON()){ let bt=it.tg[0], bd=-1; for(const e of it.tg){ const d=comboDmg(c,it.team,e); if(d>bd){ bd=d; bt=e; } } const picks=comboPicks(it.team,bt,c);
-    b.classList.add('cbb'); b.innerHTML=`<span class="ic-l">${icHTML(IC('combo')+IC(c._s.icon||'combo')+c.name)}</span><span class="cbm">合体：${picks.map(p=>(p.base?typeBadge(p.mv.type):mvBadges(p.mv))+escH(comboMvLabel(p))).join('＋')}${it.tg.length>1?`・${icTag('area')}${it.tg.length}体`:''}</span>`; }
+    b.classList.add('cbb'); b.innerHTML=`<span class="ic-l">${icHTML(IC('combo')+IC(c._s.icon||'combo')+c.name)}</span><span class="cbm">合体：${picks.map(p=>(p.base?typeBadge(p.mv.type):mvBadges(p.mv))+icHTML(comboMvLabelR(p))).join('＋')}${it.tg.length>1?`・${icTag('area')}${it.tg.length}体`:''}</span>`; }
   ac.appendChild(b); } }
 // 2026-11-01 合体を選んだ時: 範囲(中心±R)が入るように(寄せている時だけ・全体の時はそのまま入っている)
 function comboCam(u, c){ if(!u||!c||BT.headless) return; const R=comboReach(c); try{ camShow([{r:Math.max(0,u.r-R),c:Math.max(0,u.c-R)},{r:Math.min(NR-1,u.r+R),c:Math.min(NC-1,u.c+R)}], {pad:0.6}); }catch(e){} }
@@ -5873,6 +5878,10 @@ const CSS=`
 #mbRoot button.bt.cbb .tyb{font-size:12px}
 #mbRoot button.bt.mvb .mvt{display:flex;align-items:center;gap:4px;min-width:0}
 #mbRoot button.bt.mvb .mvn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+#mbRoot rt{font-size:11px;font-weight:700;line-height:1;letter-spacing:0;color:inherit;opacity:.92}
+#mbRoot button.bt.mvb.rbW{grid-column:span 2}
+#mbRoot button.bt.mvb .mvn:has(ruby){padding-top:2px;line-height:1.5}
+#mbRoot #mb-bigName .bn1 rt{font-size:13px;font-weight:800;letter-spacing:.04em}
 #mbRoot button.bt.mvb .tyb{font-size:12px;line-height:1.25em}
 #mbRoot button.bt.mvb img.ui-ic{width:1.1em;height:1.1em;vertical-align:-.2em}
 #mbRoot button.bt.mvb .mvs{font-size:12px;color:#c8d4f0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
