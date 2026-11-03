@@ -188,8 +188,8 @@ function V2ON(){ return V2DATA && BT.v2!==false; }
 try{ if(IS_NODE && process.env.V2K) Object.assign(V2, JSON.parse(process.env.V2K)); }catch(e){}   // シムのつまみ: V2K='{"dmgX":1.06,"ancX":0.9}'
 function mvName(mv){ return mv ? (mv.name||mv.n||'') : ''; }
 // 2026-11-02 技名の読みがな(moves.json の yomi): 漢字のかたまりの上に小さく。画面に出す所は mvNameR(印つき→icHTML で <ruby>)・mvNameH(HTML)。mvName はそのまま(シム・確認用)
-const RB_K=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]/, RB_S=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+|[^\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+/g; function rbHira(s){ return String(s).replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60)); } function rubyParts(name,yomi){ name=String(name||''); if(!yomi || !RB_K.test(name)) return [[name,'']]; const segs=name.match(RB_S); const m=new RegExp('^'+segs.map(x=>RB_K.test(x)?'(.+?)':rbHira(x).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('')+'$').exec(rbHira(yomi)); if(!m) return [[name,String(yomi)]]; let i=1; return segs.map(x=>RB_K.test(x)?[x,m[i++]]:[x,'']); }
-function mvNameR(mv){ return rubyParts(mvName(mv), mv&&mv.yomi).map(([t,r])=>r?'\u0003'+t+'\u0004'+r+'\u0005':t).join(''); }
+const RB_K=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]/, RB_S=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+|[^\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+/g; function rbHira(s){ return String(s).replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60)); } function rubyParts(name,yomi,ruby){ name=String(name||''); if(Array.isArray(ruby)&&ruby.map(x=>x[0]).join('')===name) return ruby.map(x=>[String(x[0]),String(x[1]||'')]);   /* 11/03 当て字: moves.json の ruby=[[かたまり,読み],…] があればそれ */ if(!yomi || !RB_K.test(name)) return [[name,'']]; const segs=name.match(RB_S); const m=new RegExp('^'+segs.map(x=>RB_K.test(x)?'(.+?)':rbHira(x).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('')+'$').exec(rbHira(yomi)); if(!m) return [[name,String(yomi)]]; let i=1; return segs.map(x=>RB_K.test(x)?[x,m[i++]]:[x,'']); }
+function mvNameR(mv){ return rubyParts(mvName(mv), mv&&mv.yomi, mv&&mv.ruby).map(([t,r])=>r?'\u0003'+t+'\u0004'+r+'\u0005':t).join(''); }
 function mvNameH(mv){ return icHTML(mvNameR(mv)); }
 // 体の数を v1(monsters.json)/v2(stats_v2.json)で切り替える(MID の hp・atk・move・def・spd)
 function setStatMode(v2){ for(const k in MID){ const m=MID[k]; if(!m._v1) m._v1={hp:m.hp, atk:m.atk, move:m.move};
@@ -5020,7 +5020,7 @@ function moveMenuV2(){ const box=document.createElement('div'); box.className='m
     const weak = tg.some(e=>mvBonusT(mv,mon(e))>0);
     const res = !weak && tg.length>0 && tg.every(e=>mvPenaltyT(mv,mon(e))<0);
     const b=document.createElement('button'); b.className='bt mvb'+(on?' on':'')+(weak?' wk':''); b.disabled=!ok;
-    const hk=mvHitKind(mv); if(hk) b.classList.add('k'+hk); if(rubyParts(mvName(mv),mv.yomi).some(x=>x[1])) b.classList.add('rbW');   // 読みがなの付く技は2列ぶん
+    const hk=mvHitKind(mv); if(hk) b.classList.add('k'+hk); if(rubyParts(mvName(mv),mv.yomi,mv.ruby).some(x=>x[1])) b.classList.add('rbW');   // 読みがなの付く技は2列ぶん
     const stat = isOffense(mv)&&mv.power>0 ? `威力${mv.power}` : (CAT_LB[mv.category]||'');
     const rg=rangeStrU(sel,mv); const spr=isOffense(mv)&&isAreaTerrainMv(sel,mv); const wetC=mv._wet?`<span class="mvspr">${icTag('terrain')}${mv.target==='map'?'水の近く':'射程+'+WET.rng}</span>`:(wideKind(mv)==='wet'?`<span class="mvspr">${icTag('terrain')}水の近く</span>`:'')+(sunBlocked(mv)?`<span class="mvspr">${icTag('terrain')}屋内</span>`:'');
     b.innerHTML=`<span class="mvt"><span class="mvn">${mvBadges(mv)}${mvNameH(mv)}${weak?icTag('weak'):(res?icTag('resist'):'')}</span><span class="mvu">${left===Infinity?'∞':left+'/'+mx}</span></span>`
@@ -5420,7 +5420,7 @@ function doComboV3(u, c, t){
     if(pickE){ const R=comboReach(c); const box=[{r:Math.max(0,u.r-R),c:Math.max(0,u.c-R)},{r:Math.min(NR-1,u.r+R),c:Math.min(NC-1,u.c+R)}];   // カメラ=範囲(中心±R)が入るように
       // 参加した子それぞれ: 当たる敵を「その子が撃つ技」ごとに分けて その技のタイプの演出。子ごと・技ごとに 少しずらす
       let k=0; team.forEach((x,i)=>{ const grp=new Map(); hits.forEach((e,hi)=>{ const p=pickE[hi][i]; const key=p.base?'_b':p.mv.id; if(!grp.has(key)) grp.set(key,{p,es:[]}); grp.get(key).es.push(e); });
-        for(const {p,es} of grp.values()){ const first=k===0; const mvF=Object.assign({}, p.mv, {name:first?c.name:comboMvLabel(p), yomi:first||p.base?'':p.mv.yomi, role:'combo_part', target:es.length>1?'area':'single', tier:3, big:first});   /* 大技の名前は合体の名前(1回だけ) */
+        for(const {p,es} of grp.values()){ const first=k===0; const mvF=Object.assign({}, p.mv, {name:first?c.name:comboMvLabel(p), yomi:first||p.base?'':p.mv.yomi, ruby:first||p.base?null:p.mv.ruby, role:'combo_part', target:es.length>1?'area':'single', tier:3, big:first});   /* 大技の名前は合体の名前(1回だけ) */
           const main=es.includes(t)?t:es[0];
           const go=()=>{ if(!state||!state.units[x.uid]) return; const live=es.filter(e=>state.units[e.uid]); _fxCamAdd=box; try{ attackFx(x, live.length?live:es.map(e=>({r:e.r,c:e.c})), state.units[main.uid]?main:{r:main.r,c:main.c}, mvF); } finally{ _fxCamAdd=null; } };
           if(first) go(); else setTimeout(go, k*240/SPD()); k++; } }); }

@@ -3424,7 +3424,7 @@
    "yomi": "おりんぽすちゃーじ"
   },
   "godherak_cross": {
-   "name": "オウジャクロス",
+   "name": "ゴッド・クロスブレイカー",
    "type": "風",
    "category": "attack",
    "role": "sig_boss",
@@ -3448,11 +3448,11 @@
    "ff": 0.3,
    "range_class": "shape",
    "cost": "few",
-   "yomi": "おうじゃくろす",
+   "yomi": "ごっどくろすぶれいかー",
    "note_1101": "光のマップをなくす決まりで 光→風(ゴッドヘラクのもう1つのタイプ)"
   },
   "fsig_2004": {
-   "name": "クリムゾンフェザー",
+   "name": "バーニング・フェニックス",
    "type": "風",
    "type2": "炎",
    "category": "attack",
@@ -3476,7 +3476,7 @@
    "desc": "炎の羽をまきちらす",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "くりむぞんふぇざー"
+   "yomi": "ばーにんぐふぇにっくす"
   },
   "fsig_2005": {
    "name": "ガーディアンバイト",
@@ -5208,7 +5208,7 @@
    "yomi": "するとぶれーど"
   },
   "fsig_2071": {
-   "name": "ジャッジメントサンダー",
+   "name": "無限雷嵐",
    "type": "竜",
    "type2": "雷",
    "type3": "炎",
@@ -5238,10 +5238,11 @@
    "desc": "雷鳴で射程3の敵みんなを打つ",
    "range_class": "far",
    "cost": "few",
-   "yomi": "じゃっじめんとさんだー"
+   "yomi": "むげんボルテックス",
+   "ruby": [["無限", "むげん"], ["雷嵐", "ボルテックス"]]
   },
   "ragna_dark": {
-   "name": "アビスダークネス",
+   "name": "ダークネスバスター",
    "type": "闇",
    "category": "attack",
    "role": "sig_boss",
@@ -5263,10 +5264,10 @@
    "desc": "闇の大きな一撃",
    "range_class": "far",
    "cost": "few",
-   "yomi": "あびすだーくねす"
+   "yomi": "だーくねすばすたー"
   },
   "ragna_fire": {
-   "name": "ワールドエンドフレア",
+   "name": "地獄の業火",
    "type": "炎",
    "category": "attack",
    "role": "sig_boss",
@@ -5288,7 +5289,7 @@
    "desc": "すべてを焼く炎。移動したら使えない",
    "range_class": "far",
    "cost": "once",
-   "yomi": "わーるどえんどふれあ"
+   "yomi": "じごくのごうか"
   },
   "fsig_2073": {
    "name": "ホムラアギト",

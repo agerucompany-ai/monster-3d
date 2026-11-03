@@ -114,10 +114,10 @@ P.init=function(o){ o=o||{}; BASE=o.base||scriptBase(); if(o.arc) CFG.arc=o.arc;
 // ---------------------------------------------------------------- 技(2026-10-27 Phase B): stats_v2.json の覚える技・moves.json。battle.js が読んでいればそれを使う
 let LS={}, MV={}, STV={};
 // 2026-11-02 技名の読みがな(moves.json の yomi・battle.js の rubyParts と同じ決まり)
-const RB_K=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]/, RB_S=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+|[^\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+/g; function rbHira(s){ return String(s).replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60)); } function rubyParts(name,yomi){ name=String(name||''); if(!yomi || !RB_K.test(name)) return [[name,'']]; const segs=name.match(RB_S); const m=new RegExp('^'+segs.map(x=>RB_K.test(x)?'(.+?)':rbHira(x).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('')+'$').exec(rbHira(yomi)); if(!m) return [[name,String(yomi)]]; let i=1; return segs.map(x=>RB_K.test(x)?[x,m[i++]]:[x,'']); }
+const RB_K=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]/, RB_S=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+|[^\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+/g; function rbHira(s){ return String(s).replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60)); } function rubyParts(name,yomi,ruby){ name=String(name||''); if(Array.isArray(ruby)&&ruby.map(x=>x[0]).join('')===name) return ruby.map(x=>[String(x[0]),String(x[1]||'')]);   /* 11/03 当て字: moves.json の ruby=[[かたまり,読み],…] があればそれ */ if(!yomi || !RB_K.test(name)) return [[name,'']]; const segs=name.match(RB_S); const m=new RegExp('^'+segs.map(x=>RB_K.test(x)?'(.+?)':rbHira(x).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('')+'$').exec(rbHira(yomi)); if(!m) return [[name,String(yomi)]]; let i=1; return segs.map(x=>RB_K.test(x)?[x,m[i++]]:[x,'']); }
 const rbEsc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function rubyH(name,yomi){ return rubyParts(name,yomi).map(([t,r])=>r?`<ruby>${rbEsc(t)}<rt>${rbEsc(r)}</rt></ruby>`:rbEsc(t)).join(''); }
-function rubyByName(n){ for(const k in MV){ if(MV[k]&&MV[k].name===n) return rubyH(n,MV[k].yomi); } return rbEsc(n); }
+function rubyH(name,yomi,ruby){ return rubyParts(name,yomi,ruby).map(([t,r])=>r?`<ruby>${rbEsc(t)}<rt>${rbEsc(r)}</rt></ruby>`:rbEsc(t)).join(''); }
+function rubyByName(n){ for(const k in MV){ if(MV[k]&&MV[k].name===n) return rubyH(n,MV[k].yomi,MV[k].ruby); } return rbEsc(n); }
 function loadMoves(){ const MB=root.MonBattle;
   if(MB && MB.v2Ready && MB.MOVES2){ MV=MB.MOVES2; for(const id in MB.MID){ const m=MB.MID[id]; if(m._v2){ LS[id]=m._v2; } } return Promise.resolve(); }
   if(typeof fetch!=='function') return Promise.resolve();
@@ -462,7 +462,7 @@ UI.movesCard=function(c){ const d=el('div','pgMv'); if(!c) return d; const f=for
   if(L) h+=`<div class="pgSt"><span>HP<b>${Math.round(L.hp*x)}</b></span><span>攻撃<b>${Math.round(L.atk*x)}</b></span><span>防御<b>${Math.round(L.def*x)}</b></span><span>素早さ<b>${Math.round(L.spd*x)}</b></span><span>移動<b>${L.mob}</b></span></div>`;
   const all=learnAt(f); const keep=new Set(dropDom(all.map(e=>MV[e.move])).map(m=>m.id)); const gotIds=new Set(movesAt(f,c.lv).map(m=>m.id));
   const got=all.filter(e=>gotIds.has(e.move)), next=all.filter(e=>!(L&&L.fixed)&&(e.lv||1)>c.lv&&keep.has(e.move)).slice(0,3);   // 下位互換の技は出さない
-  const row=(e,lock)=>{ const mv=MV[e.move]; return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${mvTyb(mv)}<b>${rubyH(mv.name,mv.yomi)}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${(mv.category==='attack'||mv.category==='ailment')&&mv.power>0?'威'+mv.power:(CATL[mv.category]||'')}${rngS(mv)?'・'+rngS(mv):''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
+  const row=(e,lock)=>{ const mv=MV[e.move]; return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${mvTyb(mv)}<b>${rubyH(mv.name,mv.yomi,mv.ruby)}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${(mv.category==='attack'||mv.category==='ailment')&&mv.power>0?'威'+mv.power:(CATL[mv.category]||'')}${rngS(mv)?'・'+rngS(mv):''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
   h+=`<div class="pgSec"><span>技</span><span>${got.length}</span></div>`+got.map(e=>row(e,false)).join('')+next.map(e=>row(e,true)).join('');
   d.innerHTML=h; return d; };
 // レベルアップで覚えた技のお知らせ(フィールドに戻ってから・タップで閉じる)
@@ -504,7 +504,7 @@ UI.detail=function(c, o){ o=o||{}; const d=el('div','pgDet'+(o.leader?' lead':''
   const all=learnAt(f); const keep=new Set(dropDom(all.map(e=>MV[e.move])).map(q=>q.id)); const gotIds=new Set(movesAt(f,c.lv).map(q=>q.id));
   const got=all.filter(e=>gotIds.has(e.move)), next=all.filter(e=>!(L&&L.fixed)&&(e.lv||1)>c.lv&&keep.has(e.move)).slice(0,2);
   const row=(e,lock)=>{ const mv=MV[e.move]; const pw=(mv.category==='attack'||mv.category==='ailment')&&mv.power>0?'威力'+mv.power:(CATL[mv.category]||''); const rg=rngS(mv);
-    return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${mvTyb(mv)}<b>${rubyH(mv.name,mv.yomi)}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${pw}${rg?'・射程'+rg:''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
+    return `<div class="pgMvR${lock?' lock':''}"><span class="lvx">${lock?'Lv'+e.lv:''}</span>${mvTyb(mv)}<b>${rubyH(mv.name,mv.yomi,mv.ruby)}</b><span class="sp">${mv.target==='map'?ICON('map'):(mv.target==='area'?ICON('area'):'')}${pw}${rg?'・射程'+rg:''}・${mv.mp>0?mv.mp+'回':'∞'}</span></div>`; };
   h+=`<div class="pgSec"><span>技</span><span>${got.length}</span></div>`+got.map(e=>row(e,false)).join('')+next.map(e=>row(e,true)).join('');
   d.innerHTML=h; return d; };
 // 引き継ぎ(2026-10-31): この機種から=合言葉(4〜8けたの数字)を決めてコードを出す / ほかの機種から=コードと合言葉で受け取る(この機種のセーブは上書き → 読み直す)
