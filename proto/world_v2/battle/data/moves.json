@@ -2643,7 +2643,7 @@
    "yomi": "しゃくねつじごく"
   },
   "starter_enou": {
-   "name": "フレイムラッシュ",
+   "name": "フォックスファイヤー",
    "type": "炎",
    "category": "attack",
    "role": "sig_starter",
@@ -2665,7 +2665,7 @@
    "desc": "火をまとって走り、体当たりする",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "ふれいむらっしゅ"
+   "yomi": "フォックスファイヤー"
   },
   "sig_sasori": {
    "name": "流星メテオ",
