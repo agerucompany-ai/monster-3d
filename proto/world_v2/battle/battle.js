@@ -25,7 +25,7 @@ function icSrc(n){ return CFG.base+CFG.img+'ui/'+n+'.webp'; }
 function LMK(){ return `<i class="lmk" style="background-image:url(${icSrc('leader')})"></i>`; }
 function icTag(n){ return `<img class="ui-ic" src="${icSrc(n)}" alt="">`; }
 function escH(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function icHTML(s){ return escH(s).replace(/\u0001(\w+)\u0002/g,(_,n)=>icTag(n)).replace(/\u0003([^\u0004]*)\u0004([^\u0005]*)\u0005/g,'<ruby>$1<rt>$2</rt></ruby>'); }
+function icHTML(s){ const h=escH(s).replace(/\u0001(\w+)\u0002/g,(_,n)=>icTag(n)); if(h.indexOf('\u0003')<0) return h; return rubyHTML(h.split(/(\u0003[^\u0004]*\u0004[^\u0005]*\u0005)/).filter(x=>x).map(x=>{ const m=/^\u0003([^\u0004]*)\u0004([^\u0005]*)\u0005$/.exec(x); return m?[m[1],m[2]]:[x,'']; }), x=>x); }
 function setIc(el,s){ s=String(s); if(/[\u0001\u0003]/.test(s)) el.innerHTML='<span class="ic-l">'+icHTML(s)+'</span>'; else el.textContent=s; }   // 1つの span に包む(flex のボタンでアイコンと文字が離れないように)
 const _icImg={}, _icWait=[]; let _icT=0;
 function icImg(n){ if(IS_NODE) return null; let im=_icImg[n];
@@ -188,7 +188,7 @@ function V2ON(){ return V2DATA && BT.v2!==false; }
 try{ if(IS_NODE && process.env.V2K) Object.assign(V2, JSON.parse(process.env.V2K)); }catch(e){}   // シムのつまみ: V2K='{"dmgX":1.06,"ancX":0.9}'
 function mvName(mv){ return mv ? (mv.name||mv.n||'') : ''; }
 // 2026-11-02 技名の読みがな(moves.json の yomi): 漢字のかたまりの上に小さく。画面に出す所は mvNameR(印つき→icHTML で <ruby>)・mvNameH(HTML)。mvName はそのまま(シム・確認用)
-const RB_K=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]/, RB_S=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+|[^\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+/g; function rbHira(s){ return String(s).replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60)); } function rubyParts(name,yomi,ruby){ name=String(name||''); if(Array.isArray(ruby)&&ruby.map(x=>x[0]).join('')===name) return ruby.map(x=>[String(x[0]),String(x[1]||'')]);   /* 11/03 当て字: moves.json の ruby=[[かたまり,読み],…] があればそれ */ if(!yomi || !RB_K.test(name)) return [[name,'']]; const segs=name.match(RB_S); const m=new RegExp('^'+segs.map(x=>RB_K.test(x)?'(.+?)':rbHira(x).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('')+'$').exec(rbHira(yomi)); if(!m) return [[name,String(yomi)]]; let i=1; return segs.map(x=>RB_K.test(x)?[x,m[i++]]:[x,'']); }
+const RB_K=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]/, RB_S=/[\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+|[^\u3400-\u9fff\uf900-\ufaff\u3005\u30060-9\uff10-\uff19]+/g; function rbHira(s){ return String(s).replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60)); } function rubyParts(name,yomi,ruby){ name=String(name||''); if(Array.isArray(ruby)&&ruby.map(x=>x[0]).join('')===name) return ruby.map(x=>[String(x[0]),String(x[1]||'')]);   /* 11/03 当て字: moves.json の ruby=[[かたまり,読み],…] があればそれ */ if(!yomi || !RB_K.test(name)) return [[name,'']]; const segs=name.match(RB_S); const m=new RegExp('^'+segs.map(x=>RB_K.test(x)?'(.+?)':rbHira(x).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('')+'$').exec(rbHira(yomi)); if(!m) return [[name,String(yomi)]]; let i=1; return segs.map(x=>RB_K.test(x)?[x,m[i++]]:[x,'']); } function rubyHTML(parts,esc){ /* 11/03 読みが長くても漢字の間を空けない(.rbx/.rbt・CSS の --k 漢字の幅 --w 読みの字数 --L/--R はみ出してよい幅) */ const W=s=>{ let n=0; for(const c of String(s)) n+=c.charCodeAt(0)<0x2000?.55:1; return n; }; const side=(j,d)=>{ const p=parts[j]; if(!p) return d<0?.6:2; if(p[1]) return 0; const q=parts[j+d]; return Math.min(1, W(p[0])*(q&&q[1]?.45:.9)); }; return parts.map(([t,r],i)=>r?'<span class="rbx" style="--k:'+W(t).toFixed(2)+';--w:'+W(r).toFixed(2)+';--L:'+side(i-1,-1).toFixed(2)+';--R:'+side(i+1,1).toFixed(2)+'">'+esc(t)+'<span class="rbt">'+esc(r)+'</span></span>':esc(t)).join(''); }
 function mvNameR(mv){ return rubyParts(mvName(mv), mv&&mv.yomi, mv&&mv.ruby).map(([t,r])=>r?'\u0003'+t+'\u0004'+r+'\u0005':t).join(''); }
 function mvNameH(mv){ return icHTML(mvNameR(mv)); }
 // 体の数を v1(monsters.json)/v2(stats_v2.json)で切り替える(MID の hp・atk・move・def・spd)
@@ -5878,10 +5878,10 @@ const CSS=`
 #mbRoot button.bt.cbb .tyb{font-size:12px}
 #mbRoot button.bt.mvb .mvt{display:flex;align-items:center;gap:4px;min-width:0}
 #mbRoot button.bt.mvb .mvn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
-#mbRoot rt{font-size:11px;font-weight:700;line-height:1;letter-spacing:0;color:inherit;opacity:.92}
+.rbx{--F:.8;--Fe:clamp(calc(var(--F)*.72),calc((var(--k) + var(--L) + var(--R))/var(--w)),var(--F));--x:calc(var(--w)*var(--Fe) - var(--k));display:inline-block;position:relative;padding-top:calc(var(--F)*1.05em);line-height:1.2;text-indent:0;white-space:nowrap}.rbt{position:absolute;top:calc((var(--F)*1.02 - var(--Fe))*1em/var(--Fe));left:calc(-1em*min(var(--L),max(min(var(--L),var(--x)/2),var(--x) - var(--R)))/var(--Fe));font-size:calc(var(--Fe)*1em);line-height:1;white-space:nowrap;letter-spacing:0;font-weight:700;transform:scaleX(min(1,calc((var(--k) + var(--L) + var(--R))/(var(--w)*var(--Fe)))));transform-origin:0 0;pointer-events:none}#mbRoot .rbt{opacity:.92}
 #mbRoot button.bt.mvb.rbW{grid-column:span 2}
-#mbRoot button.bt.mvb .mvn:has(ruby){padding-top:2px;line-height:1.5}
-#mbRoot #mb-bigName .bn1 rt{font-size:13px;font-weight:800;letter-spacing:.04em}
+#mbRoot button.bt.mvb .mvn:has(.rbx){line-height:1.2}
+#mbRoot #mb-bigName .bn1 .rbx{--F:.45}#mbRoot #mb-bigName .bn1 .rbt{font-weight:800}
 #mbRoot button.bt.mvb .tyb{font-size:12px;line-height:1.25em}
 #mbRoot button.bt.mvb img.ui-ic{width:1.1em;height:1.1em;vertical-align:-.2em}
 #mbRoot button.bt.mvb .mvs{font-size:12px;color:#c8d4f0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
