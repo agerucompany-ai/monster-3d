@@ -1466,6 +1466,30 @@ function spdLeft(){ const S=state.spd; return spdSort(Object.values(state.units)
 function spdBlock(u){ return !!(state && state.spd && state.phase==='battle' && u && u.uid!==state.spd.cur); }
 function spdAdopt(nu){ const S=state&&state.spd; if(!S||state.phase!=='battle'||state.units[S.cur]||nu.owner!==state.cur) return; S.cur=nu.uid; nu.wait=false; nu.sdone=false; nu.acted=false; }
 function spdDone(){ const S=state&&state.spd; if(!S) return false; const u=state.units[S.cur]; return !u || (u.acted && !canMove(u)); }
+// 2026-11-05 オーナー「素早さ順ならターン終了いらん。一つの行動が終わったら どんどん順番が変わる。何もしない時だけ選べばいい」
+// 自分の子が その番でできることを使い切ったら(攻撃・技・回復・融合・合体・潜る など)、演出が終わってから0.4秒で自動で次の子へ。
+// 移動だけ・進化だけ(進化は移動あつかい)の時は まだ技などが残るので進めない(残りが1つもなければ進める)。風の「当てて下がる」も下がるまで待つ。
+// 待った: 進む前の0.4秒の間に押せば戻せる(戻すと行動前に戻る=まだできることがあるので進まない)。進んだ後は今までどおり戻せない。オート・CPU・シムは変えない。
+const SPD_AUTO_MS=400;
+function spdHasMore(u){ if(!u||u.wait) return false; if(canMove(u)) return true; if(u.acted) return false;
+  if(!V2ON()) return true;   // 古い技の形(v1)は 移動のあとも今までどおり「待機」で終える
+  if(movesV2(u).some(mv=>moveReady(u,mv))) return true;
+  if(T3() && comboReady(u).length) return true;
+  if(canAwaken(u)) return true;
+  const m=mon(u); if(m.evolves_to!=null && (ONLINE||STORY.owned.includes(m.evolves_to)) && gaugeReady(u)) return true;
+  if(adjFuse(u).length) return true;
+  if(!ONLINE && u.owner===0 && feedOn() && feedTargets().length) return true;
+  return false; }
+function spdAutoCheck(){ const S=state&&state.spd; if(!S||state.phase!=='battle'||state.cur!==0||BT.auto||ONLINE||BT.headless||window._SIM) return;
+  const u=state.units[S.cur]; if(u && (u.owner!==0 || spdHasMore(u))) return;
+  const st=state, n=S.n; if(spdAutoCheck._k===st && spdAutoCheck._n===n) return; spdAutoCheck._k=st; spdAutoCheck._n=n;
+  let t0=0; const stop=()=>{ spdAutoCheck._k=null; };
+  (function tick(){ const S2=state&&state.spd; if(state!==st||!S2||S2.n!==n||state.phase!=='battle'||state.cur!==0||BT.auto) return stop();
+    const cu=state.units[S2.cur]; if(cu && spdHasMore(cu)) return stop();   // 待ったで戻した
+    if(animBusy() || (_seq && !_seq.done)){ t0=0; setTimeout(tick,80); return; }
+    if(!t0) t0=performance.now();
+    if(performance.now()-t0<SPD_AUTO_MS){ setTimeout(tick,80); return; }
+    stop(); endTurn(); })(); }
 function spdQueue(n){ const S=state.spd, out=[]; const cu=state.units[S.cur]; if(cu) out.push({u:cu,cur:1}); for(const u of spdLeft()) out.push({u});
   if(out.length<n){ out.push({sep:1}); for(const u of spdSort(Object.values(state.units), 1-S.tie)) out.push({u}); } return out.slice(0,n); }
 function spdRowHTML(){ return '<div class="qrow">'+spdQueue(10).map(x=>x.sep?'<i class="qs"></i>':`<img class="${x.u.owner===0?'me':'foe'}${x.cur?' cur':''}" src="${IMG[x.u.mid]}" alt="">`).join('')+'</div>'; }
@@ -4087,7 +4111,7 @@ function koStamp(r,c,lead,owner){ if(BT.headless||!renderer||!camera) return; fx
 // ---- 進化(FX2版): 光の繭に包まれ → 繭が割れて新しい姿が現れる ----
 // ---- 進化(2026-10-29 3D): 光の柱に包まれ、白く光りながら大きくなって 新しい3Dに入れかわる・新しい名前の帯 ----
 // o={from,to,clutch,awake}。前の姿の3Dはその場に残して(盤の子の絵は新しい姿を読みこむ)、光って消える。2Dの子(3Dなし)は前の演出(evolveFx2D)。
-function evolveFx(r,c,o){ if(BT.headless) return; o=o||{}; try{ if(!o.awake&&window.W2BGM){ const uu=unitAt(r,c); const lv=(MID[o.to||(uu&&uu.mid)]||{}).level||2; W2BGM.cue(lv>=3?'evo3':'evo2'); } }catch(e){}   // 2026-11-05 曲: 進化の短い曲(greece_town.html の bgmCue。部品だけの時は鳴らない) camShow([{r,c}],{pad:1.4, hold:2600/SPD()}); const u=unitAt(r,c); const s=u&&sprites[u.uid];
+function evolveFx(r,c,o){ if(BT.headless) return; o=o||{}; try{ if(!o.awake&&window.W2BGM){ const uu=unitAt(r,c); const lv=(MID[o.to||(uu&&uu.mid)]||{}).level||2; W2BGM.cue(lv>=3?'evo3':'evo2'); } }catch(e){}   /* 2026-11-05 曲: 進化の短い曲(greece_town.html の bgmCue。部品だけの時は鳴らない) */ camShow([{r,c}],{pad:1.4, hold:2600/SPD()}); const u=unitAt(r,c); const s=u&&sprites[u.uid];
   if(!s || !s.m3d) return evolveFx2D(r,c,o);
   const w=cell2world(r,c), h=cellH(r,c); const sp=SPD(); const lv=(MID[u.mid]||{}).level||2; const big=o.awake?1:(lv>=3||(MID[u.mid]||{}).role==='fusion'?1.3:1.0);
   const tc=o.clutch?0xff8a40:(TYPE_HEX[(MID[u.mid]||{}).type]||0xffe070); const gold=o.clutch?0xffb070:0xfff0a0; const T=(o.awake?720:1050);
@@ -4967,11 +4991,12 @@ function updateUI(){ if(BT.headless) return;
     ac.appendChild(mkbt(`${IC(MEAT_KEYS.find(k=>(STORY.items[k]||0)>0))}肉をあげる`,'evo', state.cur===0 && !sel.acted && feedTargets().length>0, ()=>{ selMode='feed'; if(!(STORY.items[BT.meatSel]>0)) BT.meatSel=MEAT_KEYS.find(k=>(STORY.items[k]||0)>0); drawSelHL(); updateUI(); }));
   { const row=document.createElement('div'); row.className='mainrow';
     if(!ONLINE) row.appendChild(mkbt(IC('undo')+'待った','', state.cur===0 && !BT.auto && undoStack.length>0, doUndo));
-    row.appendChild(mkbt(state.spd?'次へ':'ターン終了','warn end'+(state.spd&&state.cur===0&&spdDone()?' guide':''), state.cur===0 && !BT.auto, endTurn));
+    row.appendChild(mkbt(state.spd?IC('wait')+'待機':'ターン終了','warn end', state.cur===0 && !BT.auto, endTurn));   // 2026-11-05 素早さ順: 行動で自動で進む・「待機」は何もしない時だけ
     ac.appendChild(row); }
   // detail (相手等)
   $id('detail').style.display='none';
   hudHold();
+  if(state.spd) spdAutoCheck();   // 2026-11-05 素早さ順: やり終えたら自動で次の子へ
 }
 // 2026-10-30 バグ直し(盤が跳ねる): 子を選ぶ・外す・技を開くたびに 下の帯(hud)の高さが変わり、盤(カメラの fit)が縮んだり上下に動いたりして、次のタップが別のマスに当たっていた。
 //   帯の高さは その戦いでいちばん高くなった高さより低くしない(盤が動かない)。はじめに「選んだ時」「技を開いた時」の高さを測っておく(hudPremeasure)
