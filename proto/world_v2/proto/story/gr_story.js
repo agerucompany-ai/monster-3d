@@ -301,11 +301,22 @@ function grObjText(f){ if(!grOn()) return null; if(GR_RETRY) return 'もう一�
   return P.obj||'第'+s.ep+'話'; }
 
 // ---- 前の版(30話)のセーブ: 30話を終えていれば 23話も終えた扱い。途中なら新しい1話から(仲間・Lv・ジェムはそのまま) ----
-function grMigrate(){ const f=SAVE&&SAVE.flags; if(!f||f.g23) return;
+//  2026-11-05 直し(オーナー「続きからってやったら、また一からになった」): 新しいセーブに g23 の印を付けていなかったので、つづきからのたびに
+//   23話版のセーブを「前の版の途中」とまちがえて1話に戻していた。23話版かどうかは 23話版の旗(段 g01_01〜・話のおわり a01〜a23)でも見る(前の30話の版はこの形の旗を使っていない)
+const GR23_KEY=/^(g\d\d_|a\d\d$)/;
+const grIs23=f=>!!f&&typeof f==='object'&&Object.keys(f).some(k=>GR23_KEY.test(k));
+function grMigrate(){ const f=SAVE&&SAVE.flags; if(!f) return; if(f.g23){ grRescue(f); return; }
   if(f.ep30||f.king){ f.g23=1; for(const s of GR_STEPS) f[s.id]=1; for(let i=1;i<=23;i++) f['a'+pad2g(i)]=1; f.gr_bond=1; return; }
-  if(!f.arrived){ f.g23=1; return; }
+  if(!f.arrived||grIs23(f)){ f.g23=1; return; }
   const old={}; for(const k of Object.keys(f)){ old[k]=f[k]; delete f[k]; } f.old30=old; f.g23=1;
   if(SAVE.map) SAVE.map='oliva_town'; }   // 本体の contGame が arrived の無いセーブとして第1話のはじめ(ep1Open)から流す
+// まちがえて1話に戻されたセーブ(11/04〜11/05): 前の旗の入れ物 flags.old30 に 23話版の旗が入っている → 今の旗に戻す(両方を合わせる=進んでいる方から続く)
+//  続きの段の地図が今の地図とちがう時は、その地図の入口から(位置は捨てる)
+function grRescue(f){ const o=f.old30; if(!grIs23(o)) return false;
+  for(const k of Object.keys(o)) if(o[k]&&!f[k]) f[k]=o[k];
+  delete f.old30; f.g23=1; f.g23fix=1;
+  const s=grCur(); if(s&&SAVE.map&&SAVE.map!==s.map){ SAVE.map=s.map; delete SAVE.x; delete SAVE.z; delete SAVE.yaw; }
+  return true; }
 
 // ---- 本体の SC のすぐあとで呼ぶ ----
 function grInit(){ Object.assign(SC,GR_SC);

@@ -3288,11 +3288,22 @@ function grObjText(f){ if(!grOn()) return null; if(GR_RETRY) return 'もう一�
   return P.obj||'第'+s.ep+'話'; }
 
 // ---- 前の版(30話)のセーブ: 30話を終えていれば 23話も終えた扱い。途中なら新しい1話から(仲間・Lv・ジェムはそのまま) ----
-function grMigrate(){ const f=SAVE&&SAVE.flags; if(!f||f.g23) return;
+//  2026-11-05 直し(オーナー「続きからってやったら、また一からになった」): 新しいセーブに g23 の印を付けていなかったので、つづきからのたびに
+//   23話版のセーブを「前の版の途中」とまちがえて1話に戻していた。23話版かどうかは 23話版の旗(段 g01_01〜・話のおわり a01〜a23)でも見る(前の30話の版はこの形の旗を使っていない)
+const GR23_KEY=/^(g\d\d_|a\d\d$)/;
+const grIs23=f=>!!f&&typeof f==='object'&&Object.keys(f).some(k=>GR23_KEY.test(k));
+function grMigrate(){ const f=SAVE&&SAVE.flags; if(!f) return; if(f.g23){ grRescue(f); return; }
   if(f.ep30||f.king){ f.g23=1; for(const s of GR_STEPS) f[s.id]=1; for(let i=1;i<=23;i++) f['a'+pad2g(i)]=1; f.gr_bond=1; return; }
-  if(!f.arrived){ f.g23=1; return; }
+  if(!f.arrived||grIs23(f)){ f.g23=1; return; }
   const old={}; for(const k of Object.keys(f)){ old[k]=f[k]; delete f[k]; } f.old30=old; f.g23=1;
   if(SAVE.map) SAVE.map='oliva_town'; }   // 本体の contGame が arrived の無いセーブとして第1話のはじめ(ep1Open)から流す
+// まちがえて1話に戻されたセーブ(11/04〜11/05): 前の旗の入れ物 flags.old30 に 23話版の旗が入っている → 今の旗に戻す(両方を合わせる=進んでいる方から続く)
+//  続きの段の地図が今の地図とちがう時は、その地図の入口から(位置は捨てる)
+function grRescue(f){ const o=f.old30; if(!grIs23(o)) return false;
+  for(const k of Object.keys(o)) if(o[k]&&!f[k]) f[k]=o[k];
+  delete f.old30; f.g23=1; f.g23fix=1;
+  const s=grCur(); if(s&&SAVE.map&&SAVE.map!==s.map){ SAVE.map=s.map; delete SAVE.x; delete SAVE.z; delete SAVE.yaw; }
+  return true; }
 
 // ---- 本体の SC のすぐあとで呼ぶ ----
 function grInit(){ Object.assign(SC,GR_SC);
@@ -4903,7 +4914,7 @@ async function contGame(sv){ ST.title.style.display='none'; SAVE=sv; if(sv.g!=='
   grMigrate(); { const f=SAVE.flags||{}; if(f.corinth&&!f.evo19&&!f.ep18) SAVE.unlock.evo=true; }   // ---- 物語(gr_story.js): 古いセーブの手当て(進化の解禁は第19話へ移した)
   if(!SAVE.flags||!SAVE.flags.arrived||!sv.map){ SAVE.flags=SAVE.flags||{}; stShow('full'); LOADP=loadMap('oliva_town','start');   // 判定はぜんぶ SAVE.stage で見る(第1話 2-3)
     await ep1Open(); await arriveTown(); return; }   // 古いセーブ(tokyo/skyport/airship)も v11 の頭から
-  fadeEl.classList.add('on'); stHide(); await loadMap(sv.map,null,[sv.x,sv.z,sv.yaw]); followersSet(); if(sv.tod) setTime(sv.tod,true);
+  fadeEl.classList.add('on'); stHide(); await loadMap(sv.map,null,sv.x!=null&&sv.z!=null?[sv.x,sv.z,sv.yaw||0]:null); followersSet(); if(sv.tod) setTime(sv.tod,true);   // 位置の無いセーブ(grRescue で地図を移した時)はその地図の入口
   await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); showArea(D.name); AREA=D.name; objUpdate(); grArrive(); }
 // ---- 全部ためす(2026-10-27 オーナー「操作性を確かめたい・全部モンスターが使える・全マップ」) ----
 //  別のセーブ w2_save_test_v1: 全154体を牧場に(Lv50)・パーティ6体(メニューでいつでも入れかえ)・進化/融合/3体融合の解禁・ジェム99999・出口の旗の条件なし・HUD の「ワープ」で全マップへ
