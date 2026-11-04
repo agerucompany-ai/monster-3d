@@ -54,6 +54,12 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 #brief .btns{display:flex;gap:10px;margin-top:14px}
 #brief .btns button{flex:1;padding:11px 0;border-radius:999px;border:2px solid var(--ink);background:#fff;color:var(--ink);font:inherit;font-weight:800;font-size:16px;cursor:pointer}
 #brief .btns button.pri{background:var(--ink);color:#fff}
+#brief .mapc{width:min(100%,560px)}
+#brief .mapw{position:relative;width:100%;margin-top:8px;border-radius:12px;overflow:hidden;border:2px solid #fff;box-shadow:0 1px 6px rgba(60,40,20,.25);margin-left:auto;margin-right:auto}
+#brief .mapcv{position:absolute;inset:0;width:100%;height:100%;display:block}
+#brief .ml{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:12px;font-weight:900;color:#3e3428;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 2px #fff;pointer-events:none}
+#brief .ml.mx{padding:1px 7px;border-radius:999px;background:rgba(44,62,102,.88);color:#fff;text-shadow:none;font-size:11px}
+#brief .ml.me{width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:13px solid #d9483b;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 1px #fff)}
 #enter{position:fixed;left:50%;bottom:calc(34px + env(safe-area-inset-bottom));transform:translateX(-50%) scale(.92);padding:11px 26px;border-radius:999px;border:2px solid #fff;
   background:var(--ink);color:#fff;font:inherit;font-weight:800;font-size:16px;letter-spacing:.1em;box-shadow:0 4px 14px rgba(30,40,80,.28);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
 #enter.on{opacity:1;pointer-events:auto;transform:translateX(-50%) scale(1)}
@@ -671,6 +677,7 @@ const pick=(a,r)=>a[(r()*a.length)|0];
 let CUR=null; // 今組み立て中の区画 {B,cols,dyn,y}
 function addCol(c){ CUR.cols.push(c); }
 function P_(geo,col,m,o){ CUR.B.add(geo,MAT.v,m,Object.assign({col},o)); }
+function footMin(x,z,w,d,rot){ const cs=Math.cos(rot), sn=Math.sin(rot); let mn=1e9; for(let a=-1;a<=1;a+=0.5) for(let b=-1;b<=1;b+=0.5){ const lx=a*w/2, lz=b*d/2; mn=Math.min(mn,G(x+lx*cs+lz*sn,z-lx*sn+lz*cs)); } return mn; }
 function footY(x,z,w,d,rot){ const cs=Math.cos(rot), sn=Math.sin(rot); let mx=-1e9; for(const [a,b] of [[0,0],[-1,-1],[1,-1],[-1,1],[1,1],[0,1]]){ const lx=a*w/2, lz=b*d/2; mx=Math.max(mx,G(x+lx*cs+lz*sn,z-lx*sn+lz*cs)); } return mx; }
 function local(M,x,y,z,ry,sx,sy,sz,rx,rz){ return MM(M,T(x,y,z,ry,sx,sy,sz,rx,rz)); }
 
@@ -899,6 +906,7 @@ function occMark(x,z,hw,hd,rot,pad){ pad=pad||0; const cs=Math.cos(rot||0), sn=M
   for(let i=Math.floor((x-R)/OCS);i<=Math.floor((x+R)/OCS);i++) for(let j=Math.floor((z-R)/OCS);j<=Math.floor((z+R)/OCS);j++){ const px=(i+0.5)*OCS-x, pz=(j+0.5)*OCS-z; const lx=px*cs-pz*sn, lz=px*sn+pz*cs; if(Math.abs(lx)<=hw+pad&&Math.abs(lz)<=hd+pad) OCC.set(occKey(i,j),1); } }
 function occFree(x,z,r){ for(let i=Math.floor((x-r)/OCS);i<=Math.floor((x+r)/OCS);i++) for(let j=Math.floor((z-r)/OCS);j<=Math.floor((z+r)/OCS);j++){ if(OCC.has(occKey(i,j))&&Math.hypot((i+0.5)*OCS-x,(j+0.5)*OCS-z)<r+0.36) return false; } return true; }
 OB.m=(o)=>{ const F=mFoot(o); if(!F) return; const I=F.I, rot=(o.rot||0)*DEG; let y0=(F.kind==='bld'||F.kind==='wall')?footY(o.x,o.z,F.w*0.8,F.d*0.8,rot)-0.04:G(o.x,o.z)-0.03-(I.sink||0)*(o.s||3); if(o.k==='boat') y0=-0.22*(o.s||3)/5;
+  if(o.sit==='low') y0=footMin(o.x,o.z,F.w*0.9,F.d*0.9,rot)-0.06; if(o.y!=null) y0=o.y;   // 坂の上の置き物: sit:'low'=足もとのいちばん低い所に合わせる(浮かせない)・y=高さを決め打ち(2026-11-05)
   const s=o.s||3; const M=T(o.x,y0,o.z,rot+I.front,s*I.sx,s*(o.sy||1),s); (CUR.inst[o.k]||(CUR.inst[o.k]=[])).push(M);
   const ck=F.kind; if(ck==='flora'||o.k==='steps'||o.nocol) return;
   if(ck==='tree') addCol({t:'c',x:o.x,z:o.z,r:Math.max(0.3,Math.min(F.w,F.d)*0.12),top:y0+F.h,tree:1,cr:F.w*0.45});
@@ -1778,7 +1786,7 @@ function initChunks(){ const b=D.bounds; CS=D.chunk; OX=D.origin?D.origin[0]:0; 
   const put=o=>{ const x=o.x!=null?o.x:(o.pts?o.pts[0][0]:(o.x0+o.x1)/2), z=o.z!=null?o.z:(o.pts?o.pts[0][1]:(o.z0+o.z1)/2); const c=chunkAt(x,z); if(c) c.objs.push(o); };
   // 線に沿って並べる(塀・石垣・街灯の列など): {t:'line',k,pts,step,s,side,jit}
   const lines=[]; for(const o of D.objects){ if(o.t!=='line') continue; for(let q=0;q<o.pts.length-1;q++){ const [ax,az]=o.pts[q],[bx,bz]=o.pts[q+1]; const L=Math.hypot(bx-ax,bz-az), n=Math.max(1,Math.round(L/o.step)); const F1=mFoot({k:o.k,s:1}); const ry=Math.atan2(bx-ax,bz-az)-(F1&&F1.w>=F1.d?Math.PI/2:0);
-      for(let i=0;i<n;i++){ const t=(i+0.5)/n; lines.push({t:'m',k:o.k,x:lerp(ax,bx,t),z:lerp(az,bz,t),rot:ry/DEG+(o.rot||0),s:o.s||o.step*1.02,sy:o.sy}); } } }
+      for(let i=0;i<n;i++){ const t=(i+0.5)/n; lines.push({t:'m',k:o.k,x:lerp(ax,bx,t),z:lerp(az,bz,t),rot:ry/DEG+(o.rot||0),s:o.s||o.step*1.02,sy:o.sy,sit:o.sit}); } } }
   const objs=D.objects.filter(o=>o.t!=='line').concat(lines);
   for(const o of objs) put(o);
   // 足もと(重なり確認・接地影・散らす物の除外)
@@ -2118,10 +2126,12 @@ function enterPlace(n){ const f=SAVE?SAVE.flags:{}; if(chasing()) return;   // -
   if(n==='オスロ研究所'){ if(window.Progress&&Progress.state()) Progress.ui.open('cradle'); else toast('オスロ研究所'); return; }   // 北欧編(2026-10-27): オスロの研究所でも「テリオンを生み出す」
   if(n==='ナイル研究所'){ if(window.Progress&&Progress.state()) Progress.ui.open('cradle'); else toast('ナイル研究所'); return; }   // エジプト編(2026-10-26): カイロの研究所でも「テリオンを生み出す」
   if(n==='隠し研究所'){ toast('ヴィクターの隠し研究所'); return; }
-  if(n==='道しるべ'){ toast(MAP&&MAP.startsWith('eg_')?'→ ギザ → ナイルデルタ → ルクソール → 王家の谷 → 王の墓 → アスワン → アブ・シンベル → 白砂漠 → 紅海':(MAP&&MAP.startsWith('cn_')?'→ 竹海の村 → 西の高原 → 化石の谷 → 南の山 → 雲海の石柱 → 北の大河 → 東の島 → 古い都 → 雪の高原 → 東の海':'→ アルカディアの森 → 運河の町コリンタ → 雲の山道 → 山の村デルフィナ')); return; }
+  if(n==='道しるべ'){ toast(MAP&&MAP.startsWith('eg_')?'→ ギザ → ナイルデルタ → ルクソール → 王家の谷 → 王の墓 → アスワン → アブ・シンベル → 白砂漠 → 紅海':(MAP&&MAP.startsWith('cn_')?'→ 竹海の村 → 西の高原 → 化石の谷 → 南の山 → 雲海の石柱 → 北の大河 → 東の島 → 古い都 → 雪の高原 → 東の海':grSign())); return; }
   if(n==='山の天文台'){ toast('山の天文台'); return; }
   if(n==='店'&&window.Progress&&Progress.state()){ Progress.ui.open('shop'); return; }   // 2026-10-30 店: 肉・闘気の水晶をジェムで買う
   toast(n); }   // いこいの泉はただの景色(2026-10-30・入口の名札もなくした)
+function grSign(){ const R=['oliva_hill','arcadia','dig','facility','nafria','liongate','cloudroad','corinth','marble','athens'], J={oliva_hill:'オリーブの丘',arcadia:'アルカディアの森',dig:'森の外れの発掘場',facility:'森の奥の施設',nafria:'港町ナフリア',liongate:'獅子門の丘',cloudroad:'雲の山道',corinth:'運河の町コリンタ',marble:'大理石の谷',athens:'白い都'};   // ギリシャの道しるべ=今いる所から先の道の順(23話版の地図の順・2026-11-05)
+  const i=R.indexOf(MAP); return '→ '+R.slice(i<0?1:i+1).slice(0,4).map(k=>J[k]).join(' → '); }
 function npcTalk(n){ if(n.o.brief){ talkClose(); HERO.yaw=Math.atan2(n.x-HERO.x,n.z-HERO.z); briefShow(n.o.brief,'info'); return; }   // 案内の人=地図の案内(せりふなし)
   const f=SAVE?SAVE.flags:{};   // ---- 物語(gr_story.js): 勝ったあとの場面の続き(afterFlag)・勝負しない人の一言・NPC_RULE
   if(storyOn()&&n.beaten&&n.o.after&&n.o.afterFlag&&!f[n.o.afterFlag]&&SC[n.o.after]){ storyField(n.o.after); return; }
@@ -2350,7 +2360,7 @@ function briefLv(id,R){ const C=window.Progress&&Progress.config; const arc=(C&&
 const briefHex=n=>'#'+((n>>>0)&0xffffff).toString(16).padStart(6,'0');
 const briefLight=n=>(((n>>16)&255)*0.299+((n>>8)&255)*0.587+(n&255)*0.114)>150;
 const BRIEF_IC=n=>`<img class="ui-ic" src="../battle/img/ui/${n}.webp" alt="">`;
-function briefHTML(L,R,id,mode){ const B=L.BRIEF, X=Math.round(B.TERR_X*100);
+function briefHTML(L,R,id,mode,full){ const B=L.BRIEF, X=Math.round(B.TERR_X*100);
   const TB=t=>`<span class="tyb" style="background:${B.TYPE_COL[t]||'#666'}">${t}</span>`;
   const TN=t=>{ const h=B.TERR_HEX[t]; return `<span class="tn${h!=null&&briefLight(h)?' lt':''}" style="background:${h!=null?briefHex(h):'#999'}">${B.TERR_JP[t]||t}</span>`; };
   const boards=briefBoards(R).map(b=>Object.assign(b,{mix:briefMix(L,b.tt), jp:(L.PLACES[b.tt]&&L.PLACES[b.tt].jp)||B.THEME_JP[b.tt]||b.tt}));
@@ -2365,16 +2375,16 @@ function briefHTML(L,R,id,mode){ const B=L.BRIEF, X=Math.round(B.TERR_X*100);
     return `<div class="trw">${TN(t)}<span class="up"><b>+${X}%</b>${ups}</span>${dn.length?`<span class="dn"><b>−${X}%</b>${dn.map(TB).join('')}</span>`:''}</div>`; }).join('');
   const lvs=lv.lv?`<span class="chip">Lv ${lv.lv[0]}–${lv.lv[1]}</span>`:'';
   return `<div class="bc" role="dialog"><div class="bh">${BRIEF_IC('map')}<b>${R.name||id}</b></div>
-    <div class="chips">${lvs}<span class="chip">${lv.st}段目</span></div>
+    <div class="chips">${lvs}<span class="chip">${lv.st}段目</span></div>${full?`
     <div class="sec">${BRIEF_IC('area')}盤</div>${boards.map(b=>`<div class="bd"><span class="bn">${b.jp}</span>${bar(b.mix)}${b.areas.length?`<small>${b.areas.join('・')}</small>`:''}</div>`).join('')}
     <div class="sec">${BRIEF_IC('terrain')}地形</div>${rows}
     <div class="sec">${BRIEF_IC('enemy')}野生</div><div class="row">${wl.map(TB).join('')}</div>
-    ${rec.length?`<div class="sec">${BRIEF_IC('ally')}おすすめ</div><div class="row">${rec.map(r=>`<span class="rec">${TB(r.T)}${r.hit?BRIEF_IC('weak'):''}${r.ter?BRIEF_IC('terrain'):''}</span>`).join('')}</div>`:''}
-    <div class="btns">${mode==='ask'?'<button data-b="back">もどる</button><button data-b="go" class="pri">行く</button>':'<button data-b="close">とじる</button>'}</div></div>`; }
-async function briefShow(id,mode){ if(briefEl.classList.contains('on')) return 'close'; const own=!BRIEF; if(own) BRIEF={info:1}; AUTO=null; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none';
-  let L,R; try{ [L,R]=await Promise.all([briefLib(),briefRegion(id)]); briefEl.innerHTML=briefHTML(L,R,id,mode); }catch(err){ console.warn('brief',err&&err.message); if(own) BRIEF=null; return mode==='ask'?'go':'close'; }
+    ${rec.length?`<div class="sec">${BRIEF_IC('ally')}おすすめ</div><div class="row">${rec.map(r=>`<span class="rec">${TB(r.T)}${r.hit?BRIEF_IC('weak'):''}${r.ter?BRIEF_IC('terrain'):''}</span>`).join('')}</div>`:''}`:''}
+    <div class="btns">${full?'':'<button data-b="more">盤</button>'}${mode==='ask'?'<button data-b="back">もどる</button><button data-b="go" class="pri">行く</button>':'<button data-b="close">とじる</button>'}</div></div>`; }   // 2026-11-05 はじめは名前と Lv だけ(盤・地形・野生の表は「盤」を押した時)
+async function briefShow(id,mode,full){ if(briefEl.classList.contains('on')) return 'close'; const own=!BRIEF; if(own) BRIEF={info:1}; AUTO=null; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none';
+  let L,R; try{ [L,R]=await Promise.all([briefLib(),briefRegion(id)]); briefEl.innerHTML=briefHTML(L,R,id,mode,full); }catch(err){ console.warn('brief',err&&err.message); if(own) BRIEF=null; return mode==='ask'?'go':'close'; }
   briefEl.classList.add('on'); briefEl.scrollTop=0; if(SAVE&&!SAVE.flags['brief_'+id]){ SAVE.flags['brief_'+id]=1; saveGame(); }
-  return new Promise(res=>{ briefEl.onclick=ev=>{ const b=ev.target.closest('[data-b]'); if(!b) return; ev.stopPropagation(); briefEl.classList.remove('on'); briefEl.onclick=null; if(own) BRIEF=null; res(b.dataset.b); }; }); }
+  return new Promise(res=>{ briefEl.onclick=ev=>{ const b=ev.target.closest('[data-b]'); if(!b) return; ev.stopPropagation(); if(b.dataset.b==='more'){ briefEl.innerHTML=briefHTML(L,R,id,mode,true); briefEl.scrollTop=0; return; } briefEl.classList.remove('on'); briefEl.onclick=null; if(own) BRIEF=null; res(b.dataset.b); }; }); }
 function briefNeed(e){ return !!(SAVE&&!BRIEF_NO[e.to]&&!SAVE.flags['brief_'+e.to]&&!SAVE.flags[e.to]); }   // 初めての土地(まだ行っていない・まだ見ていない)だけ
 function briefInside(e,R){ const rv=R&&(R.exits||[]).find(x=>x.to===MAP); const p=rv&&D.arrive&&D.arrive[rv.at]; if(p) return [p[0],p[1]];
   const r=e.r, cx=(r[0]+r[2])/2, cz=(r[1]+r[3])/2, s=D.spawn, dx=s[0]-cx, dz=s[1]-cz, L=Math.hypot(dx,dz)||1; return [cx+dx/L*3.5, cz+dz/L*3.5]; }
@@ -2394,11 +2404,46 @@ async function briefGuides(){ const id=MAP, done=new Set();
     if(!cands.length) continue; const at=cands[0], rot=Math.atan2(P[0]-at[0],P[1]-at[1])/DEG;
     const o={n:'案内',m:'v3:elena',h:1.6,x:+at[0].toFixed(2),z:+at[1].toFixed(2),rot,line:'',brief:e.to,guide:1,cands,face:P}; const g=new THREE.Group(); g.position.set(o.x,0,o.z); g.rotation.y=rot*DEG;
     NPCS.push({o,g,x:o.x,z:o.z,r:0.36,yaw:rot*DEG,lbl:makeLabel(o.n),ph:Math.random()*6,pi:0,wait:0}); } }
-btMapEl.addEventListener('click',()=>{ if(BRIEF||STORY||TRANS||ENC||!D||!briefHas(D)) return; briefShow(MAP,'info'); });
+btMapEl.addEventListener('click',()=>{ if(BRIEF||STORY||TRANS||ENC||!D) return; mapShow(); });   // 2026-11-05 地図=上から見た絵(前は盤の表)
 function briefFix(){ for(const n of NPCS){ const o=n.o; if(!o.cands) continue; const c=chunkAt(o.cands[0][0],o.cands[0][1]); if(!c||c.state!==2) continue;   // 区画(壁・建物の当たり)ができてから、ぶつからない所に立ち直す
     const q=o.cands.find(q=>{ const cc=chunkAt(q[0],q[1]); return cc&&cc.state===2&&walkOK(q[0],q[1])&&colFree(q[0],q[1],0.6); })||o.cands[0]; delete o.cands;
     n.x=o.x=+q[0].toFixed(2); n.z=o.z=+q[1].toFixed(2); o.rot=Math.atan2(o.face[0]-q[0],o.face[1]-q[1])/DEG; n.yaw=o.rot*DEG; } }
-function briefHud(){ briefFix(); btMapEl.style.display=(READY.scene&&D&&briefHas(D)&&!STORY&&!TRANS&&!ENC&&!PAUSED&&!BRIEF)?'block':'none'; }
+function briefHud(){ briefFix(); btMapEl.style.display=(READY.scene&&D&&!STORY&&!TRANS&&!ENC&&!PAUSED&&!BRIEF)?'block':'none'; }
+// ---- 地図(HUD の「地図」・2026-11-05): 今いる土地を上から見た絵。北が上(カメラと同じ)。地面・道・水・建物・場所の名前・出口の行き先・自分の位置だけ(行き先の印や矢印は出さない)
+//  前の「地図」は盤・地形・野生の表(briefShow)だった → その表は地図の中の「盤」ボタンから(野生のいる土地だけ)
+const MAPV={}; 
+async function mapShow(){ if(briefEl.classList.contains('on')||!D) return; BRIEF={info:1}; AUTO=null; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none';
+  const id=MAP, w=D.walk||D.bounds, X0=w[0], Z0=w[1], W=w[2]-w[0], H=w[3]-w[1];
+  let cv=MAPV[id]; if(!cv){ const st=Math.max(0.5,Math.max(W,H)/300), nx=Math.ceil(W/st), nz=Math.ceil(H/st); cv=document.createElement('canvas'); cv.width=nx; cv.height=nz; const g=cv.getContext('2d'), im=g.createImageData(nx,nz), gc=[0,0,0,0,0];
+    const SEA=[0.25,0.52,0.74], SAND=[0.88,0.80,0.62], ROCK=[0.72,0.65,0.53], STONE=[0.84,0.79,0.70], DIRT=[0.70,0.54,0.34];
+    for(let j=0;j<nz;j++) for(let i=0;i<nx;i++){ const x=X0+(i+0.5)*st, z=Z0+(j+0.5)*st, h=G(x,z), hx=G(x+st,z)-G(x-st,z), hz=G(x,z+st)-G(x,z-st); const sl=Math.hypot(hx,hz)/(2*st);
+      groundCol(x,z,h,sl,gc); let c=[gc[0],gc[1],gc[2]]; const mix=(t,k)=>{ if(k>0) for(let q=0;q<3;q++) c[q]+= (t[q]-c[q])*Math.min(1,k); };
+      if(sandAt(x,z)) mix(SAND,1); mix(SAND,gc[3]); mix(ROCK,gc[4]); const pm=pathMask(x,z); mix(DIRT,pm[1]); mix(STONE,pm[0]);
+      const dk=TER.deckAt(x,z); if(dk==null){ if(h<0.22) c=SEA.slice(); else if(TER.streams.length){ const q=TER.streamQ(x,z); if(q[0]<TER.streams[0].w+0.2) c=SEA.slice(); } }
+      const sh=Math.max(0.72,Math.min(1.18,1-(hx*0.6+hz*0.9)/(2*st)*0.5)); const o=(j*nx+i)*4; for(let q=0;q<3;q++) im.data[o+q]=Math.max(0,Math.min(255,Math.pow(Math.max(0,c[q]*sh),1/1.25)*255)); im.data[o+3]=255; }
+    g.putImageData(im,0,0); const up=Math.max(1,Math.round(640/Math.max(nx,nz))); if(up>1){ const c2=document.createElement('canvas'); c2.width=nx*up; c2.height=nz*up; const g2=c2.getContext('2d'); g2.imageSmoothingEnabled=true; g2.drawImage(cv,0,0,c2.width,c2.height); cv=c2; }
+    const gx=cv.getContext('2d'), sx=cv.width/W, sz=cv.height/H;
+    gx.fillStyle='#f4eee2'; gx.strokeStyle='rgba(80,62,44,.8)'; gx.lineWidth=Math.max(1,0.25*sx);
+    for(const f of FP){ if(!(f.k>=0.5)) continue; gx.save(); gx.translate((f.x-X0)*sx,(f.z-Z0)*sz); gx.rotate(-(f.rot||0)); gx.beginPath(); gx.rect(-f.hw*sx,-f.hd*sz,f.hw*2*sx,f.hd*2*sz); gx.fill(); gx.stroke(); gx.restore(); }
+    cv._s=[sx,sz,X0,Z0]; MAPV[id]=cv; }
+  // 場所の名前・出口の行き先(行き先の名前は行き先の json の name)
+  const labs=[]; const big=a=>a.r&&((a.r[2]-a.r[0])*(a.r[3]-a.r[1])>W*H*0.35);
+  const inW=p=>p[0]>=w[0]&&p[0]<=w[2]&&p[1]>=w[1]&&p[1]<=w[3];
+  for(const a of D.areas||[]){ if(a.n===D.name||big(a)||(a.c&&a.c[2]<=5)) continue; let p=null; if(a.c) p=[a.c[0],a.c[1]]; else if(a.r) p=[(a.r[0]+a.r[2])/2,(a.r[1]+a.r[3])/2]; else if(a.seg) p=[(a.seg[0][0]+a.seg[a.seg.length-1][0])/2,(a.seg[0][1]+a.seg[a.seg.length-1][1])/2]; if(!p) continue;
+    if(!inW(p)) continue; if(!labs.some(l=>l.t===a.n)) labs.push({t:a.n,x:p[0],z:p[1]}); }
+  const ex=[]; for(const e of D.exits||[]){ if(e.todo||(e.need&&!(SAVE&&SAVE.flags[e.need]))) continue; let nm=e.to; try{ const R=await briefRegion(e.to); nm=R.name||e.to; }catch(_){ } const r=e.r; if(!ex.some(q=>q.t===nm)) ex.push({t:nm, x:Math.max(w[0],Math.min(w[2],(r[0]+r[2])/2)), z:Math.max(w[1],Math.min(w[3],(r[1]+r[3])/2))}); }
+  if(MAP!==id){ BRIEF=null; return; }
+  const pct=(x,z,m)=>{ m=m||0; return [Math.max(m,Math.min(100-m,(x-X0)/W*100)).toFixed(2),Math.max(m*0.6,Math.min(100-m*0.6,(z-Z0)/H*100)).toFixed(2)]; };
+  const put=[], hit=(p,t)=>put.some(q=>Math.abs(q[0]-p[0])<(q[2]+t.length)*1.9&&Math.abs(q[1]-p[1])<6.5);   // 名前が重なる時は後の方(場所の名前)を出さない
+  const L=ex.map(l=>{ const p=pct(l.x,l.z,14); put.push([+p[0],+p[1],l.t.length]); return `<span class="ml mx" style="left:${p[0]}%;top:${p[1]}%">${l.t}</span>`; }).join('')+labs.map(l=>{ const p=pct(l.x,l.z,10); if(hit([+p[0],+p[1]],l.t)) return ''; put.push([+p[0],+p[1],l.t.length]); return `<span class="ml" style="left:${p[0]}%;top:${p[1]}%">${l.t}</span>`; }).join('');
+  const hp=pct(HERO.x,HERO.z);
+  briefEl.innerHTML=`<div class="bc mapc" role="dialog"><div class="bh">${BRIEF_IC('map')}<b>${D.name||id}</b></div><div class="mapw" style="aspect-ratio:${W}/${H}"><span class="ml me" style="left:${hp[0]}%;top:${hp[1]}%;transform:translate(-50%,-50%) rotate(${(-HERO.yaw/DEG).toFixed(0)}deg)"></span>${L}</div>
+    <div class="btns">${briefHas(D)?'<button data-b="info">盤</button>':''}<button data-b="close" class="pri">とじる</button></div></div>`;
+  const wrap=briefEl.querySelector('.mapw'); cv.className='mapcv'; wrap.prepend(cv);
+  briefEl.classList.add('on'); briefEl.scrollTop=0; { const bc=briefEl.querySelector('.bc'), cw=bc.clientWidth-28, mh=Math.max(160,innerHeight-190); wrap.style.width=Math.min(cw,mh*W/H)+'px'; }
+  const r=await new Promise(res=>{ briefEl.onclick=ev=>{ const b=ev.target.closest('[data-b]'); if(!b) return; ev.stopPropagation(); briefEl.classList.remove('on'); briefEl.onclick=null; res(b.dataset.b); }; });
+  if(cv.parentNode) cv.remove(); BRIEF=null; if(r==='info') briefShow(MAP,'info',true); }
+
 
 // ---------------------------------------------------------------- 相棒の連れ歩き(パーティの先頭3体が一列でついて歩く。先頭=リーダー=相棒)
 const FOL=[]; const PALM={ get id(){ return FOL[0]?FOL[0].id:null; }, get inst(){ return FOL[0]?FOL[0].inst:null; } };

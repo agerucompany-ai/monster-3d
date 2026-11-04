@@ -846,15 +846,15 @@
    "backdrop": "olive"
   },
   "byArea": {
-   "アポロン神殿": {
+   "獅子の門": {
     "terrainTheme": "ruins",
     "backdrop": "agora"
    },
-   "古代の劇場": {
+   "城あとの坂": {
     "terrainTheme": "ruins",
     "backdrop": "agora"
    },
-   "谷のオリーブ": {
+   "丘のオリーブ": {
     "terrainTheme": "olive",
     "backdrop": "olive"
    }
@@ -923,7 +923,8 @@
    "x": -30,
    "z": 26,
    "s": 5.0,
-   "rot": 0
+   "rot": 0,
+   "sit": "low"
   },
   {
    "t": "m",

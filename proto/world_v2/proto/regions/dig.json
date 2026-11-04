@@ -828,11 +828,11 @@
    "backdrop": "grove"
   },
   "byArea": {
-   "森の奥の遺跡": {
+   "発掘場": {
     "terrainTheme": "ruins",
     "backdrop": "agora"
    },
-   "斜面の石の村": {
+   "研究者の小屋": {
     "terrainTheme": "olive",
     "backdrop": "olive"
    }
@@ -1021,7 +1021,8 @@
    "x": -50,
    "z": -16,
    "s": 5.0,
-   "rot": 0
+   "rot": 0,
+   "sit": "low"
   },
   {
    "t": "m",
@@ -1029,7 +1030,8 @@
    "x": -34,
    "z": -22,
    "s": 5.2,
-   "rot": 0
+   "rot": 0,
+   "sit": "low"
   },
   {
    "t": "m",
@@ -1273,7 +1275,8 @@
    "x": 13,
    "z": -78,
    "s": 2.6,
-   "rot": 10
+   "rot": 10,
+   "sit": "low"
   },
   {
    "t": "lightline",
