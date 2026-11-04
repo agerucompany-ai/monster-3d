@@ -26,10 +26,15 @@
   3.14159
  ],
  "arrive": {
-  "from_corinth": [
+  "from_lion": [
    0,
    62,
    3.14159
+  ],
+  "from_corinth": [
+   0,
+   -84,
+   0
   ],
   "from_delphi": [
    0,
@@ -45,7 +50,7 @@
     3,
     70
    ],
-   "to": "corinth",
+   "to": "liongate",
    "at": "from_cloud"
   },
   {
@@ -55,9 +60,9 @@
     3,
     -88
    ],
-   "to": "delphi",
+   "to": "corinth",
    "at": "from_cloud",
-   "need": "ep23",
+   "need": "a13",
    "lock": "霧で、先へ進めない"
   }
  ],
@@ -172,36 +177,6 @@
    ],
    "zeroday": 1,
    "todo": "手下の絵は未作成(ペトラの体を仮に使用)"
-  },
-  {
-   "n": "レン",
-   "m": "v3:dimi",
-   "h": 1.22,
-   "x": -18,
-   "z": -62,
-   "rot": 140,
-   "line": "",
-   "trainer": 1,
-   "lineAfter": "",
-   "party": [
-    {
-     "mid": 1034,
-     "lv": 14
-    },
-    {
-     "mid": 1026,
-     "lv": 12
-    }
-   ],
-   "scene": "dimi3",
-   "flagWin": "dimi3",
-   "rule": "dimi22",
-   "need": "pass22",
-   "until": "ep22",
-   "ai": {
-    "hpX": 3.503,
-    "atkX": 3.503
-   }
   }
  ],
  "entrances": [
@@ -238,8 +213,7 @@
    "x": 20,
    "z": -28,
    "r": 6,
-   "h": 0.78,
-   "need": "ep23"
+   "h": 0.78
   },
   {
    "id": 166,
@@ -274,8 +248,7 @@
    "x": -26,
    "z": -72,
    "r": 5,
-   "h": 0.78,
-   "need": "ep23"
+   "h": 0.78
   },
   {
    "id": 1031,
@@ -305,19 +278,15 @@
    "r": 0,
    "h": 1.4,
    "boss": 1,
-   "scene": "thunder",
-   "after": "thunder_win",
    "flag": "thunder",
    "lv": 16,
    "tier": 4,
-   "need": "pass22",
-   "lose": "thunder_lose",
+   "need": "a13",
    "terrain": "snow",
    "guests": [
     "partner",
     1033
    ],
-   "next": "ep22Hut",
    "tune": {
     "hp": 21.426,
     "atk": 6.991

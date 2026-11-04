@@ -162,6 +162,7 @@ details .wrap{display:flex;flex-wrap:wrap;gap:6px;padding:0 8px 8px}
 <script src="../../meshopt_decoder.js"></script>
 <script src="battle.js"></script>
 <script src="../proto/lib/progress.js"></script>
+<script src="../proto/story/gr_fights.js"></script>
 <script>
 (()=>{
 'use strict';
@@ -268,6 +269,13 @@ const SP_SCENES=[
   {n:'潜入 古い水路', map:'eg_aswan', tt:'stream', foe:[1064,1067], ai:{hpX:0.5,atkX:0.5}, special:{mode:'sneak', turns:14, guardN:3, vis:5}},
 ];
 const SP_JP={escape:'逃げる', guard:'守る', flood:'水と時間', sneak:'潜入'};
+// 2026-11-04 ギリシャ編 23話版の物語の勝負(proto/story/gr_fights.js・ゲームの grFightOpt と同じ組み立て)。全部 場面のボタンに出す
+const GR23=(typeof GR_FIGHTS!=='undefined')?GR_FIGHTS:{};
+function grSceneOpt(ep){ const F=GR23[ep]; if(!F) return null; const lv=F.lv; const party=F.me.map(m=>({mid:typeof m==='string'?GR_PMID[m]:+m, lv}));
+  const owned=[...new Set(party.map(p=>p.mid).concat(F.own||[]))]; const st=id=>{ const q=mon(id); return q?(q.role==='fusion'?3:(q.level||1)):1; };
+  const o={terrainTheme:grBoard(F.board,F.look), startStage:1, budget:party.reduce((a,p)=>a+st(p.mid),0), player:{party, owned, fusionKnown:(F.fuse||[]).slice(), stageFree:true, items:{}, rankCap:20}, fusionUnlocked:!!(F.fuse&&F.fuse.length), alignMinions:true};
+  if(F.anc) return Object.assign(o,{kind:'ancient', size:9, enemy:{name:'古代テリオン '+nm(F.anc.mid), party:[{mid:F.anc.mid, lv, fixed:true}], ancient:{tier:F.anc.tier, minions:[], tune:Object.assign({},F.anc.tune)}}});
+  return Object.assign(o,{kind:'trainer', size:9, enemy:{name:F.foe.n, party:F.foe.party.map(x=>Object.assign({lv},x)), ai:Object.assign({},F.ai||{})}}); }
 function spSceneOpt(sc){ const band=mapLv(sc.map), st=mapStage(sc.map), PL=band[1]; const cn=/^cn_/.test(sc.map);
   let party=[], owned=new Set();
   if(sc.guests){ for(const g of sc.guests){ const m=g==='partner'?1001:+g; party.push({mid:m, lv:PL+1}); if(g==='partner'||m===1053){ for(const x of lineOf(m)) if(cn||x!==1003) owned.add(x); } else { owned.add(m); if(cn&&mon(m)&&mon(m).evolves_to!=null) owned.add(mon(m).evolves_to); } } }
@@ -296,7 +304,10 @@ function renderScenes(){ const el=$('scenes'); el.innerHTML='';
     b.onclick=()=>{ const opt=strApply(sceneOpt(sc)); if(opt) run(opt, ()=>strApply(sceneOpt(sc))); }; el.appendChild(b); }
   for(const sc of SP_SCENES){ if(!REG[sc.map]) continue; const b=document.createElement('button'); b.className='scn'; b.dataset.sp=sc.special.mode;
     b.innerHTML=`<img src="${art(sc.foe[0])}" alt="" loading="lazy"><span><b>${sc.n}</b><i>${SP_JP[sc.special.mode]}・${placeJP(sc.tt)}・Lv${mapLv(sc.map).join('〜')}</i></span>`;
-    b.onclick=()=>run(strApply(spSceneOpt(sc)), ()=>strApply(spSceneOpt(sc))); el.appendChild(b); } }
+    b.onclick=()=>run(strApply(spSceneOpt(sc)), ()=>strApply(spSceneOpt(sc))); el.appendChild(b); }
+  for(const ep of Object.keys(GR23).map(Number)){ const F=GR23[ep]; const mid=F.anc?F.anc.mid:F.foe.party[0].mid; const b=document.createElement('button'); b.className='scn'; b.dataset.gr=ep;
+    b.innerHTML=`<img src="${art(mid)}" alt="" loading="lazy"><span><b>ギ${ep} ${F.anc?nm(F.anc.mid):F.foe.n}</b><i>${F.me.map(m=>nm(typeof m==='string'?GR_PMID[m]:m)).join('・')}・Lv${F.lv}</i></span>`;
+    b.onclick=()=>run(strApply(grSceneOpt(ep)), ()=>strApply(grSceneOpt(ep))); el.appendChild(b); } }
 
 // ---- 自分 / 相手のスロット ----
 function renderSlots(el, list, who){ el.innerHTML=''; for(let i=0;i<6;i++){ const id=list[i]; const d=document.createElement('button'); d.className='slot'+(id?' f':'');
@@ -469,7 +480,7 @@ perfShow();
   const ord={start:0, greece:1, china:2, egypt:3, norse:4, other:5, fuse:6, anc:7}; MON.sort((a,b)=>(ord[arcTag(a.id)]-ord[arcTag(b.id)])||(baseOf(a.id)-baseOf(b.id))||((a.level||1)-(b.level||1)));
   S.me.party=S.me.party.filter(canOwn); S.foe.party=S.foe.party.filter(id=>mon(id)); if(S.foe.boss&&!BOSSES.some(b=>b.key===S.foe.boss)) S.foe.boss=null;
   renderScenes(); renderAll(); $('load').style.display='none';
-  window.VS={S, buildOpt, sceneOpt, SCENES, SP_SCENES, spSceneOpt, BOSSES, REG, run, encounterOpt, strApply, myStage};
+  window.VS={S, buildOpt, sceneOpt, SCENES, SP_SCENES, spSceneOpt, grSceneOpt, BOSSES, REG, run, encounterOpt, strApply, myStage};
 }catch(e){ console.error(e); $('load').textContent='読み込みエラー'; } })();
 })();
 </script>

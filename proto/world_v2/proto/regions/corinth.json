@@ -26,6 +26,11 @@
   3.14159
  ],
  "arrive": {
+  "from_marble": [
+   -62,
+   46,
+   3.14159
+  ],
   "from_arcadia": [
    -62,
    46,
@@ -34,6 +39,11 @@
   "from_cloud": [
    -24,
    -86,
+   0
+  ],
+  "from_ship": [
+   -24,
+   38,
    0
   ]
  },
@@ -45,8 +55,10 @@
     -59,
     52
    ],
-   "to": "arcadia",
-   "at": "from_corinth"
+   "to": "marble",
+   "at": "from_corinth",
+   "need": "a14",
+   "lock": "まだ進めない"
   },
   {
    "r": [
@@ -56,15 +68,13 @@
     -90
    ],
    "to": "cloudroad",
-   "at": "from_corinth",
-   "need": "ep21",
-   "lock": "丘の上のとりでが、まだ呼んでいる"
+   "at": "from_corinth"
   }
  ],
  "nature": true,
  "lv": [
-  7,
-  10
+  10,
+  13
  ],
  "grass": {
   "tall": [
@@ -122,54 +132,6 @@
  },
  "npcs": [
   {
-   "n": "手下のカテリナ",
-   "m": "v3:petra",
-   "h": 1.55,
-   "x": 14,
-   "z": 0.4,
-   "rot": 90,
-   "line": "",
-   "trainer": 1,
-   "lineAfter": "",
-   "party": [
-    {
-     "mid": 1007
-    },
-    {
-     "mid": 1062
-    }
-   ],
-   "zeroday": 1,
-   "flagWin": "bridge",
-   "todo": "手下の絵は未作成(ペトラの体を仮に使用)",
-   "rule": "bridge19",
-   "until": "bridge"
-  },
-  {
-   "n": "手下のパノス",
-   "m": "v3:tasos",
-   "h": 1.55,
-   "x": 27,
-   "z": -0.6,
-   "rot": 90,
-   "line": "",
-   "trainer": 1,
-   "lineAfter": "",
-   "party": [
-    {
-     "mid": 1030
-    },
-    {
-     "mid": 1065
-    }
-   ],
-   "zeroday": 1,
-   "flagWin": "bridge",
-   "todo": "手下の絵は未作成(タソスの体を仮に使用)",
-   "rule": "bridge19",
-   "until": "bridge"
-  },
-  {
    "n": "ミハリス",
    "m": "v3:stavros",
    "h": 1.55,
@@ -197,15 +159,12 @@
     }
    ],
    "master": 1,
-   "scene": "mihalis",
-   "flagWin": "mihalis",
    "todo": "ミハリスの絵は未作成(スタヴロスの体を仮に使用)",
    "ai": {
     "hpX": 3.32,
     "atkX": 2.976
    },
-   "need": "east20",
-   "rule": "mihalis"
+   "need": "a14"
   },
   {
    "n": "ユスフ",
@@ -214,11 +173,10 @@
    "x": -12,
    "z": 12,
    "rot": 270,
-   "line": "",
+   "line": "父さんの船、まだ止められたままなんだ。",
    "kid": 1,
    "role": "guide",
-   "todo": "ユスフの絵は未作成(ゾイの体を仮に使用)",
-   "scene": "yusuf"
+   "todo": "ユスフの絵は未作成(ゾイの体を仮に使用)"
   },
   {
    "n": "港の人",
@@ -291,8 +249,7 @@
    "x": -60,
    "z": -40,
    "r": 5,
-   "h": 0.78,
-   "need": "ep23"
+   "h": 0.78
   },
   {
    "id": 1030,
@@ -320,8 +277,7 @@
    "x": 50,
    "z": -36,
    "r": 5,
-   "h": 0.78,
-   "need": "ep23"
+   "h": 0.78
   },
   {
    "id": 166,
@@ -376,14 +332,10 @@
    "r": 0,
    "h": 1.35,
    "ancient": 1,
-   "scene": "tenmarai",
-   "after": "tenmarai_win",
-   "flag": "guard3",
+   "flag": "gr_pega",
    "lv": 14,
    "tier": 3,
-   "need": "fort21",
-   "afterFlag": "ep21",
-   "lose": "tenmarai_lose"
+   "need": "a20"
   }
  ],
  "drones": [],
