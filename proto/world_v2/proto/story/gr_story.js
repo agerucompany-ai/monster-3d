@@ -39,7 +39,10 @@ function hintOff(){ const h=document.getElementById('grHint'); if(h) h.style.dis
 // ---- 背景の絵が無い場面の代わり(今ある intro/anime_* を色を変えて使う。TODO アニメの静止画が来たら差しかえ) ----
 const BG_ALIAS={ gr_night_room:['anime_europe_night',''], gr_lab_night:['anime_oliva_lab','night'], gr_grandma_night:['anime_ep1_29','night'], gr_past:['anime_oliva_plaza','dusk'],
   gr_hill_night:['anime_olive_hill','night'], gr_ruins_night:['anime_temple_ruins','night'], gr_lab:['anime_oliva_lab',''], gr_port_rain:['anime_greek_port','night'],
-  anime_marble_valley:['anime_temple_ruins',''], anime_parthena_city:['anime_temple_ruins',''], anime_lab:['anime_oliva_lab',''] };
+  anime_marble_valley:['anime_temple_ruins',''], anime_parthena_city:['anime_temple_ruins',''], anime_lab:['anime_oliva_lab',''],
+  // 2026-11-05 地図と場所が合わない場面の代わり(宿・森・発掘場・ふもとの町・船の上・向こう岸)
+  gr_gate_night:['anime_oliva_gate','night'], gr_inn_night:['anime_ep1_25',''], gr_forest:['anime_olive_hill',''], gr_forest_dusk:['anime_olive_hill','dusk'], gr_dig_dawn:['anime_temple_ruins','dusk'],
+  gr_town_dusk:['anime_ep1_09',''], gr_town_night:['anime_ep1_09','night'], gr_plaza_night:['anime_ep1_09','night'], gr_ship:['anime_ep1_07',''], gr_shore_dusk:['anime_ep1_12',''] };
 const GR_FILT={ night:'brightness(.42) saturate(.7) hue-rotate(195deg)', dusk:'sepia(.35) saturate(1.25) brightness(.82)' };
 function grBg(b){ const a=BG_ALIAS[b]; if(ST&&ST.bg) ST.bg.style.filter=a&&GR_FILT[a[1]]||''; return a?a[0]:b; }
 
@@ -152,10 +155,14 @@ const GR_PLAN={
   23:{map:'oliva_hill', at:'*', chain:1, tod:'dawn'},
 };
 // 全画面の絵で見せる場面(その場にいない所・回想・夜の部屋など)。ほかは今いる地図の上で見せる
+//  2026-11-05 オーナー「競技場の前で、まだホテルを出る前の会話をしていた」: 台本の場所(見出し)が今の地図と合わない場面に絵を足した(3話のホテルの前・地下、4話のホテルの門、9話の発掘場・森・施設の前、
+//   10・11話の宿・朝市・連絡船・向こう岸、13話のふもとの町、18話の丘の下の広場、19話の操舵室)。3・4話は台本の場面が変わったので番号を合わせた
 const GR_BG={ g01_01:'anime_aegean_dawn', g01_02:'anime_ep1_02', g01_03:'anime_ep1_21', g01_04:'anime_ep1_14', g01_05:'anime_ep1_19', g01_06:'anime_ep1_16', g01_07:'anime_ep1_20',
   g01_09:'anime_ep1_17', g01_10:'gr_night_room', g01_11:'anime_ep1_25',
   g02_01:'anime_ep1_27', g02_02:'anime_oliva_plaza', g02_03:'anime_oliva_plaza', g02_04:'anime_olive_hill', g02_05:'anime_olive_hill', g02_06:'anime_ep1_29', g02_07:'anime_ep1_25', g02_08:'gr_hill_night',
-  g03_01:'gr_ruins_night', g04_02:'gr_night_room', g04_07:'gr_night_room', g05_01:'anime_olive_hill', g05_02:'anime_oliva_plaza', g05_03:'anime_oliva_plaza', g05_04:'anime_oliva_gate', g05_10:'anime_oliva_gate',
+  g03_01:'gr_ruins_night', g03_02:'anime_oliva_gate', g03_07:'gr_ruins_night', g03_08:'gr_ruins_night', g04_02:'gr_night_room', g04_08:'gr_gate_night', g05_01:'anime_olive_hill', g05_02:'anime_oliva_plaza', g05_03:'anime_oliva_plaza', g05_04:'anime_oliva_gate', g05_10:'anime_oliva_gate',
+  g09_01:'gr_dig_dawn', g09_02:'gr_forest', g09_03:'anime_lab_front_day', g09_04:'anime_lab_front_day', g09_09:'gr_forest', g09_10:'gr_forest_dusk',
+  g10_06:'gr_inn_night', g10_08:'gr_inn_night', g11_01:'gr_inn_night', g11_02:'gr_port_rain', g11_08:'gr_ship', g11_09:'gr_shore_dusk', g13_14:'gr_town_dusk', g13_15:'gr_town_night', g18_02:'gr_plaza_night', g19_03:'gr_ship',
   g09_11:'gr_night_room', g12_01:'gr_night_room', g12_05:'anime_temple_ruins', g12_09:'gr_grandma_night', g14_07:'gr_past', g15_09:'gr_lab_night', g15_10:'gr_night_room',
   g19_01:'anime_greek_port', g19_02:'anime_greek_port', g21_01:'anime_aegean_dawn', g21_02:'anime_oliva_plaza', g22_01:'anime_olive_hill', g22_02:'anime_oliva_plaza', g22_08:'gr_ruins_night', g22_09:'gr_ruins_night',
   g23_08:'anime_olive_hill', g23_09:'gr_lab' };
@@ -166,8 +173,8 @@ const GR_BG={ g01_01:'anime_aegean_dawn', g01_02:'anime_ep1_02', g01_03:'anime_e
 const GR_BGM={
   g01_01:'title_opening', g01_02:'map_oliva', g01_03:'scene_daily', g01_04:'map_olive_hill', g01_05:'scene_daily', g01_06:'scene_reunion', g01_07:'scene_villain', g01_09:'map_olive_hill', g01_10:'scene_villain', g01_11:'scene_inn_night',
   g02_01:'scene_daily', g02_02:'scene_daily', g02_03:'scene_daily', g02_04:'map_oliva', g02_05:'map_olive_hill', g02_06:'scene_legend', g02_07:'scene_inn_night', g02_08:'scene_villain',
-  g03_01:'map_stadium_under', g03_02:'scene_daily', g03_03:'map_ruins', g03_04:'scene_daily', g03_07:'map_ruins', g03_09:'map_stadium_under', g03_10:'scene_daily',
-  g04_01:'scene_villain', g04_02:'map_night_forest', g04_03:'map_night_forest', g04_07:'scene_inn_night',
+  g03_01:'map_stadium_under', g03_02:'scene_daily', g03_03:'map_ruins', g03_04:'scene_daily', g03_05:'scene_daily', g03_06:'map_ruins', g03_07:'map_stadium_under', g03_08:'scene_daily',
+  g04_01:'scene_villain', g04_02:'map_night_forest', g04_03:'map_night_forest', g04_04:'map_night_forest', g04_08:'scene_inn_night',
   g05_01:'scene_villain', g05_02:'map_oliva', g05_03:'scene_daily', g05_04:'scene_villain', g05_10:'map_oliva', g05_11:'scene_villain',
   g06_01:'map_olive_hill', g06_02:'map_olive_hill',
   g07_01:'scene_villain', g07_03:'scene_village_attack', g07_05:'map_ladon_river', g07_06:'map_ladon_river', g07_07:'map_ladon_river', g07_08:'map_night_forest',
@@ -252,7 +259,8 @@ async function grStep(s){ const f=GF();
   else if(s.kind==='battle'){ const b=f[s.id+'_b'];
     if(!b){ GR_RETRY=false; await grFight(s); return false; }
     const win=b===2;
-    if(!win&&s.F.must){ delete f[s.id+'_b']; GR_RETRY=true; saveGame(); await runScene(grLoseLines(s.F),{field:true}); objUpdate(); return false; } }
+    if(!win&&s.F.must){ delete f[s.id+'_b']; GR_RETRY=true; saveGame(); await runScene(grLoseLines(s.F),{field:true}); objUpdate(); return false; }
+    const B=GR_BT[s.ep]; if(B&&B.post&&B.post.length) await runScene(B.post,{field:true}); }   // 2026-11-05 台本の勝負の場面の、決着から後の台詞
   flag(s.id); if(s.last){ if(GR_DONE[s.ep]) GR_DONE[s.ep](); flag('a'+pad2g(s.ep)); } saveGame(); return true; }
 async function grTp(x,z,yaw){ TRANS=true; fadeEl.classList.add('on'); await sleep(260);
   HERO.x=x; HERO.z=z; if(yaw!=null) HERO.yaw=yaw; HERO.speed=0; HERO.dir=null; CAM.tx=x; CAM.tz=z; HERO.y=groundAt(x,z); CAM.ty=HERO.y; partnerPlace();
@@ -267,9 +275,30 @@ function grBond(){ if(!SAVE) return; const f=SAVE.flags;
 async function grFight(s){ const F=s.F; F._ep=s.ep; const say=GR_SAY[s.ep];
   if(!SAVE.flags.gr_bond) grBond();
   if(say&&!GF()['seen_'+s.id]){ bgmCue('idea'); await runScene([{w:say[0],f:say[1],t:say[2]}],{field:true}); SAVE.flags['seen_'+s.id]=1; }
+  const stop=grInbStart(s.ep);
+  try{
   if(F.anc){ const o={id:F.anc.mid, ancient:1, tier:F.anc.tier, lv:F.lv, h:1.6, size:9, flag:GR_ANC_FLAG[s.ep]||('gr_w'+s.ep), x:HERO.x, z:HERO.z-3};
     const m={o, x:o.x, z:o.z, wild:true}; await startEncounter({type:'wild', m, gr:{s,F}}); }
-  else { const n=stubFoe({n:F.foe.n, trainer:1, party:F.foe.party.map(x=>Object.assign({lv:F.lv},x))}); await startEncounter({type:'trainer', n, gr:{s,F}}); } }
+  else { const n=stubFoe({n:F.foe.n, trainer:1, party:F.foe.party.map(x=>Object.assign({lv:F.lv},x))}); await startEncounter({type:'trainer', n, gr:{s,F}}); }
+  } finally{ stop(); } }
+// ---- 勝負の中の台詞(2026-11-05 オーナー「チームが崩壊寸前なのに個人的なひがみもスルー」) ----
+//  台本の勝負の場面の台詞(GR_BT[話].mid・gr23_extract.py が作る)を、盤の勝負の中で 自分の番が来るたびに1かたまりずつ、下の吹き出しで出す。
+//  前のかたまりを出し終えてから次の番で次のかたまり。吹き出しは時間で次へ(さわると すぐ次へ)。盤はそのまま動かせる。声があれば鳴らす。battle.js は変えない(MonBattle._dbg.state の turn を見るだけ)
+function grInbStart(ep){ const B=GR_BT[ep]; const C=(B&&B.mid)||[]; if(!C.length||!storyOn()) return ()=>{};
+  let ci=0, turn=null, tm=null, el=null, on=true; const q=[];
+  const nm=L=>L.w==='hero'?(SAVE&&SAVE.name?SAVE.name:DEFN(SAVE&&SAVE.g)):(L.n||WHO[L.w]||'');
+  const box=()=>{ const root=document.getElementById('mbRoot'); if(!root) return null; if(el&&el.parentNode===root) return el;
+    el=document.createElement('div'); el.id='grInb';
+    el.style.cssText='position:absolute;left:50%;transform:translateX(-50%);bottom:calc(124px + env(safe-area-inset-bottom));width:min(92vw,560px);box-sizing:border-box;z-index:60;padding:9px 14px 11px;border-radius:14px;background:rgba(255,250,240,.95);color:#1d2742;font-size:15px;line-height:1.5;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.35);display:none;pointer-events:auto;cursor:pointer';
+    el.addEventListener('pointerdown',e=>{ e.stopPropagation(); e.preventDefault(); next(); }); root.appendChild(el); return el; };
+  function show(L){ const b=box(); if(!b) return; b.textContent='';
+    const n=L.w?nm(L):''; if(n){ const d=document.createElement('div'); d.style.cssText='font-size:12px;color:#2c3e66;opacity:.85;margin-bottom:1px'; d.textContent=n; b.appendChild(d); }
+    const t=document.createElement('div'); t.textContent=L.t; if(!L.w) t.style.cssText='font-weight:600;color:#3a4460'; b.appendChild(t); b.style.display='block';
+    if(L.v) vcPlay(L.v); clearTimeout(tm); tm=setTimeout(next, Math.max(2200, L.t.length*190)); }
+  function next(){ clearTimeout(tm); if(!on) return; const L=q.shift(); if(L) show(L); else { if(el) el.style.display='none'; vcStop(); } }
+  const iv=setInterval(()=>{ if(!on) return; const st=window.MonBattle&&MonBattle._dbg&&MonBattle._dbg.state; if(!st||st.phase!=='battle') return;
+    if(st.turn!==turn&&!q.length&&(!el||el.style.display==='none')){ turn=st.turn; if(ci<C.length){ q.push(...C[ci++]); next(); } } },300);   // 前のかたまりを出し終えてから、次の番で次のかたまり
+  return ()=>{ on=false; clearInterval(iv); clearTimeout(tm); vcStop(); if(el){ el.remove(); el=null; } }; }
 // 物語の勝負の opt(シムの battle/sim/study_gr23.js と同じ組み立て)。隊は表どおり・覚えた姿は隊の子＋own だけ・相手1体(古代は子分なし)
 const grStageOf=mid=>{ const M=window.MonBattle&&MonBattle.MID; const m=M&&M[+mid]; if(m) return m.role==='fusion'?3:(m.level||1); return +mid>=2000?3:(ENJU_LINE.indexOf(+mid)+1||1); };
 function grFightOpt(opt,F){ const lv=F.lv; if(!opt.player) opt.player={}; let party=opt.player.party; if(!Array.isArray(party)){ party=[]; opt.player.party=party; }
