@@ -3073,6 +3073,7 @@ function onAreaEnter(z){ const r=areaRuleOf(z); if(!r){ AREA_WAIT=null; return; 
   if(STORY||TRANS||SPOT_BUSY||ENC||BRIEF){ AREA_WAIT=z; return; }
   AREA_WAIT=null; runRule(r); }
 function grArrive(){ if(!storyOn()||!D) return; followersSet();
+  if(GR_RESCUE_AT){ const n=GR_RESCUE_AT; GR_RESCUE_AT=null; const s=grCur(); const p=s&&s.map===MAP?grAreaPt(n):null; if(p){ grTp(p[0],p[1]).then(()=>grArrive()); return; } }   // 救ったセーブ: その話の頭の場所へ
   const z=zoneAt(HERO.x,HERO.z)||D.name; AREA=z; if(afterPending()) return; onAreaEnter(z); }
 function afterPending(){ for(const w of D.wild||[]){ if(w.after&&w.afterFlag&&SAVE.flags[w.flag||'guard1']&&!SAVE.flags[w.afterFlag]&&SC[w.after]){ runRule(w.after); return true; } } return false; }
 // 調べる場所(uiUpdate から毎フレーム)。負けた勝負のやり直しは「もう一度勝負」のボタン(その場の調べる場所)
@@ -3299,11 +3300,19 @@ function grMigrate(){ const f=SAVE&&SAVE.flags; if(!f) return; if(f.g23){ grResc
   if(SAVE.map) SAVE.map='oliva_town'; }   // 本体の contGame が arrived の無いセーブとして第1話のはじめ(ep1Open)から流す
 // まちがえて1話に戻されたセーブ(11/04〜11/05): 前の旗の入れ物 flags.old30 に 23話版の旗が入っている → 今の旗に戻す(両方を合わせる=進んでいる方から続く)
 //  続きの段の地図が今の地図とちがう時は、その地図の入口から(位置は捨てる)
+//  救ったセーブは、とちゅうの話をその話の頭から(その話の段の旗を外す)。頭の場所(GR_PLAN の at)へは、地図を読んだあとの grArrive で運ぶ
+let GR_RESCUE_AT=null;
 function grRescue(f){ const o=f.old30; if(!grIs23(o)) return false;
   for(const k of Object.keys(o)) if(o[k]&&!f[k]) f[k]=o[k];
   delete f.old30; f.g23=1; f.g23fix=1;
+  const c=grCur(); if(c&&c.ep>1) for(const s of GR_STEPS) if(s.ep===c.ep){ delete f[s.id]; delete f[s.id+'_b']; delete f['seen_'+s.id]; }
   const s=grCur(); if(s&&SAVE.map&&SAVE.map!==s.map){ SAVE.map=s.map; delete SAVE.x; delete SAVE.z; delete SAVE.yaw; }
+  if(s&&s.head&&s.at&&s.at!=='*') GR_RESCUE_AT=Array.isArray(s.at)?s.at[0]:s.at;
   return true; }
+// その場所(D.areas の名前)の中の、歩ける所(まん中から外へさがす)
+function grAreaPt(n){ const a=(D.areas||[]).find(a=>a.n===n); if(!a) return null; const c=a.c?[a.c[0],a.c[1]]:a.r?[(a.r[0]+a.r[2])/2,(a.r[1]+a.r[3])/2]:null; if(!c) return null;
+  for(let r=0;r<=10;r+=1) for(let i=0;i<(r?12:1);i++){ const t=i/12*Math.PI*2, x=c[0]+Math.cos(t)*r, z=c[1]+Math.sin(t)*r;
+    if(zoneAt(x,z)===n&&walkOK(x,z)&&colFree(x,z,0.4)) return [x,z]; } return null; }
 
 // ---- 本体の SC のすぐあとで呼ぶ ----
 function grInit(){ Object.assign(SC,GR_SC);
