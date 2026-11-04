@@ -131,7 +131,9 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 #stCard .cap.on{opacity:1}
 #stFF{position:absolute;top:calc(14px + env(safe-area-inset-top));right:104px;padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.6);background:rgba(0,0,0,.3);color:#fff;font:inherit;font-weight:800;font-size:13px;display:none;z-index:3;cursor:pointer}#stFF.on{background:#e8a53a;border-color:#fff}
 #stVc{position:absolute;top:calc(14px + env(safe-area-inset-top));padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.6);background:rgba(0,0,0,.3);color:#fff;font:inherit;font-weight:800;font-size:13px;display:none;z-index:3;cursor:pointer}#stVc.off{opacity:.6}
-#st.field #stSkip,#st.field #stFF,#st.field #stVc{top:calc(64px + env(safe-area-inset-top))}
+#stBgm{position:absolute;top:calc(14px + env(safe-area-inset-top));padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.6);background:rgba(0,0,0,.3);color:#fff;font:inherit;font-weight:800;font-size:13px;display:none;z-index:3;cursor:pointer}#stBgm.off{opacity:.6}
+#btBgm{position:fixed;top:calc(52px + env(safe-area-inset-top));right:96px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--cream);color:var(--ink);font:inherit;font-weight:800;font-size:13px;box-shadow:0 2px 8px rgba(80,60,30,.12);cursor:pointer;display:none;z-index:4}#btBgm.off{opacity:.6}
+#st.field #stSkip,#st.field #stFF,#st.field #stVc,#st.field #stBgm{top:calc(64px + env(safe-area-inset-top))}
 #stSkip{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.6);background:rgba(0,0,0,.3);color:#fff;font:inherit;font-weight:800;font-size:13px;display:none;z-index:3;cursor:pointer}
 .stBtn{border:2px solid #fff;border-radius:999px;background:var(--ink);color:#fff;font:inherit;font-weight:800;font-size:17px;letter-spacing:.12em;padding:12px 34px;box-shadow:0 4px 14px rgba(20,30,60,.3);cursor:pointer;min-width:220px}
 .stBtn.sub{background:rgba(255,250,240,.95);color:var(--ink);border-color:rgba(44,62,102,.25)}
@@ -173,7 +175,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 <canvas id="cv"></canvas>
 <div id="vig"></div>
 <div id="area"></div>
-<div id="tod"><button data-t="morning">朝</button><button data-t="noon" class="sel">昼</button><button data-t="evening">夕</button></div><button id="btSave">セーブ</button><div id="pgHud"><button id="btMenu"><img class="ui-ic" src="../battle/img/ui/ally.webp" alt="">メニュー</button></div><div id="testBadge">テスト</div><button id="btWarp"><img class="ui-ic" src="../battle/img/ui/map.webp" alt="">ワープ</button><div id="warp"><div class="wt"><b>ワープ</b><button id="wpReset">リセット</button><button id="wpX">とじる</button></div><div class="wl" id="wpList"></div></div>
+<div id="tod"><button data-t="morning">朝</button><button data-t="noon" class="sel">昼</button><button data-t="evening">夕</button></div><button id="btSave">セーブ</button><button id="btBgm">曲 大</button><div id="pgHud"><button id="btMenu"><img class="ui-ic" src="../battle/img/ui/ally.webp" alt="">メニュー</button></div><div id="testBadge">テスト</div><button id="btWarp"><img class="ui-ic" src="../battle/img/ui/map.webp" alt="">ワープ</button><div id="warp"><div class="wt"><b>ワープ</b><button id="wpReset">リセット</button><button id="wpX">とじる</button></div><div class="wl" id="wpList"></div></div>
 <button id="btMap"><img class="ui-ic" src="../battle/img/ui/map.webp" alt="">地図</button><div id="brief"></div>
 <button id="enter"></button>
 <div id="stick"><div id="knob"></div></div>
@@ -188,8 +190,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
   <img class="stP off" id="stR2" alt=""><img class="stP off" id="stL" alt=""><img class="stP off" id="stR" alt=""><div id="stPh"><img alt=""></div>
   <div id="stPick"></div>
   <div id="stBox"><b></b><p></p><i></i></div>
-  <div id="stTitle"><h1><img src="ui/logo.webp" alt="テリオンモンスター"></h1><button class="stBtn" id="btNew">はじめから</button><button class="stBtn sub" id="btCont">つづきから</button><div class="stMini"><button id="btTest">全部ためす</button><a id="btVs" href="../battle/vs.html">CPU対戦</a><a id="btDex" href="../battle/dex.html">テリオン表</a><a id="btFuse" href="../battle/fusion.html">融合表</a></div></div>
-  <button id="stSkip">スキップ</button><button id="stFF">早送り</button><button id="stVc">声 大</button>
+  <div id="stTitle"><h1><img src="ui/logo.webp" alt="テリオンモンスター"></h1><button class="stBtn" id="btNew">はじめから</button><button class="stBtn sub" id="btCont">つづきから</button><div class="stMini"><button id="btTest">全部ためす</button><a id="btVs" href="../battle/vs.html">CPU対戦</a><a id="btDex" href="../battle/dex.html">テリオン表</a><a id="btFuse" href="../battle/fusion.html">融合表</a><button id="btBgmT">曲 大</button></div></div>
+  <button id="stSkip">スキップ</button><button id="stFF">早送り</button><button id="stVc">声 大</button><button id="stBgm">曲 大</button>
 </div>
 <script src="../../three.min.js"></script>
 <script src="../../gltfloader.128.js"></script>
@@ -2156,7 +2158,7 @@ function inTown(x,z){ if(!D) return true; if(D.quiet) return D.quiet.some(r=>x>r
 function encounterCheck(dt){ encCool-=dt; if(WORLD.noEnc||ENC||STORY||TRANS||BRIEF||encCool>0||!READY.hero) return; const town=inTown(HERO.x,HERO.z);
   if(!town) for(const m of MONS){ if(!m.wild||!m.inst||m.gone||m.rematch||!grShown(m.o)||(!(m.o.ancient||m.o.boss)&&!grWildOk())) continue; if(Math.hypot(m.x-HERO.x,m.z-HERO.z)<(m.o.ancient||m.o.boss?2.8:1.5)){ startEncounter({type:'wild',m}); return; } }
   if(!chasing()) for(const n of NPCS){ if(!n.rig||!trainerLive(n)||!npcShown(n)) continue; const dn=Math.hypot(n.x-HERO.x,n.z-HERO.z); if(n.loseCool){ if(dn>4.2) n.loseCool=false; continue; } if(dn<3.4){ startEncounter({type:'trainer',n}); return; } } }   // ---- 物語(gr_story.js): TRAINER_RULE・負けたら一度はなれるまで勝負しない
-async function startEncounter(e){ ENC=e; AUTO=null; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; enterEl.classList.remove('on');
+async function startEncounter(e){ ENC=e; BGM.bt=bgmBattleTrack(e); BGM.res=false; AUTO=null; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; enterEl.classList.remove('on');
   const who=e.m?e.m:e.n; const P=new THREE.Vector3(who.x,groundAt(who.x,who.z)+(e.m?e.m.o.h+0.3:1.9),who.z).project(camera);
   bangEl.style.left=((P.x*0.5+0.5)*innerWidth)+'px'; bangEl.style.top=((-P.y*0.5+0.5)*innerHeight)+'px'; bangEl.style.display='block';
   if(e.n){ HERO.yaw=Math.atan2(e.n.x-HERO.x,e.n.z-HERO.z); e.n.yaw=Math.atan2(HERO.x-e.n.x,HERO.z-e.n.z); talkTo(e.n,e.n.o.n+'が勝負をしかけてきた！'); { const sc0=grTrainerScene(e.n); if(sc0&&SC[sc0]&&!(SAVE&&SAVE.flags['seen_'+sc0])){ await sleep(500); bangEl.style.display='none'; talkClose(); await grScene(sc0,e.n); if(SAVE) SAVE.flags['seen_'+sc0]=1; } } }
@@ -2186,7 +2188,7 @@ async function startEncounter(e){ ENC=e; AUTO=null; IN.active=false; IN.sx=IN.sy
   let res=null; try{ res=await startBattle(opt); }catch(err){ console.error('battle',err); }
   endEncounter(e,res); }
 const npcKey=n=>'beat_'+n.o.n+'@'+MAP+':'+n.o.x+','+n.o.z;   // 同じ名前の人(ヴィクターの手下)が同じマップに何人もいるので、位置まで含めて記録する
-function endEncounter(e,res){ if(res&&res.result==='quit'){ WORLD.lastBattle=res; ENC=null; encCool=4; saveGame(); toTitle(); return; }
+function endEncounter(e,res){ BGM.res=false; if(res&&res.result==='quit'){ WORLD.lastBattle=res; ENC=null; encCool=4; saveGame(); toTitle(); return; }
   PAUSED=false; LAST=performance.now(); WORLD.lastBattle=res; if(res&&res.items&&!(window.Progress&&Progress.state())) ITEMS=res.items;   // 2026-10-30 進行(progress.js)がある時は 使った道具をその場でセーブから引いている
   // 仲間・EXP・レベル・ジェムは progress.js が decorate の中で済ませ、結果画面にも出している。ここでは旗と連れ歩きの更新だけ
   const pg=res&&res.progress; if(pg){ if(pg.recruit&&pg.recruit.isNew){ if(pg.recruit.uid) flag('caught'); toast(pg.recruit.tag||(monName(pg.recruit.mid)+'が仲間になった！')); } else if(pg.lvup&&pg.lvup.length){ const l=pg.lvup[0]; toast(monName(l.mid)+'が Lv'+l.after+'になった！'); } }
@@ -2487,7 +2489,7 @@ function onFlag(k){ if(!(window.Progress&&Progress.state())) return;
 const saveBtn=document.getElementById('btSave'); let AUTOSAVE_T=0;
 function canSave(){ return !!(SAVE&&!NOSAVE&&READY.scene&&D&&MAP&&!STORY&&!TRANS&&!ENC&&!PAUSED&&!(window.Progress&&Progress.ui&&Progress.ui.isOpen())); }
 saveBtn.addEventListener('click',()=>{ if(!canSave()) return; saveGame(); toast('セーブしました'); });
-function autosaveTick(dt){ const ok=canSave(); saveBtn.style.display=ok?'block':'none'; pgHud.style.display=ok&&window.Progress&&Progress.state()?'flex':'none'; if(TESTMODE) document.getElementById('btWarp').style.display=ok?'block':'none'; if(!ok) return; AUTOSAVE_T+=dt; if(AUTOSAVE_T>30){ AUTOSAVE_T=0; saveGame(); } }
+function autosaveTick(dt){ const ok=canSave(); saveBtn.style.display=ok?'block':'none'; { const bb=document.getElementById('btBgm'); bb.style.display=ok?'block':'none'; if(ok) bb.style.right=(12+saveBtn.offsetWidth+8)+'px'; } pgHud.style.display=ok&&window.Progress&&Progress.state()?'flex':'none'; if(TESTMODE) document.getElementById('btWarp').style.display=ok?'block':'none'; if(!ok) return; AUTOSAVE_T+=dt; if(AUTOSAVE_T>30){ AUTOSAVE_T=0; saveGame(); } }
 addEventListener('pagehide',()=>{ if(SAVE&&!NOSAVE&&READY.scene&&D&&MAP) saveGame(); });
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'&&SAVE&&!NOSAVE&&READY.scene&&D&&MAP) saveGame(); });
 // ---- 進行(progress.js・2026-10-26): 倒して仲間・Lv1〜99・EXP・ジェム・テリオン研究所の「テリオンを生み出す」(ガチャ)・パーティ3→5体と牧場。手順は proto/PROGRESS_INTEGRATION.md ----
@@ -2580,6 +2582,85 @@ function vcPlay(v){ vcStop(); if(!v||!vcHas()||!VC.ids.has(v)||FF||SKIP_SCENE||V
 function vcUnlock(){ try{ VC.a.src='data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA=='; VC.a.volume=0; const pr=VC.a.play(); if(pr&&pr.then) pr.then(()=>VC.a.pause(),()=>{}); }catch(e){} }
 VC.btn.addEventListener('click',e=>{ e.stopPropagation(); VC.k=(VC.k+1)%4; try{ localStorage.setItem('w2_vc',String(VC.k)); }catch(e){} vcPaint(); if(VC.k===3) vcStop(); else VC.a.volume=VC_VOL[VC.k]; }); vcPaint();
 fetch('voice/gr/index.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(j=>{ if(j&&Array.isArray(j.ids)){ VC.ids=new Set(j.ids); if(j.ext) VC.ext=j.ext; } }).catch(()=>{});
+// 曲(BGM・2026-11-05 オーナー「テリオンアニメのミュージックに曲をタイトル付きで入れてるから全部入れ込んで。セリフがあるところは BGM 小さくしてほしい」)
+//  曲は bgm/{id}.mp3(対応表 bgm/index.json・元は テリオンアニメ/music)。鳴らす曲は bgmWant() が毎回決める:
+//   勝負(ENC)→勝負の曲(BGM.bt・bgmBattleTrack) / タイトル→オープニング / 物語の場面の曲(BGM.sc・gr_story.js の GR_BGM) / 地図の曲(BGM_MAP・夜と場所で変わる)
+//  台詞の箱・話しかけた人の吹き出しが出ている間と声が鳴っている間は 3割に下げる(なめらかに)。進化・融合・ひらめき・勝ち負けは短い曲(cue)を重ね、その間は曲を下げる。
+//  曲の切りかえは短いフェード。ループは終わりの手前で同じ曲の頭を重ねてつなぐ(2本の audio を交互に使う)。
+//  「曲」ボタン(大→中→小→なし・w2_bgm)は 物語の画面・HUD・タイトルに。スマホは最初のタップで音を許可(bgmUnlock)。音量は WebAudio の GainNode(iPhone は audio.volume が効かない)
+const BGM_MAP={   // 地図 → [昼, 夜, {場所の名前: 曲}]。ギリシャ以外は近い曲
+  oliva_town:['map_oliva','scene_inn_night',{'競技場の跡':'map_ruins'}], greece_oliva:['map_oliva','scene_inn_night'],
+  oliva_hill:['map_olive_hill','map_night_forest',{'競技場の跡':'map_ruins','競技場の下の扉':'map_stadium_under'}],
+  arcadia:['map_ladon_river','map_night_forest',{'森の奥の遺跡':'map_ruins'}], dig:['map_marble','map_night_forest'], facility:['scene_infiltrate'],
+  nafria:['map_nafria','map_harbor_rain',{'丘の遺跡':'map_ruins'}], liongate:['map_delfina','map_delfina',{'獅子の門':'map_ruins','石の輪':'map_ruins'}],
+  cloudroad:['map_cloud_road'], corinth:['map_corinth','map_corinth',{'アクロコリントス':'map_ruins','アポロン神殿':'map_ruins'}], marble:['map_marble'],
+  athens:['map_white_city','map_white_city',{'大競技場':'map_arena','古代アゴラ':'map_ruins'}], crete_maze:['map_hill_maze'], oliva_maze:['map_hill_maze'],
+  stadium_under:['map_stadium_under'], delphi:['map_delfina'], crete:['map_nafria','map_harbor_rain',{'クノッソス宮殿':'map_ruins'}],
+  cn_bund:['map_white_city'], cn_bamboo:['map_oliva','map_night_forest'], cn_capital:['map_corinth'], cn_fossil:['map_marble'], cn_gorges:['map_ladon_river'],
+  cn_karst:['map_ladon_river'], cn_kunlun:['map_cloud_road'], cn_pillars:['map_delfina'], cn_plateau:['map_olive_hill'], cn_sea:['map_nafria'], cn_thunder:['map_night_forest'],
+  eg_cairo:['map_white_city'], eg_giza:['map_ruins'], eg_delta:['map_ladon_river'], eg_luxor:['map_corinth','map_corinth',{'カルナック神殿':'map_ruins','ルクソール神殿':'map_ruins'}],
+  eg_valley:['map_marble'], eg_tomb:['map_stadium_under'], eg_aswan:['map_ladon_river'], eg_abusimbel:['map_ruins'], eg_white:['map_marble'], eg_redsea:['map_nafria'],
+  nr_oslo:['map_white_city'], nr_fjord:['map_ladon_river'], nr_lofoten:['map_nafria'], nr_iceland:['map_marble'], nr_uppsala:['map_ruins'], nr_lapland:['map_delfina'],
+  nr_ygg:['map_olive_hill'], nr_svalbard:['map_cloud_road'], nr_glacier:['map_cloud_road'], nr_core:['map_stadium_under'] };
+const BGM_CUE={ evo2:['cue_evo2',9], evo3:['cue_evo3',12], fuse2:['cue_fuse2',10], fuse3:['cue_fuse3',13], idea:['cue_idea',7], win:['jingle_win',99], lose:['jingle_lose',99] };   // [曲, 長さの上限(秒)・そのあと1.2秒で消す]
+const BGM_LV=['大','中','小','なし'], BGM_VOL=[1,.6,.3,0], BGM_MASTER=0.5, BGM_CUEV=0.62, BGM_DUCK=0.3;
+const BGM={k:0, ctx:null, unlocked:false, m:[], c:null, a:0, cur:null, wantP:null, wantT:0, sc:null, bt:null, res:false, duck:1, cueDuck:1, pos:{}, miss:new Set(), zone:'', zoneT:0, last:0, btns:[], hidden:false};
+try{ BGM.k=(+localStorage.getItem('w2_bgm')||0)%4; }catch(e){}
+function bgmCh(){ const el=new Audio(); el.preload='auto'; const ch={el, g:null, id:null, f:0, ft:0, rate:1, stop:false, until:0, kind:null};
+  el.addEventListener('error',()=>{ if(ch.id&&el.src.indexOf('bgm/')>=0){ BGM.miss.add(ch.id); ch.id=null; ch.f=ch.ft=0; } });   // 無いファイル(Render は index.html を返す)は以後鳴らさない
+  el.addEventListener('ended',()=>{ if(ch===BGM.c){ ch.id=null; ch.f=ch.ft=0; return; } if(ch.id&&ch.id===BGM.cur&&BGM.m[BGM.a]===ch){ try{ el.currentTime=0; el.play().catch(()=>{}); }catch(e){} } });   // ループの重ねが間に合わなかった時の保険
+  return ch; }
+BGM.m=[bgmCh(),bgmCh()]; BGM.c=bgmCh();
+const BGM_SIL='data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==';
+function bgmUnlock(){ if(BGM.ctx&&BGM.ctx.state!=='running') BGM.ctx.resume().catch(()=>{});
+  if(!BGM.unlocked){ BGM.unlocked=true;
+    try{ const C=window.AudioContext||window.webkitAudioContext; if(C) BGM.ctx=new C(); }catch(e){ BGM.ctx=null; }
+    if(BGM.ctx) for(const ch of [...BGM.m,BGM.c]){ try{ const s=BGM.ctx.createMediaElementSource(ch.el); ch.g=BGM.ctx.createGain(); ch.g.gain.value=0; s.connect(ch.g); ch.g.connect(BGM.ctx.destination); }catch(e){ ch.g=null; } }
+    if(BGM.ctx&&BGM.ctx.state!=='running') BGM.ctx.resume().catch(()=>{}); }
+  for(const ch of [...BGM.m,BGM.c]){ if(ch.primed||ch.id) continue;   // タップの中で一度鳴らした audio は、あとで src を変えても鳴る(スマホ)
+    try{ ch.el.src=BGM_SIL; const p=ch.el.play(); if(p&&p.then) p.then(()=>{ ch.primed=true; if(!ch.id) ch.el.pause(); },()=>{}); else ch.primed=true; }catch(e){} } }
+for(const ev of ['pointerdown','touchend','keydown']) document.addEventListener(ev,bgmUnlock,{capture:true,passive:true});
+function bgmPaint(){ for(const b of BGM.btns){ b.textContent='曲 '+BGM_LV[BGM.k]; b.classList.toggle('off',BGM.k===3); } }
+function bgmBtn(b){ if(!b) return; BGM.btns.push(b); b.addEventListener('click',e=>{ e.stopPropagation(); bgmUnlock(); BGM.k=(BGM.k+1)%4; try{ localStorage.setItem('w2_bgm',String(BGM.k)); }catch(err){} bgmPaint(); }); }
+bgmBtn($('stBgm')); bgmBtn($('btBgm')); bgmBtn($('btBgmT')); bgmPaint();
+function bgmMapTrack(){ const r=BGM_MAP[MAP]; if(!r) return 'map_olive_hill'; const z=r[2]&&BGM.zone&&r[2][BGM.zone]; if(z) return z; return (TODN==='night'&&r[1])||r[0]; }
+function bgmBattleTrack(e){ if(e.gr&&e.gr.s&&typeof GR_FIGHT_BGM!=='undefined'&&GR_FIGHT_BGM[e.gr.s.ep]) return GR_FIGHT_BGM[e.gr.s.ep];   // 物語の勝負(gr_story.js)
+  if(e.m){ const o=e.m.o; if(o.ancient) return (+o.tier>=6)?'battle_boss_big':'battle_ancient'; if(o.boss) return 'battle_boss'; return 'battle_wild'; }
+  const o=(e.n&&e.n.o)||{}; if(o.zeroday||/ヴィクター|ゼロデイ|手下|下っ端|アイギス/.test(o.n||'')) return 'battle_grunt';
+  if((o.party||[]).some(x=>x&&typeof x==='object'&&x.boss)) return 'battle_boss'; return 'battle_elite'; }   // 使い手=中ボス戦・切り札(ボス)を持つ人=ボス戦
+function bgmScene(k){ BGM.sc=(k&&typeof GR_BGM!=='undefined'&&GR_BGM[k])||null; }
+function bgmWant(){ if(BGM.k===3||BGM.res) return null; if(ENC) return BGM.bt||'battle_wild'; if(ST.title.style.display==='flex') return 'title_opening'; if(BGM.sc) return BGM.sc; if(!D||!MAP) return undefined; return bgmMapTrack(); }
+function bgmStart(ch,id,at,fin){ ch.id=id; ch.stop=false; ch.f=0; ch.ft=1; ch.rate=1/Math.max(0.05,fin); ch.el.src='bgm/'+id+'.mp3'+(at>0.5?'#t='+at.toFixed(2):''); try{ const p=ch.el.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} }
+function bgmFadeOut(ch,s){ if(!ch.id) return; ch.ft=0; ch.rate=1/Math.max(0.05,s); ch.stop=true; }
+function bgmSwitch(id){ const was=BGM.cur, old=BGM.m[BGM.a]; BGM.cur=id;
+  const toB=!!(id&&id.startsWith('battle_')), fromB=!!(was&&was.startsWith('battle_'));
+  if(old.id&&old.id.startsWith('map_')&&!old.stop) BGM.pos[old.id]={t:old.el.currentTime||0, at:performance.now()};   // 勝負のあと地図にもどったら続きから(3分まで)
+  bgmFadeOut(old, toB?0.3:(fromB?0.5:1.2));
+  if(!id||BGM.miss.has(id)) return;
+  const n=1-BGM.a, ch=BGM.m[n]; if(ch.id){ try{ ch.el.pause(); }catch(e){} ch.id=null; ch.f=0; }
+  const p=BGM.pos[id]; const at=(p&&performance.now()-p.at<180000)?p.t:0; delete BGM.pos[id];
+  bgmStart(ch,id,at,toB?0.15:(fromB?1.4:1.6)); BGM.a=n; }
+function bgmCue(kind){ const q=BGM_CUE[kind]; if(!q||BGM.k===3||!BGM.unlocked||BGM.miss.has(q[0])) return; const c=BGM.c; bgmStart(c,q[0],0,0.05); c.f=1; c.kind=kind; c.until=performance.now()+q[1]*1000; }
+function bgmResult(r){ BGM.res=true; if(r==='win') bgmCue('win'); else if(r==='lose') bgmCue('lose'); }   // 勝負の結果の画面(battle.js の showResult)。そのあとは endEncounter で地図の曲へ
+window.W2BGM={cue:bgmCue, result:bgmResult, state:()=>({cur:BGM.cur, sc:BGM.sc, bt:BGM.bt, k:BGM.k, duck:+BGM.duck.toFixed(2), cueDuck:+BGM.cueDuck.toFixed(2), unlocked:BGM.unlocked, ctx:BGM.ctx?BGM.ctx.state:null, ch:[...BGM.m,BGM.c].map(c=>({id:c.id, f:+c.f.toFixed(2), t:+(c.el.currentTime||0).toFixed(1), paused:c.el.paused, vol:c.g?+c.g.gain.value.toFixed(3):c.el.volume}))})};
+const bgmTo=(v,t,r,dt)=>v<t?Math.min(t,v+r*dt):Math.max(t,v-r*dt);
+function bgmTick(){ const now=performance.now(), dt=Math.min(0.25,(now-(BGM.last||now))/1000); BGM.last=now; if(BGM.hidden) return;
+  if(D&&MAP&&!ENC&&now-BGM.zoneT>500){ BGM.zoneT=now; try{ BGM.zone=zoneAt(HERO.x,HERO.z)||''; }catch(e){} }
+  const w=bgmWant();
+  if(w!==undefined&&BGM.unlocked){ if(w!==BGM.wantP){ BGM.wantP=w; BGM.wantT=now; } const hold=(w&&w.startsWith('battle_'))?0:350; if(w!==BGM.cur&&now-BGM.wantT>=hold) bgmSwitch(w); }
+  const cur=BGM.m[BGM.a];   // ループ: 終わりの手前で同じ曲の頭を重ねる(勝負の曲0.35秒・ほか2.5秒)
+  if(cur.id&&!cur.stop&&cur.id===BGM.cur){ const d=cur.el.duration, xf=cur.id.startsWith('battle_')?0.35:2.5; if(isFinite(d)&&d>xf*3&&cur.el.currentTime>=d-xf-0.06){ const n=1-BGM.a, ch=BGM.m[n]; if(ch.id){ try{ ch.el.pause(); }catch(e){} } bgmStart(ch,cur.id,0,xf); bgmFadeOut(cur,xf); BGM.a=n; } }
+  const c=BGM.c; if(c.id){ if(now>c.until&&!c.stop) bgmFadeOut(c,1.2); if(c.kind==='idea'&&ENC&&!c.stop&&now>c.until-4000) bgmFadeOut(c,1.0); }
+  const cueOn=!!(c.id&&!c.stop), talk=(STORY&&ST.box.style.display==='block')||talkEl.style.display==='block'||!!(VC.a&&!VC.a.paused&&!VC.a.ended&&VC.a.src&&VC.a.src.indexOf('voice/')>=0);
+  BGM.duck=bgmTo(BGM.duck,talk?BGM_DUCK:1,talk?2.2:0.9,dt); BGM.cueDuck=bgmTo(BGM.cueDuck,cueOn?(c.kind==='idea'?0.15:0):1,cueOn?4:1,dt);
+  const lv=BGM_VOL[BGM.k], mv=lv*BGM_MASTER*BGM.duck*BGM.cueDuck, cv=lv*BGM_CUEV;
+  for(const ch of [...BGM.m,c]){ if(ch.id||ch.f>0){ ch.f=bgmTo(ch.f,ch.ft,ch.rate,dt); if(ch.stop&&ch.f<=0.001){ ch.f=0; try{ ch.el.pause(); }catch(e){} ch.id=null; ch.stop=false; } }
+    const v=Math.max(0,Math.min(1,ch.f*(ch===c?cv:mv)));
+    if(ch.g){ try{ ch.g.gain.setTargetAtTime(v,BGM.ctx.currentTime,0.03); }catch(e){ ch.g.gain.value=v; } } else if(ch.id||ch.f>0){ try{ ch.el.volume=v; }catch(e){} } } }
+setInterval(bgmTick,50);
+document.addEventListener('visibilitychange',()=>{ const h=document.visibilityState==='hidden'; BGM.hidden=h;   // 画面を隠したら止め、もどったら続きから
+  for(const ch of [...BGM.m,BGM.c]){ if(!ch.id) continue; try{ if(h) ch.el.pause(); else ch.el.play().catch(()=>{}); }catch(e){} }
+  if(BGM.ctx){ try{ h?BGM.ctx.suspend():BGM.ctx.resume(); }catch(e){} } BGM.last=performance.now(); });
 const VISUAL_FN=/monShow|monHide|waitExamine|stDark|sleep\(|shake|flash|pan\(/;
 function waitAdvFF(n){ return new Promise(r=>{ ADV=r; if(FF) setTimeout(()=>{ if(ADV===r){ ADV=null; r(); } },550+Math.min(900,(n||0)*18)); }); }
 async function typeOut(el,t){ el.textContent=''; if(FF||SKIP_SCENE){ el.textContent=t; return; } let skip=false; const prev=ADV; ADV=()=>{ skip=true; };
@@ -2591,7 +2672,7 @@ function stShow(mode,bg){ ST.el.style.display='block'; ST.el.classList.toggle('f
 function stHide(){ vcStop(); grStHide(); ST.el.style.display='none'; ST.box.style.display='none'; ADV=null; }
 // lines: {w:'hero'|'genzo'|...|'partner'|null(ナレ), t, f:表情, if:()=>bool, fn:async()=>{}}
 async function runScene(lines,opt){ opt=opt||{}; const field=!!opt.field; if(opt.prologue&&OPEN_SKIP){ for(const L of lines){ if(L.fn&&!VISUAL_FN.test(String(L.fn))&&(!L.if||L.if())) await L.fn(); } return; } STORY=true; objUpdate(); enterEl.classList.remove('on'); talkClose(); IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; AUTO=null;
-  stShow(field?'field':'full',opt.bg); if(!field) PAUSED=true; SKIP_SCENE=!!(opt.prologue&&OPEN_SKIP); ST_FF.style.display='block'; ST.skip.style.display='block'; ST.skip.textContent=opt.prologue?'冒頭をスキップ':'スキップ'; ST_FF.style.right=(14+ST.skip.offsetWidth+8)+'px'; VC.btn.style.display=vcHas()?'block':'none'; VC.btn.style.right=(14+ST.skip.offsetWidth+8+ST_FF.offsetWidth+8)+'px';
+  stShow(field?'field':'full',opt.bg); if(!field) PAUSED=true; SKIP_SCENE=!!(opt.prologue&&OPEN_SKIP); ST_FF.style.display='block'; ST.skip.style.display='block'; ST.skip.textContent=opt.prologue?'冒頭をスキップ':'スキップ'; ST_FF.style.right=(14+ST.skip.offsetWidth+8)+'px'; VC.btn.style.display=vcHas()?'block':'none'; VC.btn.style.right=(14+ST.skip.offsetWidth+8+ST_FF.offsetWidth+8)+'px'; { const bb=$('stBgm'); bb.style.display='block'; bb.style.right=(14+ST.skip.offsetWidth+8+ST_FF.offsetWidth+8+(vcHas()?VC.btn.offsetWidth+8:0))+'px'; }
   ST.skip.onclick=e=>{ e.stopPropagation(); SKIP_SCENE=true; vcStop(); if(opt.prologue) OPEN_SKIP=true; advance(); };
   ST.L.removeAttribute('src'); ST.R.removeAttribute('src'); ST.R2.removeAttribute('src');
   { const ps=[]; for(const L of lines){ const q=L.w&&L.w!=='partner'?pSrc(L.w,L.f||'normal'):null; if(q&&!ps.includes(q)) ps.push(q); } await Promise.race([Promise.all(ps.map(u=>new Promise(r=>{ const im=new Image(); PIMG[u]=im; im.onload=im.onerror=r; im.src=u; }))),sleep(1500)]); }
@@ -2612,7 +2693,7 @@ async function runScene(lines,opt){ opt=opt||{}; const field=!!opt.field; if(opt
     pFace(ST.L,'L'); pFace(ST.R,'R'); pFace(ST.R2,'R');
     ST.el.classList.toggle('trio',!ST.R2.classList.contains('off')&&!!ST.R2.getAttribute('src'));
     vcPlay(L.v); await typeOut(ST.tx,fillT(L.t)); if(SKIP_SCENE){ vcStop(); continue; } await waitAdvFF(L.t.length); vcStop(); }
-  SKIP_SCENE=false; ST_FF.style.display='none'; VC.btn.style.display='none'; ST.skip.onclick=null; stHide(); STORY=false; if(!field){ PAUSED=!READY.scene||!!opt.keepPaused; LAST=performance.now(); } objUpdate(); saveGame(); }
+  SKIP_SCENE=false; ST_FF.style.display='none'; VC.btn.style.display='none'; $('stBgm').style.display='none'; ST.skip.onclick=null; stHide(); STORY=false; if(!field){ PAUSED=!READY.scene||!!opt.keepPaused; LAST=performance.now(); } objUpdate(); saveGame(); }
 async function runCards(cards){ stShow('full'); PAUSED=true; ST.card.style.display='block'; ST.skip.style.display='block'; let skipAll=false; ST.skip.onclick=e=>{ e.stopPropagation(); skipAll=true; advance(); };
   for(const c of cards){ if(skipAll||!c.t) continue; ST.bg.style.opacity=0; await sleep(250); ST.bg.style.backgroundImage=`url(${bgUrl(c.bg)})`; ST.card.querySelectorAll('.mon2d').forEach(e=>e.remove());
     for(const m of c.mons||[]){ const im=document.createElement('img'); im.className='mon2d'; im.src='../battle/img/'+m[0]+'.webp'; im.style.left=m[1]+'%'; im.style.top=m[2]+'%'; im.style.width=`min(${m[3]||30}vw,${(m[3]||30)*6.3}px)`; im.style.animationDelay=(Math.random()*2)+'s'; if(m[4]) im.style.opacity=m[4]; ST.card.appendChild(im); }
@@ -3064,6 +3145,37 @@ const GR_BG={ g01_01:'anime_aegean_dawn', g01_02:'anime_ep1_02', g01_03:'anime_e
   g09_11:'gr_night_room', g12_01:'gr_night_room', g12_05:'anime_temple_ruins', g12_09:'gr_grandma_night', g14_07:'gr_past', g15_09:'gr_lab_night', g15_10:'gr_night_room',
   g19_01:'anime_greek_port', g19_02:'anime_greek_port', g21_01:'anime_aegean_dawn', g21_02:'anime_oliva_plaza', g22_01:'anime_olive_hill', g22_02:'anime_oliva_plaza', g22_08:'gr_ruins_night', g22_09:'gr_ruins_night',
   g23_08:'anime_olive_hill', g23_09:'gr_lab' };
+// 場面の曲(2026-11-05 オーナー「テリオンアニメのミュージックに曲をタイトル付きで入れてるから全部入れ込んで」)。台本の場面の見出しと中身に合わせた。
+//  書いていない場面は、その地図の曲のまま(greece_town.html の BGM_MAP)。曲のファイルは bgm/{id}.mp3(対応表 bgm/index.json)
+//  title_opening=オープニング / scene_legend=おばあさんの昔話 / scene_villain=ヴィクターの暗躍 / scene_reunion=仲直り・再会 / scene_sad=悲しい場面・別れ / scene_daily=日常の掛け合い・ドタバタ
+//  scene_village_attack=村の総攻撃 / scene_infiltrate=アイギス社の施設に潜入 / scene_inn_night=宿・ホテルの夜 / map_*=地図の曲(夜の森・港の雨の夜・競技場の地下 など)
+const GR_BGM={
+  g01_01:'title_opening', g01_02:'map_oliva', g01_03:'scene_daily', g01_04:'map_olive_hill', g01_05:'scene_daily', g01_06:'scene_reunion', g01_07:'scene_villain', g01_09:'map_olive_hill', g01_10:'scene_villain', g01_11:'scene_inn_night',
+  g02_01:'scene_daily', g02_02:'scene_daily', g02_03:'scene_daily', g02_04:'map_oliva', g02_05:'map_olive_hill', g02_06:'scene_legend', g02_07:'scene_inn_night', g02_08:'scene_villain',
+  g03_01:'map_stadium_under', g03_02:'scene_daily', g03_03:'map_ruins', g03_04:'scene_daily', g03_07:'map_ruins', g03_09:'map_stadium_under', g03_10:'scene_daily',
+  g04_01:'scene_villain', g04_02:'map_night_forest', g04_03:'map_night_forest', g04_07:'scene_inn_night',
+  g05_01:'scene_villain', g05_02:'map_oliva', g05_03:'scene_daily', g05_04:'scene_villain', g05_10:'map_oliva', g05_11:'scene_villain',
+  g06_01:'map_olive_hill', g06_02:'map_olive_hill',
+  g07_01:'scene_villain', g07_03:'scene_village_attack', g07_05:'map_ladon_river', g07_06:'map_ladon_river', g07_07:'map_ladon_river', g07_08:'map_night_forest',
+  g08_02:'scene_daily', g08_03:'scene_daily', g08_04:'scene_legend', g08_05:'scene_inn_night', g08_06:'scene_legend', g08_07:'scene_villain',
+  g09_01:'map_marble', g09_02:'map_ladon_river', g09_07:'scene_sad', g09_09:'map_ladon_river', g09_10:'scene_daily', g09_11:'scene_villain',
+  g10_02:'scene_daily', g10_06:'scene_sad', g10_07:'map_harbor_rain', g10_08:'map_harbor_rain', g10_09:'map_harbor_rain',
+  g11_01:'map_harbor_rain', g11_02:'map_harbor_rain', g11_03:'scene_reunion', g11_04:'map_harbor_rain', g11_05:'map_harbor_rain', g11_06:'scene_reunion', g11_07:'map_nafria', g11_08:'scene_daily',
+  g12_01:'scene_villain', g12_03:'scene_daily', g12_04:'map_ruins', g12_05:'scene_villain', g12_07:'scene_villain', g12_08:'map_cloud_road', g12_09:'scene_legend',
+  g13_05:'scene_inn_night', g13_06:'scene_inn_night', g13_11:'scene_inn_night', g13_14:'scene_daily', g13_15:'scene_villain',
+  g14_04:'scene_villain', g14_07:'scene_sad', g14_09:'scene_reunion',
+  g15_01:'scene_villain', g15_03:'scene_infiltrate', g15_04:'scene_infiltrate', g15_05:'scene_infiltrate', g15_08:'scene_infiltrate', g15_09:'scene_villain', g15_10:'scene_villain',
+  g16_02:'map_arena', g16_03:'scene_daily', g16_04:'scene_legend', g16_05:'map_arena', g16_06:'map_arena', g16_08:'map_arena', g16_09:'map_arena', g16_10:'scene_villain',
+  g17_01:'scene_village_attack', g17_02:'scene_village_attack', g17_03:'scene_villain', g17_04:'map_stadium_under', g17_05:'map_hill_maze', g17_06:'map_hill_maze', g17_07:'map_hill_maze', g17_09:'map_hill_maze', g17_10:'map_hill_maze',
+  g18_02:'scene_sad', g18_08:'scene_legend', g18_09:'scene_reunion',
+  g19_01:'scene_village_attack', g19_02:'scene_reunion', g19_03:'scene_daily', g19_05:'scene_village_attack', g19_06:'map_ruins', g19_10:'scene_sad',
+  g20_01:'scene_daily', g20_02:'scene_daily', g20_03:'map_ruins', g20_07:'scene_legend', g20_08:'map_olive_hill',
+  g21_01:'scene_daily', g21_02:'scene_village_attack', g21_03:'map_ruins', g21_07:'scene_legend', g21_08:'scene_village_attack',
+  g22_01:'scene_village_attack', g22_02:'scene_village_attack', g22_03:'scene_villain', g22_04:'scene_village_attack', g22_08:'scene_legend', g22_09:'scene_sad', g22_10:'scene_village_attack',
+  g23_01:'scene_village_attack', g23_02:'scene_villain', g23_06:'scene_sad', g23_07:'map_olive_hill', g23_08:'scene_reunion', g23_09:'scene_sad', g23_10:'scene_reunion', g23_11:'title_opening' };
+// 物語の勝負の曲(話 → 曲)。下っ端(ヴィクターのニーナ・マルコ)=下っ端戦・使い手=中ボス戦・野生のボス/アイギス社の主任=ボス戦・古代=古代の守り戦・王と最終回=BOSS・決勝=大会の決勝戦
+const GR_FIGHT_BGM={ 1:'battle_grunt', 3:'battle_wild', 4:'battle_elite', 5:'battle_grunt', 6:'battle_elite', 10:'battle_elite', 13:'battle_boss', 14:'battle_boss', 15:'battle_elite', 16:'battle_final',
+  17:'battle_ancient', 18:'battle_ancient', 19:'battle_ancient', 20:'battle_ancient', 21:'battle_boss_big', 22:'battle_ancient', 23:'battle_boss_big' };
 // 勝負の前のひとこと(作戦。勝負の中の台詞の代わり)。[だれ, 表情, 台詞]
 const GR_SAY={ 1:['elly','surprised','あの大きな木の根もとだと、火が大きくなってた！'], 3:['elly','normal','ピリポン、ぱちって！　雷は、風の子によく効くの。'],
   4:['hero','serious','森＝フォルン、水＝ピリポン……じゃんけんじゃん。'], 5:['alek','normal','まん中の三列まで行けば、変われるかもしれない。'],
@@ -3117,10 +3229,10 @@ async function grRun(){ if(GR_RUN) return; GR_RUN=true;
   try{ for(let g=0;g<400;g++){ const s=grCur(); if(!s||!grHere(s)||STORY||TRANS||ENC) break; const ok=await grStep(s); if(!ok) break;
       if(s.last){ const n=grCur(); if(!n||!(GR_PLAN[n.ep]&&GR_PLAN[n.ep].chain)) break; } } }
   catch(e){ console.error('gr story',e); }
-  finally{ GR_RUN=false; objUpdate(); } }
+  finally{ GR_RUN=false; bgmScene(null); objUpdate(); } }
 async function grStep(s){ const f=GF();
   if(s.tod&&TODN!==s.tod&&TOD[s.tod]) setTime(s.tod,true);
-  if(s.kind==='scene'){ if(GR_HOOK[s.key]) await GR_HOOK[s.key](); if(SC[s.key]){ if(s.bg) await runScene(SC[s.key],{bg:s.bg}); else await storyField(s.key); } }
+  if(s.kind==='scene'){ bgmScene(s.key); if(GR_HOOK[s.key]) await GR_HOOK[s.key](); if(SC[s.key]){ if(s.bg) await runScene(SC[s.key],{bg:s.bg}); else await storyField(s.key); } }
   else if(s.kind==='go'){ await goMap(s.to,s.toAt); if(MAP!==s.to) return false; }
   else if(s.kind==='tp'){ await grTp(s.x,s.z,s.yaw); }
   else if(s.kind==='battle'){ const b=f[s.id+'_b'];
@@ -3140,7 +3252,7 @@ function grBond(){ if(!SAVE) return; const f=SAVE.flags;
 // 勝負を始める(人=仮の相手を今の場所に・古代=仮の古代を今の場所に)
 async function grFight(s){ const F=s.F; F._ep=s.ep; const say=GR_SAY[s.ep];
   if(!SAVE.flags.gr_bond) grBond();
-  if(say&&!GF()['seen_'+s.id]){ await runScene([{w:say[0],f:say[1],t:say[2]}],{field:true}); SAVE.flags['seen_'+s.id]=1; }
+  if(say&&!GF()['seen_'+s.id]){ bgmCue('idea'); await runScene([{w:say[0],f:say[1],t:say[2]}],{field:true}); SAVE.flags['seen_'+s.id]=1; }
   if(F.anc){ const o={id:F.anc.mid, ancient:1, tier:F.anc.tier, lv:F.lv, h:1.6, size:9, flag:GR_ANC_FLAG[s.ep]||('gr_w'+s.ep), x:HERO.x, z:HERO.z-3};
     const m={o, x:o.x, z:o.z, wild:true}; await startEncounter({type:'wild', m, gr:{s,F}}); }
   else { const n=stubFoe({n:F.foe.n, trainer:1, party:F.foe.party.map(x=>Object.assign({lv:F.lv},x))}); await startEncounter({type:'trainer', n, gr:{s,F}}); } }
@@ -3162,8 +3274,8 @@ function grLearn(mid){ if(!(window.Progress&&Progress.learnBoss)) return null; c
   try{ if(c) c.bossLearn=1; return Progress.learnBoss({mid:+mid, lv:1}); } finally{ if(c) c.bossLearn=p; } }
 
 // ---- 第1話のはじめ(新しいセーブ・前の版のセーブを1話から): 語り→市場(全画面)。そのあと本体が村に下ろす ----
-async function ep1Open(){ const f=GF(); for(const k of (GR_PLAN[1].pro||[])){ if(f[k]) continue; if(SC[k]) await runScene(SC[k],{bg:GR_BG[k],keepPaused:true,prologue:true}); if(SAVE){ SAVE.flags[k]=1; saveGame(); } }
-  if(SAVE) SAVE.stage='now'; }
+async function ep1Open(){ const f=GF(); for(const k of (GR_PLAN[1].pro||[])){ if(f[k]) continue; bgmScene(k); if(SC[k]) await runScene(SC[k],{bg:GR_BG[k],keepPaused:true,prologue:true}); if(SAVE){ SAVE.flags[k]=1; saveGame(); } }
+  bgmScene(null); if(SAVE) SAVE.stage='now'; }
 
 // ============================================================================
 // 目的の表示(ギリシャ編のあいだだけ返す)
@@ -4779,7 +4891,8 @@ async function arriveTown(){ fadeEl.classList.add('on'); await sleep(260); stHid
   followersSet(); SAVE.stage='field'; setTime('evening',true); await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); await sleep(300);
   showArea(D.name); AREA=D.name; followersSet();   /* 狐が駆けぬける所(SC.arrive)は第1話 v11 の頭へ移した */ flag('arrived'); saveGame(); }   // 相棒は第2話の手のひらの約束(SC.lab)で
 // 主人公はヤマト(男の子)だけ(2026-10-26 オーナー)。性別・名前の設定画面は無し。古い記録(g:'f')はヤマトとして読む
-async function newGame(){ ST.title.style.display='none';   // はじめの字幕(INTRO)は第1話 v11 でなくした(2026-10-29)
+async function newGame(){ ST.title.style.display='none'; BGM.sc='title_opening';   // 第1話の語りまでオープニングの曲を続ける
+    // はじめの字幕(INTRO)は第1話 v11 でなくした(2026-10-29)
   stShow('full'); ST.bg.style.backgroundImage='none'; const g='m';
   SAVE={v:1,g,name:DEFN(g),partner:null,flags:{},unlock:{evo:false,fusion:false},owned:[],stage:'tokyo'}; NOSAVE=false; saveGame(); await progInit();
   heroGo(g); fadeEl.classList.add('on'); await sleep(260);
@@ -4835,7 +4948,7 @@ function toTitle(){ btMapEl.style.display='none'; PAUSED=true; AUTO=null; STORY=
 function titleBg(){ return 'intro/title_keyart_'+(innerWidth<innerHeight?'p':'l')+'.webp'; }
 function titleBgSet(){ ST.bg.style.backgroundImage=`url(${titleBg()})`; ST.bg.style.backgroundPosition=innerWidth<innerHeight?'center 60%':'center bottom'; }
 addEventListener('resize',()=>{ if(ST.title.style.display==='flex') titleBgSet(); });
-function titleScreen(){ if(TESTMODE){ saveGame(); SAVE=null; } SKEY=SKEY_MAIN; TESTMODE=false; testHud();   // 全部ためすから戻った時: テストの記録はテストの鍵に書いてから外す(ふつうのセーブに混ぜない) for(const c of INTRO){ const im=new Image(); PIMG[c.bg]=im; im.src=bgUrl(c.bg); for(const m of c.mons||[]){ const j=new Image(); PIMG['m'+m[0]]=j; j.src='../battle/img/'+m[0]+'.webp'; } }
+function titleScreen(){ BGM.sc=null; if(TESTMODE){ saveGame(); SAVE=null; } SKEY=SKEY_MAIN; TESTMODE=false; testHud();   // 全部ためすから戻った時: テストの記録はテストの鍵に書いてから外す(ふつうのセーブに混ぜない) for(const c of INTRO){ const im=new Image(); PIMG[c.bg]=im; im.src=bgUrl(c.bg); for(const m of c.mons||[]){ const j=new Image(); PIMG['m'+m[0]]=j; j.src='../battle/img/'+m[0]+'.webp'; } }
   stShow('full'); titleBgSet(); ST.bg.style.opacity=1; ST.el.classList.add('ttl'); ST.title.style.display='flex'; const sv=loadSave(); const bc=$('btCont'); bc.disabled=!sv;
   const off=()=>{ ST.el.classList.remove('ttl'); ST.bg.style.backgroundPosition=''; };
   $('btNew').onclick=()=>{ vcUnlock(); off(); newGame().catch(e=>console.error(e)); }; bc.onclick=()=>{ if(sv){ vcUnlock(); off(); contGame(sv).catch(e=>console.error(e)); } };

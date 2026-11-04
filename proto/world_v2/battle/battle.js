@@ -4087,7 +4087,7 @@ function koStamp(r,c,lead,owner){ if(BT.headless||!renderer||!camera) return; fx
 // ---- 進化(FX2版): 光の繭に包まれ → 繭が割れて新しい姿が現れる ----
 // ---- 進化(2026-10-29 3D): 光の柱に包まれ、白く光りながら大きくなって 新しい3Dに入れかわる・新しい名前の帯 ----
 // o={from,to,clutch,awake}。前の姿の3Dはその場に残して(盤の子の絵は新しい姿を読みこむ)、光って消える。2Dの子(3Dなし)は前の演出(evolveFx2D)。
-function evolveFx(r,c,o){ if(BT.headless) return; o=o||{}; camShow([{r,c}],{pad:1.4, hold:2600/SPD()}); const u=unitAt(r,c); const s=u&&sprites[u.uid];
+function evolveFx(r,c,o){ if(BT.headless) return; o=o||{}; try{ if(!o.awake&&window.W2BGM){ const uu=unitAt(r,c); const lv=(MID[o.to||(uu&&uu.mid)]||{}).level||2; W2BGM.cue(lv>=3?'evo3':'evo2'); } }catch(e){}   // 2026-11-05 曲: 進化の短い曲(greece_town.html の bgmCue。部品だけの時は鳴らない) camShow([{r,c}],{pad:1.4, hold:2600/SPD()}); const u=unitAt(r,c); const s=u&&sprites[u.uid];
   if(!s || !s.m3d) return evolveFx2D(r,c,o);
   const w=cell2world(r,c), h=cellH(r,c); const sp=SPD(); const lv=(MID[u.mid]||{}).level||2; const big=o.awake?1:(lv>=3||(MID[u.mid]||{}).role==='fusion'?1.3:1.0);
   const tc=o.clutch?0xff8a40:(TYPE_HEX[(MID[u.mid]||{}).type]||0xffe070); const gold=o.clutch?0xffb070:0xfff0a0; const T=(o.awake?720:1050);
@@ -4155,7 +4155,8 @@ function evolveFx2D(r,c){ if(BT.headless) return; const u=unitAt(r,c); const s=u
 // ---- 融合(FX2版): 素材の子が渦を巻いて中央へ吸い込まれ → 光が弾けて新しい子が現れる(3体はもっと大きく) ----
 function fusionFx(r,c,ca,cb){ if(BT.headless) return; camShow([{r,c}],{pad:1.8, hold:2600/SPD()}); const w=cell2world(r,c), h=cellH(r,c); const sp=SPD();
   const src=Object.keys(sprites).filter(uid=>!state.units[uid] && !_hold[uid]);   // いま消えた素材の子(tryFusion が units から外した直後)
-  const n3=src.length>=3; const T=(n3?820:640)/sp; const cols=[ca||0xffffff, cb||0xc080ff, 0xff80c0];
+  const n3=src.length>=3; try{ if(window.W2BGM) W2BGM.cue(n3?'fuse3':'fuse2'); }catch(e){}   // 2026-11-05 曲: 融合の短い曲
+  const T=(n3?820:640)/sp; const cols=[ca||0xffffff, cb||0xc080ff, 0xff80c0];
   const nu=unitAt(r,c); const nuid=nu?nu.uid:null;
   // 素材: 渦を巻きながら中央へ・縮む・白く飛ぶ
   src.forEach((uid,i)=>{ const s=sprites[uid]; if(!s) return; _hold[uid]='fx2'; const p0={x:s.grp.position.x,y:s.grp.position.y,z:s.grp.position.z}; const dx=p0.x-w.x, dz=p0.z-w.z; const rad0=Math.hypot(dx,dz)||0.6; const a0=Math.atan2(dz,dx); const dir=i%2?-1:1;
@@ -6284,6 +6285,7 @@ function buildResult(winner,msg){
 }
 
 function showResult(res, done){
+  try{ if(window.W2BGM) W2BGM.result(res.result); }catch(e){}   // 2026-11-05 曲: 勝ち=勝利ファンファーレ・負け=負けのジングル(greece_town.html)
   const ov=$id('ovEnd'); ov.classList.toggle('lose', res.winner!==0);
   const toWL = res.how==='timeout' && (res.result==='win'||res.result==='lose');   // 2026-10-27 人・古代テリオンの時間切れ=残り体力の割合で勝ち負け
   $id('endTitle').textContent = toWL?('時間切れ・'+(res.result==='win'?'勝ち':'負け')):res.result==='win'?'勝ち':res.result==='draw'?(res.how==='timeout'?'時間切れ':'引き分け'):res.result==='flee'?'にげた':'負け';

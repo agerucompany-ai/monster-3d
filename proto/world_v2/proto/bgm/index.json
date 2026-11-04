@@ -1,0 +1,271 @@
+{
+ "note": "テリオンアニメ/music の曲(2026-11-05)。id=ファイル名(bgm/{id}.mp3)・name=元の曲名",
+ "tracks": [
+  {
+   "id": "title_opening",
+   "name": "テリオンオープニング",
+   "kind": "loop",
+   "dur": 109.61,
+   "kb": 1284
+  },
+  {
+   "id": "map_oliva",
+   "name": "オリーヴァ村",
+   "kind": "loop",
+   "dur": 119.85,
+   "kb": 1404
+  },
+  {
+   "id": "map_olive_hill",
+   "name": "オリーブの丘・野原",
+   "kind": "loop",
+   "dur": 116.87,
+   "kb": 1370
+  },
+  {
+   "id": "map_ruins",
+   "name": "古代の競技場・遺跡",
+   "kind": "loop",
+   "dur": 117.19,
+   "kb": 1373
+  },
+  {
+   "id": "map_night_forest",
+   "name": "夜の森",
+   "kind": "loop",
+   "dur": 119.8,
+   "kb": 1404
+  },
+  {
+   "id": "map_hill_maze",
+   "name": "丘の下の迷宮",
+   "kind": "loop",
+   "dur": 118.07,
+   "kb": 1384
+  },
+  {
+   "id": "map_ladon_river",
+   "name": "ラドン川",
+   "kind": "loop",
+   "dur": 119.85,
+   "kb": 1404
+  },
+  {
+   "id": "map_nafria",
+   "name": "港町ナフリア",
+   "kind": "loop",
+   "dur": 117.89,
+   "kb": 1381
+  },
+  {
+   "id": "map_harbor_rain",
+   "name": "港の雨の夜",
+   "kind": "loop",
+   "dur": 117.58,
+   "kb": 1378
+  },
+  {
+   "id": "map_corinth",
+   "name": "運河の町コリンタ",
+   "kind": "loop",
+   "dur": 117.47,
+   "kb": 1377
+  },
+  {
+   "id": "map_cloud_road",
+   "name": "雲の山道・吹雪",
+   "kind": "loop",
+   "dur": 119.48,
+   "kb": 1400
+  },
+  {
+   "id": "map_delfina",
+   "name": "山の村デルフィナ・天文台",
+   "kind": "loop",
+   "dur": 117.63,
+   "kb": 1378
+  },
+  {
+   "id": "map_marble",
+   "name": "大理石の谷",
+   "kind": "loop",
+   "dur": 117.13,
+   "kb": 1373
+  },
+  {
+   "id": "map_white_city",
+   "name": "白い都",
+   "kind": "loop",
+   "dur": 64.68,
+   "kb": 758
+  },
+  {
+   "id": "map_arena",
+   "name": "闘技場・大会の会場",
+   "kind": "loop",
+   "dur": 89.99,
+   "kb": 1055
+  },
+  {
+   "id": "map_stadium_under",
+   "name": "競技場の地下",
+   "kind": "loop",
+   "dur": 118.52,
+   "kb": 1389
+  },
+  {
+   "id": "scene_inn_night",
+   "name": "宿・ホテルの夜",
+   "kind": "loop",
+   "dur": 117.84,
+   "kb": 1381
+  },
+  {
+   "id": "scene_daily",
+   "name": "日常の掛け合い・ドタバタ",
+   "kind": "loop",
+   "dur": 119.04,
+   "kb": 1395
+  },
+  {
+   "id": "scene_sad",
+   "name": "悲しい場面・別れ",
+   "kind": "loop",
+   "dur": 117.03,
+   "kb": 1371
+  },
+  {
+   "id": "scene_reunion",
+   "name": "仲直り・再会",
+   "kind": "loop",
+   "dur": 118.28,
+   "kb": 1386
+  },
+  {
+   "id": "scene_legend",
+   "name": "おばあさんの昔話",
+   "kind": "loop",
+   "dur": 118.8,
+   "kb": 1392
+  },
+  {
+   "id": "scene_villain",
+   "name": "ヴィクターの暗躍",
+   "kind": "loop",
+   "dur": 118.02,
+   "kb": 1383
+  },
+  {
+   "id": "scene_infiltrate",
+   "name": "アイギス社の施設に潜入",
+   "kind": "loop",
+   "dur": 119.9,
+   "kb": 1405
+  },
+  {
+   "id": "scene_village_attack",
+   "name": "村の総攻撃",
+   "kind": "loop",
+   "dur": 116.69,
+   "kb": 1367
+  },
+  {
+   "id": "battle_wild",
+   "name": "バトルBGM",
+   "kind": "loop",
+   "dur": 30.04,
+   "kb": 469
+  },
+  {
+   "id": "battle_grunt",
+   "name": "下っ端戦",
+   "kind": "loop",
+   "dur": 30.04,
+   "kb": 469
+  },
+  {
+   "id": "battle_elite",
+   "name": "中ボス戦",
+   "kind": "loop",
+   "dur": 29.65,
+   "kb": 463
+  },
+  {
+   "id": "battle_boss",
+   "name": "ボス戦",
+   "kind": "loop",
+   "dur": 30.72,
+   "kb": 480
+  },
+  {
+   "id": "battle_boss_big",
+   "name": "BOSS",
+   "kind": "loop",
+   "dur": 61.6,
+   "kb": 722
+  },
+  {
+   "id": "battle_ancient",
+   "name": "古代の守り戦",
+   "kind": "loop",
+   "dur": 28.03,
+   "kb": 438
+  },
+  {
+   "id": "battle_final",
+   "name": "大会の決勝戦",
+   "kind": "loop",
+   "dur": 31.19,
+   "kb": 487
+  },
+  {
+   "id": "jingle_win",
+   "name": "勝利ファンファーレ",
+   "kind": "once",
+   "dur": 6.95,
+   "kb": 109
+  },
+  {
+   "id": "jingle_lose",
+   "name": "負けのジングル",
+   "kind": "once",
+   "dur": 12.15,
+   "kb": 190
+  },
+  {
+   "id": "cue_idea",
+   "name": "ひらめき・作戦が見えた",
+   "kind": "once",
+   "dur": 17.97,
+   "kb": 281
+  },
+  {
+   "id": "cue_evo2",
+   "name": "2段目進化",
+   "kind": "once",
+   "dur": 26.93,
+   "kb": 421
+  },
+  {
+   "id": "cue_evo3",
+   "name": "三段目進化",
+   "kind": "once",
+   "dur": 33.2,
+   "kb": 519
+  },
+  {
+   "id": "cue_fuse2",
+   "name": "2体融合",
+   "kind": "once",
+   "dur": 29.49,
+   "kb": 461
+  },
+  {
+   "id": "cue_fuse3",
+   "name": "3体融合",
+   "kind": "once",
+   "dur": 30.96,
+   "kb": 484
+  }
+ ]
+}

@@ -158,6 +158,37 @@ const GR_BG={ g01_01:'anime_aegean_dawn', g01_02:'anime_ep1_02', g01_03:'anime_e
   g09_11:'gr_night_room', g12_01:'gr_night_room', g12_05:'anime_temple_ruins', g12_09:'gr_grandma_night', g14_07:'gr_past', g15_09:'gr_lab_night', g15_10:'gr_night_room',
   g19_01:'anime_greek_port', g19_02:'anime_greek_port', g21_01:'anime_aegean_dawn', g21_02:'anime_oliva_plaza', g22_01:'anime_olive_hill', g22_02:'anime_oliva_plaza', g22_08:'gr_ruins_night', g22_09:'gr_ruins_night',
   g23_08:'anime_olive_hill', g23_09:'gr_lab' };
+// 場面の曲(2026-11-05 オーナー「テリオンアニメのミュージックに曲をタイトル付きで入れてるから全部入れ込んで」)。台本の場面の見出しと中身に合わせた。
+//  書いていない場面は、その地図の曲のまま(greece_town.html の BGM_MAP)。曲のファイルは bgm/{id}.mp3(対応表 bgm/index.json)
+//  title_opening=オープニング / scene_legend=おばあさんの昔話 / scene_villain=ヴィクターの暗躍 / scene_reunion=仲直り・再会 / scene_sad=悲しい場面・別れ / scene_daily=日常の掛け合い・ドタバタ
+//  scene_village_attack=村の総攻撃 / scene_infiltrate=アイギス社の施設に潜入 / scene_inn_night=宿・ホテルの夜 / map_*=地図の曲(夜の森・港の雨の夜・競技場の地下 など)
+const GR_BGM={
+  g01_01:'title_opening', g01_02:'map_oliva', g01_03:'scene_daily', g01_04:'map_olive_hill', g01_05:'scene_daily', g01_06:'scene_reunion', g01_07:'scene_villain', g01_09:'map_olive_hill', g01_10:'scene_villain', g01_11:'scene_inn_night',
+  g02_01:'scene_daily', g02_02:'scene_daily', g02_03:'scene_daily', g02_04:'map_oliva', g02_05:'map_olive_hill', g02_06:'scene_legend', g02_07:'scene_inn_night', g02_08:'scene_villain',
+  g03_01:'map_stadium_under', g03_02:'scene_daily', g03_03:'map_ruins', g03_04:'scene_daily', g03_07:'map_ruins', g03_09:'map_stadium_under', g03_10:'scene_daily',
+  g04_01:'scene_villain', g04_02:'map_night_forest', g04_03:'map_night_forest', g04_07:'scene_inn_night',
+  g05_01:'scene_villain', g05_02:'map_oliva', g05_03:'scene_daily', g05_04:'scene_villain', g05_10:'map_oliva', g05_11:'scene_villain',
+  g06_01:'map_olive_hill', g06_02:'map_olive_hill',
+  g07_01:'scene_villain', g07_03:'scene_village_attack', g07_05:'map_ladon_river', g07_06:'map_ladon_river', g07_07:'map_ladon_river', g07_08:'map_night_forest',
+  g08_02:'scene_daily', g08_03:'scene_daily', g08_04:'scene_legend', g08_05:'scene_inn_night', g08_06:'scene_legend', g08_07:'scene_villain',
+  g09_01:'map_marble', g09_02:'map_ladon_river', g09_07:'scene_sad', g09_09:'map_ladon_river', g09_10:'scene_daily', g09_11:'scene_villain',
+  g10_02:'scene_daily', g10_06:'scene_sad', g10_07:'map_harbor_rain', g10_08:'map_harbor_rain', g10_09:'map_harbor_rain',
+  g11_01:'map_harbor_rain', g11_02:'map_harbor_rain', g11_03:'scene_reunion', g11_04:'map_harbor_rain', g11_05:'map_harbor_rain', g11_06:'scene_reunion', g11_07:'map_nafria', g11_08:'scene_daily',
+  g12_01:'scene_villain', g12_03:'scene_daily', g12_04:'map_ruins', g12_05:'scene_villain', g12_07:'scene_villain', g12_08:'map_cloud_road', g12_09:'scene_legend',
+  g13_05:'scene_inn_night', g13_06:'scene_inn_night', g13_11:'scene_inn_night', g13_14:'scene_daily', g13_15:'scene_villain',
+  g14_04:'scene_villain', g14_07:'scene_sad', g14_09:'scene_reunion',
+  g15_01:'scene_villain', g15_03:'scene_infiltrate', g15_04:'scene_infiltrate', g15_05:'scene_infiltrate', g15_08:'scene_infiltrate', g15_09:'scene_villain', g15_10:'scene_villain',
+  g16_02:'map_arena', g16_03:'scene_daily', g16_04:'scene_legend', g16_05:'map_arena', g16_06:'map_arena', g16_08:'map_arena', g16_09:'map_arena', g16_10:'scene_villain',
+  g17_01:'scene_village_attack', g17_02:'scene_village_attack', g17_03:'scene_villain', g17_04:'map_stadium_under', g17_05:'map_hill_maze', g17_06:'map_hill_maze', g17_07:'map_hill_maze', g17_09:'map_hill_maze', g17_10:'map_hill_maze',
+  g18_02:'scene_sad', g18_08:'scene_legend', g18_09:'scene_reunion',
+  g19_01:'scene_village_attack', g19_02:'scene_reunion', g19_03:'scene_daily', g19_05:'scene_village_attack', g19_06:'map_ruins', g19_10:'scene_sad',
+  g20_01:'scene_daily', g20_02:'scene_daily', g20_03:'map_ruins', g20_07:'scene_legend', g20_08:'map_olive_hill',
+  g21_01:'scene_daily', g21_02:'scene_village_attack', g21_03:'map_ruins', g21_07:'scene_legend', g21_08:'scene_village_attack',
+  g22_01:'scene_village_attack', g22_02:'scene_village_attack', g22_03:'scene_villain', g22_04:'scene_village_attack', g22_08:'scene_legend', g22_09:'scene_sad', g22_10:'scene_village_attack',
+  g23_01:'scene_village_attack', g23_02:'scene_villain', g23_06:'scene_sad', g23_07:'map_olive_hill', g23_08:'scene_reunion', g23_09:'scene_sad', g23_10:'scene_reunion', g23_11:'title_opening' };
+// 物語の勝負の曲(話 → 曲)。下っ端(ヴィクターのニーナ・マルコ)=下っ端戦・使い手=中ボス戦・野生のボス/アイギス社の主任=ボス戦・古代=古代の守り戦・王と最終回=BOSS・決勝=大会の決勝戦
+const GR_FIGHT_BGM={ 1:'battle_grunt', 3:'battle_wild', 4:'battle_elite', 5:'battle_grunt', 6:'battle_elite', 10:'battle_elite', 13:'battle_boss', 14:'battle_boss', 15:'battle_elite', 16:'battle_final',
+  17:'battle_ancient', 18:'battle_ancient', 19:'battle_ancient', 20:'battle_ancient', 21:'battle_boss_big', 22:'battle_ancient', 23:'battle_boss_big' };
 // 勝負の前のひとこと(作戦。勝負の中の台詞の代わり)。[だれ, 表情, 台詞]
 const GR_SAY={ 1:['elly','surprised','あの大きな木の根もとだと、火が大きくなってた！'], 3:['elly','normal','ピリポン、ぱちって！　雷は、風の子によく効くの。'],
   4:['hero','serious','森＝フォルン、水＝ピリポン……じゃんけんじゃん。'], 5:['alek','normal','まん中の三列まで行けば、変われるかもしれない。'],
@@ -211,10 +242,10 @@ async function grRun(){ if(GR_RUN) return; GR_RUN=true;
   try{ for(let g=0;g<400;g++){ const s=grCur(); if(!s||!grHere(s)||STORY||TRANS||ENC) break; const ok=await grStep(s); if(!ok) break;
       if(s.last){ const n=grCur(); if(!n||!(GR_PLAN[n.ep]&&GR_PLAN[n.ep].chain)) break; } } }
   catch(e){ console.error('gr story',e); }
-  finally{ GR_RUN=false; objUpdate(); } }
+  finally{ GR_RUN=false; bgmScene(null); objUpdate(); } }
 async function grStep(s){ const f=GF();
   if(s.tod&&TODN!==s.tod&&TOD[s.tod]) setTime(s.tod,true);
-  if(s.kind==='scene'){ if(GR_HOOK[s.key]) await GR_HOOK[s.key](); if(SC[s.key]){ if(s.bg) await runScene(SC[s.key],{bg:s.bg}); else await storyField(s.key); } }
+  if(s.kind==='scene'){ bgmScene(s.key); if(GR_HOOK[s.key]) await GR_HOOK[s.key](); if(SC[s.key]){ if(s.bg) await runScene(SC[s.key],{bg:s.bg}); else await storyField(s.key); } }
   else if(s.kind==='go'){ await goMap(s.to,s.toAt); if(MAP!==s.to) return false; }
   else if(s.kind==='tp'){ await grTp(s.x,s.z,s.yaw); }
   else if(s.kind==='battle'){ const b=f[s.id+'_b'];
@@ -234,7 +265,7 @@ function grBond(){ if(!SAVE) return; const f=SAVE.flags;
 // 勝負を始める(人=仮の相手を今の場所に・古代=仮の古代を今の場所に)
 async function grFight(s){ const F=s.F; F._ep=s.ep; const say=GR_SAY[s.ep];
   if(!SAVE.flags.gr_bond) grBond();
-  if(say&&!GF()['seen_'+s.id]){ await runScene([{w:say[0],f:say[1],t:say[2]}],{field:true}); SAVE.flags['seen_'+s.id]=1; }
+  if(say&&!GF()['seen_'+s.id]){ bgmCue('idea'); await runScene([{w:say[0],f:say[1],t:say[2]}],{field:true}); SAVE.flags['seen_'+s.id]=1; }
   if(F.anc){ const o={id:F.anc.mid, ancient:1, tier:F.anc.tier, lv:F.lv, h:1.6, size:9, flag:GR_ANC_FLAG[s.ep]||('gr_w'+s.ep), x:HERO.x, z:HERO.z-3};
     const m={o, x:o.x, z:o.z, wild:true}; await startEncounter({type:'wild', m, gr:{s,F}}); }
   else { const n=stubFoe({n:F.foe.n, trainer:1, party:F.foe.party.map(x=>Object.assign({lv:F.lv},x))}); await startEncounter({type:'trainer', n, gr:{s,F}}); } }
@@ -256,8 +287,8 @@ function grLearn(mid){ if(!(window.Progress&&Progress.learnBoss)) return null; c
   try{ if(c) c.bossLearn=1; return Progress.learnBoss({mid:+mid, lv:1}); } finally{ if(c) c.bossLearn=p; } }
 
 // ---- 第1話のはじめ(新しいセーブ・前の版のセーブを1話から): 語り→市場(全画面)。そのあと本体が村に下ろす ----
-async function ep1Open(){ const f=GF(); for(const k of (GR_PLAN[1].pro||[])){ if(f[k]) continue; if(SC[k]) await runScene(SC[k],{bg:GR_BG[k],keepPaused:true,prologue:true}); if(SAVE){ SAVE.flags[k]=1; saveGame(); } }
-  if(SAVE) SAVE.stage='now'; }
+async function ep1Open(){ const f=GF(); for(const k of (GR_PLAN[1].pro||[])){ if(f[k]) continue; bgmScene(k); if(SC[k]) await runScene(SC[k],{bg:GR_BG[k],keepPaused:true,prologue:true}); if(SAVE){ SAVE.flags[k]=1; saveGame(); } }
+  bgmScene(null); if(SAVE) SAVE.stage='now'; }
 
 // ============================================================================
 // 目的の表示(ギリシャ編のあいだだけ返す)
