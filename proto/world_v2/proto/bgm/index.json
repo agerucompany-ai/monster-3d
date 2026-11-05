@@ -1,5 +1,5 @@
 {
- "note": "テリオンアニメ/music の曲(2026-11-05)。id=ファイル名(bgm/{id}.mp3)・name=元の曲名",
+ "note": "テリオンアニメ/music の曲(2026-11-05)。id=ファイル名(bgm/{id}.mp3)・name=元の曲名。2026-11-06 劣勢・逆転(v4)を足した。潜入の曲の名前からアイギス社を外した(ファイルは元のまま)",
  "tracks": [
   {
    "id": "title_opening",
@@ -157,7 +157,7 @@
   },
   {
    "id": "scene_infiltrate",
-   "name": "アイギス社の施設に潜入",
+   "name": "施設に潜入",
    "kind": "loop",
    "dur": 119.9,
    "kb": 1405
@@ -217,6 +217,20 @@
    "kind": "loop",
    "dur": 31.19,
    "kb": 487
+  },
+  {
+   "id": "battle_losing",
+   "name": "劣勢",
+   "kind": "loop",
+   "dur": 42.08,
+   "kb": 658
+  },
+  {
+   "id": "battle_comeback",
+   "name": "逆転",
+   "kind": "loop",
+   "dur": 52.43,
+   "kb": 819
   },
   {
    "id": "jingle_win",

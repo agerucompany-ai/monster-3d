@@ -4111,7 +4111,7 @@ function koStamp(r,c,lead,owner){ if(BT.headless||!renderer||!camera) return; fx
 // ---- 進化(FX2版): 光の繭に包まれ → 繭が割れて新しい姿が現れる ----
 // ---- 進化(2026-10-29 3D): 光の柱に包まれ、白く光りながら大きくなって 新しい3Dに入れかわる・新しい名前の帯 ----
 // o={from,to,clutch,awake}。前の姿の3Dはその場に残して(盤の子の絵は新しい姿を読みこむ)、光って消える。2Dの子(3Dなし)は前の演出(evolveFx2D)。
-function evolveFx(r,c,o){ if(BT.headless) return; o=o||{}; try{ if(!o.awake&&window.W2BGM){ const uu=unitAt(r,c); const lv=(MID[o.to||(uu&&uu.mid)]||{}).level||2; W2BGM.cue(lv>=3?'evo3':'evo2'); } }catch(e){}   /* 2026-11-05 曲: 進化の短い曲(greece_town.html の bgmCue。部品だけの時は鳴らない) */ camShow([{r,c}],{pad:1.4, hold:2600/SPD()}); const u=unitAt(r,c); const s=u&&sprites[u.uid];
+function evolveFx(r,c,o){ if(BT.headless) return; o=o||{}; try{ if(!o.awake&&window.W2BGM){ const uu=unitAt(r,c); const lv=(MID[o.to||(uu&&uu.mid)]||{}).level||2; W2BGM.cue(lv>=3?'evo3':'evo2', {owner:uu?uu.owner:-1, clutch:!!o.clutch}); } }catch(e){}   /* 2026-11-05 曲: 進化の短い曲(greece_town.html の bgmCue。部品だけの時は鳴らない)。11-06: だれの進化か・土壇場か(劣勢→逆転の曲) */ camShow([{r,c}],{pad:1.4, hold:2600/SPD()}); const u=unitAt(r,c); const s=u&&sprites[u.uid];
   if(!s || !s.m3d) return evolveFx2D(r,c,o);
   const w=cell2world(r,c), h=cellH(r,c); const sp=SPD(); const lv=(MID[u.mid]||{}).level||2; const big=o.awake?1:(lv>=3||(MID[u.mid]||{}).role==='fusion'?1.3:1.0);
   const tc=o.clutch?0xff8a40:(TYPE_HEX[(MID[u.mid]||{}).type]||0xffe070); const gold=o.clutch?0xffb070:0xfff0a0; const T=(o.awake?720:1050);
@@ -4179,7 +4179,7 @@ function evolveFx2D(r,c){ if(BT.headless) return; const u=unitAt(r,c); const s=u
 // ---- 融合(FX2版): 素材の子が渦を巻いて中央へ吸い込まれ → 光が弾けて新しい子が現れる(3体はもっと大きく) ----
 function fusionFx(r,c,ca,cb){ if(BT.headless) return; camShow([{r,c}],{pad:1.8, hold:2600/SPD()}); const w=cell2world(r,c), h=cellH(r,c); const sp=SPD();
   const src=Object.keys(sprites).filter(uid=>!state.units[uid] && !_hold[uid]);   // いま消えた素材の子(tryFusion が units から外した直後)
-  const n3=src.length>=3; try{ if(window.W2BGM) W2BGM.cue(n3?'fuse3':'fuse2'); }catch(e){}   // 2026-11-05 曲: 融合の短い曲
+  const n3=src.length>=3; try{ if(window.W2BGM){ const fu=unitAt(r,c); W2BGM.cue(n3?'fuse3':'fuse2', {owner:fu?fu.owner:-1}); } }catch(e){}   // 2026-11-05 曲: 融合の短い曲。11-06: だれの融合か(劣勢→逆転の曲)
   const T=(n3?820:640)/sp; const cols=[ca||0xffffff, cb||0xc080ff, 0xff80c0];
   const nu=unitAt(r,c); const nuid=nu?nu.uid:null;
   // 素材: 渦を巻きながら中央へ・縮む・白く飛ぶ
@@ -6582,7 +6582,7 @@ const API={ init, startBattle, simulate, TACT, PVE_STAGE, PVE_EVO, get guideLog(
   get MID(){ return MID; }, get MONSTERS(){ return MONSTERS; }, baseFormId:(m)=>baseFormId(m), lineOf:(m)=>lineUpIds(m),
   setAuto(v){ if(v===2||v==='fast'){ BT.fastPref=true; setAutoMode(2); } else if(!!v!==BT.auto) toggleAuto(); return BT.auto; },
   // 確認用(test.html・puppeteer)
-  _dbg:{ get state(){ return state; }, sync(){ syncUnits(); updateUI(); },
+  _dbg:{ get state(){ return state; }, sync(){ syncUnits(); updateUI(); }, busy(){ try{ return !!(animBusy()||(_seq&&!_seq.done)); }catch(e){ return false; } },   // 2026-11-06 演出・技の帯・ダメージの数字が出ている間(物語の勝負の中の吹き出しを待たせる)
     cam(){ return {uz:CAMV.uz, z:CAMV.cZ, x:CAMV.cx, zz:CAMV.cz, show:CAMV.showZ, ptrs:CAMV.ptrs.size, dragged:CAMV.dragged, pick:pickEnabled}; }, camAll(){ camAll(); }, camZoom(z){ CAMV.uz=z; CAMV.cZ=z; camBtnSync(); },   // 2026-10-30 確認用: 寄りのカメラ
     unitPx(uid){ const s=sprites[uid]; if(!s||!camera) return null; const rc=renderer.domElement.getBoundingClientRect(); const h=(s.m3d&&s.m3d.h)||s.sc||1; const p=s.grp.position; const a=new THREE.Vector3(p.x,p.y,p.z).project(camera), b=new THREE.Vector3(p.x,p.y+h,p.z).project(camera); const c=new THREE.Vector3(p.x+1,p.y,p.z).project(camera); return {w:Math.round((c.x-a.x)*rc.width/2), h:Math.round((b.y-a.y)*rc.height/2), x:Math.round((a.x*0.5+0.5)*rc.width), y:Math.round((-a.y*0.5+0.5)*rc.height)}; }, clear(){ clearSel(); }, tagURL(t,k){ const tx=tagTex(t,k); return tx.image.toDataURL(); },
     cellPx(r,c){ if(!renderer||!camera) return null; const w=cell2world(r,c); const v=new THREE.Vector3(w.x, cellH(r,c)+0.05, w.z).project(camera); const rc=renderer.domElement.getBoundingClientRect(); return [rc.left+(v.x+1)/2*rc.width, rc.top+(-v.y+1)/2*rc.height]; },
