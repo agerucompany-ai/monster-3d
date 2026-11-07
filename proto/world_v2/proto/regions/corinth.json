@@ -57,7 +57,7 @@
    ],
    "to": "marble",
    "at": "from_corinth",
-   "need": "a14",
+   "need": "a15",
    "lock": "まだ進めない"
   },
   {
@@ -164,7 +164,7 @@
     "hpX": 3.32,
     "atkX": 2.976
    },
-   "need": "a14"
+   "need": "a13"
   },
   {
    "n": "ユスフ",
@@ -335,7 +335,7 @@
    "flag": "gr_pega",
    "lv": 14,
    "tier": 3,
-   "need": "a20"
+   "need": "a19"
   }
  ],
  "drones": [],

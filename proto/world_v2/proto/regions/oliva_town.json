@@ -3315,7 +3315,7 @@
    ],
    "to": "oliva_hill",
    "at": "from_town",
-   "need": "a02",
+   "need": "a01",
    "lock": "まだ村で、やることがある"
   }
  ]

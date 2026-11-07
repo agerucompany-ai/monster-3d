@@ -47,7 +47,7 @@
    ],
    "to": "liongate",
    "at": "from_nafria",
-   "need": "a11",
+   "need": "a13",
    "lock": "船は、まだ出ない"
   },
   {
@@ -139,7 +139,7 @@
      "mid": 1007
     }
    ],
-   "need": "a10"
+   "need": "a09"
   }
  ],
  "entrances": [
