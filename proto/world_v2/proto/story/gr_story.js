@@ -138,8 +138,8 @@ async function grScene(k,n){ await storyField(k); }
 //  go:{after:場面のキー, to, at}=その場面のあとで地図を移る / tp:{before:キー, x,z,yaw}=その場面の前に同じ地図の中で移る / end:{to,at}=話のおわりに地図を移る
 // ============================================================================
 const GR_PLAN={
-  1: {map:'oliva_town', at:'*', tod:'noon', pro:['g01_01','g01_02']},
-  2: {map:'oliva_town', at:'いこいの広場', tod:'morning', obj:'あくる朝。村の広場へ', go:{after:'g02_04', to:'oliva_hill', at:'from_town'}},
+  1: {map:'oliva_town', at:'*', tod:'noon', pro:['g01_01','g01_02','g01_03']},
+  2: {map:'oliva_town', at:'いこいの広場', tod:'morning', obj:'あくる朝。村の広場へ', go:{after:'g02_03', to:'oliva_hill', at:'from_town'}},
   3: {map:'arcadia', at:'森の入口', tod:'evening', obj:'村の裏の、森の小川へ', end:{to:'oliva_town', at:'start'}},
   4: {map:'oliva_town', at:'いこいの広場', tod:'dawn', obj:'あくる朝。村の広場へ'},
   5: {map:'oliva_hill', at:['オリーブ畑','花の野原','小川'], tod:'dawn', obj:'丘の畑を通って、東へ'},
@@ -165,19 +165,20 @@ const GR_PLAN={
 // 2026-11-08 場面の途中で絵を変える行。台本の文の頭で合わせる(台本が変わって見つからない行は何も起きない)。'black'=黒
 const GR_LBG={ g01_01:[['まっ暗な石の通路','black'],['2100年の地球','anime_europe_night'],['研究所で生まれた','anime_oliva_lab'],['大きな街のビルの壁','anime_tokyo_street'],['少年は、客席','black']] };
 function grLbg(k){ for(const [h,b] of GR_LBG[k]||[]){ const L=(SC[k]||[]).find(x=>x.t&&x.t.startsWith(h)); if(L) L.bg=b; } }
-const GR_BG={ g01_01:'anime_aegean_dawn', g01_02:'anime_ep1_02', g01_03:'anime_ep1_21', g01_04:'anime_ep1_14', g01_05:'anime_ep1_19', g01_06:'anime_ep1_16', g01_07:'anime_ep1_20',
-  g01_09:'anime_ep1_17', g01_10:'gr_night_room', g01_11:'anime_ep1_25', g01_12:'gr_night_room',
-  g02_01:'anime_ep1_27', g02_02:'gr_hotel', g02_03:'gr_hotel', g02_04:'anime_ep1_25', g02_06:'anime_ep1_29', g02_07:'gr_hill_night', g02_10:'gr_ruins_night',
+// 2026-11-09 台本 第23〜38回: 1話(地面の下→ロボタクシー→市場・手のひらのオリーブは勝負のあと)・2話(食堂とロビーが一つ)・8話(占いの店)・12話(宿の前・貴賓席の小部屋)・22話(10→7場面)の番号を合わせた
+const GR_BG={ g01_01:'anime_aegean_dawn', g01_02:'anime_oliva_plaza', g01_03:'anime_ep1_02', g01_04:'anime_ep1_21', g01_05:'anime_ep1_14', g01_06:'anime_ep1_19', g01_07:'anime_ep1_20',
+  g01_09:'anime_ep1_17', g01_10:'anime_ep1_16', g01_11:'gr_night_room', g01_12:'anime_ep1_25', g01_13:'gr_night_room',
+  g02_01:'anime_temple_ruins', g02_02:'gr_hotel', g02_03:'gr_hotel', g02_05:'anime_ep1_29', g02_06:'gr_hill_night', g02_09:'gr_ruins_night',
   g03_02:'gr_gate_night', g03_08:'gr_gate_night', g03_09:'gr_inn_night', g03_10:'gr_inn_night',
   g04_01:'gr_town_dawn', g04_02:'anime_ep1_27', g04_03:'anime_ep1_25', g04_04:'anime_oliva_gate', g04_10:'anime_oliva_gate', g04_11:'gr_night_room',
   g05_01:'gr_hill_dawn', g05_09:'gr_hill_dusk',
   g06_06:'gr_forest_dusk', g06_07:'gr_shore_dusk', g06_08:'gr_ship_night', g06_09:'gr_ship_night', g06_10:'gr_forest_night',
   g07_01:'gr_inn_night', g07_07:'gr_inn_night', g07_08:'gr_ruins_night',
-  g08_01:'anime_aegean_dawn', g08_06:'gr_hill_night', g08_07:'gr_night_room',
+  g08_01:'anime_aegean_dawn', g08_02:'anime_oliva_plaza', g08_07:'gr_hill_night', g08_08:'gr_night_room',
   g09_03:'gr_ship', g09_04:'gr_ship_night', g09_06:'gr_ship_night', g09_07:'anime_aegean_dawn',
   g10_01:'anime_ep1_09',
   g11_01:'gr_hotel',
-  g12_01:'gr_inn_night', g12_08:'gr_plaza_night',
+  g12_01:'gr_inn_night', g12_09:'gr_night_room', g12_10:'gr_plaza_night',
   g13_01:'gr_plaza_night', g13_02:'gr_plaza_night', g13_03:'gr_port_rain', g13_07:'gr_inn_night', g13_08:'gr_inn_night', g13_09:'gr_mansion_night',
   g14_01:'gr_hotel', g14_04:'gr_mansion', g14_05:'gr_mansion', g14_06:'gr_hill_dusk', g14_07:'gr_forest_night', g14_08:'gr_lab_night',
   g15_09:'gr_lab_night', g15_10:'gr_forest_night',
@@ -187,23 +188,23 @@ const GR_BG={ g01_01:'anime_aegean_dawn', g01_02:'anime_ep1_02', g01_03:'anime_e
   g19_01:'gr_gate_night', g19_02:'gr_inn_night', g19_03:'gr_hotel_dusk', g19_09:'anime_ep1_09', g19_10:'gr_inn_night',
   g20_01:'gr_town_night', g20_02:'gr_grandma_night', g20_03:'gr_hotel', g20_04:'gr_hotel', g20_05:'gr_hill_night',
   g21_01:'gr_inn_night', g21_02:'gr_hill_night',
-  g22_01:'gr_town_dusk', g22_02:'gr_hotel', g22_06:'anime_ep1_09', g22_07:'anime_temple_ruins', g22_08:'anime_tokyo_skyport', g22_09:'anime_tokyo_skyport', g22_10:'anime_aegean_dawn' };
+  g22_01:'gr_town_dusk', g22_04:'anime_ep1_09', g22_06:'anime_tokyo_skyport', g22_07:'anime_aegean_dawn' };
 // 場面の曲(台本の「音の予定」の、その場面の最初の曲)。書いていない場面は、その地図の曲のまま(greece_town.html の BGM_MAP)。曲のファイルは bgm/{id}.mp3(対応表 bgm/index.json)
 //  title_opening=オープニング / scene_legend=おばあさんの昔話 / scene_villain=ヴィクターの暗躍 / scene_reunion=仲直り・再会 / scene_sad=悲しい場面・別れ / scene_daily=日常の掛け合い・ドタバタ
 //  scene_village_attack=村の総攻撃 / scene_infiltrate=施設に潜入 / scene_inn_night=宿・ホテルの夜 / map_*=地図の曲(夜の森・港の雨の夜・競技場の地下 など)
 const GR_BGM={
-  g01_01:'title_opening', g01_02:'map_oliva', g01_03:'scene_daily', g01_04:'map_olive_hill', g01_05:'map_olive_hill', g01_06:'map_olive_hill', g01_07:'scene_villain', g01_09:'scene_daily', g01_10:'scene_villain', g01_11:'scene_inn_night', g01_12:'scene_villain',
-  g02_01:'map_oliva', g02_02:'scene_daily', g02_03:'scene_daily', g02_04:'scene_daily', g02_05:'map_olive_hill', g02_06:'scene_legend', g02_07:'map_night_forest', g02_08:'map_ruins', g02_09:'map_ruins', g02_10:'map_stadium_under',
+  g01_01:'map_stadium_under', g01_02:'title_opening', g01_03:'map_oliva', g01_04:'scene_daily', g01_05:'map_olive_hill', g01_06:'map_olive_hill', g01_07:'scene_villain', g01_09:'scene_daily', g01_10:'map_olive_hill', g01_11:'scene_villain', g01_12:'scene_inn_night', g01_13:'scene_villain',
+  g02_01:'map_oliva', g02_02:'scene_daily', g02_03:'scene_daily', g02_04:'map_olive_hill', g02_05:'scene_legend', g02_06:'map_night_forest', g02_07:'map_ruins', g02_08:'map_ruins', g02_09:'map_stadium_under',
   g03_01:'map_night_forest', g03_02:'scene_daily', g03_03:'map_night_forest', g03_04:'scene_daily', g03_05:'map_night_forest', g03_07:'map_night_forest', g03_08:'scene_inn_night', g03_09:'scene_inn_night', g03_10:'scene_inn_night',
   g04_01:'scene_villain', g04_02:'map_oliva', g04_03:'map_oliva', g04_04:'scene_villain', g04_05:'scene_villain', g04_09:'map_olive_hill', g04_10:'map_oliva', g04_11:'scene_villain',
   g05_01:'scene_villain', g05_02:'map_olive_hill', g05_03:'map_olive_hill', g05_04:'map_olive_hill', g05_08:'map_olive_hill', g05_09:'scene_villain',
   g06_01:'scene_villain', g06_02:'scene_daily', g06_03:'scene_village_attack', g06_05:'scene_village_attack', g06_06:'scene_sad', g06_07:'map_ladon_river', g06_08:'map_ladon_river', g06_09:'map_ladon_river', g06_10:'map_night_forest',
   g07_01:'scene_inn_night', g07_02:'map_ruins', g07_03:'scene_daily', g07_04:'map_arena', g07_06:'scene_inn_night', g07_07:'scene_inn_night', g07_08:'map_night_forest',
-  g08_01:'map_olive_hill', g08_02:'map_olive_hill', g08_03:'scene_daily', g08_05:'map_olive_hill', g08_06:'scene_inn_night', g08_07:'scene_villain',
+  g08_01:'map_olive_hill', g08_02:'scene_daily', g08_03:'map_olive_hill', g08_04:'scene_daily', g08_06:'map_olive_hill', g08_07:'scene_inn_night', g08_08:'scene_villain',
   g09_01:'map_nafria', g09_02:'scene_daily', g09_03:'scene_inn_night', g09_04:'scene_villain', g09_06:'scene_villain', g09_07:'map_white_city',
   g10_01:'scene_daily', g10_02:'map_white_city', g10_03:'map_white_city', g10_04:'map_arena', g10_05:'map_arena', g10_07:'scene_sad', g10_08:'scene_daily',
   g11_01:'scene_daily', g11_02:'scene_daily', g11_03:'map_ruins', g11_05:'map_arena', g11_06:'map_arena',
-  g12_01:'scene_inn_night', g12_02:'map_arena', g12_04:'map_arena', g12_05:'scene_reunion', g12_06:'map_arena', g12_07:'map_arena', g12_08:'scene_daily',
+  g12_01:'scene_inn_night', g12_02:'map_arena', g12_03:'map_arena', g12_05:'map_arena', g12_06:'scene_reunion', g12_07:'map_arena', g12_08:'map_arena', g12_09:'scene_villain', g12_10:'scene_daily',
   g13_01:'map_white_city', g13_02:'scene_villain', g13_03:'map_harbor_rain', g13_04:'map_harbor_rain', g13_06:'scene_sad', g13_07:'scene_inn_night', g13_08:'scene_inn_night', g13_09:'scene_villain',
   g14_01:'map_olive_hill', g14_02:'scene_daily', g14_03:'map_ruins', g14_04:'scene_villain', g14_05:'scene_sad', g14_06:'scene_sad', g14_07:'map_night_forest', g14_08:'map_hill_maze',
   g15_01:'map_corinth', g15_02:'map_corinth', g15_03:'scene_daily', g15_04:'scene_villain', g15_06:'scene_villain', g15_07:'scene_sad', g15_08:'map_corinth', g15_09:'scene_inn_night', g15_10:'map_night_forest',
@@ -213,7 +214,7 @@ const GR_BGM={
   g19_01:'scene_inn_night', g19_02:'scene_inn_night', g19_03:'scene_villain', g19_04:'scene_villain', g19_08:'scene_sad', g19_09:'map_oliva', g19_10:'scene_inn_night',
   g20_01:'scene_villain', g20_02:'map_oliva', g20_03:'scene_daily', g20_04:'map_oliva', g20_05:'map_olive_hill', g20_06:'scene_villain', g20_10:'scene_reunion', g20_11:'scene_villain',
   g21_01:'scene_inn_night', g21_02:'map_oliva', g21_03:'scene_villain', g21_04:'scene_villain', g21_12:'map_olive_hill',
-  g22_01:'scene_villain', g22_02:'map_oliva', g22_03:'scene_villain', g22_04:'scene_sad', g22_05:'scene_villain', g22_06:'map_oliva', g22_07:'map_white_city', g22_09:'map_olive_hill', g22_10:'map_olive_hill' };
+  g22_01:'scene_villain', g22_02:'map_oliva', g22_03:'scene_villain', g22_04:'map_oliva', g22_06:'map_olive_hill', g22_07:'map_olive_hill' };
 // 物語の勝負の曲(話 → 曲)。下っ端(ニーナ・マルコ・チップの子・野良のベルクマ・ノモスのホタルン)=下っ端戦・使い手=中ボス戦・レンやカシア=ボス戦・古代=古代の守り戦・ヴィクター本人=BOSS・大会の決勝と手合わせ=大会の決勝戦
 //  勝負の中で押されると「劣勢」、盛り返すと「逆転」に切りかわる(greece_town.html の bgmMoodTick。ここの曲は はじめの曲)
 const GR_FIGHT_BGM={ 1:'battle_grunt', 2:'battle_elite', 3:'battle_elite', 4:'battle_grunt', 5:'battle_elite', 6:'battle_grunt', 7:'battle_boss', 8:'battle_grunt', 9:'battle_elite', 10:'battle_elite', 11:'battle_elite', 12:'battle_final',
@@ -222,13 +223,13 @@ const GR_FIGHT_BGM={ 1:'battle_grunt', 2:'battle_elite', 3:'battle_elite', 4:'ba
 const GR_SAY={ 1:['elly','surprised','あの大きな木の根もとだと、火が大きくなってた！'], 2:['hero','serious','水のそばじゃ、火が細る……。'],
   3:['hero','serious','森＝フォルン、水＝ピリポン……じゃんけんじゃん。'], 4:['alek','normal','まん中の三列まで行けば、変われるかもしれない。'],
   5:['elly','serious','石の床の上なら、雷は遠くまで走る。'], 6:['hero','serious','おう！　フォルン、前だ！'],
-  7:['alek','serious','おい、レベル32や。やばいで。'], 8:['elly','normal','毎年、残りのぶどうを食べに来るの。'],
+  7:['alek','serious','……やばいで、こいつ。'], 8:['elly','normal','毎年、残りのぶどうを食べに来るの。'],
   9:['hero','serious','フォルコン、あの緑のでかいのに一発だけ！'], 10:['elly','normal','穴から出た所をねらって。'],
   11:['alek','normal','くっつけたら、やられる時は二体いっぺんやで。'], 12:['hero','serious','待ってくれ、フォルコン。目を合わせるな。'],
   13:['alek','serious','羽の音がせえへん。目、離すなよ、ヤマト！'],
   15:['alek','normal','木の中に入られたら、当たらへんで。'], 16:['hero','normal','左の羽には撃つなよ。逃げ道に先に立て。'],
-  17:['alek','serious','クロベク、あいつ続けて二回来るで。気を抜くな！'], 18:['hero','normal','大波は二回。数えて、撃ちつくさせる。'],
-  19:['alek','serious','……レベル70。光と地や。'], 20:['alek','serious','……まん中まで来たら、雷、散ってまうんや。'],
+  17:['alek','serious','クロベク、まだや！　気ぃ抜くな！'], 18:['hero','normal','大波は二回。数えて、撃ちつくさせる。'],
+  19:['alek','serious','……レベル70。光と地や。'], 20:['hero','serious','……まん中だと、雷、細くなってた。'],
   21:['hero','serious','アレク、エリー。行くぞ。'], 22:['hero','normal','目を閉じて待て。出る所をねらう。'] };
 // 話の中の決まった所で動かすしかけ(場面の前)
 const GR_HOOK={
@@ -392,7 +393,7 @@ function grLearn(mid){ if(!(window.Progress&&Progress.learnBoss)) return null; c
   try{ if(c) c.bossLearn=1; return Progress.learnBoss({mid:+mid, lv:1}); } finally{ if(c) c.bossLearn=p; } }
 
 // ---- 第1話のはじめ(新しいセーブ・前の版のセーブを1話から): 語り→市場(全画面)。そのあと本体が村に下ろす ----
-async function ep1Open(){ const f=GF(); if(SAVE&&SAVE.flags){ SAVE.flags.g22=1; SAVE.flags.g22b=1; } for(const k of (GR_PLAN[1].pro||[])){ if(f[k]) continue; bgmScene(k); if(SC[k]){ grLbg(k); await runScene(SC[k],{bg:GR_BG[k],keepPaused:true,prologue:true}); } if(SAVE){ SAVE.flags[k]=1; saveGame(); } }
+async function ep1Open(){ const f=GF(); if(SAVE&&SAVE.flags){ SAVE.flags.g22=1; SAVE.flags.g22b=1; SAVE.flags.g22c=1; } for(const k of (GR_PLAN[1].pro||[])){ if(f[k]) continue; bgmScene(k); if(SC[k]){ grLbg(k); await runScene(SC[k],{bg:GR_BG[k],keepPaused:true,prologue:true}); } if(SAVE){ SAVE.flags[k]=1; saveGame(); } }
   bgmScene(null); if(SAVE) SAVE.stage='now'; }
 
 // ============================================================================
@@ -414,18 +415,18 @@ const GR_EPKEY=/^(g\d\d_|a\d\d$|seen_g\d\d_)/;
 const grIsEp=f=>!!f&&typeof f==='object'&&Object.keys(f).some(k=>GR_EPKEY.test(k));
 const GR_OLD2NEW=o=>o<=1?1:o<=3?2:o-1;
 let GR_RESCUE_AT=null;
-function grMigrate(){ const f=SAVE&&SAVE.flags; if(!f) return; if(f.g22){ if(!f.g22b) grMigrate1108(f); return; }
-  if(f.ep30||f.king){ f.g22=1; f.g22b=1; for(const s of GR_STEPS) f[s.id]=1; for(let i=1;i<=22;i++) f['a'+pad2g(i)]=1; f.gr_bond=1; return; }
+function grMigrate(){ const f=SAVE&&SAVE.flags; if(!f) return; if(f.g22){ if(!f.g22b) grMigrate1108(f); if(!f.g22c) grMigrate1109(f); return; }
+  if(f.ep30||f.king){ f.g22=1; f.g22b=1; f.g22c=1; for(const s of GR_STEPS) f[s.id]=1; for(let i=1;i<=22;i++) f['a'+pad2g(i)]=1; f.gr_bond=1; return; }
   if(f.g23||grIsEp(f)){ grMigrate23(f); return; }
-  if(!f.arrived){ f.g22=1; f.g22b=1; return; }
-  const old={}; for(const k of Object.keys(f)){ old[k]=f[k]; delete f[k]; } f.old30=old; f.g22=1; f.g22b=1;
+  if(!f.arrived){ f.g22=1; f.g22b=1; f.g22c=1; return; }
+  const old={}; for(const k of Object.keys(f)){ old[k]=f[k]; delete f[k]; } f.old30=old; f.g22=1; f.g22b=1; f.g22c=1;
   if(SAVE.map) SAVE.map='oliva_town'; }   // 本体の contGame が arrived の無いセーブとして第1話のはじめ(ep1Open)から流す
 function grMigrate23(f){ if(f.old30&&grIsEp(f.old30)){ for(const k of Object.keys(f.old30)) if(f.old30[k]&&!f[k]) f[k]=f.old30[k]; delete f.old30; }   // 11/05 の救い(44節)の前の形も拾う
   let doneMax=0; for(let i=1;i<=23;i++) if(f['a'+pad2g(i)]) doneMax=i;
   for(const k of Object.keys(f)) if(GR_EPKEY.test(k)) delete f[k];
   const nd=doneMax===2?1:(doneMax?GR_OLD2NEW(doneMax):0);   // 旧2話だけ終えていた → 新2話(旧2＋3)は頭から
   for(const s of GR_STEPS) if(s.ep<=nd) f[s.id]=1; for(let i=1;i<=nd;i++) f['a'+pad2g(i)]=1;
-  f.g22=1; f.g22b=1; f.g22from=doneMax; delete f.g23; delete f.g23fix; if(nd>=1) f.gr_bond=1; if(nd>=11&&SAVE.unlock){ SAVE.unlock.fusion=true; f.guard4=f.guard4||1; }
+  f.g22=1; f.g22b=1; f.g22c=1; f.g22from=doneMax; delete f.g23; delete f.g23fix; if(nd>=1) f.gr_bond=1; if(nd>=11&&SAVE.unlock){ SAVE.unlock.fusion=true; f.guard4=f.guard4||1; }
   const s=grCur(); if(s&&SAVE.map&&SAVE.map!==s.map){ SAVE.map=s.map; delete SAVE.x; delete SAVE.z; delete SAVE.yaw; }
   if(s&&s.head&&s.at&&s.at!=='*') GR_RESCUE_AT=Array.isArray(s.at)?s.at[0]:s.at; }
 // 11/08 第9版の取りこみ(印 flags.g22b): 11/07 の22話版のセーブ(g22 だけ)。話の数と番号は同じなので、終えた話(a01〜)はそのまま。
@@ -436,6 +437,15 @@ function grMigrate1108(f){ let doneMax=0; for(let i=1;i<=22;i++) if(f['a'+pad2g(
   for(const st of GR_STEPS) if(st.ep<=doneMax) f[st.id]=1;   // 終えた話の段の旗は全部そろえる(aNN だけのセーブでも1話に戻らない)
   f.g22b=1; f.g22from1108=doneMax;
   if(doneMax>=11&&SAVE.unlock&&!SAVE.unlock.fusion){ SAVE.unlock.fusion=true; f.guard4=f.guard4||1; }
+  const s=grCur(); if(s&&SAVE.map&&SAVE.map!==s.map){ SAVE.map=s.map; delete SAVE.x; delete SAVE.z; delete SAVE.yaw; }
+  if(s&&s.head&&s.at&&s.at!=='*') GR_RESCUE_AT=Array.isArray(s.at)?s.at[0]:s.at; }
+// 11/09 台本 第23〜38回の取りこみ(印 flags.g22c): 話の数と番号・勝負は同じ。場面の番号が変わった話(1・2・8・12・22)の とちゅうのセーブは、その話の頭から
+//  (その話の段の旗・勝負の結果・作戦の旗を外す)。終えた話の段の旗は全部そろえる(1話の g01_13 など新しい段で1話に戻らない)。地図がちがえば その話の地図の入口へ・話の頭の場所へ運ぶ(grMigrate1108 と同じ)
+const GR_CH1109=[1,2,8,12,22];
+function grMigrate1109(f){ let doneMax=0; for(let i=1;i<=22;i++) if(f['a'+pad2g(i)]) doneMax=i;
+  const ep=doneMax+1; if(GR_CH1109.includes(ep)){ const p='g'+pad2g(ep)+'_'; for(const k of Object.keys(f)) if(k.startsWith(p)||k.startsWith('seen_'+p)) delete f[k]; }
+  for(const st of GR_STEPS) if(st.ep<=doneMax) f[st.id]=1;
+  f.g22c=1; f.g22from1109=doneMax;
   const s=grCur(); if(s&&SAVE.map&&SAVE.map!==s.map){ SAVE.map=s.map; delete SAVE.x; delete SAVE.z; delete SAVE.yaw; }
   if(s&&s.head&&s.at&&s.at!=='*') GR_RESCUE_AT=Array.isArray(s.at)?s.at[0]:s.at; }
 // その場所(D.areas の名前)の中の、歩ける所(まん中から外へさがす)
@@ -452,4 +462,4 @@ function grInit(){ Object.assign(SC,GR_SC);
   { const _at=arriveTown; arriveTown=async function(){ await _at(); grArrive(); }; }   // 第1話: 村に下りたら、そのまま続きを流す
   for(const m of new Set(GR_STEPS.map(s=>s.map))) AREA_RULE[m+':*']=f=>{ const s=grCur(); return (s&&grHere(s))?grRun:null; };
   window.GR_DBG={ cur:()=>{ const s=grCur(); return s&&{id:s.id,ep:s.ep,map:s.map,at:s.at,kind:s.kind}; }, steps:GR_STEPS, run:()=>grRun(), here:()=>grHere(grCur()), obj:()=>grObjText(GF()), retry:()=>GR_RETRY,
-    skipTo:(ep)=>{ const f=GF(); f.g22=1; f.g22b=1; for(const s of GR_STEPS){ if(s.ep>=ep) break; f[s.id]=1; if(s.last) f['a'+pad2g(s.ep)]=1; } f.gr_bond=1; if(ep>4&&SAVE.unlock) SAVE.unlock.evo=true; if(ep>11&&SAVE.unlock) SAVE.unlock.fusion=true; saveGame(); objUpdate(); } }; }
+    skipTo:(ep)=>{ const f=GF(); f.g22=1; f.g22b=1; f.g22c=1; for(const s of GR_STEPS){ if(s.ep>=ep) break; f[s.id]=1; if(s.last) f['a'+pad2g(s.ep)]=1; } f.gr_bond=1; if(ep>4&&SAVE.unlock) SAVE.unlock.evo=true; if(ep>11&&SAVE.unlock) SAVE.unlock.fusion=true; saveGame(); objUpdate(); } }; }
