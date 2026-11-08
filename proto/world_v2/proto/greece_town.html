@@ -3098,7 +3098,8 @@ const BG_ALIAS={ gr_night_room:['anime_europe_night',''], gr_lab_night:['anime_o
   gr_gate_night:['anime_oliva_gate','night'], gr_inn_night:['anime_ep1_25','night'], gr_forest:['anime_olive_hill',''], gr_forest_dusk:['anime_olive_hill','dusk'], gr_dig_dawn:['anime_temple_ruins','dusk'],
   gr_town_dusk:['anime_ep1_09','dusk'], gr_town_night:['anime_ep1_09','night'], gr_plaza_night:['anime_ep1_09','night'], gr_ship:['anime_ep1_07',''], gr_shore_dusk:['anime_ep1_12',''],
   // 2026-11-07 22話版で足した代わり(ホテル・屋敷・夜の船・夜明けの丘など)
-  gr_hotel:['anime_ep1_25',''], gr_hotel_dusk:['anime_ep1_25','dusk'], gr_town_dawn:['anime_ep1_09','dusk'], gr_hill_dawn:['anime_olive_hill','dusk'], gr_hill_dusk:['anime_olive_hill','dusk'], gr_forest_night:['anime_olive_hill','night'],
+  // 2026-11-08 gr_hotel は朝の場面(2・11・14・20話)ばかりなので、夜の部屋(ep1_25)から朝の白い町の広場へ
+  gr_hotel:['anime_ep1_09',''], gr_hotel_dusk:['anime_ep1_25','dusk'], gr_town_dawn:['anime_ep1_09','dusk'], gr_hill_dawn:['anime_olive_hill','dusk'], gr_hill_dusk:['anime_olive_hill','dusk'], gr_forest_night:['anime_olive_hill','night'],
   gr_ship_night:['anime_ep1_07','night'], gr_mansion:['anime_lab_front_day',''], gr_mansion_night:['anime_lab_front_day','night'] };
 const GR_FILT={ night:'brightness(.42) saturate(.7) hue-rotate(195deg)', dusk:'sepia(.35) saturate(1.25) brightness(.82)' };
 function grBg(b){ const a=BG_ALIAS[b]; if(ST&&ST.bg) ST.bg.style.filter=a&&GR_FILT[a[1]]||''; return a?a[0]:b; }
