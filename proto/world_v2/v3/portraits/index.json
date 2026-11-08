@@ -199,6 +199,69 @@
    "facing": {
     "normal": "left"
    }
+  },
+  "kasia": {
+   "name": "カシア",
+   "faces": {
+    "normal": "kasia_normal.webp"
+   },
+   "facing": {
+    "normal": "front"
+   }
+  },
+  "zeno": {
+   "name": "ゼノ",
+   "faces": {
+    "normal": "zeno_normal.webp"
+   },
+   "facing": {
+    "normal": "front"
+   }
+  },
+  "hao": {
+   "name": "ハオ",
+   "faces": {
+    "normal": "hao_normal.webp"
+   },
+   "facing": {
+    "normal": "front"
+   }
+  },
+  "tarik": {
+   "name": "タリク",
+   "faces": {
+    "normal": "tarik_normal.webp"
+   },
+   "facing": {
+    "normal": "front"
+   }
+  },
+  "victor": {
+   "name": "ヴィクター",
+   "faces": {
+    "normal": "victor_normal.webp"
+   },
+   "facing": {
+    "normal": "front"
+   }
+  },
+  "nina": {
+   "name": "ニーナ",
+   "faces": {
+    "normal": "nina_normal.webp"
+   },
+   "facing": {
+    "normal": "front"
+   }
+  },
+  "marco": {
+   "name": "マルコ",
+   "faces": {
+    "normal": "marco_normal.webp"
+   },
+   "facing": {
+    "normal": "front"
+   }
   }
  }
 }
