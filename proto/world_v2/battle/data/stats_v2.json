@@ -6977,6 +6977,43 @@
    ],
    "fixed": true,
    "placeholder": "2071の写し(数)・決め技は2026-10-28に自分の技・TODO"
+  },
+  "2076": {
+   "name": "グリザウルス",
+   "type": "森",
+   "type2": "竜",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1725,
+   "atk": 156,
+   "def": 59,
+   "mob": 2,
+   "spd": 37,
+   "red": 0.371,
+   "src_hp": 1720,
+   "src_atk": 156,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "forest_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2076",
+     "lv": 1
+    },
+    {
+     "move": "forest_ail",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "note_1108": "2026-11-08 新しい融合(ベルクマ＋ラプント・森＋竜)。数はトリケラス(2009・森＋竜・神格型)と同じ決め方: 守り59・素早さ37・体力は monsters.json の +5"
   }
  }
 }

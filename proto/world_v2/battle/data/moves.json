@@ -5447,6 +5447,39 @@
    "yomi": "えんらいキャノン",
    "ruby": [["炎雷", "えんらい"], ["巨砲", "キャノン"]]
   },
+  "fsig_2076": {
+   "name": "熊竜大牙",
+   "type": "森",
+   "type2": "竜",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 104,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage",
+    "drain": 0.5,
+    "debuff": {
+     "stat": "def",
+     "x": -0.2,
+     "turns": 2
+    }
+   },
+   "desc": "恐竜の大きな口でかみつき、太いうでで なぎはらう",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "グリズリーファング",
+   "ruby": [["熊竜", "グリズリー"], ["大牙", "ファング"]]
+  },
   "water_tide": {
    "name": "オーシャンツナミ",
    "type": "水",
