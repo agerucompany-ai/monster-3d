@@ -330,14 +330,14 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 #pgRoot{position:fixed;inset:0;z-index:8000;pointer-events:none;font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","BIZ UDPGothic","Yu Gothic UI","Meiryo",sans-serif;color:#f4f6ff;-webkit-user-select:none;user-select:none}
 #pgRoot *{box-sizing:border-box}
 #pgBar{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:8px;display:flex;gap:6px;pointer-events:auto}
-#pgBar button{font:800 14px/1 inherit;padding:9px 12px;border-radius:999px;border:2px solid rgba(255,255,255,.55);background:rgba(20,28,56,.86);color:#fff;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+#pgBar button{font-family:inherit;font-weight:800;font-size:14px;line-height:1;padding:9px 12px;border-radius:999px;border:2px solid rgba(255,255,255,.55);background:rgba(20,28,56,.86);color:#fff;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.35)}
 #pgBar button.gem{background:rgba(18,58,42,.9);border-color:#4fd47a;color:#c9ffd9}
 #pgPanel{position:absolute;inset:0;display:none;pointer-events:auto;background:radial-gradient(ellipse at top,#1a2450,#07091a 70%);overflow:hidden;flex-direction:column}
 #pgPanel.on{display:flex}
 #pgHead{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 8px}
 #pgHead h2{margin:0;font-size:20px;letter-spacing:.08em;color:#ffe9a8;flex:1}
 #pgHead .gem{font-weight:800;color:#8ff0b0;font-size:16px}
-#pgHead button{font:800 18px/1 inherit;width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(255,255,255,.1);color:#fff}
+#pgHead button{font-family:inherit;font-weight:800;font-size:18px;line-height:1;width:40px;height:40px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:rgba(255,255,255,.1);color:#fff}
 #pgBody{flex:1;overflow:auto;padding:4px 12px calc(env(safe-area-inset-bottom,0px) + 16px);-webkit-overflow-scrolling:touch}
 .pgSec{margin:8px 0 4px;font-size:13px;font-weight:800;color:#c9d2ea;letter-spacing:.1em;display:flex;justify-content:space-between}
 .pgGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
@@ -350,13 +350,15 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgCard .bar{height:5px;border-radius:3px;background:rgba(255,255,255,.15);margin:4px 4px 0;overflow:hidden}
 .pgCard .bar i{display:block;height:100%;background:#6ad0ff}
 .pgCard .ld{position:absolute;top:4px;left:6px;width:14px;height:14px;border-radius:50%;border:3px solid #e8302a}
-.pgCard .tg{position:absolute;top:4px;right:6px;font-size:10px;font-weight:800;padding:2px 6px;border-radius:999px;background:#1b2448;border:1px solid rgba(255,217,119,.5);color:#ffe9a8}
+.pgCard .tg{position:absolute;top:4px;right:6px;font-size:11px;font-weight:800;padding:2px 6px;border-radius:999px;background:#1b2448;border:1px solid rgba(255,217,119,.5);color:#ffe9a8}
 .pgAct{display:flex;gap:8px;margin:8px 0}
-.pgBtn{font:800 15px/1 inherit;padding:12px 16px;border-radius:14px;border:2px solid rgba(255,255,255,.5);background:rgba(44,62,102,.9);color:#fff;cursor:pointer;flex:1}
-.pgBtn.main{background:#b8860b;border-color:#ffd977;font-size:18px;padding:16px}
+.pgBtn{font-family:inherit;font-weight:800;font-size:15px;line-height:1.1;transition:transform .16s cubic-bezier(.3,1.6,.5,1),filter .12s ease-out;-webkit-tap-highlight-color:transparent;padding:12px 16px;border-radius:14px;border:2px solid rgba(255,255,255,.5);background:rgba(44,62,102,.9);color:#fff;cursor:pointer;flex:1}
+.pgBtn.main{background:linear-gradient(180deg,var(--ui-main-a),var(--ui-main-b));border-color:var(--ui-main-ln);color:var(--ui-main-tx);font-size:18px;padding:16px}
+.pgBtn.risk{background:linear-gradient(180deg,var(--ui-risk-a),var(--ui-risk-b));border-color:rgba(255,170,150,.5);color:#fff}
 .pgShop span{flex:1;display:flex;flex-direction:column;gap:2px}.pgShop small{font-size:12px;color:#9fe0ff;font-weight:800}.pgShop b{min-width:2.6em;text-align:right}.pgBuy{flex:0 0 auto;min-width:96px;padding:10px 12px}.pgBuy:disabled{opacity:.45}
-.pgBtn.gem{background:#123a2a;border-color:#4fd47a;color:#c9ffd9}
-.pgBtn:disabled{opacity:.45}
+.pgBtn.gem{background:linear-gradient(180deg,var(--ui-main-a),var(--ui-main-b));border-color:var(--ui-main-ln);color:var(--ui-main-tx)}
+.pgBtn:disabled{background:var(--ui-off);border-color:rgba(255,255,255,.1);color:var(--ui-off-tx)}
+.pgBtn:active:not(:disabled),#pgTabs button:active,#pgHead button:active,#pgBar button:active{transform:scale(.96);filter:brightness(1.16);transition:transform .07s ease-out,filter .07s ease-out}
 .pgBig{text-align:center;padding:10px 0 4px}
 .pgBig .n{font-size:44px;font-weight:900;color:#8ff0b0;line-height:1}
 .pgBig .u{font-size:14px;color:#c9d2ea;font-weight:800}
@@ -364,7 +366,7 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgOdds div{background:rgba(255,255,255,.07);border-radius:10px;padding:6px 4px;text-align:center;font-size:12px;font-weight:800}
 .pgOdds img{width:48px;height:48px;object-fit:contain;display:block;margin:0 auto}
 .pgOdds b{display:block;color:#ffd86b}
-.pgOdds .own{color:#8ff0b0;font-size:10px}
+.pgOdds .own{color:#8ff0b0;font-size:11px}
 #pgHatch{display:none;flex-direction:column;align-items:center;gap:8px;padding:12px}
 #pgHatch.on{display:flex}
 #pgHatch img{width:min(46vw,200px);aspect-ratio:1;object-fit:contain;filter:drop-shadow(0 10px 20px rgba(0,0,0,.6));animation:pgPop .7s cubic-bezier(.2,.9,.3,1.2) both}
@@ -382,15 +384,15 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 #pgLearn .r span{color:#9fe0ff}
 .pgMv{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:8px 10px;margin:8px 0}
 .pgMvHd{display:flex;align-items:center;gap:6px;font-size:15px}.pgMvHd span{margin-left:auto;color:#ffd86b;font-weight:800}
-.pgSt{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:6px 0 2px;font-size:11px;color:#c9d2ea;text-align:center}
-.pgSt b{display:block;font-size:15px;color:#fff}
+.pgSt{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:6px 0 2px;font-size:12px;line-height:1.3;color:#c9d2ea;text-align:center}
+.pgSt b{display:block;font-size:15px;line-height:1.3;margin-top:2px;color:#fff}
 .pgTy{display:inline-block;min-width:1.4em;padding:0 .2em;border-radius:5px;font-size:11px;font-weight:900;color:#fff;text-align:center;margin-right:3px;text-shadow:0 1px 1px rgba(0,0,0,.6)}
 .pgMvR{display:flex;align-items:center;gap:4px;font-size:13px;padding:4px 0;border-top:1px solid rgba(255,255,255,.07)}
-.pgMvR .lvx{min-width:2.6em;font-size:11px;color:#9aa7c4}.pgMvR .sp{margin-left:auto;font-size:11px;color:#c8d4f0;white-space:nowrap}
+.pgMvR .lvx{min-width:2.6em;font-size:12px;color:#9aa7c4}.pgMvR .sp{margin-left:auto;font-size:12px;color:#c8d4f0;white-space:nowrap}
 .pgMvR.lock{opacity:.45}
 .rbx{--F:.8;--Fe:clamp(calc(var(--F)*.72),calc((var(--k) + var(--L) + var(--R))/var(--w)),var(--F));--x:calc(var(--w)*var(--Fe) - var(--k));display:inline-block;position:relative;padding-top:calc(var(--F)*1.05em);line-height:1.2;text-indent:0;white-space:nowrap}.rbt{position:absolute;top:calc((var(--F)*1.02 - var(--Fe))*1em/var(--Fe));left:calc(-1em*min(var(--L),max(min(var(--L),var(--x)/2),var(--x) - var(--R)))/var(--Fe));font-size:calc(var(--Fe)*1em);line-height:1;white-space:nowrap;letter-spacing:0;font-weight:700;transform:scaleX(min(1,calc((var(--k) + var(--L) + var(--R))/(var(--w)*var(--Fe)))));transform-origin:0 0;pointer-events:none}
 #pgTabs{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:0 6px 8px}
-#pgTabs button{font:800 12px/1.1 inherit;white-space:nowrap;font-family:inherit;min-height:58px;padding:6px 2px;border-radius:14px;border:2px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);color:#dfe6ff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
+#pgTabs button{font-family:inherit;font-weight:800;font-size:12px;line-height:1.1;white-space:nowrap;transition:transform .16s cubic-bezier(.3,1.6,.5,1),filter .12s ease-out;-webkit-tap-highlight-color:transparent;min-height:58px;padding:6px 2px;border-radius:14px;border:2px solid rgba(255,255,255,.22);background:rgba(255,255,255,.07);color:#dfe6ff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
 #pgTabs button img.ui-ic{width:26px;height:26px;margin:0}
 #pgTabs button.on{background:#2c3e66;border-color:#ffd977;color:#fff}
 .pgIn{display:block;width:100%;font:800 20px/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;text-align:center;padding:12px 10px;border-radius:12px;border:2px solid rgba(255,255,255,.35);background:#fff;color:#1b2448;margin:0 0 8px;-webkit-user-select:text;user-select:text}
@@ -407,7 +409,7 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgDetHd .nm img.ui-ic{width:20px;height:20px}
 .pgChip{display:inline-block;font-size:12px;font-weight:800;padding:2px 9px;border-radius:999px;background:#1b2448;border:1px solid rgba(255,217,119,.5);color:#ffe9a8}
 .pgLvR{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:14px;font-weight:900;color:#ffd86b}
-.pgExp{display:flex;align-items:center;gap:6px;font-size:11px;color:#9fe0ff;margin-top:4px;font-weight:800}
+.pgExp{display:flex;align-items:center;gap:6px;font-size:12px;color:#9fe0ff;margin-top:4px;font-weight:800}
 .pgExp .bar{flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,.15);overflow:hidden}.pgExp .bar i{display:block;height:100%;background:#6ad0ff}
 .pgTer{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:12px;font-weight:800;margin:8px 0 2px}
 .pgTer .u{color:#8ff0b0;margin-left:2px}.pgTer .d{color:#ff9a8a;margin-left:8px}
@@ -415,7 +417,7 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgTn{display:inline-block;padding:1px 6px;border-radius:6px;font-size:11px;font-weight:800;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.5)}
 .pgTn.lt{color:#2b2b38;text-shadow:none}
 .pgDex{display:grid;grid-template-columns:5.2em 1fr 1fr;gap:6px;align-items:center;font-size:14px;font-weight:800;margin-bottom:6px}
-.pgDex .h{font-size:11px;color:#9aa7c4;text-align:center}
+.pgDex .h{font-size:12px;color:#9aa7c4;text-align:center}
 .pgDex .c{background:rgba(255,255,255,.07);border-radius:10px;padding:7px 8px;text-align:center}
 .pgDex .c b{color:#ffd86b;font-size:16px}
 .pgItem{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.07);border-radius:12px;padding:8px 12px;font-size:15px;font-weight:800;margin-bottom:6px}
@@ -425,9 +427,9 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgGrid.sm .pgCard{min-height:96px;padding:6px 4px 4px}
 .pgGrid.sm .pgCard img{width:52px;height:52px}
 .pgPath{display:flex;align-items:center;gap:2px;margin:8px 0 2px;flex-wrap:wrap}
-.pgPath .f{display:flex;flex-direction:column;align-items:center;width:62px;font-size:10px;font-weight:800;color:#dfe6ff;text-align:center}
+.pgPath .f{display:flex;flex-direction:column;align-items:center;width:90px;font-size:12px;font-weight:800;color:#dfe6ff;text-align:center}
 .pgPath .f img{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
-.pgPath .f span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62px}
+.pgPath .f span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:88px}
 .pgPath .f.lock img{filter:grayscale(1) brightness(.35)}
 .pgPath .f.lock span{color:#6f7a96}
 .pgPath .f.cur span{color:#ffd86b}
@@ -437,7 +439,7 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgFu .to{width:56px;height:56px}
 .pgFu b{font-size:14px;color:#ffe9a8;margin-left:4px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pgFu i{font-style:normal;color:#9aa7c4}
-.pgOdds .lrn{color:#9fe0ff;font-size:10px}
+.pgOdds .lrn{color:#9fe0ff;font-size:11px}
 #pgToast{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);background:rgba(10,14,30,.92);border:1px solid rgba(255,217,119,.6);color:#ffe9a8;font-weight:800;font-size:15px;padding:10px 18px;border-radius:999px;display:none;pointer-events:none;white-space:nowrap}
 `;
 const REASON={shop:'店',shop_paid:'店(有償)',zeroday:'ヴィクター',cradle:'生み出す',cradle_paid:'生み出す(有償)',dup:'ダブり',test:'テスト',start:'はじめ'};
@@ -522,14 +524,14 @@ function moveTab(B){ const T=root.TherionPay&&root.TherionPay.transfer; const X=
   if(iss){ B.appendChild(el('div','pgCode',iss.code)); B.appendChild(el('div','pgItem',`${ICON('hint')}<span>期限</span><b>${hm(iss.exp)}</b>`));
     const a=el('div','pgAct'); const bx=el('button','pgBtn','とりけす'); bx.onclick=async()=>{ if(X.busy) return; X.busy=true; bx.disabled=true; const r=await T.cancel(); X.busy=false; if(!r.ok) UI.toast(xMsg(r)); UI.render(); }; a.appendChild(bx); B.appendChild(a); }
   else { B.appendChild(el('div','pgLbl','合言葉')); B.appendChild(inp('pass','0000',true,8));
-    const a=el('div','pgAct'); const b=el('button','pgBtn main','コードを出す'); b.id='pgXIssue';
+    const a=el('div','pgAct'); const b=el('button','pgBtn','コードを出す'); b.id='pgXIssue';
     b.onclick=async()=>{ if(X.busy) return; if(!passOk(X.pass)){ UI.toast(XERR.bad_passcode); return; } X.busy=true; b.disabled=true; const r=await T.issue(X.pass); X.busy=false; if(!r.ok){ b.disabled=false; UI.toast(xMsg(r)); return; } X.pass=''; UI.render(); };
     a.appendChild(b); B.appendChild(a); }
   // ほかの機種から
   B.appendChild(el('div','pgSec','<span>ほかの機種から</span>'));
   B.appendChild(el('div','pgLbl','コード')); B.appendChild(inp('code','XXXX-XXXX-XXXX',false,16));
   B.appendChild(el('div','pgLbl','合言葉')); B.appendChild(inp('rpass','0000',true,8));
-  const a2=el('div','pgAct'); const g=el('button','pgBtn'+(X.sure?' main':''),X.sure?'上書きして受け取る':'受け取る'); g.id='pgXGet'; if(X.sure){ g.style.flex='2.4'; g.style.whiteSpace='nowrap'; g.style.fontSize='16px'; }
+  const a2=el('div','pgAct'); const g=el('button','pgBtn'+(X.sure?' risk':''),X.sure?'上書きして受け取る':'受け取る'); g.id='pgXGet'; if(X.sure){ g.style.flex='2.4'; g.style.whiteSpace='nowrap'; g.style.fontSize='16px'; }
   g.onclick=async()=>{ if(X.busy) return; if(X.code.replace(/[\s-]/g,'').length!==12){ UI.toast(XERR.bad_code); return; } if(!passOk(X.rpass)){ UI.toast(XERR.bad_passcode); return; }
     if(!X.sure){ X.sure=true; UI.render(); return; }   // 2回押し: この機種のセーブは上書きされる
     X.busy=true; g.disabled=true; const r=await T.redeem(X.code, X.rpass); X.busy=false;
@@ -567,13 +569,13 @@ UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const 
       if(anc.length){ B.appendChild(el('div','pgSec',`<span>古代テリオン</span><span>${anc.length}</span>`)); for(const f of anc) B.appendChild(el('div','',fuseRow(f))); }
       if(nor.length){ B.appendChild(el('div','pgSec',`<span>融合</span><span>${nor.length}</span>`)); for(const f of nor) B.appendChild(el('div','',fuseRow(f))); } }
     else if(tab==='items'){ const it=(SAVE&&SAVE.items)||{}; B.appendChild(el('div','pgSec','<span>もちもの</span>'));
-      const ks=Object.keys(ITEMJ).filter(k=>+it[k]>0); for(const k of ks){ const j=ITEMJ[k]||[k,'potion']; B.appendChild(el('div','pgItem',`${ICON(j[1])}<span>${j[0]}</span><b>×${it[k]}</b>`)); } if(!ks.length) B.appendChild(el('div','pgItem','<span>—</span>'));
+      const ks=Object.keys(ITEMJ).filter(k=>+it[k]>0); for(const k of ks){ const j=ITEMJ[k]||[k,'potion']; B.appendChild(el('div','pgItem',`${ICON(j[1])}<span>${j[0]}</span><b>×${it[k]}</b>`)); } if(!ks.length) B.appendChild(el('div','pgItem','<span>なし</span>'));
       B.appendChild(el('div','pgSec','<span>ジェム</span>')); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>無料ジェム</span><b>${P.gems()}</b>`));
       const pdv=P.paidGems(); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>有償ジェム</span><b>${pdv==null?'—':pdv}</b>`));
       { const TP=root.TherionPay; for(const x of (TP&&TP.expiring?TP.expiring():[])) B.appendChild(el('div','pgItem',`${ICON('hint')}<span>期限 ${x.d}</span><b>${x.gems}</b>`)); }   // 2026-10-31 有償ジェムに期限を付けた時だけ
       const a=el('div','pgAct'); const b=el('button','pgBtn gem','ジェムを買う'); b.onclick=()=>{ if(!P.buyGems()) UI.toast('じゅんび中'); }; a.appendChild(b); B.appendChild(a);
       B.appendChild(el('div','pgSec','<span>きろく</span>'));
-      const Lg=el('div','pgLog'); for(const g of (prog()?prog().log:[])) Lg.appendChild(el('div','',`<span>${reasonJP(g.r)}</span><span class="${g.n>=0?'p':'m'}">${g.n>=0?'+':''}${g.n}</span>`)); if(!Lg.children.length) Lg.appendChild(el('div','','<span>—</span>')); B.appendChild(Lg); }
+      const Lg=el('div','pgLog'); for(const g of (prog()?prog().log:[])) Lg.appendChild(el('div','',`<span>${reasonJP(g.r)}</span><span class="${g.n>=0?'p':'m'}">${g.n>=0?'+':''}${g.n}</span>`)); if(!Lg.children.length) Lg.appendChild(el('div','','<span>なし</span>')); B.appendChild(Lg); }
     else if(tab==='move') moveTab(B);
   }
   else if(cur==='shop'){ T.textContent='店'; TB.style.display='none';   // 2026-10-30

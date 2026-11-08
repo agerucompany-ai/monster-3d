@@ -7,7 +7,7 @@
 <title>CPU対戦</title>
 <link rel="icon" href="data:,">
 <style>
-:root{--bg:#0d1120;--pn:#141b33;--pn2:#1b2448;--ln:rgba(150,170,235,.22);--tx:#eef2ff;--sub:#9fb0dc;--sel:#2f5fb0;--selb:#8fb4ff;--bad:#e05a50;--good:#3fb36b;--gold:#ffd977}
+:root{--bg:#0d1120;--pn:#141b33;--pn2:#1b2448;--ln:rgba(150,170,235,.22);--tx:#eef2ff;--sub:#9fb0dc;--sel:#2f5fb0;--selb:#8fb4ff;--bad:#e05a50;--good:#3fb36b;--gold:#ffd977;--ui-main-a:#e0a838;--ui-main-b:#b97a1c;--ui-main-ln:#f0c060;--ui-main-tx:#1a1006}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--tx);font-family:'Hiragino Sans','Yu Gothic UI','Noto Sans JP',sans-serif;font-size:14px;overscroll-behavior:none}
 body{padding:0 0 calc(130px + env(safe-area-inset-bottom))}
@@ -29,20 +29,21 @@ section>h2 img{width:22px;height:22px}
 .chip{flex:0 0 auto}
 .scenes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .scn{min-height:64px;border-radius:10px;border:1px solid var(--ln);background:linear-gradient(180deg,#1b2448,#11183a);text-align:left;padding:6px 8px;display:flex;gap:8px;align-items:center}
-.scn:active,.go:active{transform:scale(.97)}
+.tb,.seg button,.chip,.tg button,.scn,#goBar .go,#rs .go{transition:transform .16s cubic-bezier(.3,1.6,.5,1),filter .12s ease-out;-webkit-tap-highlight-color:transparent}
+.tb:active,.seg button:active,.chip:active,.tg button:active,.scn:active,#goBar .go:active,#rs .go:active{transform:scale(.96);filter:brightness(1.16);transition:transform .07s ease-out,filter .07s ease-out}
 .scn img{width:46px;height:46px;object-fit:contain;flex:0 0 auto}
 .scn b{display:block;font-size:13px;line-height:1.25}
-.scn i{display:block;font-style:normal;font-size:10.5px;color:var(--sub);margin-top:2px;line-height:1.3}
+.scn i{display:block;font-style:normal;font-size:12px;color:var(--sub);margin-top:2px;line-height:1.3}
 .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.slot{position:relative;min-height:92px;border-radius:10px;border:1px dashed var(--ln);background:#0f1530;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px;font-size:11px}
+.slot{position:relative;min-height:92px;border-radius:10px;border:1px dashed var(--ln);background:#0f1530;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px;font-size:12px}
 .slot.f{border-style:solid}
 .slot img.a{width:58px;height:58px;object-fit:contain}
 .slot .nm{font-weight:800;font-size:11.5px;text-align:center;line-height:1.2}
 .slot .plus{font-size:28px;color:var(--sub)}
 .slot .ld{position:absolute;left:4px;top:4px;width:16px;height:16px}
 .ty{display:inline-flex;gap:2px;margin-top:2px}
-.ty span{font-size:10px;font-weight:800;color:#fff;border-radius:4px;padding:0 4px;line-height:15px}
-.st{position:absolute;right:4px;top:3px;font-size:10px;color:var(--sub);font-weight:800}
+.ty span{font-size:11px;font-weight:800;color:#fff;border-radius:4px;padding:0 4px;line-height:15px}
+.st{position:absolute;right:4px;top:3px;font-size:11px;color:var(--sub);font-weight:800}
 input[type=range]{flex:1;height:32px;accent-color:#5f8fe0}
 .num{min-width:52px;text-align:right;font-weight:800;font-size:15px}
 .list{display:flex;flex-direction:column;gap:6px}
@@ -52,20 +53,20 @@ details>summary::-webkit-details-marker{display:none}
 details>summary::after{content:'+';margin-left:auto;color:var(--sub)}
 details[open]>summary::after{content:'−'}
 details .wrap{display:flex;flex-wrap:wrap;gap:6px;padding:0 8px 8px}
-.mapn{width:100%;font-size:11px;color:var(--sub);margin:6px 0 0;font-weight:800}
+.mapn{width:100%;font-size:12px;color:var(--sub);margin:6px 0 0;font-weight:800}
 .bossb{min-height:48px;border-radius:8px;border:1px solid var(--ln);background:#11183a;display:flex;align-items:center;gap:6px;padding:2px 8px;font-size:12.5px;font-weight:800;text-align:left;flex:1 1 46%}
 .bossb img{width:38px;height:38px;object-fit:contain}
-.bossb small{display:block;color:var(--sub);font-size:10.5px;font-weight:700}
+.bossb small{display:block;color:var(--sub);font-size:12px;font-weight:700}
 .bossb.on{background:var(--sel);border-color:var(--selb)}
 .tg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .tg button{min-height:52px;border-radius:10px;border:1px solid var(--ln);background:#11183a;color:var(--sub);font-weight:800;font-size:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .tg button img{width:22px;height:22px}
 .tg button.on{background:var(--sel);color:#fff;border-color:var(--selb)}
-#goBar{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(13,17,32,0),rgba(13,17,32,.96) 30%)}
-.go{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:640px;margin:0 auto;min-height:62px;border-radius:12px;border:1px solid #f0c060;background:linear-gradient(180deg,#e0a838,#b97a1c);color:#1a1006;font-size:20px;font-weight:900;letter-spacing:.2em}
-.go img{width:26px;height:26px}
+#goBar{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--ln)}
+#goBar .go,#rs .go{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:640px;margin:0 auto;min-height:62px;border-radius:12px;border:1px solid var(--ui-main-ln);background:linear-gradient(180deg,var(--ui-main-a),var(--ui-main-b));color:var(--ui-main-tx);font-size:20px;font-weight:900;letter-spacing:.2em}
+#goBar .go img,#rs .go img{width:26px;height:26px}
 .sum{display:flex;flex-wrap:wrap;gap:4px;max-width:640px;margin:0 auto 6px}
-.sum span{font-size:10.5px;background:#1b2448;border:1px solid var(--ln);border-radius:6px;padding:1px 6px;color:var(--sub);font-weight:800}
+.sum span{font-size:12px;background:#1b2448;border:1px solid var(--ln);border-radius:6px;padding:1px 6px;color:var(--sub);font-weight:800}
 /* 選ぶ画面 */
 #pk{position:fixed;inset:0;z-index:50;background:var(--bg);display:none;flex-direction:column}
 #pk.on{display:flex}
@@ -306,7 +307,7 @@ function renderScenes(){ const el=$('scenes'); el.innerHTML='';
     b.innerHTML=`<img src="${art(sc.foe[0])}" alt="" loading="lazy"><span><b>${sc.n}</b><i>${SP_JP[sc.special.mode]}・${placeJP(sc.tt)}・Lv${mapLv(sc.map).join('〜')}</i></span>`;
     b.onclick=()=>run(strApply(spSceneOpt(sc)), ()=>strApply(spSceneOpt(sc))); el.appendChild(b); }
   for(const ep of Object.keys(GR23).map(Number)){ const F=GR23[ep]; const mid=F.anc?F.anc.mid:F.foe.party[0].mid; const b=document.createElement('button'); b.className='scn'; b.dataset.gr=ep;
-    b.innerHTML=`<img src="${art(mid)}" alt="" loading="lazy"><span><b>ギ${ep} ${F.anc?nm(F.anc.mid):F.foe.n}</b><i>${F.me.map(m=>nm(typeof m==='string'?GR_PMID[m]:m)).join('・')}・Lv${F.lv}</i></span>`;
+    b.innerHTML=`<img src="${art(mid)}" alt="" loading="lazy"><span><b>${ep}話 ${F.anc?nm(F.anc.mid):F.foe.n}</b><i>${F.me.map(m=>nm(typeof m==='string'?GR_PMID[m]:m)).join('・')}・Lv${F.lv}</i></span>`;
     b.onclick=()=>run(strApply(grSceneOpt(ep)), ()=>strApply(grSceneOpt(ep))); el.appendChild(b); } }
 
 // ---- 自分 / 相手のスロット ----

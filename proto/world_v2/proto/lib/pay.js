@@ -82,11 +82,13 @@ img.tp-ic{display:inline-block;width:1.3em;height:1.3em;vertical-align:-.32em;ob
 .tpCap.full .bar i{background:#e8503a}
 .tpCap.full .r b{color:#ff9a8a}
 #tpCard{background:#fff;border-radius:14px;padding:10px 10px 2px;min-height:64px;margin-bottom:10px;color:#1b2448}
-.tpBtn{display:block;width:100%;font:900 18px/1 inherit;font-family:inherit;padding:16px;border-radius:16px;border:2px solid #ffd977;background:#b8860b;color:#fff;cursor:pointer;letter-spacing:.06em}
-.tpBtn.sub{background:rgba(44,62,102,.9);border-color:rgba(255,255,255,.5);font-size:16px;padding:13px}
-.tpBtn:disabled{opacity:.45}
+.tpBtn{display:block;width:100%;font-family:inherit;font-weight:900;font-size:18px;line-height:1;padding:16px;border-radius:16px;border:2px solid var(--ui-main-ln);background:linear-gradient(180deg,var(--ui-main-a),var(--ui-main-b));color:var(--ui-main-tx);transition:transform .16s cubic-bezier(.3,1.6,.5,1),filter .12s ease-out;cursor:pointer;letter-spacing:.06em}
+.tpBtn.sub{background:rgba(44,62,102,.9);border-color:rgba(255,255,255,.5);color:#fff;font-size:16px;padding:13px}
+.tpBtn.risk{background:linear-gradient(180deg,var(--ui-risk-a),var(--ui-risk-b));border-color:rgba(255,170,150,.5);color:#fff}
+.tpBtn:disabled{background:var(--ui-off);border-color:rgba(255,255,255,.1);color:var(--ui-off-tx)}
+.tpBtn:active:not(:disabled){transform:scale(.96);filter:brightness(1.16);transition:transform .07s ease-out,filter .07s ease-out}
 .tpAge{display:flex;flex-direction:column;gap:8px;margin:6px 0 12px}
-.tpAge button{font:800 17px/1 inherit;font-family:inherit;padding:16px;border-radius:14px;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.07);color:#fff;cursor:pointer;display:flex;justify-content:space-between}
+.tpAge button{font-family:inherit;font-weight:800;font-size:17px;line-height:1;padding:16px;border-radius:14px;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.07);color:#fff;cursor:pointer;display:flex;justify-content:space-between}
 .tpAge button small{font-size:13px;color:#c9d2ea}
 .tpAge button.on{border-color:#ffd977;background:#2c3e66}
 .tpTerms{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
@@ -131,7 +133,7 @@ function show(state, o){ S=state; o=o||{}; const B=R.querySelector('#tpBody'); R
     B.querySelector('#tpAgeOk').onclick=async()=>{ const bt=B.querySelector('#tpAgeOk'); bt.disabled=true; if(!(await ensureDevice())){ B.querySelector('#tpErr').textContent='通信エラー'; bt.disabled=false; return; }
       const r=await api('POST','/age',{band}); if(r.status===200||r.status===409){ await wallet(); return main(); } B.querySelector('#tpErr').textContent='通信エラー'; bt.disabled=false; };
     return; }
-  if(state==='buy'){ const full=capFull(); B.innerHTML=walletRow()+expRow()+prodRow()+capRow()+(full?'':termsRow()+`<div id="tpCard"></div>`)+`<div class="tpErr" id="tpErr"></div><button class="tpBtn" id="tpGo" ${full?'disabled':''}>${full?'今月の上限です':'購入する'}</button>`+links();
+  if(state==='buy'){ const full=capFull(); B.innerHTML=walletRow()+expRow()+prodRow()+capRow()+(full?'':termsRow()+`<div id="tpCard"></div>`)+`<div class="tpErr" id="tpErr"></div><button class="tpBtn risk" id="tpGo" ${full?'disabled':''}>${full?'今月の上限です':'購入する'}</button>`+links();
     if(!full){ const go=B.querySelector('#tpGo'); go.disabled=true; mountCard().then(()=>{ if(S==='buy') go.disabled=false; }).catch(()=>{ if(S==='buy') show('off'); });
       go.onclick=()=>buy(); }
     return; }

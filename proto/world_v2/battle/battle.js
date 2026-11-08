@@ -2685,8 +2685,8 @@ function ringTex(){ if(_ringTex) return _ringTex; const cv=document.createElemen
 function drawBar(x,u,m,compact){
   x.clearRect(0,0,256,80);
   if(compact){ const ally=u.owner===0; const ratio=Math.max(0,Math.min(1,u.hp/u.maxhp));   // 2026-10-28: ふだんは細い体力の棒だけ(名前の札が重ならない)
-    x.fillStyle='rgba(8,12,22,.85)'; roundRect(x,8,46,240,28,8); x.fill(); x.fillStyle=ally?'#4f8bff':'#ff5a48'; roundRect(x,8,46,14,28,5); x.fill();
-    x.fillStyle=ratio>0.5?'#4fc46a':(ratio>0.25?'#e0b040':'#e05040'); roundRect(x,26,52,218*ratio,16,5); x.fill();
+    x.fillStyle='rgba(8,12,22,.85)'; roundRect(x,8,38,240,38,9); x.fill(); x.fillStyle=ally?'#4f8bff':'#ff5a48'; roundRect(x,8,38,14,38,5); x.fill();
+    x.fillStyle=ratio>0.5?'#4fc46a':(ratio>0.25?'#e0b040':'#e05040'); roundRect(x,26,45,218*ratio,24,6); x.fill();
     if(u.leader){ const li=icImg('leader'); if(li&&li.complete&&li.naturalWidth) x.drawImage(li,2,2,40,40); } return; }
   const ally=u.owner===0; const col=ally?'#4f8bff':'#ff5a48';
   const nm=m.name.length>7?m.name.slice(0,7):m.name;
@@ -4855,7 +4855,7 @@ function updateUI(){ if(BT.headless) return;
   if(state.phase==='battle'||state.phase==='place'){
     const lm=(o)=>{ const L=leaderOf(o); let p=L?Math.round(100*Math.max(0,L.hp)/L.maxhp):0; let col=o===0?'#4f8bff':'#ff5a48', tail='';
       if(o===1 && L && L.anc && BT.anc){ const n=BT.anc.T.phases, per=L.maxhp/n, ph=Math.max(1,Math.ceil(Math.max(0,L.hp)/per-1e-9)); p=Math.round(100*Math.max(0,L.hp-(ph-1)*per)/per); col=['#ff5a48','#ff9a30','#c050ff'][Math.min(2,n-ph)]; tail=`<b>×${ph}</b>`; }   // 古代テリオン: 体力ゲージ×本数
-      return `<span class="meter ${o?'foe':''}">${LMK()}<span class="track"><i style="width:${p}%;background:${col}"></i></span>${tail}${state.phase==='battle'&&behindOf(o)?icTag('clutch'):''}</span>`; };   // 戦術v3: 背水のアイコン
+      return `<span class="meter ${o?'foe':''}">${LMK()}<span class="track"><i style="width:${p}%;background:${col}"></i></span>${o===0&&L?`<em class="hpn">${Math.ceil(Math.max(0,L.hp))}</em>`:''}${tail}${state.phase==='battle'&&behindOf(o)?icTag('clutch'):''}</span>`; };   // 戦術v3: 背水のアイコン
     const am=autoMode();
     const autoB = BT.autoButton!==false && state.phase==='battle' ? `<button class="tbb ${am?'on':''}" data-m="cycleAuto">${am===2?'オート×2':am?'オート':'手動'}</button>` : '';
     tb.innerHTML = (state.phase==='battle'
@@ -4981,7 +4981,8 @@ function updateUI(){ if(BT.headless) return;
       ac.appendChild(mkbt(IC('cancel')+'解除','',true,clearSel));
     }
   } else {
-    sd.innerHTML = (V2ON()&&BT.tileInfo) ? tileInfoHTML(BT.tileInfo.r, BT.tileInfo.c) : '<span class="muted">'+icTag('ally')+'動かす子をタップ</span>';
+    sd.innerHTML = (V2ON()&&BT.tileInfo) ? tileInfoHTML(BT.tileInfo.r, BT.tileInfo.c) : (BT.auto?'':rosterHTML());
+    sd.querySelectorAll('[data-ru]').forEach(b=>{ b.onclick=()=>{ if(state.cur!==0||BT.auto) return; const u=state.units[b.dataset.ru]; if(u) selectUnit(u); }; });   // 2026-11-08 未選択の時は自分の子の一覧(絵・名前・体力)。タップで選ぶ
   }
   // 下段：待った・降参・ターン終了
   if(!ONLINE && (STORY.items.ki||0)>0 && sel && sel.owner===0)
@@ -4991,7 +4992,7 @@ function updateUI(){ if(BT.headless) return;
     ac.appendChild(mkbt(`${IC(MEAT_KEYS.find(k=>(STORY.items[k]||0)>0))}肉をあげる`,'evo', state.cur===0 && !sel.acted && feedTargets().length>0, ()=>{ selMode='feed'; if(!(STORY.items[BT.meatSel]>0)) BT.meatSel=MEAT_KEYS.find(k=>(STORY.items[k]||0)>0); drawSelHL(); updateUI(); }));
   { const row=document.createElement('div'); row.className='mainrow';
     if(!ONLINE) row.appendChild(mkbt(IC('undo')+'待った','', state.cur===0 && !BT.auto && undoStack.length>0, doUndo));
-    row.appendChild(mkbt(state.spd?IC('wait')+'待機':'ターン終了','warn end', state.cur===0 && !BT.auto, endTurn));   // 2026-11-05 素早さ順: 行動で自動で進む・「待機」は何もしない時だけ
+    row.appendChild(mkbt(state.spd?IC('wait')+'待機':'ターン終了','end', state.cur===0 && !BT.auto, endTurn));   // 2026-11-05 素早さ順: 行動で自動で進む・「待機」は何もしない時だけ
     ac.appendChild(row); }
   // detail (相手等)
   $id('detail').style.display='none';
@@ -5007,6 +5008,8 @@ function hudHold(){ if(BT.headless||!state) return; const hud=$id('hud'); if(!hu
   if(hudHold._need && !hudHold._pm){ hudHold._need=false; hudPremeasure(); return; }
   hud.style.minHeight=''; const h=hud.offsetHeight; if(h>(hudHold._h||0)+1) hudHold._h=Math.min(h, Math.round(innerHeight*0.46));
   if(hudHold._h){ hud.style.minHeight=hudHold._h+'px'; const mr=hud.querySelector('.mainrow'); if(mr) mr.style.marginTop=Math.max(2, hudHold._h-h+2)+'px'; } }   // 待った・ターン終了の段は いつも帯のいちばん下(押す所が動かない)
+function rosterHTML(){ const L=alive(0).filter(u=>u.r>=0).sort((a,b)=>(b.leader?1:0)-(a.leader?1:0));
+  return '<div class="rost">'+L.map(u=>{ const m=mon(u), r=Math.max(0,Math.min(1,u.hp/u.maxhp)); return `<button class="rc${u.acted?' done':''}" data-ru="${u.uid}"><img src="${IMG[u.mid]}" alt=""><span class="rn">${u.leader?LMK():''}${m.name}</span><span class="rb"><span class="rt"><i style="width:${Math.round(r*100)}%;background:${r>0.5?'#4fc46a':(r>0.25?'#e0b040':'#e05040')}"></i></span><b>${Math.ceil(Math.max(0,u.hp))}</b></span></button>`; }).join('')+'</div>'; }
 function hudReset(){ hudHold._h=0; hudHold._k=null; hudHold._need=true; const hud=$id('hud'); if(hud) hud.style.minHeight=''; }
 // 「子を選んだ時」の帯の高さを先に測る(いちばん技の多い子で)。今の選び方はそのまま戻す
 function hudPremeasure(){ if(BT.headless||!state||state.phase!=='battle'||hudHold._pm) return; const me=alive(0).filter(u=>u.r>=0); if(!me.length) return;
@@ -5180,10 +5183,10 @@ function fitsBudget(i){ const p=placeList[i]; return p && (p.placed || placedLev
 function renderPlaceRow(){
   const row=$id('placeRow'); row.innerHTML='';
   placeList.forEach((p,i)=>{
-    const d=document.createElement('div'); d.className='pcard'+(placePick===i?' on':'')+(!fitsBudget(i)?' off':''); d.style.cssText+=';width:64px;flex:0 0 auto;position:relative';
+    const d=document.createElement('div'); d.className='pcard'+(placePick===i?' on':'')+(!fitsBudget(i)?' off':''); d.style.cssText+=';width:76px;flex:0 0 auto;position:relative';
     d.style.opacity=p.placed&&placePick!==i?'0.55':'';
     const m=MID[p.mid];
-    d.innerHTML=`<img src="${IMG[p.mid]}"><div class="nm">${i===0?LMK():''}${m.name}</div><div class="rk">${DAN[m.level]} ${rkStr(p.ent)}${p.ent.stack?' 重ね'+p.ent.stack:''}</div>${p.placed?'<div style="position:absolute;top:2px;right:4px;font-size:11px">✓</div>':''}${canStart2(p)?`<button class="st2" style="position:absolute;top:2px;left:2px;font:800 10px/1 inherit;padding:3px 4px;border-radius:5px;border:1px solid ${p.mid!==p.base?'#ffd977':'rgba(255,255,255,.35)'};background:${p.mid!==p.base?'#b8860b':'rgba(10,14,30,.75)'};color:#fff;cursor:pointer">2段</button>`:''}`;
+    d.innerHTML=`<img src="${IMG[p.mid]}"><div class="nm">${i===0?LMK():''}${m.name}</div><div class="rk">${DAN[m.level]} ${rkStr(p.ent)}${p.ent.stack?' 重ね'+p.ent.stack:''}</div>${p.placed?'<div style="position:absolute;top:2px;right:4px;font-size:11px">✓</div>':''}${canStart2(p)?`<button class="st2" style="position:absolute;top:2px;left:2px;font-family:inherit;font-weight:800;font-size:11px;line-height:1;padding:4px 5px;border-radius:5px;border:1px solid ${p.mid!==p.base?'#ffd977':'rgba(255,255,255,.35)'};background:${p.mid!==p.base?'#b8860b':'rgba(10,14,30,.75)'};color:#fff;cursor:pointer">2段</button>`:''}`;
     const sb=d.querySelector('.st2'); if(sb) sb.onclick=e=>{ e.stopPropagation(); toggleStart2(i); };
     d.onclick=()=>{ if(!fitsBudget(i)){ toast(`Lv合計${BT.budget}まで`); return; } placePick=(placePick===i?null:i); renderPlaceRow(); drawPlaceHL(); };
     row.appendChild(d);
@@ -5850,6 +5853,7 @@ const CSS=`
 #mbRoot *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 #mb-wrap{position:absolute;inset:0;display:flex;flex-direction:column}
 #mb-cv{flex:1 1 0;min-height:0;display:block;width:100%}
+:root{--ui-main-a:#e0a838;--ui-main-b:#b97a1c;--ui-main-ln:#f0c060;--ui-main-tx:#1a1006;--ui-sub:#2c3e66;--ui-sub-tx:#fff;--ui-risk-a:#b84f38;--ui-risk-b:#8a3a28;--ui-off:#2b3040;--ui-off-tx:#8a92a6}
 #mb-hud{background:linear-gradient(180deg,rgba(16,21,38,.96),rgba(10,13,24,.98));border-top:1px solid rgba(255,216,107,.28);box-shadow:0 -6px 20px rgba(0,0,0,.35);padding:7px 10px calc(8px + env(safe-area-inset-bottom));font-size:13px;flex:0 0 auto;max-height:46vh;overflow:auto}
 #mb-topbar{position:absolute;top:0;left:0;right:0;background:linear-gradient(180deg,rgba(10,13,24,.92),rgba(10,13,24,.72));border-bottom:1px solid rgba(255,255,255,.08);padding:calc(5px + env(safe-area-inset-top)) 8px 5px;font-size:12px;display:flex;gap:5px;align-items:center;flex-wrap:nowrap;z-index:25}
 #mb-topbar:empty{display:none}
@@ -5861,20 +5865,31 @@ const CSS=`
 #mb-topbar .qrow .qs{width:2px;height:24px;background:rgba(255,255,255,.35);flex:0 0 auto;margin:0 3px}
 #mb-topbar b{color:#ffd86b}
 #mb-topbar span{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:0 7px;height:30px;white-space:nowrap;flex:0 0 auto}
-#mb-topbar .tchip i{font-style:normal;font-size:11px;font-weight:800;margin-left:3px;color:#cfe0ff}
+#mb-topbar .hpn{font-style:normal;font-size:12px;font-weight:800;color:#cfe0ff;flex:0 0 auto}
+#mb-topbar .tchip i{font-style:normal;font-size:12px;font-weight:800;margin-left:3px;color:#cfe0ff}
 #mb-topbar .tchip.me{border-color:#4f8bff;background:rgba(40,80,170,.45)}
 #mb-topbar .tchip.foe{border-color:#ff6a58;background:rgba(150,40,30,.45)}
 #mb-topbar .tchip.foe i{color:#ffd0c8}
 #mb-topbar .sp{flex:1 1 auto;background:none;border:0}
 #mb-topbar .meter{background:rgba(20,40,80,.55);border-color:#34507a;flex:1 1 0;min-width:0;padding:0 6px}
 #mb-topbar .meter.foe{background:rgba(80,24,20,.55);border-color:#7a3a34}
-#mb-topbar .tbb{flex:0 0 auto;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:linear-gradient(180deg,#3a4668,#2a3450);color:#fff;font:inherit;font-size:12px;font-weight:800;padding:0 9px;cursor:pointer;white-space:nowrap}
+#mb-topbar .tbb{flex:0 0 auto;height:40px;transition:transform .16s cubic-bezier(.3,1.6,.5,1),filter .12s ease-out;-webkit-tap-highlight-color:transparent;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:linear-gradient(180deg,#3a4668,#2a3450);color:#fff;font:inherit;font-size:12px;font-weight:800;padding:0 9px;cursor:pointer;white-space:nowrap}
 #mb-topbar .tbb.on{background:linear-gradient(180deg,#2f6fd0,#22468a);border-color:#8fb4ff;box-shadow:0 0 0 2px rgba(143,180,255,.25)}
-#mb-topbar .tbb.menu{width:34px;padding:0;font-size:19px;line-height:1}
+#mb-topbar .tbb.menu{width:42px;padding:0;font-size:19px;line-height:1}
 #mb-topbar .track{display:inline-block;flex:1 1 auto;min-width:22px;width:auto;height:9px;background:#1a2030;border:1px solid #2c3346;border-radius:5px;overflow:hidden;vertical-align:middle;padding:0}
 #mb-topbar .track i{display:block;height:100%;transition:width .3s}
 #mb-sel{display:flex;align-items:center;gap:10px;min-height:54px;flex-wrap:wrap}
 #mb-sel img{width:50px;height:50px;border-radius:10px;object-fit:cover;background:#222;border:2px solid #3a4a74}
+#mbRoot .rost{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;width:100%}
+#mbRoot .rc{display:grid;grid-template-columns:36px minmax(0,1fr);grid-template-rows:auto auto;column-gap:5px;align-items:center;min-height:48px;padding:4px 6px 4px 4px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:linear-gradient(180deg,#3a4668,#2a3450);color:#fff;font-family:inherit;text-align:left;cursor:pointer;transition:transform .16s cubic-bezier(.3,1.6,.5,1),filter .12s ease-out;-webkit-tap-highlight-color:transparent}
+#mbRoot .rc.done{background:#1f2536}
+#mbRoot .rc.done img{filter:grayscale(.7) brightness(.8)}
+#mb-sel .rc img{grid-row:1/3;width:36px;height:36px;border:0;border-radius:6px;background:none;object-fit:contain}
+#mbRoot .rn{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+#mbRoot .rb{display:flex;align-items:center;gap:4px;min-width:0}
+#mbRoot .rt{flex:1 1 auto;min-width:10px;height:6px;border-radius:3px;background:#141a2a;overflow:hidden}
+#mbRoot .rt i{display:block;height:100%}
+#mbRoot .rb b{font-size:12px;font-weight:800;color:#dfe8ff;line-height:1.2}
 #mb-actions{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
 #mbRoot .lmk{display:inline-block;width:1.25em;height:1.25em;background:center/contain no-repeat;flex:0 0 auto;vertical-align:-0.25em;margin-right:3px}
 #mbRoot .tchipT{display:inline-block;font-size:11px;font-weight:800;border-radius:6px;padding:1px 6px;vertical-align:1px}
@@ -5937,7 +5952,7 @@ const CSS=`
 #mb-actions .mainrow .bt{flex:1 1 0;padding:10px 8px;font-size:14px}
 #mb-actions .mainrow .bt.end{flex:1.6 1 0}
 #mb-menu{position:absolute;inset:0;z-index:44;display:none;background:rgba(4,6,14,.35)}
-#mb-menuBox{position:absolute;right:8px;top:calc(44px + env(safe-area-inset-top));width:min(260px,calc(100% - 16px));background:#161c2e;border:1px solid #3a4566;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 12px 30px rgba(0,0,0,.55)}
+#mb-menuBox{position:absolute;right:8px;top:calc(54px + env(safe-area-inset-top));width:min(260px,calc(100% - 16px));background:#161c2e;border:1px solid #3a4566;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;box-shadow:0 12px 30px rgba(0,0,0,.55)}
 #mb-menuBox .mbig{width:100%;padding:12px;font-size:15px;text-align:left}
 #mb-menuBox .mrow{display:flex;align-items:center;gap:6px}
 #mb-menuBox .mrow.ask{background:#2a1c22;border:1px solid #7a3a34;border-radius:10px;padding:6px}
@@ -5948,21 +5963,21 @@ const CSS=`
 #mb-menuBox .seg .bt{padding:8px 10px;font-size:13px}
 #mbRoot img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;margin:0 .12em 0 0;object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.55));pointer-events:none}
 #mbRoot .floatdmg img.ui-ic{width:1.1em;height:1.1em;vertical-align:-.18em}
-#mbRoot button.bt{border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:8px 13px;font-size:13px;font-weight:700;cursor:pointer;background:linear-gradient(180deg,#3a4668,#2a3450);color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08);font-family:inherit}
-#mbRoot button.bt:active{transform:translateY(1px) scale(.98)}
-#mbRoot button.bt:disabled{opacity:.35;filter:grayscale(.4)}
-#mbRoot button.bt.go{background:linear-gradient(180deg,#45a05c,#2f7a42);border-color:rgba(160,255,180,.3)}
-#mbRoot button.bt.warn{background:linear-gradient(180deg,#b84f38,#8a3a28);border-color:rgba(255,170,150,.3)}
+#mbRoot button.bt{min-height:40px;transition:transform .16s cubic-bezier(.3,1.6,.5,1),filter .12s ease-out;-webkit-tap-highlight-color:transparent;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:8px 13px;font-size:13px;font-weight:700;cursor:pointer;background:linear-gradient(180deg,#3a4668,#2a3450);color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08);font-family:inherit}
+#mbRoot button.bt:active:not(:disabled),#mb-topbar .tbb:active,#mb-camAll:active,#mbRoot .pcard:active,#mbRoot .rc:active{transform:scale(.96);filter:brightness(1.16);transition:transform .07s ease-out,filter .07s ease-out}
+#mbRoot button.bt.go{background:linear-gradient(180deg,var(--ui-main-a),var(--ui-main-b));border-color:var(--ui-main-ln);color:var(--ui-main-tx)}
+#mbRoot button.bt.warn{background:linear-gradient(180deg,var(--ui-risk-a),var(--ui-risk-b));border-color:rgba(255,170,150,.3)}
 #mbRoot button.bt.evo{background:linear-gradient(180deg,#8a5cc0,#6a4098);border-color:rgba(220,180,255,.3)}
 #mbRoot button.bt.fuse{background:linear-gradient(180deg,#b35ad0,#8a3ea8);border-color:rgba(240,190,255,.35)}
 #mbRoot button.bt.on{background:linear-gradient(180deg,#2f5fb0,#22468a);border-color:#8fb4ff}
+#mbRoot button.bt:disabled{background:var(--ui-off);border-color:rgba(255,255,255,.08);color:var(--ui-off-tx);box-shadow:none;filter:grayscale(1)}
 #mbRoot .muted{color:#9aa7c4;font-size:12px;line-height:1.5}
-#mbRoot .pcard{background:#1c2233;border:2px solid #2c3346;border-radius:10px;padding:4px;text-align:center;cursor:pointer;font-size:10px;line-height:1.3;position:relative}
+#mbRoot .pcard{background:#1c2233;border:2px solid #2c3346;border-radius:10px;padding:4px;text-align:center;cursor:pointer;font-size:12px;line-height:1.3;position:relative;transition:transform .16s cubic-bezier(.3,1.6,.5,1),filter .12s ease-out}
 #mbRoot .pcard.on{border-color:#ffd86b;background:#33324a;box-shadow:0 0 0 2px rgba(255,216,107,.25)}
 #mbRoot .pcard.off{opacity:.38}
 #mbRoot .pcard img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;background:#222}
 #mbRoot .pcard .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#mbRoot .pcard .rk{color:#ffd86b;font-size:9px}
+#mbRoot .pcard .rk{color:#ffd86b;font-size:11px}
 #mb-toast{position:absolute;left:50%;top:calc(48px + env(safe-area-inset-top));transform:translateX(-50%);background:rgba(8,10,18,.86);border:1px solid rgba(255,216,107,.35);color:#fff;padding:7px 14px;border-radius:10px;z-index:30;font-size:13px;font-weight:700;pointer-events:none;opacity:0;transition:opacity .2s;max-width:88%;text-align:center}
 #mb-toast.show{opacity:1}
 #mb-guide{position:absolute;left:50%;top:calc(50px + env(safe-area-inset-top));transform:translateX(-50%);display:none;align-items:center;gap:10px;background:rgba(10,14,30,.94);border:2px solid #ffd86b;color:#fff;padding:8px 14px 8px 10px;border-radius:12px;z-index:31;max-width:min(92%,380px);box-shadow:0 0 18px rgba(255,216,107,.45);cursor:pointer}
@@ -5986,7 +6001,7 @@ const CSS=`
 #mb-detail{display:none}
 #mb-fxflash{position:absolute;inset:0;z-index:12;pointer-events:none;opacity:0;mix-blend-mode:screen}
 #mb-ovPlace{position:absolute;inset:0;display:none;flex-direction:column;pointer-events:none;z-index:20}
-#mb-camAll{position:absolute;right:8px;top:48px;z-index:24;display:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(10,13,24,.72);padding:0;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+#mb-camAll{position:absolute;right:8px;top:calc(56px + env(safe-area-inset-top));z-index:24;display:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(10,13,24,.72);padding:0;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.35)}
 #mb-camAll img{width:32px;height:32px;display:block;pointer-events:none}
 #mb-camAll.on{background:linear-gradient(180deg,#2f6fd0,#22468a);border-color:#8fb4ff;box-shadow:0 0 0 2px rgba(143,180,255,.25)}
 #mb-placeBar{margin-top:auto;background:rgba(8,10,16,.92);border-top:1px solid #2c3346;padding:8px 10px calc(8px + env(safe-area-inset-bottom));pointer-events:auto}
@@ -6003,7 +6018,28 @@ const CSS=`
 #mb-ovDetail .lock{opacity:.55}
 #mb-ovDetail .chain{font-size:12px;color:#cfd6e6;line-height:1.6}
 #mb-ovEnd{position:absolute;inset:0;z-index:42;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:radial-gradient(ellipse at center,rgba(10,14,30,.78),rgba(4,6,14,.94));padding:16px;text-align:center}
-#mb-ovEnd h1{margin:0;font-size:34px;letter-spacing:.12em;color:#ffe9a8;text-shadow:0 3px 0 #0a0f24,0 0 22px rgba(255,190,80,.35)}
+#mb-ovEnd h1{margin:0;font-size:48px;letter-spacing:.12em;color:#ffe9a8;text-shadow:0 3px 0 #0a0f24,0 0 26px rgba(255,190,80,.6);position:relative}
+#mb-ovEnd:not(.lose)::before{content:"";position:absolute;left:50%;top:50%;width:min(120vw,640px);aspect-ratio:1;margin:calc(min(120vw,640px)/-2) 0 0 calc(min(120vw,640px)/-2);background:radial-gradient(circle,rgba(255,214,110,.3),rgba(255,214,110,0) 62%);pointer-events:none}
+#mb-ovEnd.play{animation:mbResBg .2s ease-out both}
+#mb-ovEnd.play #mb-endTitle{animation:mbResIn .333s cubic-bezier(.2,.8,.2,1) both}
+#mb-ovEnd.lose.play #mb-endTitle{animation:mbResUp .3s ease-out both}
+#mb-ovEnd.play #mb-endCard{animation:mbResUp .28s ease-out .15s both}
+#mb-ovEnd.play #mb-endCard img{animation-delay:.15s}
+#mb-ovEnd.play #mb-endList>div{animation:mbResUp .28s ease-out .2s both}
+#mb-ovEnd.play #mb-endList>div:nth-child(2){animation-delay:.26s}
+#mb-ovEnd.play #mb-endList>div:nth-child(n+3){animation-delay:.32s}
+#mb-ovEnd.play #mb-endList .gem{display:inline-block;animation:mbResPop .283s cubic-bezier(.5,0,.75,.4) .2s both}
+#mb-ovEnd.play #mb-btEnd{animation:mbResUp .28s ease-out .46s both;pointer-events:none}
+#mb-ovEnd.play.done #mb-endTitle,#mb-ovEnd.play.done #mb-endCard,#mb-ovEnd.play.done #mb-endCard img,#mb-ovEnd.play.done #mb-endList>div,#mb-ovEnd.play.done #mb-endList .gem,#mb-ovEnd.play.done #mb-btEnd{animation:none}
+#mb-ovEnd.play.done #mb-btEnd{pointer-events:auto}
+#mb-ovEnd.done .rpart{display:none}
+#mb-btEnd{min-width:min(300px,80vw);min-height:52px}
+#mbRoot .rpart{position:absolute;width:20px;height:20px;margin:-10px;background:#ffff50;clip-path:polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%);pointer-events:none;animation:mbResBurst .7s ease-out .05s both}
+@keyframes mbResBg{from{opacity:0}to{opacity:1}}
+@keyframes mbResIn{0%{opacity:0;transform:scale(.4)}60%{opacity:1}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+@keyframes mbResUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes mbResPop{from{opacity:0;transform:scale(1.6)}to{opacity:1;transform:scale(1)}}
+@keyframes mbResBurst{from{opacity:1;transform:scale(var(--z))}to{opacity:0;background:#fff;transform:translate(var(--dx),var(--dy)) scale(.3)}}
 #mb-ovEnd.lose h1{color:#c9d2ea}
 #mb-endCard{display:flex;flex-direction:column;align-items:center;gap:6px}
 #mb-endCard img{width:min(46vw,220px);aspect-ratio:1;object-fit:contain;filter:drop-shadow(0 10px 20px rgba(0,0,0,.6));animation:mbJoin .7s cubic-bezier(.2,.9,.3,1.2) both}
@@ -6014,7 +6050,8 @@ const CSS=`
 #mb-endCard .tag.miss{background:#2a2a33;border-color:rgba(255,255,255,.3);color:#c9d2ea}
 #mb-endList .lvup{color:#ffe066}
 #mb-endList{display:flex;flex-direction:column;gap:6px;font-size:15px;font-weight:700}
-#mb-endList .gem{color:#4fd47a}
+#mb-endList .gem{color:#4fd47a;font-size:24px;font-weight:900}
+#mb-endList .gem img.ui-ic{width:1.15em;height:1.15em}
 #mb-intro{position:absolute;inset:0;z-index:50;pointer-events:none;display:none;overflow:hidden}
 #mb-intro.on{display:block}
 #mb-intro .fl{position:absolute;inset:0;background:radial-gradient(circle at 50% 62%,rgba(255,252,236,1) 0%,rgba(255,240,190,.95) 18%,rgba(255,220,140,.5) 38%,rgba(255,255,255,0) 64%);animation:mbIntroFl 1.5s ease-out both}
@@ -6102,7 +6139,7 @@ const DOM=`<div id="mb-wrap"><canvas id="mb-cv"></canvas><div id="mb-hud"><div i
 <div id="mb-ovPlace"><div id="mb-placeBar">
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:14px;color:#ffd86b;white-space:nowrap">配置</b><span id="mb-placeHint" style="font-size:12px;color:#cfe0ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span><span id="mb-placeCount" style="margin-left:auto;font-size:12px;color:#8ee0ff;white-space:nowrap"></span></div>
   <div id="mb-placeRow"></div>
-  <div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="bt" id="mb-btAutoPlace">おまかせ配置</button><button class="bt warn" id="mb-btResetPlace">やり直す</button><button class="bt go" id="mb-btBegin" disabled style="margin-left:auto;font-size:15px;padding:10px 18px">バトル開始</button></div>
+  <div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="bt" id="mb-btAutoPlace">おまかせ配置</button><button class="bt" id="mb-btResetPlace">やり直す</button><button class="bt go" id="mb-btBegin" disabled style="flex:1 1 100%;min-height:50px;font-size:16px;padding:10px 18px">バトル開始</button></div>
 </div></div>
 <div id="mb-ovDetail"><div class="box" id="mb-detailBox"></div></div>
 <div id="mb-ovEnd"><h1 id="mb-endTitle"></h1><div id="mb-endCard"></div><div id="mb-endList"></div><button class="bt go" id="mb-btEnd" style="font-size:16px;padding:12px 30px;margin-top:6px">もどる</button></div>
@@ -6319,13 +6356,18 @@ function showResult(res, done){
   if(c){ const m=MID[c.mid]; card.innerHTML=`<img src="${IMG[c.mid]}" alt=""><div class="nm">${m.name}</div>`
       +(c.tag?`<span class="tag${c.miss?' miss':''}">${c.tag}</span>`:c.isNew?`<span class="tag">${m.name}が仲間になった！</span>`:c.miss?`<span class="tag miss">仲間にならなかった</span>`:`<span class="tag stack">重ね ${c.stack}　★${c.rankBefore} → ★${c.rankAfter}</span>`); }   // miss = 倒して仲間(ランダム)のはずれ(2026-10-26)
   const rows=[]; if(toWL && res.hpShare!=null) rows.push(`<span class="tohp">残り体力　自分 ${Math.round(res.hpShare*100)}%　相手 ${Math.round((1-res.hpShare)*100)}%</span>`);
-  if(res.rewards.gems>0) rows.push(`<span class="gem">ジェム +${res.rewards.gems}</span>`);
+  if(res.rewards.gems>0) rows.push(`<span class="gem">${icTag('gem')}ジェム +${res.rewards.gems}</span>`);
   for(const r of (res.extraRows||[])) if(!(c&&c.tag&&String(r).replace(/<[^>]*>/g,'')===c.tag)) rows.push(r);   // 進行(progress.js)の decorate が返した行: EXP・レベルアップなど(2026-10-30 カードの札と同じ文は2回出さない)
 
   if(res.fusions.length) rows.push('融合の記録 '+res.fusions.map(f=>MID[f].name).join('・'));
   list.innerHTML=rows.map(r=>`<div>${r}</div>`).join('');
-  ov.style.display='flex'; $id('btEnd').onclick=()=>{ ov.style.display='none'; done(); };
+  ov.classList.remove('done','play'); ov.querySelectorAll('.rpart').forEach(e=>e.remove()); void ov.offsetWidth; ov.classList.add('play'); ov.style.display='flex';   // 2026-11-08 出す順: 見出し→獲得物→ボタン。途中のタップで全部出す
+  if(res.result==='win'&&res.winner===0) resBurst(ov);
+  const fin=()=>ov.classList.add('done'); clearTimeout(BT._resT); BT._resT=setTimeout(fin,760); ov.onclick=()=>{ if(!ov.classList.contains('done')) fin(); };
+  $id('btEnd').onclick=()=>{ clearTimeout(BT._resT); ov.onclick=null; ov.style.display='none'; done(); };
 }
+function resBurst(ov){ const t=$id('endTitle').getBoundingClientRect(), o=ov.getBoundingClientRect(), x=t.left+t.width/2-o.left, y=t.top+t.height/2-o.top;
+  for(let i=0;i<16;i++){ const s=document.createElement('i'); s.className='rpart'; const a=Math.random()*6.283, d=90+Math.random()*130; s.style.cssText=`left:${x}px;top:${y}px;--dx:${Math.round(Math.cos(a)*d)}px;--dy:${Math.round(Math.sin(a)*d)}px;--z:${(.7+Math.random()*.9).toFixed(2)}`; ov.appendChild(s); } }
 
 // =====================================================================================
 // ==== 専用の盤(2026-10-31 オーナー承認): 逃げる(escape)・守る(guard)・水と時間(flood)・潜入(sneak) ====

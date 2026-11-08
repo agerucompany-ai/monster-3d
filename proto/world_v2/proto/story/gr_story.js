@@ -162,6 +162,9 @@ const GR_PLAN={
   22:{map:'oliva_hill', at:'*', chain:1, tod:'morning'},
 };
 // 全画面の絵で見せる場面(その場にいない所・回想・夜の部屋など)。ほかは今いる地図の上で見せる。代わりの絵は BG_ALIAS。場面の番号は 11/08 の台本(gr_scenes.js の GR_EP)
+// 2026-11-08 場面の途中で絵を変える行。台本の文の頭で合わせる(台本が変わって見つからない行は何も起きない)。'black'=黒
+const GR_LBG={ g01_01:[['まっ暗な石の通路','black'],['2100年の地球','anime_europe_night'],['研究所で生まれた','anime_oliva_lab'],['大きな街のビルの壁','anime_tokyo_street'],['少年は、客席','black']] };
+function grLbg(k){ for(const [h,b] of GR_LBG[k]||[]){ const L=(SC[k]||[]).find(x=>x.t&&x.t.startsWith(h)); if(L) L.bg=b; } }
 const GR_BG={ g01_01:'anime_aegean_dawn', g01_02:'anime_ep1_02', g01_03:'anime_ep1_21', g01_04:'anime_ep1_14', g01_05:'anime_ep1_19', g01_06:'anime_ep1_16', g01_07:'anime_ep1_20',
   g01_09:'anime_ep1_17', g01_10:'gr_night_room', g01_11:'anime_ep1_25', g01_12:'gr_night_room',
   g02_01:'anime_ep1_27', g02_02:'gr_hotel', g02_03:'gr_hotel', g02_04:'anime_ep1_25', g02_06:'anime_ep1_29', g02_07:'gr_hill_night', g02_10:'gr_ruins_night',
@@ -389,7 +392,7 @@ function grLearn(mid){ if(!(window.Progress&&Progress.learnBoss)) return null; c
   try{ if(c) c.bossLearn=1; return Progress.learnBoss({mid:+mid, lv:1}); } finally{ if(c) c.bossLearn=p; } }
 
 // ---- 第1話のはじめ(新しいセーブ・前の版のセーブを1話から): 語り→市場(全画面)。そのあと本体が村に下ろす ----
-async function ep1Open(){ const f=GF(); if(SAVE&&SAVE.flags){ SAVE.flags.g22=1; SAVE.flags.g22b=1; } for(const k of (GR_PLAN[1].pro||[])){ if(f[k]) continue; bgmScene(k); if(SC[k]) await runScene(SC[k],{bg:GR_BG[k],keepPaused:true,prologue:true}); if(SAVE){ SAVE.flags[k]=1; saveGame(); } }
+async function ep1Open(){ const f=GF(); if(SAVE&&SAVE.flags){ SAVE.flags.g22=1; SAVE.flags.g22b=1; } for(const k of (GR_PLAN[1].pro||[])){ if(f[k]) continue; bgmScene(k); if(SC[k]){ grLbg(k); await runScene(SC[k],{bg:GR_BG[k],keepPaused:true,prologue:true}); } if(SAVE){ SAVE.flags[k]=1; saveGame(); } }
   bgmScene(null); if(SAVE) SAVE.stage='now'; }
 
 // ============================================================================
