@@ -91,10 +91,10 @@ xArc('nr','n',f=>!!f.e21,NR_MAPJ,({sc,bt,go,fn})=>{
   sc(16,'n16_1',GL,'*',{bg:TE}); sc(16,'n16_2a',GL,'*',{bg:TE});
   bt(16,'n16_b','n16_2',GL,{bg:TE,foe:()=>cnFoe({n:'ヴィクターの大人たち',zeroday:1,party:P(1064,1067,1064,1050)}),R:{terrain:'ruins',guests:['partner',199,1037,'own2'],fuse:[2055],ai:{hpX:0.385,atkX:0.385}}});
   sc(16,'n16_3',GL,'*',{bg:TE}); sc(16,'n16_4',GL,'*',{bg:TE}); sc(16,'n16_5',GL,'*',{bg:TE});
-  // 第17話 最後の守り(研究所の門からアークの中心へ・ボット。アラシドラ=リュバーン＋ソヨモモ)
+  // 第17話 最後の守り(研究所の門からアークの中心へ・ボット。アラシドラ=リュバーン＋ディーグル)
   sc(17,'n17_1',CO,'*',{objAway:'研究所の門から、アークの中心へ',tod:'night'});
   sc(17,'n17_2',CO,'サーバーの部屋',{obj:'中心への長い通路へ'}); sc(17,'n17_3a',CO);
-  bt(17,'n17_b','n17_3',CO,{foe:()=>cnFoe({n:'ボット',zeroday:1,master:1,party:NR_BOT()}),R:{terrain:'arkcore',guests:['partner','own2',16,199,1029],fuse:[2052],ai:{hpX:0.693,atkX:0.663}}});
+  bt(17,'n17_b','n17_3',CO,{foe:()=>cnFoe({n:'ボット',zeroday:1,master:1,party:NR_BOT()}),R:{terrain:'arkcore',guests:['partner','own2',16,199,1031],fuse:[2052],ai:{hpX:0.693,atkX:0.663}}});
   sc(17,'n17_4',CO); sc(17,'n17_5',CO);
   // 第18〜23話 アークの中心の丸い部屋(ラグナディオ。また止まる→フォルン一体の勝負を三度→やめよう→全員戻る)
   sc(18,'n18_1',CO,'アークの中心',{obj:'アークの中心の、丸い部屋へ'}); sc(18,'n18_2',CO); sc(18,'n18_3',CO); sc(18,'n18_4',CO); sc(18,'n18_5',CO);

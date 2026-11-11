@@ -2987,28 +2987,7 @@
    "cost": "few",
    "yomi": "ぎがぼるとはんまー"
   },
-  "sig_momonga": {
-   "name": "ムーンカッター",
-   "type": "風",
-   "category": "attack",
-   "role": "sig_line",
-   "rank": null,
-   "target": "single",
-   "range": [
-    1,
-    1
-   ],
-   "p": true,
-   "mp": 2,
-   "power": 216,
-   "hit": 100,
-   "crit": 20,
-   "effect": {},
-   "desc": "夜風にのってすべりこみ、切りつける",
-   "range_class": "near",
-   "cost": "few",
-   "yomi": "むーんかったー"
-  },
+
   "sig_taka": {
    "name": "イーグルダイブ",
    "type": "風",
@@ -5294,7 +5273,8 @@
    "desc": "雷鳴で射程3の敵みんなを打つ",
    "range_class": "far",
    "cost": "few",
-   "yomi": "むげんボルテックス",
+   "yomi": "むげんボルテックス"
+,
    "ruby": [["無限", "むげん"], ["雷嵐", "ボルテックス"]]
   },
   "ragna_dark": {
@@ -5537,6 +5517,33 @@
    "sun": true,
    "big": true,
    "note_1101": "2026-11-01 オーナー決定の新しい技: 森のマップの技・屋内の盤では使えない(battle.js sunBlocked)・威力は森の3段目の系統の技と同じ127"
-  }
+  },
+ "fsig_2077": {
+  "name": "カミナリブレード",
+  "type": "雷",
+  "type2": "竜",
+  "category": "attack",
+  "role": "sig_fusion",
+  "rank": null,
+  "target": "area",
+  "range": [
+    1,
+    2
+  ],
+  "p": true,
+  "mp": 3,
+  "power": 139,
+  "hit": 100,
+  "crit": 10,
+  "effect": {
+    "ail": "para",
+    "chance": "stage",
+    "pierce": 0.3
+  },
+  "desc": "背中の雷ブレードをまとって神速で駆け抜け、敵を斬り裂く",
+  "range_class": "mid",
+  "cost": "few",
+  "yomi": "カミナリブレード"
+}
  }
 }

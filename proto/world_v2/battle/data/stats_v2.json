@@ -1766,129 +1766,6 @@
     "thunder_ladder4"
    ]
   },
-  "49": {
-   "name": "ソヨカ",
-   "type": "風",
-   "type2": null,
-   "stage": 1,
-   "line": "momonga",
-   "archetype": "風獣型",
-   "hp": 122,
-   "atk": 28,
-   "def": 8,
-   "mob": 3,
-   "spd": 36,
-   "red": 0.074,
-   "src_hp": 125,
-   "src_atk": 28,
-   "src_move": 3,
-   "learnset": [
-    {
-     "move": "wind_ladder1",
-     "lv": 1
-    },
-    {
-     "move": "wind_ladder2",
-     "lv": 8
-    },
-    {
-     "move": "wind_ladder3",
-     "lv": 15
-    }
-   ]
-  },
-  "1029": {
-   "name": "ソヨモモ",
-   "type": "風",
-   "type2": null,
-   "stage": 2,
-   "line": "momonga",
-   "archetype": "風獣型",
-   "hp": 435,
-   "atk": 79,
-   "def": 19,
-   "mob": 3,
-   "spd": 58,
-   "red": 0.16,
-   "src_hp": 450,
-   "src_atk": 79,
-   "src_move": 3,
-   "learnset": [
-    {
-     "move": "wind_ladder1",
-     "lv": 1,
-     "from": 49
-    },
-    {
-     "move": "wind_combo",
-     "lv": 1,
-     "evo": true
-    },
-    {
-     "move": "wind_ladder2",
-     "lv": 8,
-     "from": 49
-    },
-    {
-     "move": "wind_ladder3",
-     "lv": 15,
-     "from": 49
-    },
-    {
-     "move": "wind_ladder4",
-     "lv": 34
-    }
-   ]
-  },
-  "51": {
-   "name": "カゼモモ",
-   "type": "風",
-   "type2": null,
-   "stage": 3,
-   "line": "momonga",
-   "archetype": "風獣型",
-   "hp": 1235,
-   "atk": 150,
-   "def": 33,
-   "mob": 3,
-   "spd": 79,
-   "red": 0.248,
-   "src_hp": 1290,
-   "src_atk": 150,
-   "src_move": 3,
-   "learnset": [
-    {
-     "move": "wind_ladder1",
-     "lv": 1,
-     "from": 49
-    },
-    {
-     "move": "wind_combo",
-     "lv": 1,
-     "from": 1029
-    },
-    {
-     "move": "sig_momonga",
-     "lv": 1,
-     "evo": true
-    },
-    {
-     "move": "wind_ladder2",
-     "lv": 8,
-     "from": 49
-    },
-    {
-     "move": "wind_ladder3",
-     "lv": 15,
-     "from": 49
-    },
-    {
-     "move": "wind_ladder4",
-     "lv": 34,
-     "from": 1029
-    }
-   ]
-  },
   "1030": {
    "name": "ピーグル",
    "type": "風",
@@ -2361,7 +2238,7 @@
    ]
   },
   "1041": {
-   "name": "コウガロ",
+   "name": "ギラファノ",
    "type": "地",
    "type2": null,
    "stage": 3,
@@ -2597,7 +2474,7 @@
    ]
   },
   "1046": {
-   "name": "ユキマダラ",
+   "name": "レパルド",
    "type": "氷",
    "type2": null,
    "stage": 2,
@@ -2645,7 +2522,7 @@
    ]
   },
   "1047": {
-   "name": "ユキパルダ",
+   "name": "レイドパルド",
    "type": "氷",
    "type2": null,
    "stage": 3,
@@ -3108,7 +2985,7 @@
    ]
   },
   "276": {
-   "name": "イリディア",
+   "name": "コウジャク",
    "type": "光",
    "type2": "風",
    "stage": 3,
@@ -3308,7 +3185,7 @@
    ]
   },
   "1055": {
-   "name": "グリュプス",
+   "name": "グリフィン",
    "type": "光",
    "type2": "風",
    "stage": 3,
@@ -7014,6 +6891,38 @@
    ],
    "fixed": true,
    "note_1108": "2026-11-08 新しい融合(ベルクマ＋ラプント・森＋竜)。数はトリケラス(2009・森＋竜・神格型)と同じ決め方: 守り59・素早さ37・体力は monsters.json の +5"
-  }
+  },
+ "2077": {
+  "name": "サンドラタイガー",
+  "type": "雷",
+  "type2": "竜",
+  "stage": 3,
+  "line": null,
+  "archetype": "神格型",
+  "hp": 1472,
+  "atk": 175,
+  "def": 44,
+  "mob": 2,
+  "spd": 51,
+  "red": 0.329,
+  "src_hp": 1540,
+  "src_atk": 170,
+  "src_move": 2,
+  "learnset": [
+   {
+    "move": "thunder_ladder4",
+    "lv": 1
+   },
+   {
+    "move": "dragon_ring",
+    "lv": 1
+   },
+   {
+    "move": "fsig_2077",
+    "lv": 1
+   }
+  ],
+  "fixed": true
+ }
  }
 }

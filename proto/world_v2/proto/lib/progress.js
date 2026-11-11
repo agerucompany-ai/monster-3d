@@ -36,7 +36,7 @@ const CFG={
 const ARC_ORDER=['greece','china','egypt','norse'];
 const ARC_POOL={
   greece:[1007,1026,1030,1033,166,1053,1062,1065],
-  china:[1014,1019,1022,49,1039,1045,1056,1059,1068,195],   // 2026-10-28 決定54: ピリポン系(70)→ビリトラ系(1022)に入れかえ(御三家の変更・新テリオン_御三家融合.md)
+  china:[1014,1019,1022,1030,1039,1045,1056,1059,1068,195],   // 2026-10-28 決定54: ピリポン系(70)→ビリトラ系(1022)に入れかえ(御三家の変更・新テリオン_御三家融合.md)
   egypt:[1004,1036,1042],                                  // 2026-10-28 決定54: クロッコ系(1011)を外した(アレクの相棒)
   norse:[26,1017,1048,16,198,178],                         // 2026-10-28 決定54: クマ系(178)は御三家から外れて北欧の野生に
 };
@@ -83,6 +83,16 @@ function uid(){ return 'c'+Date.now().toString(36)+Math.random().toString(36).sl
 function prog(){ return SAVE&&SAVE[CFG.sub]; }
 function newProg(){ return {v:1, gems:0, roster:[], party:[], partyMax:CFG.partyMax, lines:{}, quests:{}, log:[], arc:CFG.arc, pulls:0}; }
 // 古いセーブ(party:[{mid,rank}]・box:{base:{rank,stack}}・partner・gems)から作る
+// 2026-11-11: retired momonga line becomes the corresponding wind bird form; retain uid/level/experience.
+function migrateRetiredLine(sv){ if(!sv) return; const ids={49:1030,1029:1031,51:1032};
+  for(const c of (sv.party||[])) if(c&&typeof c==='object'&&ids[c.mid]) c.mid=ids[c.mid];
+  if(ids[sv.partner]) sv.partner=ids[sv.partner];
+  if(Array.isArray(sv.owned)) sv.owned=[...new Set(sv.owned.map(n=>ids[n]||n))];
+  if(sv.box) for(const old in ids) if(sv.box[old]){ const cur=sv.box[ids[old]], prev=sv.box[old]; if(!cur || (+prev.lv||+prev.rank||0)>(+cur.lv||+cur.rank||0)) sv.box[ids[old]]=prev; delete sv.box[old]; }
+  const pg=sv[CFG.sub]; if(!pg) return;
+  for(const c of (pg.roster||[])) if(ids[c.mid]) c.mid=ids[c.mid];
+  for(const key of ['lines','forms']) if(pg[key]) for(const old in ids) if(pg[key][old]){ pg[key][ids[old]]=pg[key][ids[old]]||pg[key][old]; delete pg[key][old]; }
+}
 function migrate(sv){ const pg=newProg(); const seen=new Set();
   const add=(mid,rank,src)=>{ mid=+mid; if(!mon(mid)||seen.has(mid)) return null; seen.add(mid); const c={uid:uid(), mid, lv:rank!=null?Math.max(1,Math.min(LV_MAX,Math.round(+rank)||CFG.startLv)):CFG.startLv, exp:0, src, t:Date.now()}; pg.roster.push(c); pg.lines[baseOf(mid)]=1; pg.forms=pg.forms||{}; pg.forms[+mid]=1; return c; };   // 古い成長ランク(1〜20)の数をそのままLvに(相棒★5→Lv5)
   for(const p of (sv.party||[])){ const c=add(p.mid, p.rank, 'old'); if(c&&pg.party.length<CFG.partyMax) pg.party.push(c.uid); }
@@ -105,7 +115,7 @@ P.init=function(o){ o=o||{}; BASE=o.base||scriptBase(); if(o.arc) CFG.arc=o.arc;
   ready=(o.monsters?Promise.resolve(o.monsters):(root.MonBattle&&root.MonBattle.MID&&Object.keys(root.MonBattle.MID).length?Promise.resolve(Object.values(root.MonBattle.MID)):fetch(BASE+'data/monsters.json').then(r=>r.json())))
     .then(list=>{ MON={}; for(const m of list) MON[m.id]=m;
       SAVE=o.save||readLS()||{v:1,flags:{},unlock:{evo:false,fusion:false},owned:[],stage:'field'};
-      if(!SAVE[CFG.sub]) SAVE[CFG.sub]=migrate(SAVE);
+      migrateRetiredLine(SAVE); if(!SAVE[CFG.sub]) SAVE[CFG.sub]=migrate(SAVE);
       const pg=SAVE[CFG.sub]; if(!pg.lines) pg.lines={}; if(!pg.quests) pg.quests={}; if(!pg.log) pg.log=[]; if(!pg.partyMax) pg.partyMax=CFG.partyMax; if(!pg.arc) pg.arc=CFG.arc;
       pg.roster=pg.roster.filter(c=>mon(c.mid)); pg.party=pg.party.filter(u=>pg.roster.some(c=>c.uid===u));
       if(!pg.party.length&&pg.roster.length) pg.party.push(pg.roster[0].uid);
@@ -136,7 +146,7 @@ function dropDom(list){ return list.filter((A,i)=>!list.some((B,j)=>domB(B,A)&&!
 function newMovesBetween(mid, a, b){ const L=LS[mid]||LS[String(mid)]; if(!L||L.fixed) return []; return learnAt(mid).filter(e=>(e.lv||1)>a && (e.lv||1)<=b).map(e=>MV[e.move]); }
 P.movesOf=(c)=>{ const f=formFor(c); return movesAt(f, c.lv); }; P.formFor=formFor; P.newMovesBetween=newMovesBetween;
 P.ready=()=>ready||Promise.reject(new Error('Progress.init を先に'));
-P.attachSave=function(sv, fn){ SAVE=sv; onSave=fn||onSave; if(!SAVE[CFG.sub]) SAVE[CFG.sub]=migrate(SAVE); normalizeLearn(SAVE[CFG.sub]); legacySync(); emit('change',prog()); };
+P.attachSave=function(sv, fn){ SAVE=sv; onSave=fn||onSave; migrateRetiredLine(SAVE); if(!SAVE[CFG.sub]) SAVE[CFG.sub]=migrate(SAVE); normalizeLearn(SAVE[CFG.sub]); legacySync(); emit('change',prog()); };
 
 // ---------------------------------------------------------------- 仲間・パーティ・牧場
 P.roster=()=>(prog()?prog().roster.slice():[]);

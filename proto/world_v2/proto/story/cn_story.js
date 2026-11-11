@@ -54,7 +54,7 @@ sc(3,'c03_1',B,'*',{bg:'anime_cn_river_morning',tod:'morning'});
 go(3,'c03_g',B,BA,'from_bund');
 tp(3,'c03_t',BA,-6,-19.5,3.14159);
 sc(3,'c03_2',BA);
-bt(3,'c03_b','c03_3',BA,{foe:()=>cnFoe({n:'ハオ',party:P({mid:1019,lv:20},{mid:49,lv:19})},'ハオ'),R:{terrain:'forest'}});
+bt(3,'c03_b','c03_3',BA,{foe:()=>cnFoe({n:'ハオ',party:P({mid:1019,lv:20},{mid:1030,lv:19})},'ハオ'),R:{terrain:'forest'}});
 sc(3,'c03_4',BA,'*',{bg:'anime_cn_village_night'});
 // 第4話 師匠の口伝(師範は勝つまで。道場の師範に近づくと勝負)
 sc(4,'c04_1',BA,'*',{bg:'anime_cn_village_night'});
@@ -72,7 +72,7 @@ sc(5,'c05_4',BA,'*',{bg:'anime_cn_bamboo_dawn'});
 sc(6,'c06_1',BA,'*',{bg:'anime_cn_bamboo_dawn'});
 go(6,'c06_g',BA,PL,'from_bamboo',{tod:'morning'});
 sc(6,'c06_2',PL);
-bt(6,'c06_b','c06_3',PL,{foe:()=>cnFoe({n:'手下のシュン',zeroday:1,party:P(49,1059)}),R:{terrain:'pasture',guests:['partner','own2',1022]}});
+bt(6,'c06_b','c06_3',PL,{foe:()=>cnFoe({n:'手下のシュン',zeroday:1,party:P(1030,1059)}),R:{terrain:'pasture',guests:['partner','own2',1022]}});
 sc(6,'c06_4',PL);
 sc(6,'c06_5',PL,'白虎の岩',{obj:'白虎の岩へ',tod:'evening'});
 // 第7話 白虎の岩(ボルケンと並んで、ヴィクターの追っ手と)
@@ -114,7 +114,7 @@ sc(13,'c13_1',KA,'*',{bg:'anime_cn_train_roof'});
 bt(13,'c13_b','c13_2',KA,{bg:'anime_cn_train_roof',foe:()=>cnFoe({n:'レン',party:P({mid:1069,lv:28,fixed:true})}),R:{terrain:'rocky',size:7,ai:{hpX:1.8,atkX:1.5}}});
 sc(13,'c13_3',KA,'*',{bg:'anime_cn_train_roof'});
 sc(14,'c14_1',KA,'*',{bg:'anime_cn_field'}); sc(14,'c14_2',KA,'*',{bg:'anime_cn_field'}); sc(14,'c14_3',KA,'*',{bg:'anime_cn_field'}); sc(14,'c14_4',KA,'*',{bg:'anime_cn_field'});
-bt(14,'c14_b','c14_5',KA,{bg:'anime_cn_field',foe:()=>cnFoe({n:'手下のジエ',zeroday:1,party:P(49,1059)}),R:{terrain:'meadow',guests:[1012,71,'own2']}});
+bt(14,'c14_b','c14_5',KA,{bg:'anime_cn_field',foe:()=>cnFoe({n:'手下のジエ',zeroday:1,party:P(1030,1059)}),R:{terrain:'meadow',guests:[1012,71,'own2']}});
 sc(14,'c14_6',KA,'*',{bg:'anime_cn_field'});
 // 第15話 凍った大河(線路のそばで目ざめ→北の大河へ歩く)
 sc(15,'c15_1',KA,'*',{bg:'anime_cn_field'});
@@ -173,9 +173,9 @@ bt(24,'c24_b','c24_5',TH,{foe:()=>cnFoe({n:'ヴィクターの見張り',zeroday
 sc(25,'c25_1',TH);
 bt(25,'c25_b','c25_2',TH,{foe:()=>cnFoe({n:'ログ＆パッチ',zeroday:1,party:P(1007,1062,1060)}),R:{terrain:'forest'}});
 sc(25,'c25_3',TH); sc(25,'c25_4',TH);
-// 第26話 首の輪(サジンオロチ・レンのヘラツノと並ぶ・フブキヤク＝ユキマダラ＋ソヨモモ)
+// 第26話 首の輪(サジンオロチ・レンのヘラツノと並ぶ・フブキヤク＝レパルド＋ディーグル)
 sc(26,'c26_1',TH); sc(26,'c26_2',TH);
-bt(26,'c26_b','c26_3',TH,{wild:2048,R:{terrain:'forest',guests:['partner',1034,1046,1029],fuse:[2049],tune:{hp:3.088,atk:2.096}}});
+bt(26,'c26_b','c26_3',TH,{wild:2048,R:{terrain:'forest',guests:['partner',1034,1046,1031],fuse:[2049],tune:{hp:3.088,atk:2.096}}});
 sc(26,'c26_4',TH); sc(26,'c26_5',TH);
 // 第27話 海の門(かけらを合わせる謎)
 go(27,'c27_g',TH,SE,'from_thunder',{tod:'dawn'});
@@ -183,7 +183,7 @@ sc(27,'c27_1',SE);
 fn(27,'c27_q',SE,()=>cnQuiz(CN_Q27));
 sc(27,'c27_2',SE,'*',{bg:'anime_cn_sea_dawn'}); sc(27,'c27_3',SE,'*',{bg:'anime_cn_sea_dawn'});
 sc(27,'c27_4',SE,'*',{bg:'anime_cn_sea_dawn',post:()=>setTime('morning')});
-// 第28話 呼ばれる(連戦。二戦目はスレイプニア＝グリフォ＋ユキマダラ)
+// 第28話 呼ばれる(連戦。二戦目はスレイプニア＝グリフォ＋レパルド)
 sc(28,'c28_1',SE,'岩の島',{obj:'分かれた海の石の道を、岩の島へ'});
 sc(28,'c28_2',SE);
 bt(28,'c28_b1','c28_3',SE,{foe:()=>cnFoe({n:'ヴィクターの船の見張り',zeroday:1,party:P(1060,1063)}),R:{terrain:'rocky'}});

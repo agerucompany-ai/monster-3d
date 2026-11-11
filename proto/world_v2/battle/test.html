@@ -26,7 +26,7 @@ h1{font-size:18px;margin:0 0 6px;color:#ffd977;letter-spacing:.08em}
   <div class="tg" id="tgFoe"><button data-v="0" class="on">相手: 進化しない</button><button data-v="1">相手: 進化できる</button></div>
   <div class="tg" id="tgFuse"><button data-v="0" class="on">融合: まだ</button><button data-v="1">融合: 解禁</button></div>
   <div class="tg" id="tgTriple"><button data-v="0" class="on">3体融合: まだ</button><button data-v="1">3体融合: 解禁</button></div>
-  <button class="go" id="bWild">野生 ソヨカ<b>7×7・小川</b></button>
+  <button class="go" id="bWild">野生 ピーグル<b>7×7・小川</b></button>
   <button class="go" id="bTrainer">ニコス<b>9×9・オリーブ畑</b></button>
   <button class="go" id="bMaster">ヤニス<b>11×11・競技場の跡</b></button>
   <button class="go" id="bRagna">フィンブル団<b>11×11・3体融合の確認</b></button>
@@ -38,13 +38,13 @@ h1{font-size:18px;margin:0 0 6px;color:#ffd977;letter-spacing:.08em}
 <script src="battle.js"></script>
 <script>
 // v3名簿(2026-10-25): id は design_v2/redesign_1024/v3_ids.json。自分のパーティ(先頭=相棒=リーダー)。rank=成長ランク、stack=重ねた回数(表示だけ)
-// 1001 フォルン(炎) / 49 ソヨカ(風) / 1022 ビリトラ(雷) / 16 ポチャラシ(氷) / 70 ピリポン(雷)
-const PARTY = [ {mid:1001, rank:5}, {mid:49, rank:4, stack:1}, {mid:1022, rank:3}, {mid:16, rank:3}, {mid:70, rank:2} ];
-const BOX = { 1001:{rank:5}, 49:{rank:4, stack:1}, 1022:{rank:3}, 16:{rank:3}, 70:{rank:2} };   // 持っている子(系統の一段目のid → 成長ランク)
+// 1001 フォルン(炎) / 49 ピーグル(風) / 1022 ビリトラ(雷) / 16 ポチャラシ(氷) / 70 ピリポン(雷)
+const PARTY = [ {mid:1001, rank:5}, {mid:1030, rank:4, stack:1}, {mid:1022, rank:3}, {mid:16, rank:3}, {mid:70, rank:2} ];
+const BOX = { 1001:{rank:5}, 1030:{rank:4, stack:1}, 1022:{rank:3}, 16:{rank:3}, 70:{rank:2} };   // 持っている子(系統の一段目のid → 成長ランク)
 const CASES = {
-  bWild:    { kind:'wild',    size:7,  terrainTheme:'stream',  backdrop:'olive', enemy:{ party:[{mid:49, rank:3}] } },
+  bWild:    { kind:'wild',    size:7,  terrainTheme:'stream',  backdrop:'olive', enemy:{ party:[{mid:1030, rank:3}] } },
   bTrainer: { kind:'trainer', size:9,  terrainTheme:'olive',   backdrop:'olive', enemy:{ name:'ニコス', party:[{mid:1059, rank:4}, {mid:166, rank:4}, {mid:1037, rank:3}, {mid:1053, rank:3}] } },   // オバケロ・ニジッコ・アルマガネ・コグリフ
-  bMaster:  { kind:'master',  size:11, terrainTheme:'stadium', backdrop:'agora', enemy:{ name:'ヤニス', order:0, party:[{mid:185, rank:6, leader:true}, {mid:49, rank:6}, {mid:1037, rank:6}, {mid:16, rank:6}] } },   // アロガルド・ソヨカ・アルマガネ・ポチャラシ
+  bMaster:  { kind:'master',  size:11, terrainTheme:'stadium', backdrop:'agora', enemy:{ name:'ヤニス', order:0, party:[{mid:185, rank:6, leader:true}, {mid:1030, rank:6}, {mid:1037, rank:6}, {mid:16, rank:6}] } },   // アロガルド・ピーグル・アルマガネ・ポチャラシ
   // 3体融合の確認: 相手がリンドヴルム(290)・トールガ(1028)・マグヤモラ(1009)を持つ(2026-10-28 3体融合は3体とも3段目) → tripleUnlocked なら ラグナディオ(2071)。自分も同じ3体＋相棒
   bRagna:   { kind:'master',  size:11, terrainTheme:'stadium', backdrop:'agora', party:[{mid:1001, rank:6}, {mid:290, rank:6}, {mid:1028, rank:6}, {mid:1009, rank:6}],
               enemy:{ name:'フィンブル団', order:3, party:[{mid:290, rank:6, leader:true}, {mid:1028, rank:6}, {mid:1009, rank:6}] } },
