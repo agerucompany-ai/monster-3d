@@ -39,7 +39,7 @@ function chips(){
   document.getElementById('fArc').innerHTML=[['all','全部']].concat(DX.ARCS.filter(a=>a[0]!=='starter')).map(([k,v])=>`<button class="chip ${F.arc===k?'on':''}" data-arc="${k}">${v}</button>`).join('')
     +`<button class="chip ${F.lost?'on':''}" data-lost="1"><span class="mk lost" style="margin:0">弱点が消える</span></button>`;
   document.getElementById('fType').innerHTML=`<button class="chip ${F.type==='all'?'on':''}" data-ty="all">全タイプ</button>`+DX.TYPES.map(t=>`<button class="chip ${F.type===t?'on':''}" data-ty="${t}"><span class="dot" style="background:${DX.TYPE_COL[t]}"></span>${t}</button>`).join('');
-  const ps=Object.keys(DX.usedIn).map(Number).sort((a,b)=>(DX.ARC_I[DX.arcOf(a)]??9)-(DX.ARC_I[DX.arcOf(b)]??9)||(DX.md.order[a]??999)-(DX.md.order[b]??999));
+  const ps=Object.keys(DX.usedIn).map(Number).sort((a,b)=>(DX.no[a]??9999)-(DX.no[b]??9999));   // monsters.json の順
   document.getElementById('fPar').innerHTML=`<button class="chip ${F.par==null?'on':''}" data-par="">全員</button>`+ps.map(p=>`<button class="chip ${F.par===p?'on':''}" data-par="${p}"><img src="${DX.img(p)}" loading="lazy" alt="">${DX.esc(DX.M[p].name)}<span class="tx">${DX.usedIn[p].length}</span></button>`).join('');
 }
 function render(){

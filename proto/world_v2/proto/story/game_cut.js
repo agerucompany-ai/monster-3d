@@ -11,6 +11,6 @@ const GAME_CUT_STALE=[];
     else { const O=T[p[0]]; if(!O||!O[p[1]]) continue; arr=O[p[1]]; set=v=>{O[p[1]]=v;}; }
     const v=K.map(i=>arr[i]); if(arr.length!==n||v.some(x=>!x)||v.map(x=>x.t.slice(0,8)).join('|')!==sig){ GAME_CUT_STALE.push(key); continue; }
     set(v); }
-  for(const ep in GR_BT){ if(GR_BT[ep]) GR_BT[ep].mid=[]; }
+  for(const ep in GR_BT){ if(GR_BT[ep]){ GR_BT[ep].midAll=GR_BT[ep].mid; GR_BT[ep].mid=[]; } }   // midAll=出会いの台詞(GR_PLAN.pre)に使う
   if(GAME_CUT_STALE.length) console.warn('GAME_CUT: 台本が変わった場面は元のまま',GAME_CUT_STALE);
 })();

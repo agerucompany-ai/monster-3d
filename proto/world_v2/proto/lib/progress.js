@@ -56,13 +56,14 @@ const AREA_RULE={ oliva_hill:{lv:[2,4]}, oliva_maze:{lv:[4,6]}, arcadia:{lv:[5,8
 P.config={cfg:CFG, areas:AREA_RULE, arcs:ARC_RULE, pools:ARC_POOL, starters:STARTERS, ancientFusions:ANCIENT_FUSIONS, bossForms:BOSS_FORMS, trumpForms:TRUMP_FORMS};
 
 // ---------------------------------------------------------------- モンスターの表(名前・段・進化先)
-let MON={}, BASE='', IMG=(mid)=>BASE+'img/'+mid+'.webp';
+let MON={}, MORD={}, BASE='', IMG=(mid)=>BASE+'img/'+mid+'.webp';
 const ICON=(n)=>`<img class="ui-ic" src="${BASE||scriptBase()}img/ui/${n}.webp" alt="">`;   // 自前のUIアイコン(battle/img/ui・2026-10-27 絵文字の代わり)
 function scriptBase(){ try{ const s=document.currentScript&&document.currentScript.src; if(s) return s.replace(/lib\/progress\.js.*$/,'')+'../battle/'; }catch(e){} return '../battle/'; }
 function mon(mid){ return MON[+mid]||null; }
 function baseOf(mid){ let m=mon(mid), g=0; while(m&&m.evolves_from!=null&&g++<6) m=mon(m.evolves_from); return m?m.id:+mid; }
 function lineOf(mid){ const o=[]; let m=mon(baseOf(mid)), g=0; while(m&&g++<6){ o.push(m.id); m=m.evolves_to!=null?mon(m.evolves_to):null; } return o; }
 function stageOf(mid){ const m=mon(mid); return m?(m.level||1):1; }
+function byOrd(a,b){ return (MORD[a]??1e6)-(MORD[b]??1e6) || a-b; }   // monsters.json の順(新しい番号の順)
 function nameOf(mid){ const m=mon(mid); return m?m.name:('#'+mid); }
 P.mon=mon; P.baseOf=baseOf; P.lineOf=lineOf; P.stageOf=stageOf; P.nameOf=nameOf; P.img=(mid)=>IMG(mid);
 
@@ -112,8 +113,8 @@ P.state=()=>prog(); P.saveObj=()=>SAVE;
 // init({save, onSave, base, arc, monsters}) → Promise
 //   save: フィールドが持っている SAVE(同じ物を渡す。省略=localStorage から読む/無ければ作る) / onSave: フィールドの saveGame(省略=自分で localStorage に書く)
 P.init=function(o){ o=o||{}; BASE=o.base||scriptBase(); if(o.arc) CFG.arc=o.arc; onSave=o.onSave||null;
-  ready=(o.monsters?Promise.resolve(o.monsters):(root.MonBattle&&root.MonBattle.MID&&Object.keys(root.MonBattle.MID).length?Promise.resolve(Object.values(root.MonBattle.MID)):fetch(BASE+'data/monsters.json').then(r=>r.json())))
-    .then(list=>{ MON={}; for(const m of list) MON[m.id]=m;
+  ready=(o.monsters?Promise.resolve(o.monsters):(root.MonBattle&&root.MonBattle.MID&&Object.keys(root.MonBattle.MID).length?Promise.resolve((root.MonBattle.MONSTERS&&root.MonBattle.MONSTERS.length?root.MonBattle.MONSTERS:Object.values(root.MonBattle.MID)).slice()):fetch(BASE+'data/monsters.json').then(r=>r.json())))
+    .then(list=>{ MON={}; MORD={}; list.forEach((m,i)=>{ MON[m.id]=m; MORD[m.id]=i; });   /* 2026-11-13 ずかんの並び=monsters.json の順 */
       SAVE=o.save||readLS()||{v:1,flags:{},unlock:{evo:false,fusion:false},owned:[],stage:'field'};
       migrateRetiredLine(SAVE); if(!SAVE[CFG.sub]) SAVE[CFG.sub]=migrate(SAVE);
       const pg=SAVE[CFG.sub]; if(!pg.lines) pg.lines={}; if(!pg.quests) pg.quests={}; if(!pg.log) pg.log=[]; if(!pg.partyMax) pg.partyMax=CFG.partyMax; if(!pg.arc) pg.arc=CFG.arc;
@@ -167,7 +168,7 @@ P.hasLine=(mid)=>{ const pg=prog(); if(!pg) return false; const b=baseOf(mid); r
 P.knowsForm=(mid)=>{ const pg=prog(); if(!pg||!mon(mid)) return false; if(stageOf(mid)<=1) return P.hasLine(mid); return !!(pg.forms&&pg.forms[+mid]); };
 P.knowsFusion=(fid)=>{ const pg=prog(); const m=mon(fid); if(!pg||!m||m.role!=='fusion') return false; if(pg.fusions&&pg.fusions[+fid]) return true; return !!(SAVE&&SAVE.unlock&&SAVE.unlock.fusion) && !ANCIENT_FUSIONS.includes(+fid) && Array.isArray(m.recipe) && m.recipe.length===2; };
 P.hasForm=(mid)=>{ const m=mon(mid); if(!m) return false; return m.role==='fusion'?P.knowsFusion(mid):P.knowsForm(mid); };
-P.fusionKnownList=()=>Object.values(MON).filter(m=>m.role==='fusion'&&P.knowsFusion(m.id)).map(m=>m.id);
+P.fusionKnownList=()=>Object.values(MON).filter(m=>m.role==='fusion'&&P.knowsFusion(m.id)).map(m=>m.id).sort(byOrd);   // 2026-11-13 monsters.json の順(Object.values は id の小さい順になる)
 P.formsList=()=>{ const pg=prog(); return pg&&pg.forms?Object.keys(pg.forms).map(Number).filter(id=>mon(id)):[]; };
 // その姿を手に入れた(野生のリーダー・生み出す・ボス): 2段目以上 → 進化の仕方を覚える / その系統の子がいなければ1段目の子を1体
 function obtain(mid, lv, src){ const out={mid:+mid, forms:[], gave:null}; if(stageOf(mid)>=2) out.forms=learnForm(mid); if(!P.hasLine(mid)) out.gave=P.add(baseOf(mid), lv, src); return out; }
@@ -210,7 +211,7 @@ P.battleParty=()=>P.party().map(c=>({mid:c.mid, lv:c.lv, uid:c.uid}));
 P.markSeen=function(mids, st){ const pg=prog(); if(!pg) return; pg.seen=pg.seen||{}; st=+st||1; for(const mid of mids||[]){ if(!mon(mid)) continue; pg.seen[+mid]=1; const ln=lineOf(mid), i=ln.indexOf(+mid); ln.forEach((id,j)=>{ if(j>i&&stageOf(id)<=st) pg.seen[id]=1; }); } };   // 野生は開始の段まで進化して出るので、その姿も「見た」
 P.dex=function(){ const pg=prog(); const seen=(pg&&pg.seen)||{}; const own=new Set(P.roster().map(c=>baseOf(c.mid)).concat(P.formsList())); /* もっている=持っている子(1段目)＋覚えた進化の仕方 */ const ARCJ={greece:'ギリシャ',china:'中国',egypt:'エジプト',norse:'北欧'};
   const rows=ARC_ORDER.map(a=>{ const ids=[]; for(const b of ARC_POOL[a]) for(const id of lineOf(b)) if(!ids.includes(id)) ids.push(id); return {arc:a, name:ARCJ[a], total:ids.length, seen:ids.filter(id=>seen[id]||own.has(id)).length, owned:ids.filter(id=>own.has(id)).length}; });
-  const lines=[...new Set(P.roster().map(c=>baseOf(c.mid)))].sort((a,b)=>a-b);
+  const lines=[...new Set(P.roster().map(c=>baseOf(c.mid)))].sort(byOrd);   // 2026-11-13 オーナー「図鑑の並びもふるいまま」: id の順 → monsters.json の順
   return {rows, owned:[...own], lines, fusions:P.fusionKnownList()}; };
 
 // ---------------------------------------------------------------- ジェム
@@ -410,6 +411,12 @@ img.ui-ic{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.3em;m
 .pgLbl{font-size:12px;font-weight:800;color:#c9d2ea;margin:2px 2px 4px}
 .pgCode{font:900 28px/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;text-align:center;color:#fff;background:#2c3e66;border:2px solid #ffd977;border-radius:14px;padding:14px 6px;margin:0 0 8px;-webkit-user-select:text;user-select:text}
 .pgNo{text-align:center;font-size:12px;font-weight:800;color:#8a96b8;margin-top:14px}
+#pgHead #pgToTitle{width:auto;height:40px;border-radius:999px;padding:0 14px;font-size:14px;white-space:nowrap}
+#pgConfirm{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(4,6,16,.66);z-index:5;pointer-events:auto}
+#pgConfirm.on{display:flex}
+#pgConfirm .box{width:min(86vw,340px);box-sizing:border-box;background:rgba(12,18,44,.97);border:2px solid #ffd977;border-radius:18px;padding:18px 14px 8px;text-align:center}
+#pgConfirm .q{font-size:17px;font-weight:800;color:#fff;line-height:1.5}
+#pgConfirm .pgAct .pgBtn{flex:1}
 .pgDet{background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.16);border-radius:16px;padding:10px 10px 6px;margin:0 0 10px}
 .pgDet.lead{border-color:#ffd977}
 .pgDetHd{display:flex;gap:10px;align-items:center}
@@ -457,10 +464,13 @@ function reasonJP(r){ if(!r) return ''; if(/^quest:/.test(r)) return 'クエス�
 function el(tag,cls,html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
 UI.mount=function(o){ o=o||{}; if(R) return R; const st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);
   R=el('div'); R.id='pgRoot'; R.innerHTML=`<div id="pgBar"><button id="pgBtParty">仲間</button><button id="pgBtCradle">生み出す</button><button id="pgBtGems" class="gem">${ICON('gem')}0</button></div>
-  <div id="pgPanel"><div id="pgHead"><h2 id="pgTitle"></h2><span class="gem" id="pgHeadGem"></span><button id="pgClose">×</button></div><div id="pgTabs"></div><div id="pgBody"></div></div><div id="pgToast"></div>`;
+  <div id="pgPanel"><div id="pgHead"><h2 id="pgTitle"></h2><span class="gem" id="pgHeadGem"></span><button id="pgToTitle" style="display:none">タイトルへ</button><button id="pgClose">×</button></div><div id="pgTabs"></div><div id="pgBody"></div><div id="pgConfirm"><div class="box"><div class="q">セーブして<br>タイトルにもどる？</div><div class="pgAct"><button class="pgBtn" id="pgCfNo">やめる</button><button class="pgBtn main" id="pgCfYes">タイトルへ</button></div></div></div></div><div id="pgToast"></div>`;
   document.body.appendChild(R);
   R.querySelector('#pgBtParty').onclick=()=>UI.open('party'); R.querySelector('#pgBtCradle').onclick=()=>UI.open('cradle'); R.querySelector('#pgBtGems').onclick=()=>UI.open('gems');
   R.querySelector('#pgClose').onclick=()=>UI.close();
+  // 2026-11-13 オーナー「タイトル画面に戻るがないな」: メニューの「タイトルへ」→ 確かめる(画面の中の2つのボタン・window.confirm は使わない)→ on('title') の側がセーブしてタイトルを出す
+  const cf=R.querySelector('#pgConfirm'); R.querySelector('#pgToTitle').onclick=()=>cf.classList.add('on'); R.querySelector('#pgCfNo').onclick=()=>cf.classList.remove('on');
+  R.querySelector('#pgCfYes').onclick=()=>{ cf.classList.remove('on'); UI.close(); emit('title',{}); };
   if(o.bar===false) R.querySelector('#pgBar').style.display='none';
   P.on('change',()=>{ UI.refresh(); }); UI.refresh(); return R; };
 const TYC={炎:'#e8503a',水:'#2f86c5',地:'#9c7a3c',風:'#4fa86a',雷:'#d6a915',闇:'#6a4a8c',氷:'#5cc8e0',光:'#f3d65a',竜:'#b15ad6',森:'#5cbf3a'};
@@ -490,7 +500,7 @@ UI.refresh=function(){ if(!R) return; R.querySelector('#pgBtGems').innerHTML=ICO
 let tab='party'; UI.opts={};
 UI.open=function(k,o){ if(!R) UI.mount(); o=o||{}; if(k==='party'){ k='menu'; o.tab=o.tab||'party'; } else if(k==='gems'){ k='menu'; o.tab=o.tab||'items'; }   // 2026-10-27: 仲間・牧場・ジェムは1つのメニュー(タブ)に
   if(k==='menu'){ tab=o.tab||tab||'party'; UI.opts=o; } cur=k; pick=null; pend=null; UI._hatch=null; R.querySelector('#pgPanel').classList.add('on'); R.querySelector('#pgBar').style.visibility='hidden'; UI.render(); emit('ui',{open:k}); };
-UI.close=function(){ if(!R) return; cur=null; R.querySelector('#pgPanel').classList.remove('on'); R.querySelector('#pgBar').style.visibility=''; emit('ui',{open:null}); };
+UI.close=function(){ if(!R) return; cur=null; R.querySelector('#pgConfirm').classList.remove('on'); R.querySelector('#pgPanel').classList.remove('on'); R.querySelector('#pgBar').style.visibility=''; emit('ui',{open:null}); };
 UI.isOpen=()=>!!cur; UI.tab=()=>cur==='menu'?tab:null;
 function card(c, opts){ const d=el('div','pgCard'+(opts.on?' on':'')+(opts.pend?' pend':'')); const need=CFG.expNeed(c.lv); const pct=c.lv>=LV_MAX?100:Math.min(100,Math.round(100*(c.exp||0)/need));
   d.innerHTML=`${opts.leader?'<i class="ld"></i>':''}${opts.tag?`<span class="tg">${opts.tag}</span>`:''}<img src="${IMG(c.mid)}" alt=""><div class="nm">${nameOf(c.mid)}</div><div class="lv">Lv${c.lv}</div><div class="bar"><i style="width:${pct}%"></i></div>`; d.dataset.uid=c.uid; return d; }
@@ -552,7 +562,7 @@ function moveTab(B){ const T=root.TherionPay&&root.TherionPay.transfer; const X=
 }
 
 UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const T=R.querySelector('#pgTitle'); const TB=R.querySelector('#pgTabs');
-  TB.style.display=cur==='menu'?'grid':'none';
+  TB.style.display=cur==='menu'?'grid':'none'; R.querySelector('#pgToTitle').style.display=cur==='menu'&&listeners.some(f=>f.k==='title')?'':'none';   // タイトルへ(on('title') がある時だけ)
   if(cur==='menu'){ T.textContent='メニュー'; TB.innerHTML=TABS.map(([k,n,ic])=>`<button data-t="${k}" class="${k===tab?'on':''}">${ICON(ic)}${n}</button>`).join('');
     TB.querySelectorAll('button').forEach(b=>b.onclick=()=>{ tab=b.dataset.t; pick=null; pend=null; UI.render(); B.scrollTop=0; emit('ui',{open:'menu',tab}); });
     const party=P.party(), ranch=P.ranch(), max=P.partyMax();

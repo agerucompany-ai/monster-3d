@@ -2522,7 +2522,8 @@ let PROG=null; const pgHud=document.getElementById('pgHud');
 function hudRefresh(){}   // 2026-10-27: ジェムの数はメニューの「もちもの」へ(HUD はメニュー1つ)
 async function progInit(){ if(!window.Progress) return;
   if(!PROG){ PROG=Progress.init({save:SAVE,onSave:saveGame,base:'../battle/'}).then(()=>{ Progress.ui.mount({bar:false}); Progress.on('change',hudRefresh);
-      Progress.on('ui',d=>{ if(d.open){ PAUSED=true; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; talkClose(); } else { PAUSED=false; LAST=performance.now(); followersSet(); } hudRefresh(); }); hudRefresh(); }); await PROG; }
+      Progress.on('ui',d=>{ if(d.open){ PAUSED=true; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; talkClose(); } else { PAUSED=false; LAST=performance.now(); followersSet(); } hudRefresh(); });
+      Progress.on('title',()=>{ if(!SAVE||STORY||TRANS||ENC) return; saveGame(); AUTO=null; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; enterEl.classList.remove('on'); AUTOSAVE_T=0; saveBtn.style.display='none'; pgHud.style.display='none'; document.getElementById('btBgm').style.display='none'; toTitle(); });   /* 2026-11-13 オーナー「タイトル画面に戻るがないな」: メニューの「タイトルへ」(progress.js)→ セーブしてタイトル(はじめから/つづきから)へ */ hudRefresh(); }); await PROG; }
   else { await PROG; Progress.attachSave(SAVE,saveGame); hudRefresh(); } }
 document.getElementById('btMenu').addEventListener('click',async()=>{ if(!canSave()) return; try{ await briefLib(); }catch(_){} if(!canSave()) return; Progress.ui.open('menu',{canSwap:TESTMODE||inTown(HERO.x,HERO.z)}); });   // メニュー(パーティ・牧場・ずかん・もちもの 2026-10-27)。入れかえは今までどおり街(静域)の中だけ・地形の表を出すため battle.js を先に読む
 const MONN={1001:'フォルン',70:'ピリポン',1011:'クロッコ'};   // 御三家(2026-10-28 決定54: ヤマト=フォルン・エリー=ピリポン・アレク=クロッコ)
@@ -3212,28 +3213,33 @@ async function grScene(k,n){ await storyField(k); }
 //  go:{after:場面のキー, to, at}=その場面のあとで地図を移る / tp:{before:キー, x,z,yaw}=その場面の前に同じ地図の中で移る / end:{to,at}=話のおわりに地図を移る
 // ============================================================================
 const GR_PLAN={
-  1: {map:'oliva_town', at:'*', tod:'noon', pro:['g01_01','g01_02','g01_03']},
-  2: {map:'oliva_town', at:'いこいの広場', tod:'morning', obj:'あくる朝。村の広場へ', go:{after:'g02_03', to:'oliva_hill', at:'from_town'}},
-  3: {map:'arcadia', at:'森の入口', tod:'evening', obj:'村の裏の、森の小川へ', end:{to:'oliva_town', at:'start'}},
-  4: {map:'oliva_town', at:'いこいの広場', tod:'dawn', obj:'あくる朝。村の広場へ'},
-  5: {map:'oliva_hill', at:['オリーブ畑','花の野原','小川'], tod:'dawn', obj:'丘の畑を通って、東へ'},
-  6: {map:'arcadia', at:'森の入口', tod:'noon', obj:'アルカディアの森の入口へ', end:{to:'dig', at:'from_forest'}},
-  7: {map:'dig', at:'発掘場', tod:'night', obj:'森の外れの、発掘場へ', end:{to:'oliva_hill', at:'from_town'}},
-  8: {map:'oliva_hill', at:['オリーブ畑','花の野原','小川'], tod:'morning', obj:'村はずれの、ぶどう畑へ', end:{to:'nafria', at:'from_lion'}},   // 11/08 新: エリーのぶどう小屋(丘の畑で)
-  9: {map:'nafria', at:'ナフリアの港', tod:'morning', obj:'港町ナフリアの港へ', end:{to:'athens', at:'from_crete'}},   // 11/08: 旧8＋9(港・客船・ゼノ)
-  10:{map:'athens', at:'大競技場', tod:'morning', obj:'白い都の、大競技場へ'},
-  11:{map:'athens', at:'大競技場', tod:'morning', obj:'大会の二日目。大競技場へ'},
-  12:{map:'athens', at:'大競技場', tod:'night', obj:'決勝の日。大競技場へ'},
-  13:{map:'athens', at:'モナスティラキ', tod:'night', obj:'優勝の夜。屋台の町へ', end:{to:'liongate', at:'from_nafria'}},
-  14:{map:'liongate', at:'獅子の門', tod:'morning', obj:'獅子門の丘の、獅子の門へ', end:{to:'corinth', at:'from_ship'}},
-  15:{map:'corinth', at:'運河の大橋', tod:'morning', obj:'運河の町コリンタの、大橋へ', end:{to:'marble', at:'from_corinth'}},
-  16:{map:'marble', at:'保管庫', tod:'dawn', obj:'大理石の谷の、保管庫へ', end:{to:'crete_maze', at:'from_surface'}},
-  17:{map:'crete_maze', at:'迷宮の広間', obj:'迷宮の奥の広間へ', end:{to:'oliva_hill', at:'from_sky'}},
-  18:{map:'oliva_hill', at:'競技場の跡', tod:'night', obj:'夜。村の古代の競技場へ'},
-  19:{map:'oliva_hill', at:'研究所あと', tod:'dawn', obj:'丘の上の、研究所あとへ'},
-  20:{map:'oliva_hill', at:'研究所あと', tod:'night', obj:'夜。丘の、ため池の堰へ'},
-  21:{map:'oliva_hill', at:'*', chain:1, tod:'dawn'},
-  22:{map:'oliva_hill', at:'*', chain:1, tod:'morning'},
+  // 2026-11-13 オーナー「会話バトル会話バトルで移動がない。プレーヤーが手を動かしてストーリーをたどるように」:
+  //  walk={場面: {at:場所, obj:目的}} = その場面は、ヤマトを歩かせてその場所に着いた時に始まる(field:1 は全画面の絵を使わず、その場の地図の上で)。'B'=勝負。
+  //  pre=N = 勝負の前に、台本の勝負の場面の頭 N かたまり(出会いの台詞)を流す。after={場面:'bond'} = その場面のあとでフォルンが仲間になってついてくる
+  1: {map:'oliva_town', at:'*', tod:'noon', pro:['g01_01','g01_02','g01_03'], after:{g01_06:'bond'},
+      walk:{g01_05:{at:'神殿の丘', obj:'狐を追って、村の上の神殿のあとへ'}, g01_07:{at:'いこいの広場', obj:'フォルンをつれて、村の広場へもどろう', field:1}}},
+  2: {map:'oliva_town', at:'いこいの広場', tod:'morning', obj:'あくる朝。村の広場へ', go:{after:'g02_03', to:'oliva_hill', at:'from_town'}, pre:2,
+      walk:{g02_04:{at:'研究所あと', obj:'エリーと、丘の上のため池へ'}, g02_07:{at:'競技場の跡', obj:'次の日。村の外れの、古代の競技場へ'}, g02_09:{at:'競技場の下の扉', obj:'競技場の下の、石の扉へ'}, B:{at:'小川', obj:'通路を出て、丘のすその水路へ'}}},
+  3: { walk:{'g03_03': {'at': 'ラドン川の渓流', 'obj': '夜の森の道を、小川の方へ'}, 'g03_05': {'at': 'ラドン川の淵', 'obj': 'アレクについて、川の淵へ'}},map:'arcadia', at:'森の入口', tod:'evening', obj:'村の裏の、森の小川へ', end:{to:'oliva_town', at:'start'}},
+  4: { walk:{'g04_05': {'at': '港の見える丘', 'obj': 'マルコと、林のそばの畑へ'}},map:'oliva_town', at:'いこいの広場', tod:'dawn', obj:'あくる朝。村の広場へ'},
+  5: { walk:{'g05_03': {'at': '研究所あと', 'obj': '丘のいちばん上の、ヤニスさんの畑へ'}, 'g05_09': {'at': '道しるべ', 'obj': '夕方。丘の奥の、道しるべまで行こう'}},map:'oliva_hill', at:['オリーブ畑','花の野原','小川'], tod:'dawn', obj:'丘の畑を通って、東へ'},
+  6: { walk:{'g06_03': {'at': '森の空き地', 'obj': '焦げたにおいの方へ。森の奥の空き地へ'}, 'g06_07': {'at': 'ラドン川の淵', 'obj': '森は通れない。川の船着き場へ'}},map:'arcadia', at:'森の入口', tod:'noon', obj:'アルカディアの森の入口へ', end:{to:'dig', at:'from_forest'}},
+  7: { walk:{'g07_03': {'at': '研究者の小屋', 'obj': 'ふるいの係。小屋の前へ'}, 'g07_04': {'at': '発掘場', 'obj': '骨の型の前の、レンの所へ'}}, pre:2,map:'dig', at:'発掘場', tod:'night', obj:'森の外れの、発掘場へ', end:{to:'oliva_hill', at:'from_town'}},
+  8: { walk:{'g08_03': {'at': '花の野原', 'obj': '村はずれの、エリーのぶどう小屋へ'}},map:'oliva_hill', at:['オリーブ畑','花の野原','小川'], tod:'morning', obj:'村はずれの、ぶどう畑へ', end:{to:'nafria', at:'from_lion'}},   // 11/08 新: エリーのぶどう小屋(丘の畑で)
+  9: { walk:{'g09_02': {'at': '防波堤のとりで', 'obj': '客を乗せる船をさがして、防波堤の方へ'}},map:'nafria', at:'ナフリアの港', tod:'morning', obj:'港町ナフリアの港へ', end:{to:'athens', at:'from_crete'}},   // 11/08: 旧8＋9(港・客船・ゼノ)
+  10:{ walk:{'g10_02': {'at': 'モナスティラキ', 'obj': '大会の屋台の町を通って、受付へ'}, 'g10_03': {'at': '大競技場', 'obj': '坂の上の、古い競技場の受付へ'}}, pre:1,map:'athens', at:'空の港', tod:'morning', obj:'白い都の港に着いた'},
+  11:{ walk:{'g11_02': {'at': '大競技場', 'obj': '準決勝。大競技場の選手の通路へ'}}, pre:1,map:'athens', at:'モナスティラキ', tod:'morning', obj:'大会の二日目。屋台の町の安い宿から'},
+  12:{ walk:{'g12_03': {'at': '大競技場', 'obj': '決勝の日。大競技場へ'}, 'g12_10': {'at': 'モナスティラキ', 'obj': 'お祝いの夜。屋台の町へ'}},map:'athens', at:'モナスティラキ', tod:'night', obj:'決勝の前の夜。屋台の町の宿へ'},
+  13:{ walk:{'g13_04': {'at': '空の港', 'obj': 'エリーを追って、海の桟橋へ'}},map:'athens', at:'モナスティラキ', tod:'night', obj:'優勝の夜。屋台の町へ', end:{to:'liongate', at:'from_nafria'}},
+  14:{ walk:{'g14_03': {'at': '獅子の門', 'obj': '丘の上の、獅子の門へ'}, 'g14_04': {'at': '丘の上の館', 'obj': 'ヴィクターの屋敷へ上がる'}, 'g14_06': {'at': '城あとの坂', 'obj': '夕方。丘を下りる'}},map:'liongate', at:'丘のオリーブ', tod:'morning', obj:'獅子門の丘の、ふもとのオリーブ林へ', end:{to:'corinth', at:'from_ship'}},
+  15:{ walk:{'g15_04': {'at': 'ディオルコス', 'obj': '運河ぞいの石の道へ。黒い荷の船がいる'}, 'g15_07': {'at': '港', 'obj': '夕方。待合所の裏の岸でひと休み'}, 'g15_08': {'at': '運河の大橋', 'obj': 'ノモスの机へもどる'}},map:'corinth', at:'運河の大橋', tod:'morning', obj:'運河の町コリンタの、大橋へ', end:{to:'marble', at:'from_corinth'}},
+  16:{ walk:{'g16_03': {'at': '保管庫', 'obj': '谷のいちばん奥の、保管庫へ'}, 'g16_07': {'at': '大理石の崖', 'obj': 'その夜。山の中腹の岩かげで休む'}},map:'marble', at:'谷の入口', tod:'dawn', obj:'大理石の谷へ', end:{to:'crete_maze', at:'from_surface'}},
+  17:{ walk:{'g17_03': {'at': '迷宮', 'obj': 'グリフォについて、右の道へ'}, 'g17_04': {'at': '広間の前', 'obj': '迷宮の奥の、広間の上へ'}, 'B': {'at': '迷宮の広間', 'obj': '階段を下りて、広間へ'}}, pre:2,map:'crete_maze', at:'迷宮の入口', obj:'がけの下の、迷宮の入口へ', end:{to:'oliva_hill', at:'from_sky'}},
+  18:{ walk:{'g18_02': {'at': '競技場の下の扉', 'obj': '競技場の下の、石の扉へ'}},map:'oliva_hill', at:'競技場の跡', tod:'night', obj:'夜。村の古代の競技場へ'},
+  19:{ walk:{'g19_04': {'at': '研究所あと', 'obj': 'アナさんがまだ池に！丘の上の研究所あとへ'}, 'g19_09': {'at': 'オリーブ畑', 'obj': 'フォルンの足を見せに、村へ下りる'}},map:'oliva_hill', at:'オリーブ畑', tod:'dawn', obj:'夜ふけ。裏の畑の道から、ホテルへ'},
+  20:{ walk:{'g20_02': {'at': '小川', 'obj': '夜明け前。丘のすその、おばあさんの家へ'}, 'g20_05': {'at': 'オリーブ畑', 'obj': '夜。ホテルの裏のぶどう畑へ'}, 'g20_06': {'at': '研究所あと', 'obj': 'ため池の土手へ。チップの子が待っている'}},map:'oliva_hill', at:'研究所あと', tod:'night', obj:'夜。丘の、ため池の堰へ'},
+  21:{ walk:{'g21_03': {'at': '研究所あと', 'obj': '坂を上って、ため池の堰の前へ'}}, pre:1,map:'oliva_hill', at:'オリーブ畑', obj:'夜明け前。ホテルの裏口から、堰へ', tod:'dawn'},
+  22:{ walk:{'B': {'at': '空の船乗り場', 'obj': '数日あと。空の船乗り場の前の芝生へ'}}, pre:1,map:'oliva_hill', at:'*', chain:1, tod:'morning'},
 };
 // 全画面の絵で見せる場面(その場にいない所・回想・夜の部屋など)。ほかは今いる地図の上で見せる。代わりの絵は BG_ALIAS。場面の番号は 11/08 の台本(gr_scenes.js の GR_EP)
 // 2026-11-08 場面の途中で絵を変える行。台本の文の頭で合わせる(台本が変わって見つからない行は何も起きない)。'black'=黒
@@ -3337,10 +3343,10 @@ function grBuild(){ GR_STEPS.length=0; for(const k in GR_BY) delete GR_BY[k];
     const list=[]; sc.forEach((x,i)=>{ if(bi<0||i<bi||i>bl){ list.push(x[0]); return; } if(!x[2]) list.push(x[0]); if(i===bl) list.push('B'); });
     let map=P.map, first=true;
     for(const k of list){
-      const head=first?{at:P.at, tod:P.tod, obj:P.obj, head:1}:{at:'*'}; first=false;
+      const W=P.walk&&P.walk[k]; const head=first?{at:P.at, tod:P.tod, obj:P.obj, head:1}:(W?{at:W.at, wobj:W.obj}:{at:'*'}); first=false;
       if(P.tp&&P.tp.before===k) grS(Object.assign({id:'g'+pad2g(ep)+'_t', ep, kind:'tp', map, x:P.tp.x, z:P.tp.z, yaw:P.tp.yaw}, head.head?head:{at:'*'}));
       if(k==='B') grS(Object.assign({id:'g'+pad2g(ep)+'_b', ep, kind:'battle', map, F:GR_FIGHTS[ep]}, head));
-      else grS(Object.assign({id:k, ep, kind:'scene', key:k, map, bg:GR_BG[k], pro:!!(P.pro&&P.pro.includes(k))}, head));
+      else grS(Object.assign({id:k, ep, kind:'scene', key:k, map, bg:(W&&W.field)?undefined:GR_BG[k], pro:!!(P.pro&&P.pro.includes(k))}, head));
       if(P.go&&P.go.after===k){ grS({id:'g'+pad2g(ep)+'_g', ep, kind:'go', map, to:P.go.to, toAt:P.go.at, at:'*'}); map=P.go.to; } }
     if(P.end) grS({id:'g'+pad2g(ep)+'_e', ep, kind:'go', map, to:P.end.to, toAt:P.end.at, at:'*'}); }
   GR_STEPS.forEach((s,i)=>{ const n=GR_STEPS[i+1]; s.last=!n||n.ep!==s.ep; }); }
@@ -3356,11 +3362,14 @@ async function grRun(){ if(GR_RUN) return; GR_RUN=true;
   finally{ GR_RUN=false; bgmScene(null); objUpdate(); } }
 async function grStep(s){ const f=GF();
   if(s.tod&&TODN!==s.tod&&TOD[s.tod]) setTime(s.tod,true);
-  if(s.kind==='scene'){ bgmScene(s.key); if(GR_HOOK[s.key]) await GR_HOOK[s.key](); if(SC[s.key]){ if(s.bg) await runScene(SC[s.key],{bg:s.bg}); else await storyField(s.key); } }
+  if(s.kind==='scene'){ bgmScene(s.key); if(GR_HOOK[s.key]) await GR_HOOK[s.key](); if(SC[s.key]){ if(s.bg) await runScene(SC[s.key],{bg:s.bg}); else await storyField(s.key); }
+    const A=(GR_PLAN[s.ep]||{}).after; if(A&&A[s.key]==='bond'&&!SAVE.flags.gr_bond) grBond(); }
   else if(s.kind==='go'){ await goMap(s.to,s.toAt); if(MAP!==s.to) return false; }
   else if(s.kind==='tp'){ await grTp(s.x,s.z,s.yaw); }
   else if(s.kind==='battle'){ const b=f[s.id+'_b'];
-    if(!b){ GR_RETRY=false; await grFight(s); return false; }
+    if(!b){ GR_RETRY=false; const P=GR_PLAN[s.ep]||{}, B=GR_BT[s.ep];
+      if(P.pre&&B&&B.midAll&&!f['seen_pre_'+s.id]){ const L=B.midAll.slice(0,P.pre).flat().filter(x=>x.w); if(L.length) await runScene(L,{field:true}); f['seen_pre_'+s.id]=1; saveGame(); }   // 2026-11-13 出会いの台詞→勝負
+      await grFight(s); return false; }
     const win=b===2;
     if(!win&&s.F.must){ delete f[s.id+'_b']; GR_RETRY=true; saveGame(); await runScene(grLoseLines(s.F),{field:true}); objUpdate(); return false; }
     const B=GR_BT[s.ep]; if(B&&B.post&&B.post.length) await runScene(B.post,{field:true}); }   // 2026-11-05 台本の勝負の場面の、決着から後の台詞
@@ -3477,7 +3486,7 @@ const GR_MAPJ={oliva_town:'オリーヴァ村', oliva_hill:'オリーブの丘',
   cloudroad:'雲の山道', corinth:'運河の町コリンタ', marble:'大理石の谷', athens:'白い都', crete_maze:'丘の下の迷宮'};
 function grObjText(f){ if(!grOn()) return null; if(GR_RETRY) return 'もう一度、勝負'; const s=grCur(); if(!s) return null; const P=GR_PLAN[s.ep]||{};
   if(MAP!==s.map) return (P.obj&&s.head)?P.obj:(GR_MAPJ[s.map]||s.map)+'へ';
-  if(s.at&&s.at!=='*'&&!(Array.isArray(s.at)?s.at:[s.at]).includes(AREA)) return P.obj||(s.at+'へ');
+  if(s.at&&s.at!=='*'&&!(Array.isArray(s.at)?s.at:[s.at]).includes(AREA)) return s.wobj||P.obj||(s.at+'へ');
   return P.obj||'第'+s.ep+'話'; }
 
 // ---- 前の版のセーブの移しかえ(2026-11-07 22話版) ----
@@ -4650,7 +4659,7 @@ const GAME_CUT_STALE=[];
     else { const O=T[p[0]]; if(!O||!O[p[1]]) continue; arr=O[p[1]]; set=v=>{O[p[1]]=v;}; }
     const v=K.map(i=>arr[i]); if(arr.length!==n||v.some(x=>!x)||v.map(x=>x.t.slice(0,8)).join('|')!==sig){ GAME_CUT_STALE.push(key); continue; }
     set(v); }
-  for(const ep in GR_BT){ if(GR_BT[ep]) GR_BT[ep].mid=[]; }
+  for(const ep in GR_BT){ if(GR_BT[ep]){ GR_BT[ep].midAll=GR_BT[ep].mid; GR_BT[ep].mid=[]; } }   // midAll=出会いの台詞(GR_PLAN.pre)に使う
   if(GAME_CUT_STALE.length) console.warn('GAME_CUT: 台本が変わった場面は元のまま',GAME_CUT_STALE);
 })();
 

@@ -403,7 +403,7 @@ function zoneEvoOK(u, fr, fc){ if(!u || !state.units[u.uid] || u.anc) return fal
 function zoneEvolve(u, fr, fc){ if(!zoneEvoOK(u,fr,fc)) return false; if(state.stats){ const s=state.stats.zoneEvo||(state.stats.zoneEvo=[0,0]); s[u.owner]++; } return evolveUnit(u,true,'zone'); }
 // 2026-10-27 技 v2: 古代テリオン・人(9×9 以上)の戦いも 最後の left ターンは「決戦」(ダメージ +step ずつ)。時間切れを減らすつまみ(人の3段目は STAGE_HUMAN.final のまま)
 const FINAL_V2={left:6, step:0.35}; try{ if(IS_NODE && process.env.FINV2) Object.assign(FINAL_V2, JSON.parse(process.env.FINV2)); }catch(e){}
-function finCfg(){ if(state&&state.sp) return null; if(BT.sh&&BT.sh.final) return BT.sh.final; if(V2ON() && FINAL_V2 && BT.size!==7 && (BT.kind==='ancient'||BT.kind==='trainer'||BT.kind==='master')) return (T3()&&TACT.final)||FINAL_V2; return null; }   // 戦術v3: かげ・陣地で長引くので 決戦を2ターン早く(TACT.final)
+function finCfg(){ if(state&&state.sp) return null; if(noTL()) return null; if(BT.sh&&BT.sh.final) return BT.sh.final; if(V2ON() && FINAL_V2 && BT.size!==7 && (BT.kind==='ancient'||BT.kind==='trainer'||BT.kind==='master')) return (T3()&&TACT.final)||FINAL_V2; return null; }   // 戦術v3: かげ・陣地で長引くので 決戦を2ターン早く(TACT.final)
 function finalStart(){ const F=finCfg(); return F ? MAX_TURN-F.left+1 : Infinity; }   // 決戦が始まるターン(STAGE_HUMAN.final)
 function finalX(){ const F=state&&finCfg(); if(!F) return 1; const k=state.turn-finalStart()+1; return k>0 ? 1+F.step*k : 1; }   // 決戦: 1ターン目+step・2ターン目+2step…
 function shPush(me){ const P=BT.sh&&BT.sh.push; if(!P||!state) return false; return state.turn>=P.turn || hpShare(me)>=P.ahead; }   // 人の3段目: リーダーが前に出る(下がって守り続けない)
@@ -1432,7 +1432,7 @@ function endTurn(){
   if(state.cur===0){ startTurn(1); }
   else {
     state.turn++;
-    if(state.turn>MAX_TURN){ finishByTimeout(); return; }
+    if(overTurn()){ finishByTimeout(); return; }
     startTurn(0);
   }
 }
@@ -1444,6 +1444,9 @@ function afterAction(){
   checkWin();
 }
 // 時間切れ: ストーリー/CPU戦=敗北(やり直し)、オンライン対戦=残りHPの多い側の勝ち
+// 2026-11-13 オーナー「時間切れいらん。意味わからん」: ゲームの勝負は手数の上限なし(残りターンも決戦も出さない)。vs.html の手数指定・専用の盤(守る等)・シム(headless)は今まで通り。念のため 99 ターンで打ち切り
+function noTL(){ return !BT.headless && !BT.keepTL && !(state&&state.sp); }
+function overTurn(){ return state.turn>(noTL()?99:MAX_TURN); }
 function finishByTimeout(){
   if(state.sp && spTimeout()) return;   // 2026-10-31 専用の盤: 守る=勝ち・ほか=負け
   state.endHow='timeout';
@@ -1503,7 +1506,7 @@ function spdNext(){ const S=state.spd; if(!S||state.phase!=='battle') return;
   const pu=state.units[S.cur]; if(pu){ pu.sdone=true; pu.wait=true; pu.moved=true; pu.acted=true; pu.away=0; }
   S.cur=null;
   for(let g=0; g<3; g++){ const nx=spdLeft()[0]; if(nx){ spdAct(nx); return; }
-    state.turn++; if(state.turn>MAX_TURN){ finishByTimeout(); return; } spdRound(false); } }
+    state.turn++; if(overTurn()){ finishByTimeout(); return; } spdRound(false); } }
 function spdAct(u){ const S=state.spd;
   repairBoard(); if(!state.units[u.uid]){ u.sdone=true; spdNext(); return; }
   S.cur=u.uid; S.n++; state.cur=u.owner;
@@ -4859,7 +4862,7 @@ function updateUI(){ if(BT.headless) return;
     const am=autoMode();
     const autoB = BT.autoButton!==false && state.phase==='battle' ? `<button class="tbb ${am?'on':''}" data-m="cycleAuto">${am===2?'オート×2':am?'オート':'手動'}</button>` : '';
     tb.innerHTML = (state.phase==='battle'
-      ? (state.sp?`<span class="tchip ${state.cur===0?'me':'foe'}">のこり<b>${Math.max(0,MAX_TURN-state.turn+1)}</b><i>${state.cur===0?'自分':'相手'}</i></span>`+spChip()+(state.sp.mode==='sneak'&&!state.sp.alert?'':lm(0)+lm(1)):`<span class="tchip ${state.cur===0?'me':'foe'}">T<b>${state.turn}</b>/${MAX_TURN}<i>${state.cur===0?'自分':(BT.kind==='wild'?'野生':'相手')}</i></span>`+lm(0)+lm(1))
+      ? (state.sp?`<span class="tchip ${state.cur===0?'me':'foe'}">のこり<b>${Math.max(0,MAX_TURN-state.turn+1)}</b><i>${state.cur===0?'自分':'相手'}</i></span>`+spChip()+(state.sp.mode==='sneak'&&!state.sp.alert?'':lm(0)+lm(1)):`<span class="tchip ${state.cur===0?'me':'foe'}">T<b>${state.turn}</b>${noTL()?'':'/'+MAX_TURN}<i>${state.cur===0?'自分':(BT.kind==='wild'?'野生':'相手')}</i></span>`+lm(0)+lm(1))
       : `<span class="tchip">配置</span><span class="sp"></span>`)
       +autoB+`<button class="tbb menu" data-m="menu" aria-label="メニュー">≡</button>`+(state.phase==='battle'&&state.spd?spdRowHTML():'');
     tb.classList.toggle('spdq', state.phase==='battle'&&!!state.spd);
@@ -6197,6 +6200,7 @@ function startBattle(opts){
     BT.diff=Object.assign({}, KD.ai, (kind==='wild'&&(BT.solo?BT.rules.ai:WILD_STAGE[BT.startStage]))||{}, en.ai||{}); BT.aiSkill=[ (pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1 ];
     BT.place=resolvePlace(opts.terrainTheme, opts.backdrop); BT.place.sp=!!opts.special;
     BT.budget=+opts.budget||(BT.anc?ancientBudget():baseBudget());   // 2段目/3段目から出す地方は出せる段の合計も×段(=出せる体の数は変えない)。古代テリオン戦は全パーティ
+    BT.keepTL=+opts.maxTurn>0;
     if(+opts.maxTurn>0){ MAX_TURN=Math.round(+opts.maxTurn); BT.rules=Object.assign({}, BT.rules, {maxTurn:MAX_TURN}); }   // 2026-10-27 CPU対戦(vs.html)のターン数。省略=今まで通り
     BT.headless=IS_NODE||!!opts.headless; ancClearMarks();
     BT.autoButton = opts.autoButton!=null ? !!opts.autoButton : true;   // 2026-10-24: オートは上のバーに・全部の戦いで使える(autoButton:false で隠す)

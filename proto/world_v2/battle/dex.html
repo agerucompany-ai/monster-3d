@@ -34,16 +34,24 @@ function render(){
   // 系統(1段目から)
   const bases=DX.list.filter(m=>!DX.isFusion(m) && m.level===1);
   const lines=[]; for(const b of bases){ const ch=[]; let c=b.id; const seen={}; while(c!=null&&DX.M[c]&&!seen[c]){ seen[c]=1; ch.push(c); c=DX.M[c].evolves_to; } lines.push(ch); }
-  lines.sort((x,y)=>(DX.ARC_I[DX.arcOf(x[0])]??9)-(DX.ARC_I[DX.arcOf(y[0])]??9) || (DX.md.order[x[0]]??999)-(DX.md.order[y[0]]??999));
-  const arcs=F.arc==='all'?DX.ARCS.map(a=>a[0]):[F.arc];
+  lines.sort((x,y)=>(DX.no[x[0]]??9999)-(DX.no[y[0]]??9999));   // 2026-11-13: monsters.json の順(新しい番号の順)
+  const inLine=new Set(lines.flat()); const fids=new Set(DX.fusions.map(f=>f.id));
+  const elders=DX.list.filter(m=>!inLine.has(m.id) && !fids.has(m.id) && okT(m)).map(m=>m.id);   // 物語だけの古の個体(3024 ボルケン・3291 セイリュウ)など
+  const lineRow=(ch,mark)=>{ const m=DX.M[ch[0]]; const home=DX.md.home[ch[0]]; const a=DX.arcOf(ch[0]);
+    return `<div class="lnh">${DX.tyb(m.type)}${DX.esc(m.line_name||'')}${mark&&a?`<span class="mk arc">${DX.esc(DX.ARC_JP[a])}</span>`:''}${home&&!(mark&&a&&home===DX.ARC_JP[a])?`<span class="mk arc">${DX.esc(home)}</span>`:''}</div><div class="ln">`+ch.map((id,i)=>(i?'<i class="ar"></i>':'')+DX.card(id)).join('')+'</div>'; };
   let h='';
-  for(const a of arcs){
+  if(F.arc==='all'){   // 全部: 編で分けず、monsters.json の順に1本で
+    const ls=lines.filter(ch=>okT(DX.M[ch[0]])); const fs=DX.fusions.filter(f=>okT(DX.M[f.id]));
+    if(ls.length){ h+=`<section data-sec="lines"><h2><img src="img/ui/evolve.webp" alt="">系統<span class="n">${ls.length}系統</span></h2>`+ls.map(ch=>lineRow(ch,true)).join('')+'</section>'; }
+    if(fs.length){ h+=`<section data-sec="fusion"><h2><img src="img/ui/fuse.webp" alt="">融合・いにしえ<span class="n">${fs.length}</span></h2><div class="grid">`+fs.map(f=>DX.card(f.id)).join('')+'</div></section>'; }
+    if(elders.length){ h+=`<section data-sec="elder"><h2><img src="img/ui/evolve.webp" alt="">古の個体<span class="n">${elders.length}</span></h2><div class="grid">`+elders.map(id=>DX.card(id)).join('')+'</div></section>'; }
+  }
+  else for(const a of [F.arc]){
     const ls=lines.filter(ch=>DX.arcOf(ch[0])===a && okT(DX.M[ch[0]]));
     const fs=DX.fusions.filter(f=>DX.arcOf(f.id)===a && okT(DX.M[f.id]));
     if(!ls.length && !fs.length) continue;
     h+=`<section data-sec="${a}"><h2><img src="img/ui/evolve.webp" alt="">${DX.ARC_JP[a]}<span class="n">${ls.length}系統${fs.length?'・融合'+fs.length:''}</span></h2>`;
-    for(const ch of ls){ const m=DX.M[ch[0]]; const home=DX.md.home[ch[0]];
-      h+=`<div class="lnh">${DX.tyb(m.type)}${DX.esc(m.line_name||'')}${home?`<span class="mk arc">${DX.esc(home)}</span>`:''}</div><div class="ln">`+ch.map((id,i)=>(i?'<i class="ar"></i>':'')+DX.card(id)).join('')+'</div>'; }
+    for(const ch of ls) h+=lineRow(ch,false);
     if(fs.length){ h+=`<div class="lnh"><img class="ic" src="img/ui/fuse.webp" alt="">融合・いにしえ</div><div class="grid">`+fs.map(f=>DX.card(f.id)).join('')+'</div>'; }
     h+='</section>';
   }

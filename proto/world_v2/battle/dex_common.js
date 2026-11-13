@@ -46,11 +46,12 @@ DX.load = async function(){
   DX.TYPE_TERR=dxGrab(bjs,'TYPE_TERR'); DX.TERR_JP=dxGrab(bjs,'TERR_JP');
   DX.RANK_STEP=dxNum(bjs,'RANK_STEP',0.02); DX.LV_MAX=dxNum(bjs,'LV_MAX',99);
   DX.M={}; DX.list=mons; for(const m of mons) DX.M[m.id]=m;
+  DX.no={}; mons.forEach((m,i)=>{ DX.no[m.id]=i; });   // 2026-11-13 オーナー「図鑑の並びもふるいまま」: 並びは data/monsters.json の順(新しい番号の順)。編ごとの表.md は編・ふるさと・メモだけに使う
   DX.S=(stats&&stats.creatures)||stats; DX.MV=(moves&&moves.moves)||moves;
   DX.md=dxParseMd(md);
   // 融合のレシピ(2体・3体)
   DX.fusions=mons.filter(m=>m.recipe||m.recipe3).map(m=>({id:m.id, parents:(m.recipe||m.recipe3).slice()}));
-  DX.fusions.sort((a,b)=>(DX.ARC_I[DX.arcOf(a.id)]??9)-(DX.ARC_I[DX.arcOf(b.id)]??9) || (DX.md.order[a.id]??999)-(DX.md.order[b.id]??999));
+  DX.fusions.sort((a,b)=>(DX.no[a.id]??9999)-(DX.no[b.id]??9999));   // monsters.json の順
   DX.usedIn={}; for(const f of DX.fusions) for(const p of f.parents) (DX.usedIn[p]||(DX.usedIn[p]=[])).push(f.id);
   return DX; };
 
