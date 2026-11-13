@@ -13,13 +13,13 @@
     "hurt": "hero_m_hurt.webp"
    },
    "facing": {
-    "normal": "left",
-    "smile": "left",
-    "surprised": "left",
-    "serious": "left",
-    "sad": "left",
-    "angry": "left",
-    "hurt": "left"
+    "normal": "right",
+    "smile": "right",
+    "surprised": "right",
+    "serious": "right",
+    "sad": "right",
+    "angry": "right",
+    "hurt": "right"
    }
   },
   "hero_f": {

@@ -102,11 +102,13 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 }
 .stP{position:absolute;bottom:calc(112px + env(safe-area-inset-bottom));width:min(64vw,440px);height:min(64vw,440px);object-fit:contain;transition:opacity .2s,transform .25s,filter .2s;pointer-events:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.25))}
 #stL{left:max(-6vw,calc(50% - 480px))}#stR{right:max(-6vw,calc(50% - 480px))}
-.stP.dim{filter:brightness(.6) drop-shadow(0 6px 14px rgba(0,0,0,.25));transform:scale(.95)}
+.stP.dim{filter:brightness(.6) drop-shadow(0 6px 14px rgba(0,0,0,.25))}
 .stP.off{opacity:0}
 /* 右の枠は左右反転(全員右向きで描いてある)・右のうしろの枠は少し小さく奥に */
 /* 向き: 絵ごとの向き(v3/portraits/index.json の facing)と置く側から --fx(1/-1)を決める。左の枠=右向き、右の枠=左向き */
-.stP{transform:scaleX(var(--fx,1))}.stP.dim{transform:scaleX(calc(var(--fx,1)*.95)) scaleY(.95)}
+.stP{transform:scaleX(var(--fx,1))}.stP.dim{transform:scaleX(var(--fx,1))}
+/* 2026-11-13 オーナー「ヤマトがぱかぱか出る」: 話す人が替わるたびに縮んだり戻ったりしない。歩ける場面(field)の会話は立ち絵を出さず箱だけ(ポケモン式) */
+#st.field .stP{display:none}
 #stR2{right:max(-16vw,calc(50% - 560px));bottom:calc(132px + env(safe-area-inset-bottom));width:min(58vw,396px);height:min(58vw,396px);filter:brightness(.72) drop-shadow(0 6px 14px rgba(0,0,0,.25))}
 /* 3人の場面: 3人を横に並べ直す(顔は重ねない。重なるのは体の端だけ)。話している人を前に出して明るく、ほかは少し下げて暗く */
 #st.trio .stP{--wc:min(100vw,760px);width:calc(var(--wc)*.46);height:calc(var(--wc)*.46);right:auto;bottom:calc(112px + env(safe-area-inset-bottom));transition:opacity .2s,transform .25s,filter .2s,left .25s}
@@ -2718,13 +2720,13 @@ async function typeOut(el,t){ el.textContent=''; if(FF||SKIP_SCENE){ el.textCont
 // 背景の絵: 'anime_…' はアニメの背景(intro/anime_*.webp・オーナー 2026-10-26)、それ以外は intro/bg_*.webp
 function bgUrl(b){ return 'intro/'+(String(b).startsWith('anime_')?b:'bg_'+b)+'.webp'; }
 function stShow(mode,bg){ ST.el.style.display='block'; ST.el.classList.toggle('field',mode==='field'); if(bg) ST.bg.style.backgroundImage=`url(${bgUrl(grBg(bg))})`;
-  ST.el.classList.remove('trio'); for(const k of ['card','title','pick','ph']) ST[k].style.display='none'; ST.box.style.display='none'; for(const k of ['L','R','R2']){ ST[k].classList.add('off'); ST[k].dataset.w=''; } ST.skip.style.display='none'; if(typeof bgReset==='function') bgReset(); }
-function stHide(){ vcStop(); grStHide(); ST.el.style.display='none'; ST.box.style.display='none'; ADV=null; }
+  ST.el.classList.remove('trio'); for(const k of ['card','title','pick','ph']) ST[k].style.display='none'; ST.box.style.display='none'; const keepL=mode!=='field'&&performance.now()-ST_END<1500; for(const k of ['L','R','R2']){ if(k==='L'&&keepL){ ST.L.classList.add('dim'); continue; } ST[k].classList.add('off'); ST[k].dataset.w=''; } ST.skip.style.display='none'; if(typeof bgReset==='function') bgReset(); }
+let ST_END=-1e9; function stHide(){ if(!ST.el.classList.contains('field')) ST_END=performance.now(); vcStop(); grStHide(); ST.el.style.display='none'; ST.box.style.display='none'; ADV=null; }
 // lines: {w:'hero'|'genzo'|...|'partner'|null(ナレ), t, f:表情, if:()=>bool, fn:async()=>{}}
 async function runScene(lines,opt){ opt=opt||{}; const field=!!opt.field; if(opt.prologue&&OPEN_SKIP){ for(const L of lines){ if(L.fn&&!VISUAL_FN.test(String(L.fn))&&(!L.if||L.if())) await L.fn(); } return; } STORY=true; objUpdate(); enterEl.classList.remove('on'); talkClose(); IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; AUTO=null;
   stShow(field?'field':'full',opt.bg); if(!field) PAUSED=true; SKIP_SCENE=!!(opt.prologue&&OPEN_SKIP)||performance.now()-SKIP_CHAIN_T<8000; ST_FF.style.display='block'; ST.skip.style.display='block'; ST.skip.textContent=opt.prologue?'冒頭をスキップ':'スキップ'; ST_FF.style.right=(14+ST.skip.offsetWidth+8)+'px'; VC.btn.style.display=vcHas()?'block':'none'; VC.btn.style.right=(14+ST.skip.offsetWidth+8+ST_FF.offsetWidth+8)+'px'; { const bb=$('stBgm'); bb.style.display='block'; bb.style.right=(14+ST.skip.offsetWidth+8+ST_FF.offsetWidth+8+(vcHas()?VC.btn.offsetWidth+8:0))+'px'; }
   ST.skip.onclick=e=>{ e.stopPropagation(); SKIP_SCENE=true; vcStop(); if(opt.prologue) OPEN_SKIP=true; advance(); };
-  ST.L.removeAttribute('src'); ST.R.removeAttribute('src'); ST.R2.removeAttribute('src');
+  if(ST.L.classList.contains('off')) ST.L.removeAttribute('src'); ST.R.removeAttribute('src'); ST.R2.removeAttribute('src');   // 2026-11-13 続けて始まる場面ではヤマトの立ち絵を消さない(場面の切れ目でぱかぱか出入りしない)
   if(!SKIP_SCENE){ const ps=[]; for(const L of lines){ const q=L.w&&L.w!=='partner'?pSrc(L.w,L.f||'normal'):null; if(q&&!ps.includes(q)) ps.push(q); } await Promise.race([Promise.all(ps.map(u=>new Promise(r=>{ const im=new Image(); PIMG[u]=im; im.onload=im.onerror=r; im.src=u; }))),sleep(1500)]); }
   for(const L of lines){ if(L.todo||(!L.fn&&!L.t)) continue;   // 台詞の枠だけ(空)の行は飛ばす(物語はあとで貼る)
     if(L.if&&!L.if()) continue; if(L.fn){ if(SKIP_SCENE&&VISUAL_FN.test(String(L.fn))) continue; ST.box.style.display='none'; await L.fn(); continue; }
