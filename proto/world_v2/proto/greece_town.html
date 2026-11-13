@@ -345,7 +345,7 @@ const POST={ on:Q.get('post')!=='0', lite:IS_MOBILE, rt:{}, q:null, cam:new THRE
       uSat:{value:1.1}, uCon:{value:1.06}, uExpo:{value:1.0}, uHaze:{value:col3('#dbe9ef')}, uHazeK:{value:0.35}, uVig:{value:0.28}, uDof:{value:1.0}, uEdge:{value:0.38}, uAO:{value:0.55} } };
 (function initPost(){
   const mk=(s)=>{ const t=new THREE.WebGLRenderTarget(1,1,{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,format:THREE.RGBAFormat,depthBuffer:!!s,stencilBuffer:false}); if(s){ t.depthTexture=new THREE.DepthTexture(1,1); t.depthTexture.type=THREE.UnsignedIntType; } return t; };
-  POST.rt.m=mk(true); POST.rt.h1=mk(); POST.rt.h2=mk(); POST.rt.q1=mk(); POST.rt.q2=mk();
+  POST.rt.m=mk(true); POST.rt.f=mk(); POST.rt.h1=mk(); POST.rt.h2=mk(); POST.rt.q1=mk(); POST.rt.q2=mk();
   const V='varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.0,1.0); }';
   const LIN=`uniform float uNear,uFar; float lin(float d){ float z=d*2.0-1.0; return 2.0*uNear*uFar/(uFar+uNear-z*(uFar-uNear)); }`;
   const sh=(f,u)=>new THREE.ShaderMaterial({uniforms:Object.assign({},POST.U,u),vertexShader:V,fragmentShader:f,depthTest:false,depthWrite:false});
@@ -378,10 +378,20 @@ const POST={ on:Q.get('post')!=='0', lite:IS_MOBILE, rt:{}, q:null, cam:new THRE
       c*=uExpo; c=uLift*(1.0-c)+c*uGain; float L=dot(c,vec3(0.299,0.587,0.114)); c=mix(vec3(L),c,uSat); c=(c-0.5)*uCon+0.5;
       vec2 q=vUv-0.5; c*=1.0-uVig*smoothstep(0.25,0.85,dot(q*vec2(1.0,0.82),q*vec2(1.0,0.82))*2.2);
       gl_FragColor=vec4(clamp(c,0.0,1.0),1.0); }`,{tC:{value:null},tD:{value:null},tB:{value:null},tG:{value:null},uPx:{value:new THREE.Vector2()}});
+  // 2026-11-13 オーナー「顔がガビガビ」: 線のギザギザを消す仕上げ(FXAA)。合成を一度 rt.f に描いてから、ここで画面へ
+  POST.fxaa=sh(`uniform sampler2D tC; uniform vec2 uPx; varying vec2 vUv;
+    void main(){ vec3 Lw=vec3(0.299,0.587,0.114); vec3 m=texture2D(tC,vUv).rgb;
+      float nw=dot(texture2D(tC,vUv+uPx*vec2(-1.0,-1.0)).rgb,Lw), ne=dot(texture2D(tC,vUv+uPx*vec2(1.0,-1.0)).rgb,Lw), sw=dot(texture2D(tC,vUv+uPx*vec2(-1.0,1.0)).rgb,Lw), se=dot(texture2D(tC,vUv+uPx*vec2(1.0,1.0)).rgb,Lw), lm=dot(m,Lw);
+      float lo=min(lm,min(min(nw,ne),min(sw,se))), hi=max(lm,max(max(nw,ne),max(sw,se)));
+      vec2 d=vec2(-((nw+ne)-(sw+se)),(nw+sw)-(ne+se)); float rd=max((nw+ne+sw+se)*0.03125,0.0078125); float rc=1.0/(min(abs(d.x),abs(d.y))+rd);
+      d=clamp(d*rc,vec2(-8.0),vec2(8.0))*uPx;
+      vec3 a=0.5*(texture2D(tC,vUv+d*(1.0/3.0-0.5)).rgb+texture2D(tC,vUv+d*(2.0/3.0-0.5)).rgb);
+      vec3 b=a*0.5+0.25*(texture2D(tC,vUv-d*0.5).rgb+texture2D(tC,vUv+d*0.5).rgb); float lb=dot(b,Lw);
+      gl_FragColor=vec4((lb<lo||lb>hi)?a:b,1.0); }`,{tC:{value:null},uPx:{value:new THREE.Vector2()}});
   if(!POST.lite) POST.comp.defines={AO_ON:1};
   POST.q=new THREE.Mesh(new THREE.PlaneGeometry(2,2),POST.comp); POST.q.frustumCulled=false; POST.scene=new THREE.Scene(); POST.scene.add(POST.q);
 })();
-function postResize(w,h){ const W=Math.round(w*PR), H=Math.round(h*PR); POST.rt.m.setSize(W,H); const hw=Math.max(1,W>>1), hh=Math.max(1,H>>1), qw=Math.max(1,W>>2), qh=Math.max(1,H>>2);
+function postResize(w,h){ const W=Math.round(w*PR), H=Math.round(h*PR); POST.rt.m.setSize(W,H); POST.rt.f.setSize(W,H); const hw=Math.max(1,W>>1), hh=Math.max(1,H>>1), qw=Math.max(1,W>>2), qh=Math.max(1,H>>2);
   POST.rt.h1.setSize(hw,hh); POST.rt.h2.setSize(hw,hh); POST.rt.q1.setSize(qw,qh); POST.rt.q2.setSize(qw,qh); POST.size=[W,H,hw,hh,qw,qh]; }
 function postPass(mat,target){ POST.q.material=mat; renderer.setRenderTarget(target); renderer.render(POST.scene,POST.cam); }
 function renderFrame(){
@@ -395,7 +405,7 @@ function renderFrame(){
   B.tC.value=R.h1.texture; B.uDir.value.set(sp/hw,0); postPass(POST.blur,R.h2); B.tC.value=R.h2.texture; B.uDir.value.set(0,sp/hh); postPass(POST.blur,R.h1);
   if(!POST.lite){ B.tC.value=R.h1.texture; B.uDir.value.set(sp*1.8/hw,0); postPass(POST.blur,R.h2); B.tC.value=R.h2.texture; B.uDir.value.set(0,sp*1.8/hh); postPass(POST.blur,R.h1); }
   const C=POST.comp.uniforms; C.tC.value=R.m.texture; C.tD.value=R.m.depthTexture; C.tB.value=R.h1.texture; C.tG.value=R.q1.texture; C.uPx.value.set(1/W,1/H);
-  postPass(POST.comp,null); }
+  postPass(POST.comp,R.f); POST.fxaa.uniforms.tC.value=R.f.texture; POST.fxaa.uniforms.uPx.value.set(1/W,1/H); postPass(POST.fxaa,null); }
 
 // ---------------------------------------------------------------- テクスチャ(手描きをcanvasで)
 function canvas(w,h){ const c=document.createElement('canvas'); c.width=w; c.height=h||w; return [c,c.getContext('2d')]; }
