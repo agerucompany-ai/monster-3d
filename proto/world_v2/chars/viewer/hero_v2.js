@@ -7,6 +7,7 @@
 //   待機中は数秒ごとに IdleLook(見回す) / IdleStretch(伸び) / IdleHolo(端末をのぞく) / IdleTap(足先でつつく) が自動で入る
 //   自動: まばたき・後ろ髪/フード/上着のすそのばね・曲がるときの傾き・走り出し/止まりの前後の傾き・近くの人への振り向き
 //   h.lookAt(Vector3|null) で見る先を指定(null で自動)。h.react('Crouch') は play と同じ。
+//   2026-11-13: 輪郭線を細く・地の色ベースの暖かい茶に/線を奥へ下げて前髪の線が目にかからない/顔を上へ0.32(斜め上カメラで目が見える)/歩き再生速度の下限0.45
 (function(){
 const HeroV2={};
 let GRAD=null;
@@ -34,13 +35,21 @@ HeroV2.toonMat=function(map){
   m.toneMapped=false; m.color.setScalar(0.92);
   return m;
 };
-// 輪郭線(背面押し出し)
-HeroV2.OUTLINE=new THREE.MeshBasicMaterial({color:0x2b170c,side:THREE.BackSide,skinning:true});
-HeroV2.OUTLINE.onBeforeCompile=s=>{
-  s.vertexShader=s.vertexShader.replace('#include <begin_vertex>','#include <beginnormal_vertex>\n#include <skinnormal_vertex>\n#include <begin_vertex>').replace('#include <project_vertex>',`#include <project_vertex>
-    { vec3 vnO=normalize(normalMatrix*objectNormal); vec4 mv2=mvPosition; mv2.xyz+=vnO*(0.0011*(-mvPosition.z)+0.0022);
-      gl_Position=projectionMatrix*mv2; gl_Position.z+=0.0002*gl_Position.w; }`);
-};
+// 輪郭線(背面押し出し)。2026-11-13: 黒っぽい一色→「その場所の色を半分に暗くして暖かい茶を足した色」(髪=茶・上着=えんじ・肌=薄茶)で細めに。
+//  さらに線を視線の奥へ少し下げる=前髪の線が目の上にかぶらない(顔が髪で隠れて見える問題の主因だった)
+HeroV2.OL={k:0.5,warm:[0.17,0.10,0.06],w:0.00055,w0:0.0011,push:0.035};   // 線の色=その場所の色×k+暖かい茶 / 太さ(奥行き比例+一定) / 奥へ下げる量
+HeroV2.outlineMat=function(map){
+  const O=HeroV2.OL; const m=new THREE.MeshBasicMaterial({map:map||null,color:map?0xffffff:0x6a4632,side:THREE.BackSide,skinning:true});
+  m.onBeforeCompile=s=>{
+    if(map) s.fragmentShader=s.fragmentShader.replace('#include <map_fragment>',`#include <map_fragment>
+    diffuseColor.rgb=diffuseColor.rgb*${O.k.toFixed(3)}+vec3(${O.warm.map(v=>v.toFixed(3)).join(',')});`);
+    s.vertexShader=s.vertexShader.replace('#include <begin_vertex>','#include <beginnormal_vertex>\n#include <skinnormal_vertex>\n#include <begin_vertex>').replace('#include <project_vertex>',`#include <project_vertex>
+    { vec3 vnO=normalize(normalMatrix*objectNormal); vec4 mv2=mvPosition; mv2.xyz+=vnO*(${O.w.toFixed(5)}*(-mvPosition.z)+${O.w0.toFixed(5)});
+      mv2.xyz+=normalize(mv2.xyz)*${O.push.toFixed(4)};
+      gl_Position=projectionMatrix*mv2; }`);
+  };
+  return m; };
+HeroV2.OUTLINE=HeroV2.outlineMat(null);
 let SHTEX=null;
 function shadowTex(){ if(SHTEX)return SHTEX; const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d');
   const g=x.createRadialGradient(32,32,2,32,32,31); g.addColorStop(0,'rgba(40,28,20,0.85)'); g.addColorStop(0.55,'rgba(40,28,20,0.45)'); g.addColorStop(1,'rgba(40,28,20,0)');
@@ -63,7 +72,7 @@ HeroV2.setup=function(gltf,opt){
   if(holo){ holo.material.transparent=true; holo.material.depthWrite=false; holo.material.toneMapped=false; holo.renderOrder=4; }
   body.material=HeroV2.toonMat(texOpen); body.castShadow=true; body.frustumCulled=false; body.onBeforeRender=(r,sc,c)=>{ HeroV2.camera=c; };
   let outline=null;
-  if(opt.outline!==false){ outline=new THREE.SkinnedMesh(body.geometry,HeroV2.OUTLINE); outline.bind(body.skeleton,body.bindMatrix);
+  if(opt.outline!==false){ outline=new THREE.SkinnedMesh(body.geometry,HeroV2.outlineMat(texOpen)); outline.bind(body.skeleton,body.bindMatrix);
     outline.frustumCulled=false; body.parent.add(outline); }
   const meta=(gltf.asset&&gltf.asset.extras)||{};
   const H0=meta.height||1, s=(opt.height||H0)/H0, HW=opt.height||H0;
@@ -122,7 +131,7 @@ HeroV2.setup=function(gltf,opt){
       const dx=t.x-_v.x, dz=t.z-_v.z, dist=Math.hypot(dx,dz); const ay=angD(Math.atan2(dx,dz),by);
       head.getWorldPosition(_v2); wp=Math.atan2(t.y-_v2.y,Math.max(0.3,dist)); wy=Math.max(-1.25,Math.min(1.25,ay)); want=Math.abs(ay)<2.6?1:0; }
     lookW+=(want-lookW)*(1-Math.exp(-dt*5)); lookYaw+=(wy-lookYaw)*(1-Math.exp(-dt*7)); lookPitch+=(wp-lookPitch)*(1-Math.exp(-dt*7));
-    const FU=opt.faceUp!=null?opt.faceUp:0.14; if(FU){ _q.setFromAxisAngle(_v3.set(1,0,0),-FU); head.quaternion.premultiply(_q); }
+    const FU=opt.faceUp!=null?opt.faceUp:0.32; if(FU){ _q.setFromAxisAngle(_v3.set(1,0,0),-FU); head.quaternion.premultiply(_q); }
     if(lookW<0.01) return; const Y=lookYaw*lookW, P=Math.max(-0.45,Math.min(0.35,-lookPitch))*lookW;
     const ax=new THREE.Vector3(0,1,0);
     if(sp2){ _q.setFromAxisAngle(ax,Y*0.18); sp2.quaternion.premultiply(_q); }
@@ -143,7 +152,7 @@ HeroV2.setup=function(gltf,opt){
     const cn=h.cur();
     if(cn==='Idle'&&v<0.05){ idleT+=dt; if(idleT>idleNext){ let pick=IDLES[Math.floor(Math.random()*IDLES.length)]; if(pick===lastIdle) pick=IDLES[(IDLES.indexOf(pick)+1)%IDLES.length];
         if(acts[pick]){ lastIdle=pick; start(pick,0.35); } idleT=0; idleNext=5+Math.random()*5; } }
-    if(cur){ const n=cur.getClip().name; if((n==='Walk'||n==='Run')&&v>0&&speed[n]) cur.timeScale=Math.max(0.6,Math.min(1.6,v/speed[n])); else cur.timeScale=1; }
+    if(cur){ const n=cur.getClip().name; if((n==='Walk'||n==='Run')&&v>0&&speed[n]) cur.timeScale=Math.max(0.45,Math.min(1.6,v/speed[n])); else cur.timeScale=1; }
     mixer.update(dt);
     look(dt); springs(Math.min(dt,0.05)); lean(dt,v);
     if(holo){ht+=dt;holo.material.opacity=0.88+0.08*Math.sin(ht*3.1)+0.04*Math.sin(ht*17.0);}
