@@ -192,12 +192,12 @@
   },
   "alek": {
    "name": "アレク",
-   "note": "anime/chars/alek/alek_normal.png を rembg で背景抜き→640角(2026-10-26)。表情違いはまだ無い",
+   "note": "2026-11-13 新デザイン(紺のTシャツ・C7_アレク_14歳175cm_笑顔_v6 の顔アップ)を rembg で背景抜き→640角",
    "faces": {
     "normal": "alek_normal.webp"
    },
    "facing": {
-    "normal": "left"
+    "normal": "front"
    }
   },
   "kasia": {
