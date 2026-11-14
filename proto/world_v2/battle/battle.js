@@ -5641,6 +5641,12 @@ function stageForm(mid, stage, owned){ let m=MID[+mid]; if(!m) return +mid; let 
 const STAGE_DMGX={1:1, 2:1, 3:2.6};   // 2026-10-27 野生の群れ(2〜3体)で決めなおした(旧1.7=1対1の時・1対1は SIZE_RULES[7].solo.stageDmgX に残した)
 // 2026-10-27 野生の群れ: 段ごとの野生の体力・攻撃(KIND_DEFAULTS.wild.ai の hpX/atkX を置きかえる。マップの wild[].ai が来ればそちらが勝つ)。sim/sim_wild_pack.js で決めた
 const WILD_STAGE={1:{hpX:1.1, atkX:1.1}, 2:{hpX:1.05, atkX:1.05}, 3:{hpX:0.7, atkX:0.7}};   // 2026-10-31 3段目 0.85→0.7(人の手 naiveB で 北欧の野生の群れが 28〜65% だった→71〜91%)   // 3段目の子は体力/攻撃の比が1段目の1.7倍(1200/163 vs 135/33)なので、7×7(10ターン)で時間切れしないようダメージを×1.7(シム 2026-10-26)
+// 2026-11-14 オーナー「序盤の野生の敵が強すぎて、弱点をついても全く勝てない」: WILD_STAGE[1](1.1倍)は群れの戦いでこちらが進化できる前提の数(シム: 進化ありで勝率99〜100%)。
+//   進化を習う前(ギリシャ編の序盤・unlock.evo なし)は盤の誰も進化できず、仲間が1体ふえて群れ(2体)になった途端に勝率19〜31%に落ちていた(1対1は81〜97%)。
+//   → 1段目の群れで、こちらのパーティの誰も戦いの中で進化できない時だけ WILD_NOEVO を使う(マップの wild[].ai が来ればそちらが勝つのは今まで通り)。シム(AI同士・時間切れなし・フォルンLv5+仲間 対 オリーブの丘の群れ): 0.7 で勝率96〜100%(前 15〜52%)。進化を習ったあと(進化先を持つ)は WILD_STAGE のまま
+const WILD_NOEVO={1:{hpX:+(IS_NODE&&process.env.WNOEVO)||0.7, atkX:+(IS_NODE&&process.env.WNOEVO)||0.7}};
+function wildStageDiff(kind){ if(kind!=='wild') return null; if(BT.solo) return BT.rules.ai; const st=BT.startStage, ne=WILD_NOEVO[st];
+  if(ne && !(BT.party||[]).some(p=>canEverEvolve(0, playerStartMid(p.mid), false))) return ne; return WILD_STAGE[st]; }
 // 2026-10-27 人(語り手・語り部・幹部・ボス=kind 'trainer'/'master')の 9×9/11×11 を段ごとに(STAGE_HUMAN)。3段目は体力/攻撃の比が1段目の1.7倍で、
 //   ダメージ1倍のままだと時間切れ(ノルドで10〜63%)・勝ち越した側のリーダーが下がって守り続けて決着しなかった → シムで調整(sim/sim_champ_egypt.js・sim_champ_norse.js)
 //   dmgX = ダメージの倍率(盤の dmgX に掛ける) / atkMP = 1体の攻撃の回数(既定10・撃ち切ると両軍が泉で回復するだけになり時間切れの主因だった) / push = リーダーが前に出る条件(turn ターン目から か 自軍の体力の割合が ahead 以上) / final = 決戦(最後の left ターンはダメージ +step ずつ・バナー)
@@ -6197,7 +6203,7 @@ function startBattle(opts){
     if(!BT.party.length||!BT.enemyParty.length) throw new Error('startBattle: player/enemy の party が空');
     BT.items=Object.assign({heal:0}, pl.items||{}); STORY.items=BT.items; BT.fed={}; BT.guide={}; BT.guideLog=[];   // 2026-10-30 店の肉: BT.fed[enemyParty の idx]=足す確率
     BT.fusionOn=!!opts.fusionUnlocked; BT.tripleOn=!!opts.tripleUnlocked; BT.tune=Object.assign({}, TUNE, opts.tune||{});
-    BT.diff=Object.assign({}, KD.ai, (kind==='wild'&&(BT.solo?BT.rules.ai:WILD_STAGE[BT.startStage]))||{}, en.ai||{}); BT.aiSkill=[ (pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1 ];
+    BT.diff=Object.assign({}, KD.ai, wildStageDiff(kind)||{}, en.ai||{}); BT.aiSkill=[ (pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1 ];
     BT.place=resolvePlace(opts.terrainTheme, opts.backdrop); BT.place.sp=!!opts.special;
     BT.budget=+opts.budget||(BT.anc?ancientBudget():baseBudget());   // 2段目/3段目から出す地方は出せる段の合計も×段(=出せる体の数は変えない)。古代テリオン戦は全パーティ
     BT.keepTL=+opts.maxTurn>0;
@@ -6597,7 +6603,7 @@ function simulate(opts){
   BT.party=normParty(pl.party||pl); BT.enemyParty=normParty(en.party||en); applyStartStage(opts); setOwned(pl, en); ancientSetup(en); alignMinions(opts);
   BT.items={heal:0}; STORY.items=BT.items;
   BT.fusionOn=!!opts.fusionUnlocked; BT.tripleOn=!!opts.tripleUnlocked; BT.tune=Object.assign({}, TUNE, opts.tune||{});
-  BT.diff=Object.assign({}, KD.ai, (kind==='wild'&&(BT.solo?BT.rules.ai:WILD_STAGE[BT.startStage]))||{}, en.ai||{}); BT.aiSkill=[(pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1];
+  BT.diff=Object.assign({}, KD.ai, wildStageDiff(kind)||{}, en.ai||{}); BT.aiSkill=[(pl.ai&&pl.ai.skill!=null)?pl.ai.skill:1, BT.diff.skill!=null?BT.diff.skill:1];
   BT.place=resolvePlace(opts.terrainTheme, opts.backdrop); BT.place.sp=!!opts.special; BT.budget=+opts.budget||(BT.anc?ancientBudget():baseBudget());
   applyPlace(); state=newBattleState(); uidSeq=1; spInit(opts.special);
   spawnEnemy(); ancientEscort(); spPlace(); preparePlaceList(); autoPlace(); state.phase='battle'; ensureLeaders(); firstSetup(); spReady(); setEvoArea(V2ON()||evoNeededNow(), false); state.turn=1; state.cur=0;
