@@ -3355,37 +3355,68 @@ function grBuild(){ GR_STEPS.length=0; for(const k in GR_BY) delete GR_BY[k];
 let GR_RUN=false, GR_RETRY=false;
 function grCur(){ if(!grOn()) return null; const f=GF(); for(const s of GR_STEPS) if(!f[s.id]) return s; return null; }
 function grHere(s){ if(!s||s.map!==MAP) return false; if(!s.at||s.at==='*') return true; if(!(Array.isArray(s.at)?s.at:[s.at]).includes(AREA)) return false; return grGuideNear(s); }
-// ---- 2026-11-14 歩く段の行き先に、次に話す人(3Dの無いアレク)を立たせる。その人の近くまで行ったら話が始まる(オーナー: アレクがいないのに会話が始まる・話したあとどこにいるか分からない) ----
-const GR_GUIDE_ART={alek:{img:'../v3/chars/alek_stand.webp', h:1.45, n:'アレク'}};
-let GR_GUIDE=null;
-function grGuideWho(s){ if(!s||!s.wobj||s.map!==MAP) return null; let L=[];
-  if(s.kind==='scene') L=GR_SC[s.key]||SC[s.key]||[];
-  else if(s.kind==='battle'){ const P=GR_PLAN[s.ep]||{}, B=GR_BT[s.ep]; if(P.pre&&B&&B.midAll) L=B.midAll.slice(0,P.pre).flat(); }
-  for(const x of L) if(x&&GR_GUIDE_ART[x.w]) return x.w; return null; }
-function grGuideNear(s){ const g=GR_GUIDE; if(!g||g.id!==s.id) return true; return Math.hypot(HERO.x-g.x,HERO.z-g.z)<3.2; }
-function grGuideDrop(){ const g=GR_GUIDE; if(!g) return; scene.remove(g.grp); g.lbl.remove(); GR_GUIDE=null; }
-function grGuideMake(s,who){ const at=Array.isArray(s.at)?s.at[0]:s.at; const pt=grAreaPt(at); if(!pt) return;
-  const A=GR_GUIDE_ART[who], grp=new THREE.Group(), tl=new THREE.TextureLoader();
+// ---- 2026-11-14 場面に出る人を、その場に立たせる(オーナー: アレクがいないのに会話が始まる・話したあとどこにいるか分からない・エリーもアニメで出てる人も全員いる) ----
+//  歩く段: 行き先に その場面で話す人を立たせ、近くまで行ったら話が始まる。続きの場面(その場)では そのまま残る。エリーは 一緒にいる場面ではヤマトのうしろを歩く。
+//  3Dの無い人は全身の絵の立て看板(高さ=ヤマト158cm を 1.3 として身長で割る)
+const GR_GUIDE_ART={
+  alek:{img:'../v3/chars/alek_stand.webp', h:1.44, n:'アレク'},
+  elly:{img:'../v3/chars/elly_stand.webp', h:1.34, n:'エリー'},
+  nina:{img:'../v3/chars/nina_stand.webp', h:1.30, n:'ニーナ'},
+  marco:{img:'../v3/chars/marco_stand.webp', h:1.48, n:'マルコ'} };
+let GR_GUIDE=null;   // 立たせている組 {id,map,x,z,walk,mem:{who:{grp,sp,mk,lbl,x,z,h}}}
+let GR_ELLY=null;    // うしろを歩くエリー
+function grLines(s){ if(!s) return []; if(s.kind==='scene') return GR_SC[s.key]||SC[s.key]||[];
+  if(s.kind==='battle'){ const P=GR_PLAN[s.ep]||{}, B=GR_BT[s.ep]; if(P.pre&&B&&B.midAll) return B.midAll.slice(0,P.pre).flat(); } return []; }
+function grWho(s){ const o=[]; for(const x of grLines(s)) if(x&&GR_GUIDE_ART[x.w]&&!o.includes(x.w)) o.push(x.w); return o; }
+function grEllyWith(s){ if(!s||s.map!==MAP) return false; if(grWho(s).includes('elly')) return true; const i=GR_STEPS.indexOf(s), p=GR_STEPS[i-1];
+  return !!(p&&p.ep===s.ep&&grWho(p).includes('elly')); }
+const GR_CASTPT={};
+function grCastPt(n){ const k=MAP+':'+n; if(GR_CASTPT[k]) return GR_CASTPT[k]; let p=grAreaPt(n);
+  if(!p){ const w=D.walk||D.bounds, pts=[]; for(let x=w[0];x<=w[2];x+=1.5) for(let z=w[1];z<=w[3];z+=1.5) if(zoneAt(x,z)===n&&walkOK(x,z)&&colFree(x,z,0.4)) pts.push([x,z]);
+    if(pts.length){ const cx=pts.reduce((a,q)=>a+q[0],0)/pts.length, cz=pts.reduce((a,q)=>a+q[1],0)/pts.length; p=pts.reduce((b,q)=>Math.hypot(q[0]-cx,q[1]-cz)<Math.hypot(b[0]-cx,b[1]-cz)?q:b); } }
+  if(p) GR_CASTPT[k]=p; return p; }
+function grGuideNear(s){ const g=GR_GUIDE; if(!g||g.id!==s.id||!g.walk) return true; return Math.hypot(HERO.x-g.x,HERO.z-g.z)<3.4; }
+function grSprite(who){ const A=GR_GUIDE_ART[who], grp=new THREE.Group();
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,alphaTest:0.1,depthWrite:false,depthTest:false})); sp.renderOrder=998; sp.visible=false; grp.add(sp);
-  tl.load(A.img,t=>{ if(THREE.sRGBEncoding) t.encoding=THREE.sRGBEncoding; sp.material.map=t; sp.material.needsUpdate=true; const r=t.image.width/t.image.height; sp.scale.set(A.h*r,A.h,1); sp.center.set(0.5,0); sp.visible=true; });
-  const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); x.fillStyle='#ffd23a'; x.strokeStyle='#5a3a00'; x.lineWidth=5; x.beginPath(); x.moveTo(8,14); x.lineTo(56,14); x.lineTo(32,54); x.closePath(); x.stroke(); x.fill();
-  const mk=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false,depthWrite:false})); mk.scale.set(0.5,0.5,1); mk.renderOrder=999; grp.add(mk);
-  grp.position.set(pt[0],groundAt(pt[0],pt[1]),pt[1]); scene.add(grp);
-  GR_GUIDE={id:s.id,who,x:pt[0],z:pt[1],grp,sp,mk,h:A.h,map:MAP,lbl:makeLabel(A.n)}; window.GR_GUIDE=GR_GUIDE; window.GR_GUIDE_SP=sp; }
-function grGuideTick(){ try{ if(!SAVE||!HERO) return; const s=grCur(); const who=grGuideWho(s);
-  if(GR_GUIDE&&(!who||GR_GUIDE.id!==s.id||GR_GUIDE.map!==MAP||GR_GUIDE.grp.parent!==scene)) grGuideDrop();
-  if(!who) return; if(!GR_GUIDE) grGuideMake(s,who); const g=GR_GUIDE; if(!g) return;
-  g.mk.position.y=g.h+0.35+Math.sin(performance.now()/260)*0.08; g.mk.visible=!STORY;
-  const d=Math.hypot(HERO.x-g.x,HERO.z-g.z); const v=new THREE.Vector3(g.x,g.grp.position.y+g.h+0.15,g.z).project(camera);
-  const W=innerWidth, H=innerHeight; let sx=(v.x+1)/2*W, sy=(1-v.y)/2*H; if(v.z>1){ sx=W-sx; sy=H-sy; }
-  const inView=v.z<1&&sx>20&&sx<W-20&&sy>60&&sy<H-40, vis=!STORY&&!TRANS;
-  g.lbl.style.display=vis?'block':'none'; g.lbl.classList.add('on');
-  if(vis){ if(inView){ g.lbl.textContent=GR_GUIDE_ART[g.who].n; g.lbl.style.left=sx+'px'; g.lbl.style.top=sy+'px'; }
-    else { const cx=W/2, cy=H/2, a=Math.atan2(sy-cy,sx-cx), k=Math.min((W/2-60)/Math.abs(Math.cos(a)||1e-6),(H/2-90)/Math.abs(Math.sin(a)||1e-6));
-      const ar=['→','↘','↓','↙','←','↖','↑','↗'][((Math.round(a/(Math.PI/4))%8)+8)%8];
-      g.lbl.textContent=GR_GUIDE_ART[g.who].n+' '+ar; g.lbl.style.left=(cx+Math.cos(a)*k)+'px'; g.lbl.style.top=(cy+Math.sin(a)*k+12)+'px'; } }
-  if(d<3.2&&!STORY&&!TRANS&&!ENC&&!GR_RUN&&grHere(s)) grRun(); }catch(e){ console.warn('grGuide',e&&e.message); } }
-setInterval(grGuideTick,120);
+  new THREE.TextureLoader().load(A.img,t=>{ if(THREE.sRGBEncoding) t.encoding=THREE.sRGBEncoding; sp.material.map=t; sp.material.needsUpdate=true; const r=t.image.width/t.image.height; sp.scale.set(A.h*r,A.h,1); sp.center.set(0.5,0); sp.visible=true; });
+  scene.add(grp); return {who,grp,sp,h:A.h,lbl:makeLabel(A.n)}; }
+function grSpriteDrop(m){ scene.remove(m.grp); m.lbl.remove(); }
+function grGuideDrop(){ const g=GR_GUIDE; if(!g) return; for(const k in g.mem) grSpriteDrop(g.mem[k]); if(g.mk) scene.remove(g.mk); GR_GUIDE=null; window.GR_GUIDE=null; }
+function grSpot(x,z){ for(let r=0;r<=4;r+=0.5) for(let i=0;i<(r?10:1);i++){ const t=i/10*Math.PI*2, a=x+Math.cos(t)*r, b=z+Math.sin(t)*r; if(walkOK(a,b)) return [a,b]; } return [x,z]; }
+function grPlace(m,x,z){ const p=grSpot(x,z); m.x=p[0]; m.z=p[1]; m.grp.position.set(p[0],groundAt(p[0],p[1]),p[1]); }
+function grLabel(m,txt,arrowOK){ const W=innerWidth, H=innerHeight, v=new THREE.Vector3(m.x,m.grp.position.y+m.h+0.15,m.z).project(camera);
+  let sx=(v.x+1)/2*W, sy=(1-v.y)/2*H; if(v.z>1){ sx=W-sx; sy=H-sy; } const inView=v.z<1&&sx>20&&sx<W-20&&sy>60&&sy<H-40, vis=!STORY&&!TRANS&&(inView||arrowOK);
+  m.lbl.style.display=vis?'block':'none'; m.lbl.classList.add('on'); if(!vis) return;
+  if(inView){ m.lbl.textContent=txt; m.lbl.style.left=sx+'px'; m.lbl.style.top=sy+'px'; return; }
+  const cx=W/2, cy=H/2, a=Math.atan2(sy-cy,sx-cx), k=Math.min((W/2-60)/Math.abs(Math.cos(a)||1e-6),(H/2-90)/Math.abs(Math.sin(a)||1e-6));
+  const ar=['→','↘','↓','↙','←','↖','↑','↗'][((Math.round(a/(Math.PI/4))%8)+8)%8];
+  m.lbl.textContent=txt+' '+ar; m.lbl.style.left=(cx+Math.cos(a)*k)+'px'; m.lbl.style.top=(cy+Math.sin(a)*k+12)+'px'; }
+function grCastTick(s){ const ellyF=grEllyWith(s); const need=s&&s.map===MAP?grWho(s).filter(w=>!(w==='elly'&&ellyF)):[];
+  let g=GR_GUIDE; if(g&&(g.map!==MAP||!s)) { grGuideDrop(); g=null; }
+  if(s&&s.wobj&&s.map===MAP){   // 歩く段: 行き先に立たせる(話す人がいなければ誰も立たせない)
+    if(g&&g.id!==s.id){ grGuideDrop(); g=null; }
+    if(!g&&need.length){ const at=Array.isArray(s.at)?s.at[0]:s.at; const pt=grCastPt(at); if(!pt) return;
+      g=GR_GUIDE={id:s.id,map:MAP,x:pt[0],z:pt[1],walk:true,mem:{}}; window.GR_GUIDE=g;
+      const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); x.fillStyle='#ffd23a'; x.strokeStyle='#5a3a00'; x.lineWidth=5; x.beginPath(); x.moveTo(8,14); x.lineTo(56,14); x.lineTo(32,54); x.closePath(); x.stroke(); x.fill();
+      g.mk=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false,depthWrite:false})); g.mk.scale.set(0.5,0.5,1); g.mk.renderOrder=999; scene.add(g.mk); } }
+  else if(g){ g.walk=false; g.id=s?s.id:null; if(g.mk){ scene.remove(g.mk); g.mk=null; } }
+  else if(need.length){ const a=HERO.yaw||0; g=GR_GUIDE={id:s.id,map:MAP,x:HERO.x+Math.sin(a)*2.4,z:HERO.z+Math.cos(a)*2.4,walk:false,mem:{}}; window.GR_GUIDE=g; }
+  if(!g) return;
+  need.forEach((w,i)=>{ if(g.mem[w]) return; const m=g.mem[w]=grSprite(w); const n=Object.keys(g.mem).length-1, off=(n%2?1:-1)*Math.ceil(n/2)*0.95; grPlace(m,g.x+off,g.z+(n?0.3:0)); });
+  const first=g.mem[Object.keys(g.mem)[0]];
+  if(g.mk&&first){ g.mk.position.set(first.x,first.grp.position.y+first.h+0.35+Math.sin(performance.now()/260)*0.08,first.z); g.mk.visible=!STORY; }
+  Object.values(g.mem).forEach((m,i)=>grLabel(m,GR_GUIDE_ART[m.who].n,g.walk&&i===0)); }
+function grEllyTick(s){ const on=!!s&&grEllyWith(s)&&!(GR_GUIDE&&GR_GUIDE.mem.elly);
+  if(!on||(GR_ELLY&&GR_ELLY.map!==MAP)){ if(GR_ELLY){ grSpriteDrop(GR_ELLY); GR_ELLY=null; } if(!on) return; }
+  if(!GR_ELLY){ GR_ELLY=grSprite('elly'); GR_ELLY.map=MAP; const a=HERO.yaw||0; grPlace(GR_ELLY,HERO.x-Math.sin(a)*1.4+Math.cos(a)*0.9,HERO.z-Math.cos(a)*1.4-Math.sin(a)*0.9); }
+  const e=GR_ELLY, a=HERO.yaw||0, tx=HERO.x-Math.sin(a)*1.5+Math.cos(a)*0.9, tz=HERO.z-Math.cos(a)*1.5-Math.sin(a)*0.9, d=Math.hypot(tx-e.x,tz-e.z);
+  if(d>12){ grPlace(e,tx,tz); }
+  else if(d>0.35&&!STORY){ const st=Math.min(d,Math.max(0.06,d*0.12)); const nx=e.x+(tx-e.x)/d*st, nz=e.z+(tz-e.z)/d*st; if(walkOK(nx,nz)){ e.x=nx; e.z=nz; } else { e.x+=(tx-e.x)*0.2; e.z+=(tz-e.z)*0.2; } }
+  e.grp.position.set(e.x,groundAt(e.x,e.z)+(d>0.5&&!STORY?Math.abs(Math.sin(performance.now()/130))*0.05:0),e.z);
+  grLabel(e,'エリー',false); e.lbl.style.display='none'; }
+function grGuideTick(){ try{ if(!SAVE||!HERO) return; const s=grCur(); grCastTick(s); grEllyTick(s);
+  const g=GR_GUIDE; if(s&&g&&g.walk&&g.id===s.id&&!STORY&&!TRANS&&!ENC&&!GR_RUN&&grHere(s)) grRun(); }catch(e){ console.warn('grGuide',e&&e.message); } }
+setInterval(grGuideTick,50);
 async function grRun(){ if(GR_RUN) return; GR_RUN=true;
   try{ for(let g=0;g<400;g++){ const s=grCur(); if(!s||!grHere(s)||STORY||TRANS||ENC) break; const ok=await grStep(s); if(!ok) break;
       if(s.last){ const n=grCur(); if(!n||!(GR_PLAN[n.ep]&&GR_PLAN[n.ep].chain)) break; } } }
@@ -3518,7 +3549,7 @@ const GR_MAPJ={oliva_town:'オリーヴァ村', oliva_hill:'オリーブの丘',
 function grObjText(f){ if(!grOn()) return null; if(GR_RETRY) return 'もう一度、勝負'; const s=grCur(); if(!s) return null; const P=GR_PLAN[s.ep]||{};
   if(MAP!==s.map) return (P.obj&&s.head)?P.obj:(GR_MAPJ[s.map]||s.map)+'へ';
   if(s.at&&s.at!=='*'&&!(Array.isArray(s.at)?s.at:[s.at]).includes(AREA)) return s.wobj||P.obj||(s.at+'へ');
-  if(GR_GUIDE&&GR_GUIDE.id===s.id&&!grGuideNear(s)) return s.wobj||P.obj;
+  if(GR_GUIDE&&GR_GUIDE.walk&&GR_GUIDE.id===s.id&&!grGuideNear(s)) return s.wobj||P.obj;
   return P.obj||'第'+s.ep+'話'; }
 
 // ---- 前の版のセーブの移しかえ(2026-11-07 22話版) ----
