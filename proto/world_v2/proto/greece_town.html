@@ -3359,10 +3359,10 @@ function grHere(s){ if(!s||s.map!==MAP) return false; if(!s.at||s.at==='*') retu
 //  歩く段: 行き先に その場面で話す人を立たせ、近くまで行ったら話が始まる。続きの場面(その場)では そのまま残る。エリーは 一緒にいる場面ではヤマトのうしろを歩く。
 //  3Dの無い人は全身の絵の立て看板(高さ=ヤマト158cm を 1.3 として身長で割る)
 const GR_GUIDE_ART={
-  alek:{img:'../v3/chars/alek_stand.webp', h:1.44, n:'アレク'},
-  elly:{img:'../v3/chars/elly_stand.webp', h:1.34, n:'エリー'},
-  nina:{img:'../v3/chars/nina_stand.webp', h:1.30, n:'ニーナ'},
-  marco:{img:'../v3/chars/marco_stand.webp', h:1.48, n:'マルコ'} };
+  alek:{img:'../v3/chars/alek_stand.webp', h:1.33, n:'アレク'},
+  elly:{img:'../v3/chars/elly_stand.webp', h:1.24, n:'エリー'},
+  nina:{img:'../v3/chars/nina_stand.webp', h:1.20, n:'ニーナ'},
+  marco:{img:'../v3/chars/marco_stand.webp', h:1.36, n:'マルコ'} };
 let GR_GUIDE=null;   // 立たせている組 {id,map,x,z,walk,mem:{who:{grp,sp,mk,lbl,x,z,h}}}
 let GR_ELLY=null;    // うしろを歩くエリー
 function grLines(s){ if(!s) return []; if(s.kind==='scene') return GR_SC[s.key]||SC[s.key]||[];
@@ -3375,10 +3375,12 @@ function grCastPt(n){ const k=MAP+':'+n; if(GR_CASTPT[k]) return GR_CASTPT[k]; l
   if(!p){ const w=D.walk||D.bounds, pts=[]; for(let x=w[0];x<=w[2];x+=1.5) for(let z=w[1];z<=w[3];z+=1.5) if(zoneAt(x,z)===n&&walkOK(x,z)&&colFree(x,z,0.4)) pts.push([x,z]);
     if(pts.length){ const cx=pts.reduce((a,q)=>a+q[0],0)/pts.length, cz=pts.reduce((a,q)=>a+q[1],0)/pts.length; p=pts.reduce((b,q)=>Math.hypot(q[0]-cx,q[1]-cz)<Math.hypot(b[0]-cx,b[1]-cz)?q:b); } }
   if(p) GR_CASTPT[k]=p; return p; }
-function grGuideNear(s){ const g=GR_GUIDE; if(!g||g.id!==s.id||!g.walk) return true; return Math.hypot(HERO.x-g.x,HERO.z-g.z)<3.4; }
+function grGuideNear(s){ const g=GR_GUIDE; if(!g||g.id!==s.id||!g.walk) return true; if(g.lead) return false; return Math.hypot(HERO.x-g.x,HERO.z-g.z)<3.4; }
+const GR_PLANE=new THREE.PlaneGeometry(1,1).translate(0,0.5,0);
+function grFace(m){ if(m&&m.grp) m.grp.rotation.y=Math.atan2(camera.position.x-m.x,camera.position.z-m.z); }
 function grSprite(who){ const A=GR_GUIDE_ART[who], grp=new THREE.Group();
-  const sp=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,alphaTest:0.1,depthWrite:false,depthTest:false})); sp.renderOrder=998; sp.visible=false; grp.add(sp);
-  new THREE.TextureLoader().load(A.img,t=>{ if(THREE.sRGBEncoding) t.encoding=THREE.sRGBEncoding; sp.material.map=t; sp.material.needsUpdate=true; const r=t.image.width/t.image.height; sp.scale.set(A.h*r,A.h,1); sp.center.set(0.5,0); sp.visible=true; });
+  const sp=new THREE.Mesh(GR_PLANE,new THREE.MeshBasicMaterial({transparent:true,alphaTest:0.1,depthWrite:false,depthTest:false,side:THREE.DoubleSide})); sp.renderOrder=998; sp.visible=false; grp.add(sp);   // 2026-11-15 立てた板(真上からは縮んで見える=3Dのヤマトと同じ見え方)
+  new THREE.TextureLoader().load(A.img,t=>{ if(THREE.sRGBEncoding) t.encoding=THREE.sRGBEncoding; sp.material.map=t; sp.material.needsUpdate=true; const r=t.image.width/t.image.height; sp.scale.set(A.h*r,A.h,1); sp.visible=true; });
   scene.add(grp); return {who,grp,sp,h:A.h,lbl:makeLabel(A.n)}; }
 function grSpriteDrop(m){ scene.remove(m.grp); m.lbl.remove(); }
 function grGuideDrop(){ const g=GR_GUIDE; if(!g) return; for(const k in g.mem) grSpriteDrop(g.mem[k]); if(g.mk) scene.remove(g.mk); GR_GUIDE=null; window.GR_GUIDE=null; }
@@ -3394,18 +3396,35 @@ function grLabel(m,txt,arrowOK){ const W=innerWidth, H=innerHeight, v=new THREE.
 function grCastTick(s){ const ellyF=grEllyWith(s); const need=s&&s.map===MAP?grWho(s).filter(w=>!(w==='elly'&&ellyF)):[];
   let g=GR_GUIDE; if(g&&(g.map!==MAP||!s)) { grGuideDrop(); g=null; }
   if(s&&s.wobj&&s.map===MAP){   // 歩く段: 行き先に立たせる(話す人がいなければ誰も立たせない)
-    if(g&&g.id!==s.id){ grGuideDrop(); g=null; }
+    if(g&&g.id!==s.id){ const at=Array.isArray(s.at)?s.at[0]:s.at; const pt=grCastPt(at);
+      const pv=GR_STEPS[GR_STEPS.indexOf(s)-1], pw=pv&&pv.ep===s.ep?grWho(pv):[];
+      if(pt&&need.some(w=>g.mem[w]&&pw.includes(w)&&Math.hypot(HERO.x-g.mem[w].x,HERO.z-g.mem[w].z)<8)){   // 2026-11-15 さっき話した人は消さず、先を歩いて行き先へ連れていく
+        for(const k of Object.keys(g.mem)) if(!need.includes(k)){ grSpriteDrop(g.mem[k]); delete g.mem[k]; }
+        g.id=s.id; g.walk=true; g.lead=true; g.x=pt[0]; g.z=pt[1]; g.stk=0; if(g.mk) scene.remove(g.mk); g.mk=grMark(); }
+      else { grGuideDrop(); g=null; } }
     if(!g&&need.length){ const at=Array.isArray(s.at)?s.at[0]:s.at; const pt=grCastPt(at); if(!pt) return;
-      g=GR_GUIDE={id:s.id,map:MAP,x:pt[0],z:pt[1],walk:true,mem:{}}; window.GR_GUIDE=g;
-      const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); x.fillStyle='#ffd23a'; x.strokeStyle='#5a3a00'; x.lineWidth=5; x.beginPath(); x.moveTo(8,14); x.lineTo(56,14); x.lineTo(32,54); x.closePath(); x.stroke(); x.fill();
-      g.mk=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false,depthWrite:false})); g.mk.scale.set(0.5,0.5,1); g.mk.renderOrder=999; scene.add(g.mk); } }
+      g=GR_GUIDE={id:s.id,map:MAP,x:pt[0],z:pt[1],walk:true,mem:{}}; window.GR_GUIDE=g; g.mk=grMark(); } }
   else if(g){ g.walk=false; g.id=s?s.id:null; if(g.mk){ scene.remove(g.mk); g.mk=null; } }
   else if(need.length){ const a=HERO.yaw||0; g=GR_GUIDE={id:s.id,map:MAP,x:HERO.x+Math.sin(a)*2.4,z:HERO.z+Math.cos(a)*2.4,walk:false,mem:{}}; window.GR_GUIDE=g; }
   if(!g) return;
   need.forEach((w,i)=>{ if(g.mem[w]) return; const m=g.mem[w]=grSprite(w); const n=Object.keys(g.mem).length-1, off=(n%2?1:-1)*Math.ceil(n/2)*0.95; grPlace(m,g.x+off,g.z+(n?0.3:0)); });
+  if(g.lead) grLeadTick(g);
   const first=g.mem[Object.keys(g.mem)[0]];
   if(g.mk&&first){ g.mk.position.set(first.x,first.grp.position.y+first.h+0.35+Math.sin(performance.now()/260)*0.08,first.z); g.mk.visible=!STORY; }
   Object.values(g.mem).forEach((m,i)=>grLabel(m,GR_GUIDE_ART[m.who].n,g.walk&&i===0)); }
+function grMark(){ const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); x.fillStyle='#ffd23a'; x.strokeStyle='#5a3a00'; x.lineWidth=5; x.beginPath(); x.moveTo(8,14); x.lineTo(56,14); x.lineTo(32,54); x.closePath(); x.stroke(); x.fill();
+  const mk=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false,depthWrite:false})); mk.scale.set(0.5,0.5,1); mk.renderOrder=999; scene.add(mk); return mk; }
+// 先を歩く: ヤマトが離れたら立ち止まって待つ。道がふさがって進めない時は行き先へ移る
+function grLeadTick(g){ if(STORY||TRANS||ENC) return; let done=true, moved=false;
+  Object.values(g.mem).forEach((m,n)=>{ const off=(n%2?1:-1)*Math.ceil(n/2)*0.95, tx=g.x+off, tz=g.z+(n?0.3:0), d=Math.hypot(tx-m.x,tz-m.z);
+    if(d<0.4) return; done=false; const hd=Math.hypot(HERO.x-m.x,HERO.z-m.z); if(hd>16||Math.hypot(HERO.x-g.x,HERO.z-g.z)<5){ grPlace(m,tx,tz); return; } if(hd>7) return;
+    const st=Math.min(d,0.17), a0=Math.atan2(tx-m.x,tz-m.z);
+    for(const da of [0,0.6,-0.6,1.2,-1.2,1.8,-1.8]){ const nx=m.x+Math.sin(a0+da)*st, nz=m.z+Math.cos(a0+da)*st; if(walkOK(nx,nz)){ m.x=nx; m.z=nz; moved=true; break; } }
+    m.grp.position.set(m.x,groundAt(m.x,m.z)+Math.abs(Math.sin(performance.now()/130))*0.05,m.z); });
+  const fd=Object.values(g.mem).reduce((a,m)=>a+Math.hypot(g.x-m.x,g.z-m.z),0);   // 行き先までの残りが2秒縮まなければ、先に着いたことにする
+  if(g.bd==null||fd<g.bd-0.3){ g.bd=fd; g.stk=0; } else if(moved) g.stk=(g.stk||0)+1;
+  if(!done&&g.stk>40){ Object.values(g.mem).forEach((m,n)=>grPlace(m,g.x+(n%2?1:-1)*Math.ceil(n/2)*0.95,g.z+(n?0.3:0))); g.stk=0; g.bd=null; }
+  if(done) g.lead=false; }
 function grEllyTick(s){ const on=!!s&&grEllyWith(s)&&!(GR_GUIDE&&GR_GUIDE.mem.elly);
   if(!on||(GR_ELLY&&GR_ELLY.map!==MAP)){ if(GR_ELLY){ grSpriteDrop(GR_ELLY); GR_ELLY=null; } if(!on) return; }
   if(!GR_ELLY){ GR_ELLY=grSprite('elly'); GR_ELLY.map=MAP; const a=HERO.yaw||0; grPlace(GR_ELLY,HERO.x-Math.sin(a)*1.4+Math.cos(a)*0.9,HERO.z-Math.cos(a)*1.4-Math.sin(a)*0.9); }
@@ -3415,6 +3434,7 @@ function grEllyTick(s){ const on=!!s&&grEllyWith(s)&&!(GR_GUIDE&&GR_GUIDE.mem.el
   e.grp.position.set(e.x,groundAt(e.x,e.z)+(d>0.5&&!STORY?Math.abs(Math.sin(performance.now()/130))*0.05:0),e.z);
   grLabel(e,'エリー',false); e.lbl.style.display='none'; }
 function grGuideTick(){ try{ if(!SAVE||!HERO) return; const s=grCur(); grCastTick(s); grEllyTick(s);
+  if(GR_GUIDE) Object.values(GR_GUIDE.mem).forEach(grFace); grFace(GR_ELLY);
   const g=GR_GUIDE; if(s&&g&&g.walk&&g.id===s.id&&!STORY&&!TRANS&&!ENC&&!GR_RUN&&grHere(s)) grRun(); }catch(e){ console.warn('grGuide',e&&e.message); } }
 setInterval(grGuideTick,50);
 async function grRun(){ if(GR_RUN) return; GR_RUN=true;
