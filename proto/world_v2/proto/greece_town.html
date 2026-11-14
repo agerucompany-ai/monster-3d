@@ -3354,7 +3354,38 @@ function grBuild(){ GR_STEPS.length=0; for(const k in GR_BY) delete GR_BY[k];
 // ---- 段を進める ----
 let GR_RUN=false, GR_RETRY=false;
 function grCur(){ if(!grOn()) return null; const f=GF(); for(const s of GR_STEPS) if(!f[s.id]) return s; return null; }
-function grHere(s){ if(!s||s.map!==MAP) return false; if(!s.at||s.at==='*') return true; return (Array.isArray(s.at)?s.at:[s.at]).includes(AREA); }
+function grHere(s){ if(!s||s.map!==MAP) return false; if(!s.at||s.at==='*') return true; if(!(Array.isArray(s.at)?s.at:[s.at]).includes(AREA)) return false; return grGuideNear(s); }
+// ---- 2026-11-14 歩く段の行き先に、次に話す人(3Dの無いアレク)を立たせる。その人の近くまで行ったら話が始まる(オーナー: アレクがいないのに会話が始まる・話したあとどこにいるか分からない) ----
+const GR_GUIDE_ART={alek:{img:'../v3/chars/alek_stand.webp', h:1.45, n:'アレク'}};
+let GR_GUIDE=null;
+function grGuideWho(s){ if(!s||!s.wobj||s.map!==MAP) return null; let L=[];
+  if(s.kind==='scene') L=GR_SC[s.key]||SC[s.key]||[];
+  else if(s.kind==='battle'){ const P=GR_PLAN[s.ep]||{}, B=GR_BT[s.ep]; if(P.pre&&B&&B.midAll) L=B.midAll.slice(0,P.pre).flat(); }
+  for(const x of L) if(x&&GR_GUIDE_ART[x.w]) return x.w; return null; }
+function grGuideNear(s){ const g=GR_GUIDE; if(!g||g.id!==s.id) return true; return Math.hypot(HERO.x-g.x,HERO.z-g.z)<3.2; }
+function grGuideDrop(){ const g=GR_GUIDE; if(!g) return; scene.remove(g.grp); g.lbl.remove(); GR_GUIDE=null; }
+function grGuideMake(s,who){ const at=Array.isArray(s.at)?s.at[0]:s.at; const pt=grAreaPt(at); if(!pt) return;
+  const A=GR_GUIDE_ART[who], grp=new THREE.Group(), tl=new THREE.TextureLoader();
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,alphaTest:0.1,depthWrite:false,depthTest:false})); sp.renderOrder=998; sp.visible=false; grp.add(sp);
+  tl.load(A.img,t=>{ if(THREE.sRGBEncoding) t.encoding=THREE.sRGBEncoding; sp.material.map=t; sp.material.needsUpdate=true; const r=t.image.width/t.image.height; sp.scale.set(A.h*r,A.h,1); sp.center.set(0.5,0); sp.visible=true; });
+  const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); x.fillStyle='#ffd23a'; x.strokeStyle='#5a3a00'; x.lineWidth=5; x.beginPath(); x.moveTo(8,14); x.lineTo(56,14); x.lineTo(32,54); x.closePath(); x.stroke(); x.fill();
+  const mk=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false,depthWrite:false})); mk.scale.set(0.5,0.5,1); mk.renderOrder=999; grp.add(mk);
+  grp.position.set(pt[0],groundAt(pt[0],pt[1]),pt[1]); scene.add(grp);
+  GR_GUIDE={id:s.id,who,x:pt[0],z:pt[1],grp,sp,mk,h:A.h,map:MAP,lbl:makeLabel(A.n)}; window.GR_GUIDE=GR_GUIDE; window.GR_GUIDE_SP=sp; }
+function grGuideTick(){ try{ if(!SAVE||!HERO) return; const s=grCur(); const who=grGuideWho(s);
+  if(GR_GUIDE&&(!who||GR_GUIDE.id!==s.id||GR_GUIDE.map!==MAP||GR_GUIDE.grp.parent!==scene)) grGuideDrop();
+  if(!who) return; if(!GR_GUIDE) grGuideMake(s,who); const g=GR_GUIDE; if(!g) return;
+  g.mk.position.y=g.h+0.35+Math.sin(performance.now()/260)*0.08; g.mk.visible=!STORY;
+  const d=Math.hypot(HERO.x-g.x,HERO.z-g.z); const v=new THREE.Vector3(g.x,g.grp.position.y+g.h+0.15,g.z).project(camera);
+  const W=innerWidth, H=innerHeight; let sx=(v.x+1)/2*W, sy=(1-v.y)/2*H; if(v.z>1){ sx=W-sx; sy=H-sy; }
+  const inView=v.z<1&&sx>20&&sx<W-20&&sy>60&&sy<H-40, vis=!STORY&&!TRANS;
+  g.lbl.style.display=vis?'block':'none'; g.lbl.classList.add('on');
+  if(vis){ if(inView){ g.lbl.textContent=GR_GUIDE_ART[g.who].n; g.lbl.style.left=sx+'px'; g.lbl.style.top=sy+'px'; }
+    else { const cx=W/2, cy=H/2, a=Math.atan2(sy-cy,sx-cx), k=Math.min((W/2-60)/Math.abs(Math.cos(a)||1e-6),(H/2-90)/Math.abs(Math.sin(a)||1e-6));
+      const ar=['→','↘','↓','↙','←','↖','↑','↗'][((Math.round(a/(Math.PI/4))%8)+8)%8];
+      g.lbl.textContent=GR_GUIDE_ART[g.who].n+' '+ar; g.lbl.style.left=(cx+Math.cos(a)*k)+'px'; g.lbl.style.top=(cy+Math.sin(a)*k+12)+'px'; } }
+  if(d<3.2&&!STORY&&!TRANS&&!ENC&&!GR_RUN&&grHere(s)) grRun(); }catch(e){ console.warn('grGuide',e&&e.message); } }
+setInterval(grGuideTick,120);
 async function grRun(){ if(GR_RUN) return; GR_RUN=true;
   try{ for(let g=0;g<400;g++){ const s=grCur(); if(!s||!grHere(s)||STORY||TRANS||ENC) break; const ok=await grStep(s); if(!ok) break;
       if(s.last){ const n=grCur(); if(!n||!(GR_PLAN[n.ep]&&GR_PLAN[n.ep].chain)) break; } } }
@@ -3487,6 +3518,7 @@ const GR_MAPJ={oliva_town:'オリーヴァ村', oliva_hill:'オリーブの丘',
 function grObjText(f){ if(!grOn()) return null; if(GR_RETRY) return 'もう一度、勝負'; const s=grCur(); if(!s) return null; const P=GR_PLAN[s.ep]||{};
   if(MAP!==s.map) return (P.obj&&s.head)?P.obj:(GR_MAPJ[s.map]||s.map)+'へ';
   if(s.at&&s.at!=='*'&&!(Array.isArray(s.at)?s.at:[s.at]).includes(AREA)) return s.wobj||P.obj||(s.at+'へ');
+  if(GR_GUIDE&&GR_GUIDE.id===s.id&&!grGuideNear(s)) return s.wobj||P.obj;
   return P.obj||'第'+s.ep+'話'; }
 
 // ---- 前の版のセーブの移しかえ(2026-11-07 22話版) ----
