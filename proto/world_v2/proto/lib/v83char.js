@@ -185,8 +185,12 @@ V83.OUTLINE.onBeforeCompile=s=>{
     { vec3 vnO=normalize(normalMatrix*objectNormal); vec4 mv2=mvPosition; mv2.xyz+=vnO*(0.0006*(-mvPosition.z)+0.0010);   // 2026-11-15 縁を細く(旧 0.0011*z+0.0022)
       gl_Position=projectionMatrix*mv2; gl_Position.z+=0.0002*gl_Position.w; }`);
 };
-V83.addOutline=function(mesh){
-  const ol=new THREE.SkinnedMesh(mesh.geometry,V83.OUTLINE);
+// 2026-11-15 o.tex(色): 黒一色でなく、その所の絵の色×o.tex で縁を描く(金髪=濃い金・肌=赤茶)。人ごとに渡す(渡さない人=ヤマト等は従来の黒茶)
+V83.outlineMat=function(map,tint){
+  const m=new THREE.MeshBasicMaterial({color:tint,map,side:THREE.BackSide,skinning:true}); m.onBeforeCompile=V83.OUTLINE.onBeforeCompile; return m; };
+V83.addOutline=function(mesh,o){
+  const mp=o&&o.tex!=null&&mesh.material&&mesh.material.map;
+  const ol=new THREE.SkinnedMesh(mesh.geometry,mp?V83.outlineMat(mp,o.tex):V83.OUTLINE);
   ol.bind(mesh.skeleton,mesh.bindMatrix);ol.bindMode=mesh.bindMode;
   ol.position.copy(mesh.position);ol.quaternion.copy(mesh.quaternion);ol.scale.copy(mesh.scale);
   ol.frustumCulled=false;ol.castShadow=false;ol.receiveShadow=false;ol.userData.v83Outline=true;ol.userData.v81Outline=true;
