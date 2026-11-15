@@ -442,7 +442,7 @@ function strApply(opt){ if(!opt||!opt.enemy) return opt; const st=STR[S.foe.str]
 // ---- たたかう / 結果 ----
 let LAST=null, RUNNING=false;
 async function run(opt, again){ if(RUNNING) return; RUNNING=true; LAST=again||(()=>buildOpt()); $('rs').classList.remove('on');
-  opt=Object.assign({ autoButton:true, recruit:()=>null }, opt); if(S.board.order==='spd') opt.turnOrder='spd';
+  opt=Object.assign({ autoButton:true, recruit:()=>null }, opt); opt.turnOrder=(S.board.order==='spd')?'spd':'alt';   /* 2026-11-15 battle.js の既定が素早さ順になったので、交互を選んだ時は 'alt' を渡す */
   window._vsLastOpt=JSON.parse(JSON.stringify(opt, (k,v)=>typeof v==='function'?undefined:v));
   let res=null; try{ res=await MB.startBattle(opt); }catch(e){ console.error('vs battle', e); }
   RUNNING=false; window._vsLastResult=res; showResult(res); }

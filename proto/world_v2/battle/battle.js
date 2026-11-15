@@ -301,13 +301,18 @@ function aimFromCell(u, mv, r, c){ const S=mv.shape||{}; if(S.shape==='line'){ c
 // ---- 相性(技のタイプ × 守る側のタイプ・2タイプは案B) ----
 function typeBonusT(at, dm){ const ds=monTypes(dm); if(ds.length<2) return ds.some(d=>(STRONG[at]||[]).includes(d))?0.2:0;
   let net=0; for(const d of ds){ if((STRONG[at]||[]).includes(d)) net++; else if(typeResExt(at,d)) net--; } return net>0?0.2:0; }
-function typePenaltyT(at, dm){ return monTypes(dm).some(d=>(WEAK[at]||[]).includes(d))?-0.2:0; }
+const RES_PEN=0.3;   // 2026-11-15 いまひとつ(技 v2)のダメージ減 0.2→0.3(同じLvの進化前どうしで いまひとつは5回くらい)
+function typePenaltyT(at, dm){ return monTypes(dm).some(d=>(WEAK[at]||[]).includes(d))?-RES_PEN:0; }
 const STAGE_SPD={1:1, 2:1.6, 3:2.2};   // 素早さの段の倍率(stats_v2 と同じ)。古代テリオンは挑む側の段に合わせて目覚める(体力・攻撃の stageRef と同じ考え)
 function spdOf(u){ const m=mon(u); let v=(m.spd||20)*rankX(u.rank||1); if(u.anc && BT.anc) v*=(STAGE_SPD[BT.anc.pst]||2.2)/2.2; return Math.max(1,v); }
 function spdE(att, def){ const a=spdOf(att), d=spdOf(def); return (d-a)/(d+a); }
 function hitChance(att, def, mv, area){ if(!mv || mv.target==='map') return 1; const E=V2.EVADE; let ev=Math.max(E.min, Math.min(E.max, E.base+E.k*spdE(att,def)))+(terrFx(mon(def), state.terrain[def.r][def.c], 'evade')?TERR_FX.evade:0)+((T3()&&def.blur&&(state.ht||0)<def.blur)?TACT.charge.windEvade:0); if(area) ev*=E.areaX;   // 森(森)・闇(遺跡・瘴気)はよけやすい
   return Math.max(V2.minHit, Math.min(1,((mv.hit!=null?mv.hit:100)/100)*(1-ev))); }
 function critChance(att, def, mv){ if(!mv) return 0; return Math.max(0, ((mv.crit||0)+V2.CRIT.base)/100*Math.max(0.5, Math.min(1.5, 1-spdE(att,def)))); }
+// 2026-11-15 段のちがいの補正: 進化した子は体力・攻撃とも約3倍なので、そのままだと進化前の子を1回でたおす(ダメージを4回で倒れるくらいにそろえたあと)。
+//   上の段→下の段は1段ごとに ×up(2段目→1段目の普通の技で2〜3回)・下の段→上の段は ×down。古代テリオンには掛けない
+const KO_CAP=0.55;   // 1回の技で与えるダメージの上限(相手の最大体力の割合)。0=なし
+const STAGE_GAP={up:0.5, down:1};
 // ダメージ(STATS_MOVES_SPEC.md 2章)。mv が {p:x}(古代の大技など・威力のない物)なら 威力=100×x・相性は攻撃する子のタイプ
 function calcDamageV2(att, def, mv, o){
   const ma=mon(att), md=mon(def); mv=mv||{p:1}; const legacy=(mv.power==null);
@@ -326,6 +331,7 @@ function calcDamageV2(att, def, mv, o){
   if(!legacy && terrFx(md, state.terrain[def.r][def.c], 'guard')) dmg*=1-TERR_FX.guard;   // 地: 荒地・遺跡で受けるダメージ−20%
   if(!legacy && coverOn(att, def, mv)) dmg*=1-TACT.cover.x;
   if(!legacy && att.owner!=null) dmg*=1+chargeX(att, mv);   // 戦術v3: 突進   // 戦術v3: 森・遺跡のかげ(2マス以上はなれた所から −15%)
+  if(!att.anc && !def.anc){ const sg=((ma.level||1)-(md.level||1)); if(sg>0) dmg*=Math.pow(STAGE_GAP.up,sg); else if(sg<0) dmg*=Math.pow(STAGE_GAP.down,-sg); }   // 2026-11-15 段のちがい(進化した子→進化前の子は1段ごとに×up・逆は×down)
   if(def.ancTired) dmg*=ANCIENT.breakX;
   if(att.anc && !legacy) dmg*=V2.ancX;
   const rg=(att.owner===1&&BT.diff&&BT.diff.rage)?1+BT.diff.rage*((state.koN&&state.koN[1])||0):1;
@@ -388,6 +394,7 @@ function gaugeZone(u){ return !!u && (inCenterRow(u.r) || inCampRow(1-u.owner, u
 const GAUGE_MAX = 100;
 const LEADER_HP_X = 2.0;           // ボス以外のリーダーの体力倍率
 const EVO_GAUGE = {1:50, 2:100};     // 進化に必要な闘気: Lv1→2=50 / Lv2→3=100
+const GAUGE_PACE = 1;   // 2026-11-15 闘気のたまる速さ(ダメージを4回で倒れるくらいにして戦いが短くなったので、進化が間に合うように)
 const GAUGE_HIT = 15, GAUGE_HIT_WEAK = 25;      // 与ダメ: 当てる+15 / 弱点+25
 const GAUGE_TAKEN = 20, GAUGE_TAKEN_LOW = 30;   // 被ダメ: +20 / HP半分以下なら+30
 function gaugeOf(u){ return (u&&u.g)||0; }
@@ -442,13 +449,14 @@ function addGauge(u, n){
 // リーダー: 自軍=先頭の1体(主人公の相棒) / 敵=ボス(いなければ最も体力の高い1体)
 function leaderOf(o){ return alive(o).find(u=>u.leader)||null; }
 function leaderAlive(o){ const us=alive(o); if(!us.length) return false; return us.some(u=>u.leader) || !state.leaderSet; }
+function leaderHpOf(o){ if(BT.kind!=='ancient' && alive(o).length<=1) return 1; return (BT.rules&&BT.rules.leaderHpX)||LEADER_HP_X; }   // 2026-11-15 1体だけの側(1対1など)はリーダーの体力増しなし(守る仲間がいない・のびるだけ)
 function ensureLeaders(){
   for(const o of [0,1]){ const us=alive(o); if(!us.length || us.some(u=>u.leader)) continue;
     let pick=null;
     if(o===0){ pick=us.find(u=>u._pl===0)||us.slice().sort((a,b)=>a.uid-b.uid)[0]; }
     else { const bs=us.filter(u=>u.isBoss); pick=(bs.length?bs:us).slice().sort((a,b)=>b.maxhp-a.maxhp)[0]; }
     if(pick) pick.leader=true; }
-  for(const u of Object.values(state.units)){ if(u.leader && !u.isBoss && !u._lbuf){ const LX=((BT.rules&&BT.rules.leaderHpX)||LEADER_HP_X)*((u.owner===1&&BT.diff&&BT.diff.leadHpX)||1); u._lbuf=LX; u.maxhp=Math.round(u.maxhp*LX);   /* 2026-10-27 enemy.ai.leadHpX=相手のリーダーだけ体力をさらに(北欧編の終盤のボス=最後ギリギリ) */ u.hp=Math.round(u.hp*LX); u.hx=(u.hx||1)*LX; } }   // ボス以外のリーダーは体力増し(一撃で決着しにくく)
+  for(const u of Object.values(state.units)){ if(u.leader && !u.isBoss && !u._lbuf){ const LX=leaderHpOf(u.owner)*((u.owner===1&&BT.diff&&BT.diff.leadHpX)||1); u._lbuf=LX; u.maxhp=Math.round(u.maxhp*LX);   /* 2026-10-27 enemy.ai.leadHpX=相手のリーダーだけ体力をさらに(北欧編の終盤のボス=最後ギリギリ) */ u.hp=Math.round(u.hp*LX); u.hx=(u.hx||1)*LX; } }   // ボス以外のリーダーは体力増し(一撃で決着しにくく)
   state.leaderSet=true;
 }
 // 勝敗判定(リーダー撃破)。決着したらtrue
@@ -874,7 +882,7 @@ function doAttack(att, def, move){
   }
   if(att.owner===0){
     if(advType && tutOnce('t_adv')) tutToast(IC('hint')+IC('weak')+'弱点！ +20%・守りを貫く');
-    else if(weakHit && tutOnce('t_weak')) tutToast(IC('hint')+IC('resist')+'いまひとつ… -20%');
+    else if(weakHit && tutOnce('t_weak')) tutToast(IC('hint')+IC('resist')+'いまひとつ… -'+Math.round((V2ON()?RES_PEN:0.2)*100)+'%');
     else if(advTerr && tutOnce('t_terr')) tutToast(IC('hint')+IC('terrain')+'得意な地形！ +30%');
   }
   let kills=0, msg='', dealt=0; const hitFoes=[];
@@ -919,7 +927,8 @@ function hitOne(att, t, mv, area, sure){   // 1体に当てる。戻り値 {dmg,
   if(isFoe && !sure && Math.random()>=hitChance(att,t,mv,area)){ floatText(t.r,t.c,'よけた','#cfe8ff','tag'); if(_seq&&_seq.miss) _seq.miss[t.uid]=1;   /* 見た目だけ: 技がそれて飛ぶ */ if(state.stats){ const s=state.stats.miss||(state.stats.miss=[0,0]); s[att.owner]++; } return {miss:true, isFoe}; }
   let dmg=0, crit=false;
   if(mv.power>0){ const H=(mv.effect&&mv.effect.hits)||1; for(let h=0;h<H;h++){ const c=isFoe && Math.random()<critChance(att,t,mv); if(c) crit=true; dmg+=calcDamage(att,t,mv,{crit:c}); }
-    if(!isFoe) dmg=Math.max(1,Math.round(dmg*(mv.ff||V2.FF))); }
+    if(!isFoe) dmg=Math.max(1,Math.round(dmg*(mv.ff||V2.FF)));
+    else if(KO_CAP && !att.anc && !t.anc && !t.isBoss) dmg=Math.min(dmg, Math.ceil((t.maxhp||1)*KO_CAP)); }   // 2026-11-15 1回の技で 最大体力の KO_CAP まで(会心・連続技・段のちがいでも 1回では倒れない=いちばん速くて2回)
   if(crit && state.stats){ const s=state.stats.crit||(state.stats.crit=[0,0]); s[att.owner]++; }
   const adv=isFoe && mvBonusT(mv,mon(t))>0, res=isFoe && mvPenaltyT(mv,mon(t))<0;
   if(dmg>0){ t.hp-=dmg; floatText(t.r,t.c,`-${dmg}`, adv?'#ffd24a':(res?'#aab4c0':(t.owner===0?'#ff7a5a':'#ffb0a0')), adv?'num weak':(res?'num res':'num')); if(crit) floatText(t.r,t.c,'会心!','#fff07a','tag'); }
@@ -1595,7 +1604,7 @@ function aiSkillOf(u){ const k=BT.aiSkill&&BT.aiSkill[u.owner]; return k==null?1
 // ===== 技 v2 の AI: 期待ダメージ(威力×命中×(1+会心/2)×当たる数)で技と相手を選ぶ =====
 function expDmg(u, e, mv, area){ const d=calcDamage(u,e,mv)*((mv.effect&&mv.effect.hits)||1); return {raw:d, ev:d*hitChance(u,e,mv,area)*(1+critChance(u,e,mv)*(V2.CRIT.x-1))}; }
 function ailValue(u, e, mv){ let s=0; for(const a of mvAils(mv)){ if(e[a]>0) continue; if(a==='para'&&uHasType(e,'地')||a==='freeze'&&uHasType(e,'炎')||a==='poison'&&uHasType(e,'闇')||a==='burn'&&uHasType(e,'水')) continue;   // 2つのタイプの技は 状態異常ごとに足す
-  const ch=mv.effect.chance==='stage'?procChance(mon(u).level):(+mv.effect.chance||0); s+=ch*(a==='freeze'||a==='para'?30:22); } return s; }
+  const ch=mv.effect.chance==='stage'?procChance(mon(u).level):(+mv.effect.chance||0); s+=ch*0.5*(e.maxhp||1)*(a==='burn'?BURN_FRAC*AIL_TURNS.burn:(a==='poison'?POISON_FRAC*AIL_TURNS.poison:0.12)); } return s; }   // 2026-11-15 状態異常の値を 相手の体力の割合で(前は 22/30 点の固定。ダメージを4回で倒れるくらいにしたら、弱い状態異常の技ばかり選んでいた)
 function costPen(u, mv){ if(!(mv.mp>0)) return 0; const left=usesLeft(u,mv); return 4+14/Math.max(1,left); }   // 回数のある技は少しだけ惜しむ(倒せる時は ∞ の技で)
 function aiScoreTarget(u, e, mv, area){ const x=expDmg(u,e,mv,area); const hp=Math.max(1,e.hp); let s=Math.min(x.ev,hp)*0.5+(1-e.hp/e.maxhp)*80*(x.raw>0?1:0);
   if(e.leader) s+=900; if(x.raw>=hp) s+=500*hitChance(u,e,mv,area); if(mvBonusT(mv,mon(e))>0) s+=40; s+=ailValue(u,e,mv);
@@ -5530,10 +5539,10 @@ function seriesBadges(mid){ const ss=seriesOf(mid); return ss.length?' '+ss.map(
 // ---- 盤の大きさごとの決まり(decisions.md 3 / game_design.md 8-3) ----
 // leaderHpX=リーダーの体力倍率(template は2.0) / budget=出せる子のLv合計 / maxTurn=最大ターン / rows=開始の行数(自陣の最奥から) / evo=進化エリア / springs=回復の泉(片側のマス数) / items=盤の回復薬 / dmgX=ダメージの倍率(バランス用) / sustainX=光の回復量・森の吸収量の倍率(省略=1)
 const SIZE_RULES={
-  7: {budget:3, maxTurn:14, rows:3, evo:'one',   springs:0, items:0, dmgX:1.40, hpX:1.00, leaderHpX:1.3, sustainX:0.45, solo:{dmgX:2.10, leaderHpX:1.1, stageDmgX:{1:1,2:1,3:1.7}, ai:{hpX:0.85, atkX:0.85}}},   // 2026-10-27 野生は群れ(自分の出せる数と同じ数)になった → ダメージ1.4倍・リーダー1.3倍・段ごとの野生の強さ WILD_STAGE・3段目のダメージ STAGE_DMGX[3]=2.3(sim_wild_pack.js)。以下は1対1の時の記録:   // シムで調整(2026-10-25): 1対1は両方リーダーなので体力1.6倍×回復/吸収で8割が時間切れだった → 10ターン・ダメージ2.1倍・リーダー1.1倍・回復/吸収45%。27組×80戦で時間切れ0.1%・平均5.8ターン・勝率70〜100%
-  9: {budget:4, maxTurn:18, rows:3, evo:"rows", springs:0, items:0, dmgX:1.00, hpX:1.00, leaderHpX:2.0},
-  11:{budget:5, maxTurn:20, rows:3, evo:"rows", springs:0, items:0, dmgX:1.20, hpX:1.00, leaderHpX:1.7},
-  13:{budget:6, maxTurn:24, rows:3, evo:"rows", springs:0, items:0, dmgX:1.20, hpX:1.00, leaderHpX:1.7},   // 2026-10-27 終盤のボス戦(6対6・北欧の幹部/アドリアン/ラグナディオ)。マップの人の札の size:13 で使う。盤と小物は 11×11 と同じ作り(iPhone の負荷)   // シムで調整: 8分前後・時間切れを減らす(template は dmgX1.0/リーダー2.0)
+  7: {budget:3, maxTurn:14, rows:3, evo:'one',   springs:0, items:0, dmgX:2.60, hpX:1.00, leaderHpX:1.3, sustainX:0.45, solo:{dmgX:2.60, leaderHpX:1.1, stageDmgX:{1:1,2:1,3:1.7}, ai:{hpX:0.85, atkX:0.85}}},   // 2026-10-27 野生は群れ(自分の出せる数と同じ数)になった → ダメージ1.4倍・リーダー1.3倍・段ごとの野生の強さ WILD_STAGE・3段目のダメージ STAGE_DMGX[3]=2.3(sim_wild_pack.js)。以下は1対1の時の記録:   // シムで調整(2026-10-25): 1対1は両方リーダーなので体力1.6倍×回復/吸収で8割が時間切れだった → 10ターン・ダメージ2.1倍・リーダー1.1倍・回復/吸収45%。27組×80戦で時間切れ0.1%・平均5.8ターン・勝率70〜100%
+  9: {budget:4, maxTurn:18, rows:3, evo:"rows", springs:0, items:0, dmgX:2.60, hpX:1.00, leaderHpX:2.0},   // 2026-11-15 オーナー「最初体力と攻撃力のバランスがあってなくてバトルが長い。同じレベル・進化前同士なら 弱点で3回・弱点＋地形で2回・弱点なしで4回くらいでノックダウン」→ ダメージ(dmgX)を盤の大きさによらず 2.60 にそろえ。リーダーの体力増しは盤ごとの値のまま、1体だけの側(1対1など)は増しなし。シム scratchpad/hits(hits.js・realsim.js)。前の dmgX: 7=1.4・1対1=2.1・9=1.0・11/13=1.2
+  11:{budget:5, maxTurn:20, rows:3, evo:"rows", springs:0, items:0, dmgX:2.60, hpX:1.00, leaderHpX:1.7},
+  13:{budget:6, maxTurn:24, rows:3, evo:"rows", springs:0, items:0, dmgX:2.60, hpX:1.00, leaderHpX:1.7},   // 2026-10-27 終盤のボス戦(6対6・北欧の幹部/アドリアン/ラグナディオ)。マップの人の札の size:13 で使う。盤と小物は 11×11 と同じ作り(iPhone の負荷)   // シムで調整: 8分前後・時間切れを減らす(template は dmgX1.0/リーダー2.0)
 };
 // 相手の種類ごとの既定(盤の大きさ・敵のAI)。evo=敵が進化できる回数 / eg=敵の闘気のたまりやすさ / skill=1なら毎回いちばん良い手(低いほど迷う)
 const KIND_DEFAULTS={
@@ -5550,6 +5559,7 @@ const KIND_DEFAULTS={
 //   shape: 'area'=自分のまわり cheby≤rng / 'cross'=自分の行と列(幅3)で rng まで。big.from = 何回目の目覚めから使えるか(0=最初から)。
 // 時間切れは人と同じ(残り体力の割合)。評価は sim/sim_ancient.js(6戦×相棒3系統)。
 const ANCIENT={
+  dmgX:{7:1.4, 9:1.0, 11:1.2, 13:1.2},   // 2026-11-15 古代テリオンの戦いの盤のダメージ(前の SIZE_RULES の値のまま)
   size:9, maxTurn:18, maxTurn13:24, atkMP13:20, cover:['ruins','forest'], coverX:0.5, breakX:1.5, minionX:0.85, minionLvDown:3,
   stageRef:{hp:{1:135,2:460,3:1350}, atk:{1:30,2:85,3:150}},   // 段ごとの体力・攻撃のめやす(表の平均)
   tiers:{   // シム(sim_ancient.js 60・その土地のレベル帯のパーティ・相棒3系統・AI同士・各180戦・2026-10-26): 勝率 守り①89% ②75% ③73% ボス82% ④69% 王63%・時間切れ ①1.7% ②5% ③2% ボス3% ④2% 王0%・平均9〜11ターン
@@ -5638,7 +5648,7 @@ function lvRank(lv){ lv=Math.max(1,Math.min(LV_MAX,+lv||1)); return 1+(lv-1)*19/
 function rkStr(u){ return u&&u.lv?('Lv'+u.lv):('★'+Math.round((u&&u.rank)||1)); }   // 表示: lv があれば Lv、なければ従来の★ランク
 // 開始の段(startStage 1〜3・2026-10-26 オーナー): 後半の地方では野生・人の子・自分の子を2段目/3段目から出す。owned=null なら所持を問わない(敵)
 function stageForm(mid, stage, owned){ let m=MID[+mid]; if(!m) return +mid; let g=0; while(m.evolves_to!=null && MID[m.evolves_to] && MID[m.evolves_to].level<=stage && (!owned || owned.includes(m.evolves_to)) && g++<4) m=MID[m.evolves_to]; return m.id; }
-const STAGE_DMGX={1:1, 2:1, 3:2.6};   // 2026-10-27 野生の群れ(2〜3体)で決めなおした(旧1.7=1対1の時・1対1は SIZE_RULES[7].solo.stageDmgX に残した)
+const STAGE_DMGX={1:1, 2:1, 3:1.7};   // 2026-11-15 2.6→1.7(盤の dmgX を 2.60 にそろえたので 3段目どうしも 4回くらいに)   // 2026-10-27 野生の群れ(2〜3体)で決めなおした(旧1.7=1対1の時・1対1は SIZE_RULES[7].solo.stageDmgX に残した)
 // 2026-10-27 野生の群れ: 段ごとの野生の体力・攻撃(KIND_DEFAULTS.wild.ai の hpX/atkX を置きかえる。マップの wild[].ai が来ればそちらが勝つ)。sim/sim_wild_pack.js で決めた
 const WILD_STAGE={1:{hpX:1.1, atkX:1.1}, 2:{hpX:1.05, atkX:1.05}, 3:{hpX:0.7, atkX:0.7}};   // 2026-10-31 3段目 0.85→0.7(人の手 naiveB で 北欧の野生の群れが 28〜65% だった→71〜91%)   // 3段目の子は体力/攻撃の比が1段目の1.7倍(1200/163 vs 135/33)なので、7×7(10ターン)で時間切れしないようダメージを×1.7(シム 2026-10-26)
 // 2026-11-14 オーナー「序盤の野生の敵が強すぎて、弱点をついても全く勝てない」: WILD_STAGE[1](1.1倍)は群れの戦いでこちらが進化できる前提の数(シム: 進化ありで勝率99〜100%)。
@@ -5651,7 +5661,7 @@ function wildStageDiff(kind){ if(kind!=='wild') return null; if(BT.solo) return 
 //   ダメージ1倍のままだと時間切れ(ノルドで10〜63%)・勝ち越した側のリーダーが下がって守り続けて決着しなかった → シムで調整(sim/sim_champ_egypt.js・sim_champ_norse.js)
 //   dmgX = ダメージの倍率(盤の dmgX に掛ける) / atkMP = 1体の攻撃の回数(既定10・撃ち切ると両軍が泉で回復するだけになり時間切れの主因だった) / push = リーダーが前に出る条件(turn ターン目から か 自軍の体力の割合が ahead 以上) / final = 決戦(最後の left ターンはダメージ +step ずつ・バナー)
 //   野生・古代テリオン・7×7・1段目/2段目(ギリシャ・中国・エジプト前半)は今のまま。startBattle/simulate の stageHuman:{…} で上書き・stageHuman:false で切る
-const STAGE_HUMAN={3:{dmgX:{9:1.7, 11:1.4, 13:1.4}, atkMP:20, push:{turn:3, ahead:0.5}, final:{left:5, step:0.3}}};
+const STAGE_HUMAN={3:{dmgX:{9:1.7, 11:1.7, 13:1.7}, atkMP:20, push:{turn:3, ahead:0.5}, final:{left:5, step:0.3}}};
 function applyStartStage(opts){ BT.startStage=Math.max(1,Math.min(3,+(opts&&opts.startStage)||1));
   { const pl=(opts&&opts.player)||{}; BT.stageFree=!!pl.stageFree; BT.holdForms=new Set((pl.holdForms||[]).map(Number)); }   // 2026-10-31 物語の借りる子・仲間: その戦いの開始の段まで 覚えていなくても上げて出す(holdForms=上げない姿・北欧のフォルコン)。戦いの中の進化は覚えた姿だけ
   // 2026-10-27 野生の1対1(群れが1体=自分も1体)は、群れの前の決まり(SIZE_RULES[7].solo)のまま
@@ -5690,7 +5700,7 @@ function setBoardSize(n){
   HOME={0:NR-1, 1:0}; CASTLE={0:{r:NR-1,c:CC}, 1:{r:0,c:CC}};
   START_ROWS = {0:[NR-1,NR-2,NR-3], 1:[0,1,2]};   // 自陣の3行(どの大きさの決まりでも)
   EVO_BASE=[]; for(let r=0;r<NR;r++) if(inCenterRow(r)) for(let c=0;c<NC;c++) EVO_BASE.push([r,c]); EVO_CELLS=EVO_BASE; BT.evoOn=true;   // 中央の3列
-  MAX_TURN=R.maxTurn; BT.dmgX=R.dmgX;
+  MAX_TURN=R.maxTurn; BT.dmgX=(BT.kind==='ancient'&&ANCIENT.dmgX&&ANCIENT.dmgX[n]!=null)?ANCIENT.dmgX[n]:R.dmgX;   // 2026-11-15 古代テリオン(守り・王・ボス)は大技の強さを tier で決めているので 前の盤のダメージのまま(ANCIENT.dmgX)
   _hlGeoCache={};
 }
 
@@ -6195,7 +6205,7 @@ function startBattle(opts){
   opts=opts||{};
   return init(opts.init||{}).then(()=>new Promise((resolve)=>{
     const kind=KIND_DEFAULTS[opts.kind]?opts.kind:'trainer'; const KD=KIND_DEFAULTS[kind];
-    BT.kind=kind; BT.opts=opts; BT.order=opts.turnOrder==='spd'?'spd':null; BT.v2=(opts.moveSystem?opts.moveSystem!=="v1":!(IS_NODE&&process.env.MOVESYS==="v1")); setStatMode(V2ON()); BT.onEnd=opts.onEnd||null; BT.resolve=resolve; BT.fusedNew=[]; BT.auto=false; BT._autoRun=false; BT.fxUntil=0;
+    BT.kind=kind; BT.opts=opts; BT.order=(opts.turnOrder==='alt'||ONLINE)?null:'spd';   /* 2026-11-15 オーナー「素早さ順に行動してターン終了をなくす」: 素早さ順を既定に(turnOrder:'alt' で今までの交互) */ BT.v2=(opts.moveSystem?opts.moveSystem!=="v1":!(IS_NODE&&process.env.MOVESYS==="v1")); setStatMode(V2ON()); BT.onEnd=opts.onEnd||null; BT.resolve=resolve; BT.fusedNew=[]; BT.auto=false; BT._autoRun=false; BT.fxUntil=0;
     try{ BT.fastPref=localStorage.getItem('mb_auto_fast')==='1'; }catch(e){ BT.fastPref=false; } BT.fast=false;
     setBoardSize(+opts.size||KD.size);
     const pl=opts.player||{}, en=opts.enemy||{};
@@ -6290,7 +6300,7 @@ function showTable(kind){ const box=$id('detailBox'); let h='';
   if(kind==='type'){
     h=`<h3>相性</h3><table class="afft"><tr><th></th>${TYPES.map(t=>`<th style="color:${TYPE_COL[t]}">${t}</th>`).join('')}</tr>`
       +TYPES.map(a=>`<tr><th style="color:${TYPE_COL[a]}">${a}</th>`+TYPES.map(d=>(STRONG[a]||[]).includes(d)?'<td class="s">◎</td>':((WEAK[a]||[]).includes(d)?'<td class="w">△</td>':'<td></td>')).join('')+'</tr>').join('')
-      +`</table><div class="row"><span><span class="afft"><span class="up">◎</span></span> 弱点</span><b class="up" style="color:#ffe680">+20%・守り×0.3</b></div><div class="row"><span>△ いまひとつ</span><b style="color:#9aa3b8">−20%</b></div>`;
+      +`</table><div class="row"><span><span class="afft"><span class="up">◎</span></span> 弱点</span><b class="up" style="color:#ffe680">+20%・守り×0.3</b></div><div class="row"><span>△ いまひとつ</span><b style="color:#9aa3b8">−${Math.round(RES_PEN*100)}%</b></div>`;
   } else {
     const here={}; if(state&&state.terrain) for(const row of state.terrain) for(const t of row) here[t]=1;
     const list=['plain','forest','wasteland','water','sea','ruins','snow','lava','gloom'].filter(t=>here[t]||['plain','forest','wasteland','water','sea','ruins'].includes(t));
@@ -6597,7 +6607,7 @@ function simulate(opts){
   const prevHeadless=BT.headless; let res=null;
   BT.headless=true;
   const kind=KIND_DEFAULTS[opts.kind]?opts.kind:'trainer'; const KD=KIND_DEFAULTS[kind];
-  BT.kind=kind; BT.opts=opts; BT.order=opts.turnOrder==='spd'?'spd':null; BT.v2=(opts.moveSystem?opts.moveSystem!=="v1":!(IS_NODE&&process.env.MOVESYS==="v1")); setStatMode(V2ON()); BT.fusedNew=[]; BT.auto=false; setBoardSize(+opts.size||KD.size);
+  BT.kind=kind; BT.opts=opts; BT.order=(opts.turnOrder==='alt'||ONLINE)?null:'spd';   /* 2026-11-15 オーナー「素早さ順に行動してターン終了をなくす」: 素早さ順を既定に(turnOrder:'alt' で今までの交互) */ BT.v2=(opts.moveSystem?opts.moveSystem!=="v1":!(IS_NODE&&process.env.MOVESYS==="v1")); setStatMode(V2ON()); BT.fusedNew=[]; BT.auto=false; setBoardSize(+opts.size||KD.size);
   if(opts.rules){ BT.rules=Object.assign({},BT.rules,opts.rules); MAX_TURN=BT.rules.maxTurn; BT.dmgX=BT.rules.dmgX; }
   const pl=opts.player||{}, en=opts.enemy||{};
   BT.party=normParty(pl.party||pl); BT.enemyParty=normParty(en.party||en); applyStartStage(opts); setOwned(pl, en); ancientSetup(en); alignMinions(opts);
