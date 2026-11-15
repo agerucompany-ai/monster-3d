@@ -3460,6 +3460,66 @@ function grEllyTick(s){ const on=!!s&&grEllyWith(s)&&!(GR_GUIDE&&GR_GUIDE.mem.el
   else if(d>0.35&&!STORY){ const st=Math.min(d,Math.max(0.06,d*0.12)); const nx=e.x+(tx-e.x)/d*st, nz=e.z+(tz-e.z)/d*st; if(walkOK(nx,nz)){ e.x=nx; e.z=nz; } else { e.x+=(tx-e.x)*0.2; e.z+=(tz-e.z)*0.2; } }
   e.grp.position.set(e.x,groundAt(e.x,e.z)+(d>0.5&&!STORY?Math.abs(Math.sin(performance.now()/130))*0.05:0),e.z);
   grLabel(e,'エリー',false); e.lbl.style.display='none'; }
+// ---- 2026-11-15 第1話のはじめ(オーナー「冒頭、フォルンが実際に神殿の方に逃げていくエフェクトほしい」): 「狐を追って神殿のあとへ」の歩く段(g01_05)で、
+//  狐(フォルン 1001 の3D)がヤマトの前に現れ、しっぽの火の粉をまきながら 歩ける道を通って神殿の丘へ走っていく。ヤマトが離れすぎたら立ち止まってふり返る。着いたら木の根もとで待つ。
+//  段が進む・地図が変わると消える。台詞・段・セーブには触らない(見た目だけ)
+const GR_FR={step:'g01_05', mid:1001, sc:0.62, sp:5.2};
+let GR_FRS=null;
+function grFrPath(x0,z0,x1,z1){ const w=D.walk||D.bounds, C=1, nx=Math.floor((w[2]-w[0])/C)+1, nz=Math.floor((w[3]-w[1])/C)+1, ok=new Uint8Array(nx*nz);
+  for(let i=0;i<nx;i++) for(let j=0;j<nz;j++){ const x=w[0]+i*C, z=w[1]+j*C; ok[i*nz+j]=walkOK(x,z)&&colFree(x,z,0.3)?1:0; }
+  const cell=(x,z)=>{ let bi=-1, bd=1e9; const ci=Math.round((x-w[0])/C), cj=Math.round((z-w[1])/C);
+    for(let i=Math.max(0,ci-4);i<=Math.min(nx-1,ci+4);i++) for(let j=Math.max(0,cj-4);j<=Math.min(nz-1,cj+4);j++) if(ok[i*nz+j]){ const d=Math.hypot(i-ci,j-cj); if(d<bd){ bd=d; bi=i*nz+j; } } return bi; };
+  const a=cell(x0,z0), b=cell(x1,z1); if(a<0||b<0) return null;
+  const prev=new Int32Array(nx*nz).fill(-1); prev[a]=a; const q=[a]; let h=0;
+  while(h<q.length){ const c=q[h++]; if(c===b) break; const ci=Math.floor(c/nz), cj=c%nz;
+    for(const [di,dj] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){ const i=ci+di, j=cj+dj; if(i<0||j<0||i>=nx||j>=nz) continue; const n=i*nz+j;
+      if(!ok[n]||prev[n]>=0) continue; if(di&&dj&&!(ok[ci*nz+j]&&ok[i*nz+cj])) continue; prev[n]=c; q.push(n); } }
+  if(prev[b]<0) return null; const pts=[]; for(let c=b;;c=prev[c]){ pts.push([w[0]+Math.floor(c/nz)*C, w[1]+(c%nz)*C]); if(c===a) break; } pts.reverse();
+  const clear=(p,r)=>{ const L=Math.hypot(r[0]-p[0],r[1]-p[1]), n=Math.ceil(L/0.4); for(let k=1;k<n;k++){ const t=k/n, x=p[0]+(r[0]-p[0])*t, z=p[1]+(r[1]-p[1])*t; if(!walkOK(x,z)||!colFree(x,z,0.25)) return false; } return true; };
+  const out=[pts[0]]; let i=0; while(i<pts.length-1){ let j=pts.length-1; while(j>i+1&&!clear(pts[i],pts[j])) j--; out.push(pts[j]); i=j; }
+  out.push([x1,z1]); return out; }
+function grFrSparkTex(){ const c=document.createElement('canvas'); c.width=c.height=32; const x=c.getContext('2d'), g=x.createRadialGradient(16,16,0,16,16,16);
+  g.addColorStop(0,'rgba(255,250,200,1)'); g.addColorStop(0.35,'rgba(255,170,40,0.9)'); g.addColorStop(1,'rgba(255,60,0,0)'); x.fillStyle=g; x.fillRect(0,0,32,32); return new THREE.CanvasTexture(c); }
+function grFrStart(){ const a=HERO.yaw||0, p=grSpot(HERO.x+Math.sin(a)*2.4,HERO.z+Math.cos(a)*2.4), goal=grCastPt('神殿の丘');
+  const F=GR_FRS={map:MAP, x:p[0], z:p[1], yaw:Math.atan2(HERO.x-p[0],HERO.z-p[1]), inst:null, path:null, pi:1, st:'look', t:0, spd:0, len:0.6, hgt:0.6, sparks:[], acc:0, lbl:makeLabel('狐'), grp:null, h:0.7, dead:false};
+  F.lbl.style.display='none';
+  if(goal){ try{ F.path=grFrPath(F.x,F.z,goal[0],goal[1]); }catch(e){ console.warn('fornrun path',e&&e.message); } if(!F.path) F.path=[[F.x,F.z],goal]; }
+  const tex=grFrSparkTex(); for(let i=0;i<48;i++){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,color:0xffffff,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending})); s.visible=false; s.renderOrder=997; scene.add(s); F.sparks.push({s,life:0,max:1,vx:0,vy:0,vz:0}); }
+  monProto(GR_FR.mid).then(g=>{ if(F.dead) return; F.inst=monMake(g); const R=F.inst.root; R.scale.setScalar(GR_FR.sc); R.position.set(F.x,groundAt(F.x,F.z),F.z); R.rotation.y=F.yaw; scene.add(R);
+    R.updateMatrixWorld(true); const bb=new THREE.Box3().setFromObject(R), sz=bb.getSize(new THREE.Vector3()); if(isFinite(sz.y)&&sz.y>0.05){ F.hgt=sz.y; F.len=Math.max(sz.x,sz.z); F.h=sz.y+0.1; }
+    F.grp=R; }).catch(e=>{ console.warn('fornrun 3D',e&&e.message); }); }
+function grFrDrop(){ const F=GR_FRS; if(!F) return; F.dead=true; if(F.inst&&F.inst.root.parent) scene.remove(F.inst.root); for(const p of F.sparks){ scene.remove(p.s); p.s.material.dispose(); } if(F.sparks[0]) F.sparks[0].s.material.map.dispose(); F.lbl.remove(); GR_FRS=null; }
+function grFrEmit(F,n){ for(const p of F.sparks){ if(n<=0) break; if(p.life>0) continue; n--;
+    const fx=Math.sin(F.yaw), fz=Math.cos(F.yaw), sd=(Math.random()<0.5?-1:1)*0.08, bx=F.x-fx*F.len*0.5+fz*sd, bz=F.z-fz*F.len*0.5-fx*sd;   // 二本のしっぽの先(左右)
+    p.s.position.set(bx+(Math.random()-0.5)*0.12, groundAt(F.x,F.z)+F.hgt*0.75+(Math.random()-0.3)*0.15, bz+(Math.random()-0.5)*0.12);
+    p.vx=(Math.random()-0.5)*0.6-fx*0.4; p.vz=(Math.random()-0.5)*0.6-fz*0.4; p.vy=0.5+Math.random()*0.9; p.max=p.life=0.45+Math.random()*0.5; p.s.visible=true; } }
+let GR_FRT=0;
+function grFornRunAnim(t){ requestAnimationFrame(grFornRunAnim); const dt=GR_FRT?Math.min(0.1,(t-GR_FRT)/1000):0; GR_FRT=t; if(!dt) return;
+  try{ if(!SAVE||!HERO||!D){ if(GR_FRS) grFrDrop(); return; } const s=grCur();
+    const want=!!s&&s.id===GR_FR.step&&s.map===MAP;
+    if(GR_FRS&&(!want||GR_FRS.map!==MAP)) grFrDrop();
+    if(!want) return;
+    if(!GR_FRS){ if(STORY||TRANS||ENC||PAUSED) return; if(zoneAt(HERO.x,HERO.z)==='神殿の丘') return; grFrStart(); }
+    const F=GR_FRS, frozen=STORY||TRANS||ENC||PAUSED; let mv=0;
+    if(!frozen&&F.inst){ F.t+=dt; const hd=Math.hypot(HERO.x-F.x,HERO.z-F.z);
+      if(F.st==='look'){ F.yaw+=angD(Math.atan2(HERO.x-F.x,HERO.z-F.z),F.yaw)*Math.min(1,dt*8); if(F.t>0.7){ F.st='run'; F.t=0; } }   // 一瞬ヤマトを見てから逃げる
+      else if(F.st==='run'||F.st==='wait'){ const P=F.path, last=F.pi>=P.length-1, tgt=P[Math.min(F.pi,P.length-1)];
+        const toEnd=Math.hypot(P[P.length-1][0]-F.x,P[P.length-1][1]-F.z);
+        if(F.st==='run'&&hd>12&&toEnd>6) F.st='wait'; else if(F.st==='wait'&&(hd<7||toEnd<=6)) F.st='run';
+        if(F.st==='wait') F.yaw+=angD(Math.atan2(HERO.x-F.x,HERO.z-F.z),F.yaw)*Math.min(1,dt*5);
+        else { const dx=tgt[0]-F.x, dz=tgt[1]-F.z, d=Math.hypot(dx,dz), st=Math.min(d,GR_FR.sp*Math.min(1,0.35+F.t*1.6)*dt);
+          if(d>1e-3){ F.x+=dx/d*st; F.z+=dz/d*st; mv=st/dt; F.yaw+=angD(Math.atan2(dx,dz),F.yaw)*Math.min(1,dt*10); }
+          if(d-st<0.15){ if(last) F.st='end'; else F.pi++; } } }
+      else if(F.st==='end'){ F.yaw+=angD(Math.atan2(HERO.x-F.x,HERO.z-F.z),F.yaw)*Math.min(1,dt*3); } }
+    F.spd=(F.spd||0)+(mv-(F.spd||0))*Math.min(1,dt*10);
+    if(F.inst){ const R=F.inst.root; R.position.set(F.x,groundAt(F.x,F.z),F.z); R.rotation.y=F.yaw; monGait(F.inst,frozen?0:F.spd,frozen?0:dt,GR_FR.sc); }
+    if(!frozen&&F.inst){ F.acc+=dt*(F.spd>0.5?38:5); const n=Math.floor(F.acc); F.acc-=n; if(n) grFrEmit(F,n); }
+    for(const p of F.sparks){ if(p.life<=0) continue; if(!frozen){ p.life-=dt; p.vy-=0.6*dt; p.s.position.x+=p.vx*dt; p.s.position.y+=p.vy*dt; p.s.position.z+=p.vz*dt; }
+      const k=Math.max(0,p.life/p.max); p.s.material.opacity=k; p.s.material.color.setRGB(1,0.55+0.45*k,0.2+0.6*k*k); p.s.scale.setScalar(0.07+0.16*k); if(p.life<=0) p.s.visible=false; }
+    if(F.grp&&!PAUSED) grLabel(F,'狐',F.st!=='end'); else F.lbl.style.display='none';
+  }catch(e){ console.warn('fornrun',e&&e.message); } }
+requestAnimationFrame(grFornRunAnim);
+window.GR_FR_DBG=()=>GR_FRS&&{x:GR_FRS.x,z:GR_FRS.z,st:GR_FRS.st,pi:GR_FRS.pi,n:GR_FRS.path&&GR_FRS.path.length,inst:!!GR_FRS.inst,path:GR_FRS.path};
 function grGuideTick(){ try{ if(!SAVE||!HERO) return; const s=grCur(); grCastTick(s); grEllyTick(s);
   if(GR_GUIDE) Object.values(GR_GUIDE.mem).forEach(grFace); grFace(GR_ELLY);
   const g=GR_GUIDE; if(s&&g&&g.walk&&g.id===s.id&&!STORY&&!TRANS&&!ENC&&!GR_RUN&&grHere(s)) grRun(); }catch(e){ console.warn('grGuide',e&&e.message); } }
