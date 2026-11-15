@@ -182,7 +182,7 @@ V83.toonMat=function(map,o){
 V83.OUTLINE=new THREE.MeshBasicMaterial({color:0x2b170c,side:THREE.BackSide,skinning:true});
 V83.OUTLINE.onBeforeCompile=s=>{
   s.vertexShader=s.vertexShader.replace('#include <begin_vertex>','#include <beginnormal_vertex>\n#include <skinnormal_vertex>\n#include <begin_vertex>').replace('#include <project_vertex>',`#include <project_vertex>
-    { vec3 vnO=normalize(normalMatrix*objectNormal); vec4 mv2=mvPosition; mv2.xyz+=vnO*(0.0011*(-mvPosition.z)+0.0022);
+    { vec3 vnO=normalize(normalMatrix*objectNormal); vec4 mv2=mvPosition; mv2.xyz+=vnO*(0.0006*(-mvPosition.z)+0.0010);   // 2026-11-15 縁を細く(旧 0.0011*z+0.0022)
       gl_Position=projectionMatrix*mv2; gl_Position.z+=0.0002*gl_Position.w; }`);
 };
 V83.addOutline=function(mesh){
