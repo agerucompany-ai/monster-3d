@@ -165,13 +165,13 @@ function close(){ if(!R||S==='busy') return; R.classList.remove('on'); S=null; i
 // ---------------------------------------------------------------- 機種を変えた時の引き継ぎ(2026-10-31)
 //   出す: 合言葉を決めて コード(XXXX-XXXX-XXXX)をもらう。有償ジェム(サーバー)とセーブ(localStorage の w2_save_v1 だけ)を預ける。セーブはサーバーで暗号化・24時間で消える
 //   受け取る: コード＋合言葉 → この機種のトークンとセーブを書きかえて読み直す(前の機種の有償ジェムは使えなくなる)
-const XK='therion_xfer_v1';
+const XK='therion_xfer_v1'; const TEST_KEY='w2_save_test_v1';
 function saveKey(){ const P=root.Progress; return (P&&P.config&&P.config.cfg&&P.config.cfg.key)||'w2_save_v1'; }
 function issued(){ try{ const x=JSON.parse(localStorage.getItem(XK)||'null'); if(x&&x.code&&new Date(x.exp)>new Date()) return x; if(x) localStorage.removeItem(XK); }catch(e){} return null; }
 async function xIssue(pass){ if(!(await config())) return {ok:false, why:'off'};
   for(let i=0;i<2;i++){ if(!(await ensureDevice())) return {ok:false, why:'net'};
     try{ const P=root.Progress; if(P&&P.state&&P.state()&&P.save) P.save(); }catch(e){}   // 今の進み具合を書いてから預ける
-    let save=null; try{ save=localStorage.getItem(saveKey()); }catch(e){}
+    let save=null; try{ const m=localStorage.getItem(saveKey()), t=localStorage.getItem(TEST_KEY); save=t?JSON.stringify({__xfer:2, main:m, test:t}):m; }catch(e){}   // 2026-11-17 オーナー「引き継いだが引き継げてない」: 「全部ためす」の記録(別の鍵)も一緒に預ける
     const r=await api('POST','/transfer/issue',{passcode:pass, save:save||undefined},60000);
     if(r.status===200){ try{ localStorage.setItem(XK, JSON.stringify({code:r.body.code, exp:r.body.expiresAt})); }catch(e){} return {ok:true, code:r.body.code, expiresAt:r.body.expiresAt}; }
     if(r.status===401){ dropToken(); continue; }
@@ -186,8 +186,12 @@ async function xRedeem(code, pass){ if(!(await config())) return {ok:false, why:
   const r=await api('POST','/transfer/redeem',{code, passcode:pass},60000);
   if(r.status!==200) return {ok:false, why:r.status===0||r.status>=500?'net':(r.body.error||'net'), left:r.body.left, locked:r.body.locked};
   const b=r.body; const sk=saveKey();
-  try{ localStorage.setItem(LSK, JSON.stringify({deviceId:b.deviceId, token:b.token, t:Date.now()})); if(b.save) localStorage.setItem(sk, b.save); localStorage.removeItem(XK); }catch(e){ return {ok:false, why:'storage'}; }
-  freeze([LSK, sk]); W=null; return {ok:true, paidGems:b.paidGems, hasSave:!!b.save}; }
+  let pk=null; if(b.save&&b.save.slice(0,10)==='{"__xfer":'){ try{ pk=JSON.parse(b.save); }catch(e){ pk=null; } }
+  try{ localStorage.setItem(LSK, JSON.stringify({deviceId:b.deviceId, token:b.token, t:Date.now()}));
+    if(pk){ if(pk.main) localStorage.setItem(sk, pk.main); if(pk.test) localStorage.setItem(TEST_KEY, pk.test); }
+    else if(b.save) localStorage.setItem(sk, b.save);
+    localStorage.removeItem(XK); }catch(e){ return {ok:false, why:'storage'}; }
+  freeze([LSK, sk, TEST_KEY]); W=null; return {ok:true, paidGems:b.paidGems, hasSave:!!(pk?(pk.main||pk.test):b.save)}; }
 function deviceNo(){ const d=ls(); return d&&d.deviceId?String(d.deviceId).slice(0,8):''; }
 const transfer={ issue:xIssue, cancel:xCancel, redeem:xRedeem, issued, deviceNo, reload:()=>location.reload() };
 

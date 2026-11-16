@@ -40,7 +40,12 @@ const ARC_POOL={
   egypt:[1004,1036,1042],                                  // 2026-10-28 決定54: クロッコ系(1011)を外した(アレクの相棒)
   norse:[26,1017,1048,16,198,178],                         // 2026-10-28 決定54: クマ系(178)は御三家から外れて北欧の野生に
 };
-const STARTERS=[1001,70,1011];   // 御三家(2026-10-28 決定54: フォルン・ピリポン・クロッコ。前は 1001/178/1022)
+const STARTERS=[1001,70,1011];
+// 2026-11-17 オーナー「フォルレオンに進化できるのが早すぎる…レベルいくらで進化を覚えるで良い」: 御三家の系統は 進化の仕方をレベルで覚える(2段目=Lv6・3段目=Lv12。物語で初めて進化する話の Lv)。その系統でいちばん高い子の Lv で見る
+const EVO_LV={2:6, 3:12};
+function lineLv(b){ const pg=prog(); let mx=0; if(pg) for(const c of pg.roster) if(baseOf(c.mid)===b) mx=Math.max(mx,+c.lv||1); return mx; }
+function lvForm(id){ const b=baseOf(id); return STARTERS.includes(b) && stageOf(id)>=2 && mon(id) && mon(id).role!=='fusion'; }   // レベルで覚える姿か
+function lvFormOk(id){ const need=EVO_LV[stageOf(id)]; return !need || (P.hasLine(id) && lineLv(baseOf(id))>=need); }   // 御三家(2026-10-28 決定54: フォルン・ピリポン・クロッコ。前は 1001/178/1022)
 // 2026-10-28 オーナー「進化の2段目と融合進化は仲間にするというより、進化とか融合の仕方を覚える」:
 //   持つ子(仲間・牧場)=系統の1段目だけ。2段目・3段目の姿=「進化の仕方」(prog.forms)・融合=「融合の仕方」(prog.fusions)を覚える
 //   古代テリオン(マップの ancient の融合体)を倒す → bossLearn の確率でその融合の仕方を覚える(仲間の記録には入るが盤のはじめには出せない・融合でだけ出る)
@@ -71,7 +76,7 @@ P.mon=mon; P.baseOf=baseOf; P.lineOf=lineOf; P.stageOf=stageOf; P.nameOf=nameOf;
 const LV_MAX=99;
 function lvRank(lv){ lv=Math.max(1,Math.min(LV_MAX,+lv||1)); return 1+(lv-1)*19/(LV_MAX-1); }   // battle.js と同じ写し(Lv1=ランク1・Lv99=ランク20=+38%)
 function rankLv(rank){ return Math.max(1,Math.min(LV_MAX,Math.round(1+((+rank||1)-1)*(LV_MAX-1)/19))); }
-function statX(lv){ return 1+0.02*(lvRank(lv)-1); }   // 体力・攻撃の倍率
+function statX(lv){ lv=Math.max(1,Math.min(LV_MAX,+lv||1)); return 1+0.05*(lv-1); }   // 2026-11-17: battle.js の lvRank(1Lv=+5%)と同じ   // 体力・攻撃の倍率
 P.lvRank=lvRank; P.rankLv=rankLv; P.statX=statX; P.expNeed=CFG.expNeed; P.LV_MAX=LV_MAX;
 function addExp(c, n){ const out={uid:c.uid, mid:c.mid, before:c.lv, exp:0}; if(c.lv>=LV_MAX){ c.exp=0; return out; }
   c.exp=(c.exp||0)+n; out.exp=n; let g=0; while(c.lv<LV_MAX && c.exp>=CFG.expNeed(c.lv) && g++<LV_MAX){ c.exp-=CFG.expNeed(c.lv); c.lv++; } if(c.lv>=LV_MAX) c.exp=0; out.after=c.lv; return out; }
@@ -165,11 +170,13 @@ P.isAncientFusion=(mid)=>ANCIENT_FUSIONS.includes(+mid);
 function learnForm(mid){ const pg=prog(); if(!pg) return []; pg.forms=pg.forms||{}; const ln=lineOf(mid), i=ln.indexOf(+mid), out=[];   // その姿まで(3段目を覚えたら2段目も)
   for(let j=1;j<=i;j++){ const id=ln[j]; if(stageOf(id)>=2&&!pg.forms[id]){ pg.forms[id]=1; out.push(id); } } return out; }
 P.hasLine=(mid)=>{ const pg=prog(); if(!pg) return false; const b=baseOf(mid); return pg.roster.some(c=>baseOf(c.mid)===b); };   // その系統の子(1段目)を持っている
-P.knowsForm=(mid)=>{ const pg=prog(); if(!pg||!mon(mid)) return false; if(stageOf(mid)<=1) return P.hasLine(mid); return !!(pg.forms&&pg.forms[+mid]); };
+P.knowsForm=(mid)=>{ const pg=prog(); if(!pg||!mon(mid)) return false; if(stageOf(mid)<=1) return P.hasLine(mid); if(lvForm(mid)) return lvFormOk(mid); return !!(pg.forms&&pg.forms[+mid]); };
 P.knowsFusion=(fid)=>{ const pg=prog(); const m=mon(fid); if(!pg||!m||m.role!=='fusion') return false; if(pg.fusions&&pg.fusions[+fid]) return true; return !!(SAVE&&SAVE.unlock&&SAVE.unlock.fusion) && !ANCIENT_FUSIONS.includes(+fid) && Array.isArray(m.recipe) && m.recipe.length===2; };
 P.hasForm=(mid)=>{ const m=mon(mid); if(!m) return false; return m.role==='fusion'?P.knowsFusion(mid):P.knowsForm(mid); };
 P.fusionKnownList=()=>Object.values(MON).filter(m=>m.role==='fusion'&&P.knowsFusion(m.id)).map(m=>m.id).sort(byOrd);   // 2026-11-13 monsters.json の順(Object.values は id の小さい順になる)
-P.formsList=()=>{ const pg=prog(); return pg&&pg.forms?Object.keys(pg.forms).map(Number).filter(id=>mon(id)):[]; };
+P.formsList=()=>{ const pg=prog(); const o=new Set(pg&&pg.forms?Object.keys(pg.forms).map(Number).filter(id=>mon(id)&&!lvForm(id)):[]); for(const b of STARTERS) for(const id of lineOf(b)) if(lvForm(id)&&lvFormOk(id)) o.add(id); return [...o]; };
+P.evoLv=(mid)=>lvForm(mid)?EVO_LV[stageOf(mid)]:null;   // レベルで覚える姿なら その Lv
+P.evoAvail=()=>{ if(!(SAVE&&SAVE.unlock&&SAVE.unlock.evo)) return []; const o=[]; for(const b of STARTERS) for(const id of lineOf(b)) if(lvForm(id)&&lvFormOk(id)) o.push(id); return o; };   // 今 進化できる(レベルで覚えた)姿
 // その姿を手に入れた(野生のリーダー・生み出す・ボス): 2段目以上 → 進化の仕方を覚える / その系統の子がいなければ1段目の子を1体
 function obtain(mid, lv, src){ const out={mid:+mid, forms:[], gave:null}; if(stageOf(mid)>=2) out.forms=learnForm(mid); if(!P.hasLine(mid)) out.gave=P.add(baseOf(mid), lv, src); return out; }
 P.obtain=obtain;
@@ -203,7 +210,7 @@ P.swap=function(uParty,uRanch){ const pg=prog(); if(!pg) return false; const i=p
 P.setLeader=function(u){ const pg=prog(); if(!pg||!pg.party.includes(u)) return false; pg.party=[u].concat(pg.party.filter(x=>x!==u)); SAVE.partner=P.get(u).mid; P.save(); return true; };
 P.release=function(u){ const pg=prog(); if(!pg) return false; if(pg.party.includes(u)&&pg.party.length<=1) return false; pg.roster=pg.roster.filter(c=>c.uid!==u); pg.party=pg.party.filter(x=>x!==u); P.save(); return true; };
 // 持っている種類(バトルの進化の判定に渡す): 持っている子(1段目)＋覚えた進化の仕方(物語で進化が解禁されたあと)。2026-10-28
-P.ownedList=function(){ const pg=prog(); const o=new Set(); const evo=!!(SAVE&&SAVE.unlock&&SAVE.unlock.evo); for(const c of (pg?pg.roster:[])) o.add(baseOf(c.mid)); if(evo&&pg&&pg.forms) for(const k in pg.forms) o.add(+k); if(SAVE&&SAVE.test) for(const id of (SAVE.owned||[])) o.add(+id); return [...o]; };
+P.ownedList=function(){ const pg=prog(); const o=new Set(); const evo=!!(SAVE&&SAVE.unlock&&SAVE.unlock.evo); for(const c of (pg?pg.roster:[])) o.add(baseOf(c.mid)); if(evo&&pg&&pg.forms) for(const k in pg.forms) if(!lvForm(+k)) o.add(+k); if(evo) for(const id of P.formsList()) if(lvForm(id)) o.add(id); if(SAVE&&SAVE.test) for(const id of (SAVE.owned||[])) o.add(+id); return [...o]; };
 P.legacyBox=function(){ const box={}; for(const c of P.roster()){ const b=baseOf(c.mid); if(!box[b]||box[b].lv<c.lv) box[b]={rank:Math.round(lvRank(c.lv)), lv:c.lv}; } return box; };
 P.battleParty=()=>P.party().map(c=>({mid:c.mid, lv:c.lv, uid:c.uid}));
 
@@ -300,6 +307,7 @@ P.applyResult=function(res, ctx){ const rows=[]; const pg=prog(); if(!pg) return
   const total=Math.round(ctx.enemy.reduce((s,e)=>s+CFG.expGain(e.lv||1, stage(e.mid), ctx.kind)*(e.pack?CFG.packExp:1),0))||CFG.expGain(1,1,ctx.kind);
   (res.party||[]).forEach((p,i)=>{ const ent=ctx.party[i]; const c=ent&&P.get(ent.uid); if(!c) return; const n=Math.max(1,Math.round(total*(p.out?1:CFG.benchExp))); const r=addExp(c,n); res.progress.exp.push(r);
     rows.push(`${nameOf(c.mid)}　EXP +${n}`); if(r.after>r.before){ res.progress.lvup.push(r); rows.push(`<span class="lvup">${nameOf(c.mid)}　Lv${r.before} → Lv${r.after}</span>`);
+      for(const id of lineOf(c.mid)) if(lvForm(id)){ const need=EVO_LV[stageOf(id)]; if(SAVE&&SAVE.unlock&&SAVE.unlock.evo&&r.before<need&&r.after>=need&&lineLv(baseOf(id))<=r.after){ (res.progress.evo||(res.progress.evo=[])).push({from:lineOf(c.mid)[stageOf(id)-2], to:id}); rows.push(`<span class="lvup">${nameOf(lineOf(c.mid)[stageOf(id)-2])}は ${nameOf(id)}への進化を覚えた！</span>`); } }
       const f=formFor(c); const nw=newMovesBetween(f, r.before, r.after); if(nw.length){ const L={uid:c.uid, mid:f, name:nameOf(f), moves:nw.map(x=>x.name)}; (res.progress.learn||(res.progress.learn=[])).push(L); rows.push(`<span class="lvup">新しい技を覚えた　${nameOf(f)}「${L.moves.map(rubyByName).join('」「')}」</span>`); } } });
   if(res.progress.learn&&res.progress.learn.length) UI.learnNotice(res.progress.learn);
   if(res.rewards){ if(ctx.zeroday&&ctx.kind!=='wild'){ res.progress.gems=res.rewards.gems; if(res.rewards.gems) P.addGems(res.rewards.gems,'zeroday'); } else res.rewards.gems=0; }   // ジェムはヴィクター(手下・幹部)を倒した時だけ(G2)

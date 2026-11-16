@@ -5644,7 +5644,8 @@ const STACK_GEM=50;            // 上限で止まった分は1ランク=ジェ�
 function rankX(rank){ return 1+RANK_STEP*Math.max(0,(rank||1)-1); }
 // 2026-10-26 進行(progress.js・決定41): レベル1〜99。既存の成長ランク(1〜20・+2%/ランク)に連続で写す = Lv1→ランク1(補正なし)・Lv99→ランク20(+38%)・1レベル=体力・攻撃+0.39%
 const LV_MAX=99;
-function lvRank(lv){ lv=Math.max(1,Math.min(LV_MAX,+lv||1)); return 1+(lv-1)*19/(LV_MAX-1); }
+function lvRank(lv){ lv=Math.max(1,Math.min(LV_MAX,+lv||1)); return 1+(lv-1)*LV_RANK; }   // 2026-11-17 オーナー「レベル上がったのに反映されてない」: 1レベル=体力・攻撃+5%(前は+0.4%で効かなかった)。敵も同じなので同じLvどうしの強さの比は変わらない
+const LV_RANK=2.5;
 function rkStr(u){ return u&&u.lv?('Lv'+u.lv):('★'+Math.round((u&&u.rank)||1)); }   // 表示: lv があれば Lv、なければ従来の★ランク
 // 開始の段(startStage 1〜3・2026-10-26 オーナー): 後半の地方では野生・人の子・自分の子を2段目/3段目から出す。owned=null なら所持を問わない(敵)
 function stageForm(mid, stage, owned){ let m=MID[+mid]; if(!m) return +mid; let g=0; while(m.evolves_to!=null && MID[m.evolves_to] && MID[m.evolves_to].level<=stage && (!owned || owned.includes(m.evolves_to)) && g++<4) m=MID[m.evolves_to]; return m.id; }
@@ -6346,7 +6347,7 @@ function defaultReward(winner){
   const en=BT.opts.enemy||{}; if(winner!==0) return {gems:0, items:[]};
   if(en.reward) return {gems:Array.isArray(en.reward.gems)?Math.round(en.reward.gems[0]+Math.random()*(en.reward.gems[1]-en.reward.gems[0])):(+en.reward.gems||0), items:(en.reward.items||[]).slice()};
   if(BT.kind==='wild'||BT.kind==='ancient') return {gems:0, items:[]};   // 古代テリオン・ボスの報酬は旗(クエストのジェム)で。盤からは出さない
-  const lv=BT.enemyParty.reduce((s,e)=>s+(MID[e.mid].level*e.rank),0);
+  const lv=BT.enemyParty.reduce((s,e)=>s+(MID[e.mid].level*(e.lv?(1+(e.lv-1)*19/(LV_MAX-1)):e.rank)),0);   // ジェムは前の段の数え方のまま
   if(BT.kind==='trainer') return {gems:Math.max(80,Math.min(250,Math.round(60+lv*12))), items:[]};   // ふつうの相手(trainer) 80〜250。2026-10-29 盤 v4: ごほうびはジェムだけ(回復の水筒・おやつはなくした)
   return {gems:600+90*(+en.order||0), items:[]};                                                     // master 600+(地方の順番×90)
 }
