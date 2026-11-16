@@ -196,6 +196,7 @@ const Pay={ open, close, api:API, state:()=>({cfg:CFG, wallet:W, sheet:S, tokErr
   expiring:()=>((W&&W.expiring)||[]).map(x=>({d:ymd(x.at), gems:x.gems})) };
 root.TherionPay=Pay;
 function hook(){ const P=root.Progress; if(!P||!P.on||!P.setPaid) return false;
+  return true;   // 2026-11-16 オーナー「課金システムはいらない」: 購入の画面(on buy)と有償ジェム(setPaid)はつながない。引き継ぎ(transfer)だけ使う
   P.on('buy',()=>open());
   P.setPaid({ balance:()=>W?W.paidGems:((ls()||{}).token?null:0), spend });
   if((ls()||{}).token) wallet();   // 前に買った端末だけ起動時に残高を聞く(買っていない人はサーバーを起こさない)

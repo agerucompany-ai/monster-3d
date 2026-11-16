@@ -509,6 +509,7 @@ UI.isOpen=()=>!!cur; UI.tab=()=>cur==='menu'?tab:null;
 function card(c, opts){ const d=el('div','pgCard'+(opts.on?' on':'')+(opts.pend?' pend':'')); const need=CFG.expNeed(c.lv); const pct=c.lv>=LV_MAX?100:Math.min(100,Math.round(100*(c.exp||0)/need));
   d.innerHTML=`${opts.leader?'<i class="ld"></i>':''}${opts.tag?`<span class="tg">${opts.tag}</span>`:''}<img src="${IMG(c.mid)}" alt=""><div class="nm">${nameOf(c.mid)}</div><div class="lv">Lv${c.lv}</div><div class="bar"><i style="width:${pct}%"></i></div>`; d.dataset.uid=c.uid; return d; }
 // メニュー(2026-10-27 オーナー「ステータスとかパーティーの情報みれるタブのような画面欲しいな」): パーティ・牧場・ずかん・もちもの。ラベル・アイコン・数字だけ
+// 2026-11-16 オーナー「課金システムはいらない」: ジェムを買う・有償ジェムの表示をはずした(lib/pay.js は引き継ぎだけに使う)
 const TABS=[['party','パーティ','ally'],['ranch','牧場','terrain'],['dex','ずかん','evolve'],['fuse','融合','fuse'],['items','もちもの','potion'],['move','引き継ぎ','move']];   // 2026-10-31 引き継ぎ(機種を変えた時・lib/pay.js の TherionPay.transfer)
 const ITEMJ={meat1:['ふつうの肉','meat1'], meat2:['上等な肉','meat2'], meat3:['特上の肉','meat3'], ki:['闘気の水晶','kicrystal']};   // 2026-10-29 盤 v4: 回復の水筒・おやつの材料・〇〇のおやつはなくした(古いセーブに残っていても出さない)。2026-10-30 店の肉・闘気の水晶
 function terrInfo(){ const MB=root.MonBattle; return MB&&MB.TYPE_TERR&&MB.BRIEF?{TT:MB.TYPE_TERR, J:MB.BRIEF.TERR_JP, H:MB.BRIEF.TERR_HEX, X:Math.round((MB.BRIEF.TERR_X||0.3)*100)}:null; }
@@ -594,17 +595,13 @@ UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const 
       if(nor.length){ B.appendChild(el('div','pgSec',`<span>融合</span><span>${nor.length}</span>`)); for(const f of nor) B.appendChild(el('div','',fuseRow(f))); } }
     else if(tab==='items'){ const it=(SAVE&&SAVE.items)||{}; B.appendChild(el('div','pgSec','<span>もちもの</span>'));
       const ks=Object.keys(ITEMJ).filter(k=>+it[k]>0); for(const k of ks){ const j=ITEMJ[k]||[k,'potion']; B.appendChild(el('div','pgItem',`${ICON(j[1])}<span>${j[0]}</span><b>×${it[k]}</b>`)); } if(!ks.length) B.appendChild(el('div','pgItem','<span>なし</span>'));
-      B.appendChild(el('div','pgSec','<span>ジェム</span>')); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>無料ジェム</span><b>${P.gems()}</b>`));
-      const pdv=P.paidGems(); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>有償ジェム</span><b>${pdv==null?'—':pdv}</b>`));
-      { const TP=root.TherionPay; for(const x of (TP&&TP.expiring?TP.expiring():[])) B.appendChild(el('div','pgItem',`${ICON('hint')}<span>期限 ${x.d}</span><b>${x.gems}</b>`)); }   // 2026-10-31 有償ジェムに期限を付けた時だけ
-      const a=el('div','pgAct'); const b=el('button','pgBtn gem','ジェムを買う'); b.onclick=()=>{ if(!P.buyGems()) UI.toast('じゅんび中'); }; a.appendChild(b); B.appendChild(a);
+      B.appendChild(el('div','pgSec','<span>ジェム</span>')); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>ジェム</span><b>${P.gems()}</b>`));
       B.appendChild(el('div','pgSec','<span>きろく</span>'));
       const Lg=el('div','pgLog'); for(const g of (prog()?prog().log:[])) Lg.appendChild(el('div','',`<span>${reasonJP(g.r)}</span><span class="${g.n>=0?'p':'m'}">${g.n>=0?'+':''}${g.n}</span>`)); if(!Lg.children.length) Lg.appendChild(el('div','','<span>なし</span>')); B.appendChild(Lg); }
     else if(tab==='move') moveTab(B);
   }
   else if(cur==='shop'){ T.textContent='店'; TB.style.display='none';   // 2026-10-30
-    B.appendChild(el('div','pgItem',`${ICON('gem')}<span>無料ジェム</span><b id="pgShopGem">${P.gems()}</b>`));
-    { const pdv=P.paidGems(); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>有償ジェム</span><b id="pgShopPaid">${pdv==null?'—':pdv}</b>`)); }   // 2026-10-30 有償ジェムでも買える
+    B.appendChild(el('div','pgItem',`${ICON('gem')}<span>ジェム</span><b id="pgShopGem">${P.gems()}</b>`));
     for(const x of P.shopList()){ const d=el('div','pgItem pgShop',`${ICON(x.icon)}<span>${x.name}${x.add?`<small>+${Math.round(x.add*100)}%</small>`:'<small>闘気+50</small>'}</span><b>×${x.have}</b>`);
       const b=el('button','pgBtn gem pgBuy',`${ICON('gem')}${x.price}`); b.disabled=!x.canBuy; b.dataset.k=x.k;
       b.onclick=async()=>{ if(b.disabled) return; b.disabled=true; let r; try{ r=await P.buyItemAsync(x.k); }catch(e){ r={ok:false, why:'net'}; } if(!r.ok){ b.disabled=!(P.totalGems()>=x.price); UI.toast(r.why==='gems'||r.why==='insufficient'?'ジェムがたりない':(r.why==='busy'?'処理中':'通信エラー')); return; } UI.toast(`${x.name}　×${r.have}`); UI.render(); };

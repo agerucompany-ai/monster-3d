@@ -5417,7 +5417,7 @@ function titleBgSet(){ ST.bg.style.backgroundImage=`url(${titleBg()})`; ST.bg.st
 addEventListener('resize',()=>{ if(ST.title.style.display==='flex') titleBgSet(); });
 // ---------------------------------------------------------------- 機種変更の引き継ぎ(2026-11-16 オーナー「デバイスが変わってもセーブデータ引き継げるように」)
 //   前の機種: 合言葉(数字4〜8けた)を決めて「コードを出す」→ XXXX-XXXX-XXXX(24時間)。新しい機種: コード＋合言葉で受け取る → 読み直す
-//   預けるのは セーブ(w2_save_v1)と有償ジェム。サーバーは lib/pay.js の TherionPay.transfer(therion-pay)
+//   預けるのは セーブ(w2_save_v1)。サーバーは lib/pay.js の TherionPay.transfer(therion-pay)
 function xferOpen(){ let R=$('xfer'); if(!R){ R=document.createElement('div'); R.id='xfer'; document.body.appendChild(R); R.addEventListener('click',e=>{ if(e.target===R) xferClose(); }); }
   R.classList.add('on'); xferShow(TherionPay.transfer.issued()?'out':'pick'); }
 function xferClose(){ const R=$('xfer'); if(R&&!R.dataset.busy) R.classList.remove('on'); }
@@ -5432,7 +5432,7 @@ function xferShow(mode, data){ const R=$('xfer'); const ex=TherionPay.transfer.i
   } else if(mode==='in'){
     h+=`<div>前の機種で出したコードと合言葉を入れてください。</div><label>コード</label><input id="xCodeIn" maxlength="14" autocomplete="off" autocapitalize="characters" placeholder="XXXX-XXXX-XXXX"><label>合言葉</label><input id="xPassIn" inputmode="numeric" maxlength="8" autocomplete="off"><button class="xgo risk" id="xRedeem">受け取る</button><div class="xn">この機種の今の記録は、受け取った記録に置きかわります。</div>`;
   } else if(mode==='inok'){
-    h+=`<div style="text-align:center;font-weight:800">受け取りました。</div><div class="xn" style="text-align:center">${data&&data.hasSave?'記録を読みこみ直します。':'記録はありませんでした(有償ジェムだけ引き継ぎました)。'}</div><button class="xgo" id="xReload">はじめる</button>`;
+    h+=`<div style="text-align:center;font-weight:800">受け取りました。</div><div class="xn" style="text-align:center">${data&&data.hasSave?'記録を読みこみ直します。':'前の機種に記録がありませんでした。'}</div><button class="xgo" id="xReload">はじめる</button>`;
   }
   h+='<div class="xm" id="xMsg"></div><button class="xs" id="xClose">とじる</button></div>'; R.innerHTML=h;
   R.querySelectorAll('.xt button').forEach(b=>b.onclick=()=>{ if(!R.dataset.busy) xferShow(b.dataset.m); });
