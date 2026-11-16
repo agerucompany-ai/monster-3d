@@ -990,7 +990,7 @@ OB.barrels=(o)=>{ const y=G(o.x,o.z); for(let i=0;i<3;i++){ const x=o.x+i*0.7, z
 OB.stall=(o)=>{ const y=G(o.x,o.z), M=T(o.x,y,o.z,(o.rot||0)*DEG);
   P_(rbox(2.4,0.9,1.0,0.06,1),PAL.wood,local(M,0,0.45,0),{ao:y}); P_(rbox(2.5,0.08,1.1,0.03,1),0xc79a6a,local(M,0,0.92,0));
   for(const s of [-1,1]) for(const t of [-1,1]) P_(cyl(0.045,0.045,2.3,6),PAL.wood2,local(M,s*1.15,1.15,t*0.5));
-  for(let i=0;i<8;i++) P_(rbox(0.33,0.05,1.5,0.02,1),i%2?0xfaf6ee:0xd9604f,local(M,-1.15+0.165+i*0.33,2.32,0.12,0,1,1,1,0.18));
+  for(let i=0;i<8;i++) P_(rbox(0.33,0.05,1.5,0.02,1),i%2?0xfaf6ee:(o.awn?col3(o.awn).getHex():0xd9604f),local(M,-1.15+0.165+i*0.33,2.32,0.12,0,1,1,1,0.18));
   const R=rng(5); for(let k=0;k<3;k++){ P_(rbox(0.6,0.22,0.5,0.03,1),0xb58a5a,local(M,-0.75+k*0.75,1.06,0.1)); const fc=[0xf09a3a,0xf2d14e,0x8fae4a][k]; for(let i=0;i<7;i++) P_(sph(0.08,8,6),fc,local(M,-0.75+k*0.75+(R()-0.5)*0.4,1.2,0.1+(R()-0.5)*0.3)); }
   P_(lathe('am',[[0,0],[0.18,0],[0.3,0.25],[0.36,0.6],[0.28,0.95],[0.14,1.1],[0.16,1.25],[0.2,1.3],[0,1.3]],14),0xc9895e,local(M,1.5,0,0.6,0,0.6),{ao:y});
   addCol({t:'b',x:o.x,z:o.z,hw:1.3,hd:0.6,rot:(o.rot||0)*DEG,top:y+2.4}); };
@@ -1152,6 +1152,21 @@ OB.evzone=(o)=>{ const y=G(o.x,o.z), M=T(o.x,y,o.z,(o.rot||0)*DEG);
   const b=local(M,0,0.15,0); P_(lathe('fust',[[0,0],[0.3,0],[0.34,0.1],[0.2,0.55],[0.16,0.9],[0.18,1.1],[0,1.12]],10),0xfbf8f2,b,{ao:y}); P_(rbox(0.42,0.45,0.26,0.05,1),0x2a2630,MM(b,T(0,0.95,0))); P_(sph(0.15,10,8),0xf2d2b6,MM(b,T(0,1.3,0))); P_(cyl(0.16,0.14,0.14,10),0xc0392b,MM(b,T(0,1.44,0))); P_(rbox(0.06,0.06,0.5,0.01,1),0xc0392b,MM(b,T(0.1,1.3,-0.2),0,1,1,1,0.9));
   for(const s of [-1,1]) P_(rbox(0.1,0.42,0.1,0.02,1),0xfbf8f2,MM(b,T(s*0.26,0.95,0))); P_(rbox(0.05,1.5,0.05,0.01,1),0x4a3a2a,MM(b,T(0.3,0.9,0.12)));
   addCol({t:'b',x:o.x,z:o.z-0.5,hw:0.65,hd:0.9,rot:(o.rot||0)*DEG,top:y+2.6}); };
+// 町の人(動かない人影・白い都のにぎわい 2026-11-17)。{t:'folk',x,z,rot,sit,kid,c(服の色),y}  話しかけられない飾り。足もとに小さな当たり
+OB.folk=(o)=>{ const R=rng(((o.x*91+o.z*37)|0)+3), y=o.y!=null?o.y:G(o.x,o.z), k=o.kid?0.66:(0.84+R()*0.1), M=T(o.x,y,o.z,(o.rot||0)*DEG,k,k,k);
+  const cloth=col3(o.c||pick(['#3f74b0','#e2574c','#f2c14e','#3c8f9a','#fbf7ee','#9b7fd1','#5aa36a','#e58a8a','#f4efe6','#2f4f7f','#d9604f'],R)).getHex(), pants=pick([0x3a3f4a,0x5a4a3a,0xf1ece2,0x2f4f7f,0x6a6f7a],R), skin=pick([0xf2d2b6,0xe8c0a0,0xc89878,0xf5dcc6,0xa87858],R), hair=pick([0x2a2222,0x4a3226,0x6a4a2a,0xd8c8a0,0x1e1e24,0x8a5a3a],R), dress=!o.sit&&R()<0.4;
+  const hip=o.sit?0.46:0.8;
+  if(o.sit){ for(const s of [-1,1]){ P_(rbox(0.14,0.14,0.48,0.05,1),pants,local(M,s*0.1,hip,0.2)); P_(rbox(0.13,hip,0.14,0.05,1),pants,local(M,s*0.1,hip/2,0.42)); } }
+  else if(!dress){ const st=(R()-0.5)*0.3; for(const s of [-1,1]) P_(rbox(0.14,hip,0.16,0.05,1),pants,local(M,s*0.1,hip/2,0,0,1,1,1,s*st),{ao:y}); }
+  if(dress) P_(lathe('folkd',[[0,0],[0.3,0],[0.27,0.2],[0.2,0.7],[0.17,1.1],[0.19,1.42],[0.12,1.5],[0,1.52]],10),cloth,M,{ao:y});
+  else P_(lathe('folkb',[[0,0],[0.2,0],[0.23,0.1],[0.22,0.45],[0.2,0.66],[0.12,0.72],[0,0.74]],10),cloth,local(M,0,hip,0),{ao:y});
+  const sh=dress?1.46:hip+0.68, sw=R()<0.5?0.5:-0.3;
+  for(const s of [-1,1]){ const a=s>0?sw:(o.sit?0.9:0.15); P_(rbox(0.1,0.56,0.11,0.04,1),cloth,local(M,s*0.27,sh-0.26,0.06,0,1,1,1,-a*0.6,s*0.12)); P_(sph(0.06,6,5),skin,local(M,s*0.29,sh-0.56,0.06+a*0.3)); }
+  P_(cyl(0.06,0.07,0.1,8),skin,local(M,0,sh+0.04,0)); P_(sph(0.15,12,10),skin,local(M,0,sh+0.22,0));
+  P_(sph(0.165,12,8,0,Math.PI*2,0,Math.PI*0.55),hair,local(M,0,sh+0.24,-0.025,0,1,1,1,-0.25));
+  if(R()<0.25){ P_(cyl(0.3,0.3,0.03,14),0xe9d8b4,local(M,0,sh+0.33,0)); P_(cyl(0.13,0.15,0.12,12),0xe9d8b4,local(M,0,sh+0.4,0)); }
+  else if(R()<0.3) P_(rbox(0.26,0.22,0.16,0.04,1),pick([0xb58a5a,0xe9d8b4,0x3c8f9a],R),local(M,0.3,sh-0.62,0.1));
+  addCol({t:'c',x:o.x,z:o.z,r:0.28,top:y+1.6}); };
 // クノッソス宮殿(迷宮の入口を兼ねる): 黄土色の壇・赤い逆さ円柱(上が太い)・黒い柱頭・赤と黒の帯の壁・白い「聖なる角」・雄牛のフレスコ画
 function frescoTex(){ const [c,x]=canvas(256,128); x.fillStyle='#e8dcc0'; x.fillRect(0,0,256,128); x.fillStyle='#a63a2a'; x.fillRect(0,0,256,12); x.fillRect(0,116,256,12);
   x.strokeStyle='#2f5f8a'; x.lineWidth=4; x.beginPath(); for(let i=0;i<=256;i+=16){ x.lineTo(i,20+(i/16%2?4:-4)); } x.stroke(); x.beginPath(); for(let i=0;i<=256;i+=16){ x.lineTo(i,108+(i/16%2?4:-4)); } x.stroke();
@@ -1842,6 +1857,8 @@ function initChunks(){ const b=D.bounds; CS=D.chunk; OX=D.origin?D.origin[0]:0; 
       if(F.kind!=='flora') FP.push({x:o.x,z:o.z,hw:F.w/2*(big?0.96:0.75),hd:F.d/2*(big?0.94:0.75),rot,k:big?0.55:(F.kind==='tree'?0.32:0.4),r:big?1.3:(F.kind==='tree'?Math.max(0.8,F.w*0.25):0.5),k0:o.k});
       occMark(o.x,o.z,F.w/2*(F.kind==='tree'?0.45:0.9),F.d/2*(F.kind==='tree'?0.45:0.9),rot,0); if(big) FOOT.push([o.x,o.z,F.w/2+0.4,F.d/2+0.4]); }
     else if(o.t==='fbld'){ const rot=(o.rot||0)*DEG, hw=(o.w||8)/2, hd=(o.d||8)/2; FP.push({x:o.x,z:o.z,hw,hd,rot,k:0.55,r:1.3,k0:'fbld'}); occMark(o.x,o.z,hw,hd,rot,0.4); FOOT.push([o.x,o.z,hw+0.5,hd+0.5]); }
+    else if(o.t==='folk'){ occMark(o.x,o.z,0.35,0.35,0,0.25); }   // 町の人の足もとに花や鉢を重ねない(2026-11-17)
+    else if(o.t==='stall'){ occMark(o.x,o.z,1.3,0.7,(o.rot||0)*DEG,0.2); }
     else if(o.t==='observatory'||o.t==='tholos'){ const r=(o.r||5)+1.5; FP.push({x:o.x,z:o.z,hw:r,hd:r,rot:0,k:0.5,r:1.0,k0:o.t}); occMark(o.x,o.z,r,r,0,0.3); }
     else if(o.t==='canalbridge'||o.t==='vault'){ const cx=o.x!=null?o.x:(o.x0+o.x1)/2, cz=o.z!=null?o.z:(o.z0+o.z1)/2, hw=o.x1!=null?(o.x1-o.x0)/2:(o.w||4)/2+1.2, hd=o.z1!=null?(o.z1-o.z0)/2:(o.L||16)/2; occMark(cx,cz,hw,hd,(o.rot||0)*DEG,0.5); }
     else if(o.t==='mazewall'||o.t==='colonnade'||o.t==='rampart'||o.t==='railing'){ const th=o.th||1.2; for(let k=0;k<o.pts.length-1;k++){ const [ax,az]=o.pts[k],[bx,bz]=o.pts[k+1], L=Math.hypot(bx-ax,bz-az), ry=Math.atan2(-(bz-az),bx-ax), n=Math.max(1,Math.ceil(L/2)); for(let i=0;i<n;i++){ const t=(i+0.5)/n, x=lerp(ax,bx,t), z=lerp(az,bz,t); FP.push({x,z,hw:L/n/2,hd:th/2,rot:ry,k:0.5,r:1.0,k0:o.t}); occMark(x,z,L/n/2,th/2+0.3,ry,0); } } }
@@ -2113,15 +2130,19 @@ cv.addEventListener('pointerup',pend); cv.addEventListener('pointercancel',pend)
 // 固定の斜め見下ろし(北向き・回らない)。主人公を少し遅れて追うだけ
 const CAM={yaw:0,yawT:0,pitch:45*DEG,dist:27,tx:0,ty:3,tz:19,fixed:null,lead:0};
 function camDist(){ return camera.aspect<1?27:32; }
+function camFov(port){ const cb=typeof D!=='undefined'&&D&&D.cam; return cb&&cb.fov?(port?cb.fov:(cb.fovW||cb.fov)):(port?34:26); }   // 地図ごとの画角(D.cam.fov/fovW)。白い都は少し広く撮って通りの両側の建物まで入れる(2026-11-17)
 function camUpdate(dt){ if(CAM.fixed){ const f=CAM.fixed; camera.position.set(f[0],f[1],f[2]); camera.lookAt(f[3],f[4],f[5]); return; }
   const k=1-Math.exp(-dt*3.4); CAM.tx+=(HERO.x-CAM.tx)*k; CAM.tz+=(HERO.z-CAM.tz)*k; CAM.ty+=(HERO.y-CAM.ty)*(1-Math.exp(-dt*2.2));
   // 見晴らし(D.vista の矩形の中): カメラが低く傾いて、遠くの高い名所(アクロポリス)が画面に入る。出ると元に戻る(2026-10-25)
   let V=null; if(D&&D.vista) for(const v of D.vista){ if(HERO.x>v.r[0]&&HERO.x<v.r[2]&&HERO.z>v.r[1]&&HERO.z<v.r[3]){ V=v; break; } } if(V) CAM.lv=V;
   CAM.vk=(CAM.vk||0)+((V?1:0)-(CAM.vk||0))*(1-Math.exp(-dt*1.4)); const lv=CAM.lv||{}; const vk=sm(0,1,CAM.vk);
-  const d=CAM.dist=lerp(camDist(),lv.dist||camDist(),vk), p=lerp(CAM.pitch,(lv.pitch||45)*DEG,vk); const ah=camera.aspect<1?1.6:0.8;   // 主人公を画面の少し下に置く(進む先=北を広く)
+  // 地図ごとの低いカメラ(D.cam={pitch,dist,distW}): 白い都は建物の正面と高さが見えるように低く構える(2026-11-17 オーナー「角度的に見えない」)
+  if(Math.abs(camera.fov-camFov(camera.aspect<1))>0.01) resize();
+  const cb=D&&D.cam, bd=cb?(camera.aspect<1?cb.dist:(cb.distW||cb.dist)):camDist(), bp=cb?cb.pitch*DEG:CAM.pitch;
+  const d=CAM.dist=lerp(bd,lv.dist||bd,vk), p=lerp(bp,(lv.pitch||45)*DEG,vk); const ah=camera.aspect<1?1.6:0.8;   // 主人公を画面の少し下に置く(進む先=北を広く)
   const fx=CAM.tx, fz=CAM.tz-ah-vk*(lv.ahead||0), fy=CAM.ty+0.6+vk*(lv.yOff||0);
   camera.position.set(fx,fy+Math.sin(p)*d,fz+Math.cos(p)*d); camera.lookAt(fx,fy,fz);
-  POST.U.uFocus.value=d; POST.U.uDof.value=1-vk*0.9; }
+  POST.U.uFocus.value=d; POST.U.uDof.value=(cb&&cb.dof!=null?cb.dof:1)*(1-vk*0.9); }
 
 // ---------------------------------------------------------------- 時間帯(朝・昼・夕)
 const TOD={   // 光と色(post: 露出・にじみ・光の色・陰の色・彩度)
@@ -2362,7 +2383,7 @@ function frame(now){ requestAnimationFrame(frame); if(PAUSED){ LAST=now; return;
   if(FRAME%20===0&&fpsEl.style.display==='block') fpsEl.textContent=(FPSB.length/FPSB.reduce((a,b)=>a+b,0)).toFixed(0)+'fps '+renderer.info.render.calls+'dc '+(renderer.info.render.triangles/1000).toFixed(0)+'k';
 }
 let AUTO=null, PAUSED=true;
-function resize(){ const w=innerWidth, h=innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.fov=w<h?34:26; camera.updateProjectionMatrix(); postResize(w,h); U.uResY.value=Math.round(h*PR); const s=h*PR*0.5/Math.tan(camera.fov*DEG/2); for(const p of [PETALS,MOTES,SPRAY]) if(p) p.material.uniforms.uScale.value=s; }
+function resize(){ const w=innerWidth, h=innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.fov=camFov(w<h); camera.updateProjectionMatrix(); postResize(w,h); U.uResY.value=Math.round(h*PR); const s=h*PR*0.5/Math.tan(camera.fov*DEG/2); for(const p of [PETALS,MOTES,SPRAY]) if(p) p.material.uniforms.uScale.value=s; }
 addEventListener('resize',resize);
 
 // ---------------------------------------------------------------- マップ(街と自然を分けて、そのマップの分だけ読む。出入口で暗転して切り替え)
