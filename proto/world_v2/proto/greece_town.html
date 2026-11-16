@@ -3528,7 +3528,7 @@ function grOnScreen(x,z){ const v=new THREE.Vector3(x,groundAt(x,z)+0.6,z).proje
 function grEllyBehind(e){ const a=HERO.yaw||0; let last=null;   // ヤマトの後ろ(進む向きの逆)で、画面に映らない一番近い所
   for(let r=5;r<=16;r+=1) for(const da of [0,0.5,-0.5,1.0,-1.0]){ const x=HERO.x-Math.sin(a+da)*r, z=HERO.z-Math.cos(a+da)*r; if(!walkOK(x,z)) continue; last=[x,z]; if(!grOnScreen(x,z)){ grPlace(e,x,z); return true; } }
   return false; }
-function grEllyTick(s){ const on=!!s&&grEllyWith(s)&&!(GR_GUIDE&&GR_GUIDE.mem.elly);
+function grEllyTick(s){ const on=!!s&&grEllyWith(s)&&!(GR_GUIDE&&GR_GUIDE.mem.elly)&&!(SAVE&&SAVE.crew&&GR_CREW.elly(+s.ep||0)&&!SAVE.crew.elly);   // 仲間になる演出の前には出さない
   if(!on||(GR_ELLY&&GR_ELLY.map!==MAP)){ if(GR_ELLY){ grSpriteDrop(GR_ELLY); GR_ELLY=null; } if(!on) return; }
   if(!GR_ELLY){ GR_ELLY=grSprite('elly'); GR_ELLY.map=MAP; const a=HERO.yaw||0; grPlace(GR_ELLY,HERO.x-Math.sin(a)*1.4+Math.cos(a)*0.9,HERO.z-Math.cos(a)*1.4-Math.sin(a)*0.9); }
   const e=GR_ELLY, a=HERO.yaw||0, tx=HERO.x-Math.sin(a)*1.5+Math.cos(a)*0.9, tz=HERO.z-Math.cos(a)*1.5-Math.sin(a)*0.9, d=Math.hypot(tx-e.x,tz-e.z);
@@ -3598,7 +3598,37 @@ function grFornRunAnim(t){ requestAnimationFrame(grFornRunAnim); const dt=GR_FRT
   }catch(e){ console.warn('fornrun',e&&e.message); } }
 requestAnimationFrame(grFornRunAnim);
 window.GR_FR_DBG=()=>GR_FRS&&{x:GR_FRS.x,z:GR_FRS.z,st:GR_FRS.st,pi:GR_FRS.pi,n:GR_FRS.path&&GR_FRS.path.length,inst:!!GR_FRS.inst,path:GR_FRS.path};
-function grGuideTick(){ try{ if(!SAVE||!HERO) return; const s=grCur(); grCastTick(s); grEllyTick(s);
+// ---- 2026-11-17 オーナー「エリーとアレクが仲間になるのは飛ばせないエフェクトで出して。いつのまにかついてきたり一緒にいて気持ち悪い」 ----
+//  仲間(旅の連れ)の話の範囲: エリー=2〜13話・18話から(14〜17話はさらわれている)/アレク=5話から。入った時に一度だけ演出(飛ばせない・3秒たってからタップで閉じる)。見せた印=SAVE.crew
+const GR_CREW={elly:ep=>(ep>=2&&ep<=13)||ep>=18, alek:ep=>ep>=5};
+function grCrewTick(s){ if(!SAVE||!s||EVOFX||STORY||TRANS||ENC||PAUSED) return; const ep=+s.ep||0; if(!ep) return;
+  if(!SAVE.crew){ SAVE.crew={}; for(const w in GR_CREW) if(GR_CREW[w](ep)) SAVE.crew[w]=1; return; }   // 前からのセーブ: 今の連れは見せたことにする
+  for(const w in GR_CREW){ const inn=GR_CREW[w](ep); if(!inn&&SAVE.crew[w]){ delete SAVE.crew[w]; continue; }
+    if(inn&&!SAVE.crew[w]&&(w!=='elly'||grEllyWith(s))){ SAVE.crew[w]=1; saveGame(); crewFxShow(w); return; } } }
+function crewFxShow(who){ const A=GR_GUIDE_ART[who]; if(!A) return; EVOFX=true; const wasP=PAUSED; PAUSED=true; IN.active=false;
+  if(!document.getElementById('crewFxCss')){ const st=document.createElement('style'); st.id='crewFxCss'; st.textContent=`
+#crewFx{position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(circle at 50% 42%,#2a3f6a 0%,#101a33 55%,#05070f 100%);opacity:0;transition:opacity .35s;overflow:hidden}
+#crewFx.on{opacity:1}
+#crewFx .st{position:relative;height:min(62vh,520px);aspect-ratio:1/2;max-width:80vw}
+#crewFx .st img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transform:translateX(40px);filter:brightness(0) invert(1) drop-shadow(0 0 22px #9fd4ff);transition:filter 1s ease-out}
+#crewFx .st img.in{animation:cwIn .9s cubic-bezier(.2,.8,.2,1) .35s forwards}
+#crewFx .st img.col{filter:brightness(1) invert(0) drop-shadow(0 0 14px rgba(160,210,255,.55))}
+#crewFx .bd{position:absolute;left:-30vw;right:-30vw;top:58%;height:64px;background:linear-gradient(90deg,transparent,rgba(120,190,255,.35),transparent);transform:skewY(-6deg) scaleX(0);animation:cwBd .7s ease-out 1.2s forwards}
+#crewFx .tx{position:relative;color:#fff;font-weight:900;font-size:clamp(22px,6vw,32px);text-shadow:0 2px 12px #000;opacity:0;transform:translateY(10px);animation:cwT .5s ease-out 1.5s forwards}
+#crewFx .sub{color:#cfe6ff;font-size:14px;font-weight:700;opacity:0;animation:cwT .5s ease-out 1.9s forwards}
+#crewFx .go{color:#fff;font-size:13px;opacity:0;animation:cwT .5s ease-out 3s forwards}
+#crewFx .sp{position:absolute;width:5px;height:5px;border-radius:50%;background:#dff1ff;box-shadow:0 0 10px #8cc8ff;opacity:0}
+@keyframes cwIn{to{opacity:1;transform:translateX(0)}}
+@keyframes cwBd{to{transform:skewY(-6deg) scaleX(1)}}
+@keyframes cwT{to{opacity:1;transform:translateY(0)}}
+@keyframes cwS{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy))}}`; document.head.appendChild(st); }
+  const W=document.createElement('div'); W.id='crewFx';
+  W.innerHTML=`<div class="bd"></div><div class="st"><img src="${A.img}" alt=""></div><div class="tx">${A.n}が仲間になった！</div><div class="sub">これから いっしょに旅をする</div><div class="go">タップでとじる</div>`;
+  for(let k=0;k<26;k++){ const d=document.createElement('i'); d.className='sp'; const a=Math.random()*Math.PI*2, r=120+Math.random()*180; d.style.cssText=`left:50%;top:42%;--dx:${Math.cos(a)*r}px;--dy:${Math.sin(a)*r}px;animation:cwS ${1+Math.random()}s ease-out ${0.9+Math.random()*0.6}s forwards`; W.appendChild(d); }
+  document.body.appendChild(W); requestAnimationFrame(()=>{ W.classList.add('on'); W.querySelector('.st img').classList.add('in'); }); setTimeout(()=>{ const im=W.querySelector('.st img'); if(im) im.classList.add('col'); },1100);
+  const t0=performance.now(); const close=e=>{ if(e) e.stopPropagation(); if(performance.now()-t0<3000) return; W.classList.remove('on'); setTimeout(()=>{ W.remove(); EVOFX=false; PAUSED=wasP; LAST=performance.now(); },360); };
+  for(const ev of ['pointerdown','touchstart']) W.addEventListener(ev,e=>e.stopPropagation()); W.addEventListener('click',close); }
+function grGuideTick(){ try{ if(!SAVE||!HERO) return; const s=grCur(); grCrewTick(s); grCastTick(s); grEllyTick(s);
   if(GR_GUIDE) Object.values(GR_GUIDE.mem).forEach(grFace); grFace(GR_ELLY);
   const g=GR_GUIDE; if(s&&g&&g.walk&&g.id===s.id&&!STORY&&!TRANS&&!ENC&&!GR_RUN&&grHere(s)) grRun(); }catch(e){ console.warn('grGuide',e&&e.message); } }
 setInterval(grGuideTick,50);
@@ -3681,7 +3711,8 @@ function grFightOpt(opt,F){ const lv=F.lv; if(!opt.player) opt.player={}; let pa
   const exOwn=[]; { const MN=id=>(window.Progress&&Progress.mon&&Progress.mon(+id))||null; const ow=new Set(((window.Progress&&Progress.ownedList&&Progress.ownedList())||[]).map(Number));
     for(const e of EX){ let q=MN(e.mid), g=0; while(q&&q.evolves_to!=null&&g++<4){ if(!ow.has(+q.evolves_to)) break; exOwn.push(+q.evolves_to); q=MN(q.evolves_to); } } }
   party.length=0; L.forEach(p=>party.push(p)); EX.forEach(p=>party.push(p));
-  opt.player.owned=[...new Set(L.map(p=>p.mid).concat(F.own||[]).concat(EX.map(p=>p.mid)).concat(exOwn))]; opt.player.fusionKnown=(F.fuse||[]).slice(); opt.player.stageFree=true;
+  opt.player.owned=[...new Set(L.map(p=>p.mid).concat(F.own||[]).concat(EX.map(p=>p.mid)).concat(exOwn))];
+  { const P=window.Progress; if(P&&P.formsList&&P.lineOf&&P.knowsForm&&!(SAVE&&SAVE.unlock&&!SAVE.unlock.evo)){ const lines=new Set(L.concat(EX).map(p=>+P.baseOf(+p.mid))); const add=P.formsList().filter(id=>lines.has(+P.baseOf(+id))&&P.knowsForm(id)); if(add.length) opt.player.owned=[...new Set(opt.player.owned.concat(add))]; } }   // 2026-11-17 オーナー「Lv12でフォルレオンに進化したのに進化できない」: 物語の勝負でも、Lvで覚えた進化の姿は使える opt.player.fusionKnown=(F.fuse||[]).slice(); opt.player.stageFree=true;
   opt.fusionUnlocked=!!(F.fuse&&F.fuse.length); opt.tripleUnlocked=false; opt.startStage=1; opt.alignMinions=true;
   opt.budget=L.reduce((a,p)=>a+grStageOf(p.mid),0)+EX.reduce((a,p)=>a+grStageOf(p.mid),0); const adj=grTeamAdj(F, EX.length);
   const bd=grBoard(F.board,F.look); if(bd){ opt.terrainTheme=bd; opt.backdrop=undefined; }
