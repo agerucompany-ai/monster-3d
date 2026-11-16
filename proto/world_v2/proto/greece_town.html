@@ -3465,12 +3465,18 @@ function grLeadTick(g){ if(STORY||TRANS||ENC) return; let done=true, moved=false
   if(g.bd==null||fd<g.bd-0.3){ g.bd=fd; g.stk=0; } else if(moved) g.stk=(g.stk||0)+1;
   if(!done&&g.stk>40){ Object.values(g.mem).forEach((m,n)=>grPlace(m,g.x+(n%2?1:-1)*Math.ceil(n/2)*0.95,g.z+(n?0.3:0))); g.stk=0; g.bd=null; }
   if(done) g.lead=false; }
+function grOnScreen(x,z){ const v=new THREE.Vector3(x,groundAt(x,z)+0.6,z).project(camera); return v.z<1&&Math.abs(v.x)<1.08&&Math.abs(v.y)<1.08; }
+function grEllyBehind(e){ const a=HERO.yaw||0; let last=null;   // ヤマトの後ろ(進む向きの逆)で、画面に映らない一番近い所
+  for(let r=5;r<=16;r+=1) for(const da of [0,0.5,-0.5,1.0,-1.0]){ const x=HERO.x-Math.sin(a+da)*r, z=HERO.z-Math.cos(a+da)*r; if(!walkOK(x,z)) continue; last=[x,z]; if(!grOnScreen(x,z)){ grPlace(e,x,z); return true; } }
+  return false; }
 function grEllyTick(s){ const on=!!s&&grEllyWith(s)&&!(GR_GUIDE&&GR_GUIDE.mem.elly);
   if(!on||(GR_ELLY&&GR_ELLY.map!==MAP)){ if(GR_ELLY){ grSpriteDrop(GR_ELLY); GR_ELLY=null; } if(!on) return; }
   if(!GR_ELLY){ GR_ELLY=grSprite('elly'); GR_ELLY.map=MAP; const a=HERO.yaw||0; grPlace(GR_ELLY,HERO.x-Math.sin(a)*1.4+Math.cos(a)*0.9,HERO.z-Math.cos(a)*1.4-Math.sin(a)*0.9); }
   const e=GR_ELLY, a=HERO.yaw||0, tx=HERO.x-Math.sin(a)*1.5+Math.cos(a)*0.9, tz=HERO.z-Math.cos(a)*1.5-Math.sin(a)*0.9, d=Math.hypot(tx-e.x,tz-e.z);
-  if(d>12){ grPlace(e,tx,tz); }
-  else if(d>0.35&&!STORY){ const SPe=GR_GUIDE_ART.elly.sp, st=Math.min(d,Math.max(0.06,d*0.12),SPe?SPe[4]*0.05:1e9); const nx=e.x+(tx-e.x)/d*st, nz=e.z+(tz-e.z)/d*st; if(walkOK(nx,nz)){ e.x=nx; e.z=nz; } else { e.x+=(tx-e.x)*0.2; e.z+=(tz-e.z)*0.2; } }
+  // 2026-11-16 エリーは見えている間は瞬間移動しない(遠くても速歩きで追う)。画面に映っていない時に12より離れたら、ヤマトの後ろの画面の外のすぐそばへ移し、そこから歩いて寄る
+  const SPe=GR_GUIDE_ART.elly.sp;
+  if(d>12&&!grOnScreen(e.x,e.z)&&grEllyBehind(e)){}
+  else if(d>0.35&&!STORY){ const st=Math.min(d,Math.max(0.06,d*0.12),SPe?SPe[4]*0.05:1e9); const nx=e.x+(tx-e.x)/d*st, nz=e.z+(tz-e.z)/d*st; if(walkOK(nx,nz)){ e.x=nx; e.z=nz; } else { const f=SPe?Math.min(0.2,st/d):0.2; e.x+=(tx-e.x)*f; e.z+=(tz-e.z)*f; } }
   e.grp.position.set(e.x,groundAt(e.x,e.z)+(d>0.5&&!STORY?Math.abs(Math.sin(performance.now()/130))*0.05:0),e.z);
   grLabel(e,'エリー',false); e.lbl.style.display='none'; }
 // ---- 2026-11-15 第1話のはじめ(オーナー「冒頭、フォルンが実際に神殿の方に逃げていくエフェクトほしい」): 「狐を追って神殿のあとへ」の歩く段(g01_05)で、
@@ -3727,7 +3733,7 @@ function grInit(){ Object.assign(SC,GR_SC);
   grBuild();
   { const _at=arriveTown; arriveTown=async function(){ await _at(); grArrive(); }; }   // 第1話: 村に下りたら、そのまま続きを流す
   for(const m of new Set(GR_STEPS.map(s=>s.map))) AREA_RULE[m+':*']=f=>{ const s=grCur(); return (s&&grHere(s))?grRun:null; };
-  window.GR_DBG={ cur:()=>{ const s=grCur(); return s&&{id:s.id,ep:s.ep,map:s.map,at:s.at,kind:s.kind}; }, steps:GR_STEPS, run:()=>grRun(), here:()=>grHere(grCur()), obj:()=>grObjText(GF()), retry:()=>GR_RETRY, art:GR_GUIDE_ART, cast:(w,x,z)=>{ const m=grSprite(w); grPlace(m,x,z); return m; },
+  window.GR_DBG={ cur:()=>{ const s=grCur(); return s&&{id:s.id,ep:s.ep,map:s.map,at:s.at,kind:s.kind}; }, steps:GR_STEPS, run:()=>grRun(), here:()=>grHere(grCur()), obj:()=>grObjText(GF()), retry:()=>GR_RETRY, art:GR_GUIDE_ART, elly:()=>GR_ELLY, onScreen:(x,z)=>grOnScreen(x,z), auto:(v)=>{ AUTO=v; }, cast:(w,x,z)=>{ const m=grSprite(w); grPlace(m,x,z); return m; },
     skipTo:(ep)=>{ const f=GF(); f.g22=1; f.g22b=1; f.g22c=1; for(const s of GR_STEPS){ if(s.ep>=ep) break; f[s.id]=1; if(s.last) f['a'+pad2g(s.ep)]=1; } f.gr_bond=1; if(ep>4&&SAVE.unlock) SAVE.unlock.evo=true; if(ep>11&&SAVE.unlock) SAVE.unlock.fusion=true; saveGame(); objUpdate(); } }; }
 
 // ギリシャ編 22話版の会話の場面(story/gr22_extract.py でアニメの台本から機械で抜き出したもの。ここは直接直さない)
