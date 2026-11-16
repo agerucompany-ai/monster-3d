@@ -39,7 +39,7 @@ const GR_FIGHTS={
       hint:'大きなオリーブの木の根もとでは、炎が強くなる。'},
   2: {tadj:2.0, foe:{n:'アレク', party:[{mid:1011}]}, me:['P1'], lv:5, board:'ep02', look:'agora', must:0, ai:{hpX:1.386,atkX:1.070},
       hint:'水は炎に強い。水路のそばの水は、遠くまで届く。'},
-  3: {tadj:2.0, foe:{n:'アレク', party:[{mid:1011}]}, me:['P1',70], lv:5, board:'ep03', look:'grove', must:1, ai:{hpX:1.652,atkX:2.485},
+  3: {tadj:2.0, foe:{n:'アレク', party:[{mid:1011}]}, me:['P1',70], lv:5, board:'ep03', look:'grove', must:1, ai:{hpX:1.2,atkX:1.6},
       hint:'炎は水に弱い。雷は水によく効く。水の子は乾いた石の上で弱る。'},
   4: {tadj:2.0, foe:{n:'マルコ', party:[{mid:1007,fixed:true,evo:true}]}, me:['P1'], lv:6, board:'ep04', look:'olive', must:1, own:[1002], evo:1, ai:{hpX:0.937,atkX:0.693},
       hint:'盤のまん中の三列に入ると、フォルンはフォルコンに進化できる。'},
