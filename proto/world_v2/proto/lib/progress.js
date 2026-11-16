@@ -253,9 +253,13 @@ P.wildEnemy=function(mid, area){ return {mid:+mid, lv:P.wildLv(area)}; };
 P.startStage=(area)=>P.rule(area).startStage||1;
 // 野生の群れ(2026-10-27): リーダー=触った子(帯+packLeadLv・leader)+そのマップの野生(pool)から n-1 体(帯のレベル)。n = 編の pack と「自分が盤に出せる数」の小さい方
 // 自分が盤に出せる数 = battle.js の packCount と同じ数え方(先頭から・その段の姿のLv合計が 3×段 まで)。battle.js の表は init 前で空のことがあるので自分の表(MON)で数える
-function fieldCount(party, st, owned){ const cap=3*st; let used=0, n=0; const own=owned?new Set(owned.map(Number)):null;
+function fieldCount(party, st, owned, bud){ const cap=(bud||3)*st; let used=0, n=0; const own=owned?new Set(owned.map(Number)):null;
   for(const p of (party||[])){ let m=mon(p.mid), g=0; while(m&&m.evolves_to!=null&&mon(m.evolves_to)&&(mon(m.evolves_to).level||1)<=st&&(!own||own.has(m.evolves_to))&&g++<4) m=mon(m.evolves_to); const lv=m?(m.level||1):1; if(n>0&&used+lv>cap) continue; used+=lv; n++; } return n; }
-P.packSize=function(area, party, owned){ const want=P.rule(area).pack||1; const st=P.startStage(area); return Math.max(1, Math.min(want, fieldCount(party, st, owned)||1)); };
+// 2026-11-16 オーナー「野生の数制限を直して・連れてる数だけ敵も出る」: 群れの数 = 自分が盤に出せる数(連れている数まで)。編の pack の上限はやめた。
+//   4体以上の時は盤の決まりを大きい方へ(SIZE_RULES 7=3体・9=4体・11=5体・13=6体。盤の見た目は 13×9 のまま)
+const WILD_SIZE={3:7, 4:9, 5:11, 6:13}, WILD_BUD={7:3, 9:4, 11:5, 13:6};
+P.wildSize=function(party){ const n=Math.max(1,Math.min(6,(party||[]).length||1)); return WILD_SIZE[Math.max(3,n)]; };
+P.packSize=function(area, party, owned, size){ const st=P.startStage(area); const bud=WILD_BUD[size||P.wildSize(party)]||3; return Math.max(1, fieldCount(party, st, owned, bud)||1); };
 P.wildPack=function(lead, area, pool, n){ const L=Object.assign({}, lead, {leader:true}); L.lv=Math.min(LV_MAX,(+L.lv||P.wildLv(area))+CFG.packLeadLv); const out=[L];
   const st=P.startStage(area); const ids=(pool||[]).map(Number).filter(id=>mon(id)&&!BOSS_FORMS.some(b=>lineOf(id).indexOf(b)>=0&&stageOf(b)<=st)); for(let k=1;k<n&&ids.length;k++) out.push({mid:ids[Math.floor(Math.random()*ids.length)], lv:P.wildLv(area), pack:true}); return out; };
 
@@ -280,7 +284,7 @@ P.prepare=function(opt, ctx){ opt=opt||{}; ctx=ctx||{}; const pl=opt.player||{};
   if(opt.startStage==null) opt.startStage=P.startStage(ctx.area);
   opt.noWildForms=TRUMP_FORMS.slice();   // battle.js: 野生・古代テリオン戦では切り札の姿まで上げない
   if((opt.kind||'wild')==='wild' && opt.enemy && Array.isArray(opt.enemy.pack) && opt.enemy.party && opt.enemy.party.length===1){   // 野生の群れ(呼ぶ側が enemy.pack=そのマップの野生の種類 を渡した時)
-    const n=P.packSize(ctx.area, party, opt.player.owned); opt.enemy=Object.assign({}, opt.enemy, {party:P.wildPack(opt.enemy.party[0], ctx.area, opt.enemy.pack, n)}); delete opt.enemy.pack; }
+    const sz=P.wildSize(party); opt.size=sz; const n=P.packSize(ctx.area, party, opt.player.owned, sz); opt.enemy=Object.assign({}, opt.enemy, {party:P.wildPack(opt.enemy.party[0], ctx.area, opt.enemy.pack, n)}); delete opt.enemy.pack; }
   P.markSeen(((opt.enemy&&opt.enemy.party)||[]).map(e=>e.mid), opt.startStage);   // ずかんの「見た」(2026-10-27)
   const zeroday=!!(ctx.zeroday||opt.zeroday||(opt.enemy&&opt.enemy.zeroday));
   const enemy=(opt.enemy&&opt.enemy.party)||[];
