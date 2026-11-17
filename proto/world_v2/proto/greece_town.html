@@ -510,7 +510,7 @@ function patchLit(m,key,o){ o=o||{};
     sh.uniforms.uHeroF=U.uHero; sh.uniforms.uResY=U.uResY;
     sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vWq; uniform vec3 uHeroF; uniform float uResY;').replace('#include <clipping_planes_fragment>',`#include <clipping_planes_fragment>
       { float cd=distance(vWq,cameraPosition); vec3 ch=uHeroF+vec3(0.0,0.8,0.0)-cameraPosition; float L=length(ch); vec3 dir=ch/max(L,0.001); float t=dot(vWq-cameraPosition,dir);
-        float seg=length(vWq-cameraPosition-dir*clamp(t,0.0,L)); float k=max(1.0-smoothstep(1.2,3.2,cd), (t>0.0&&t<L-2.2)?(1.0-smoothstep(1.3,3.0,seg))*smoothstep(-0.2,1.0,vWq.y-uHeroF.y):0.0); k=max(k,(1.0-smoothstep(0.04,0.2,gl_FragCoord.y/uResY))*smoothstep(1.6,3.2,vWq.y-uHeroF.y)*0.92);
+        float seg=length(vWq-cameraPosition-dir*clamp(t,0.0,L)); float k=max(1.0-smoothstep(1.2,3.2,cd), (t>0.0&&t<L-1.1)?(1.0-smoothstep(1.6,3.4,seg))*smoothstep(-0.2,1.0,vWq.y-uHeroF.y):0.0); k=max(k,(1.0-smoothstep(0.04,0.2,gl_FragCoord.y/uResY))*smoothstep(1.6,3.2,vWq.y-uHeroF.y)*0.92);
         ${o.noDither?'k=0.0;':''}if(k>0.0){ vec2 q=mod(floor(gl_FragCoord.xy),4.0); float b=mod(q.x*8.0+q.y*4.0+mod(q.x+q.y,2.0)*2.0+q.x*q.y,16.0)/16.0; if(k*0.9>b) discard; } }`);
     sh.fragmentShader=sh.fragmentShader.replace('* getShadowMask()','* (0.30+0.70*getShadowMask())');
     if(o.front) sh.fragmentShader=sh.fragmentShader.split('gl_FrontFacing').join('true');
@@ -2286,8 +2286,7 @@ let EVOFX=false, evoFxT=0;
 function evoFxTick(dt){ evoFxT-=dt; if(evoFxT>0) return; evoFxT=0.5; if(EVOFX||STORY||TRANS||ENC||PAUSED||!SAVE||TESTMODE&&!SAVE) return; const P=window.Progress; if(!P||!P.evoAvail||!P.state||!P.state()) return;
   const av=P.evoAvail(); if(!SAVE.evoFx){ SAVE.evoFx={}; for(const id of av) SAVE.evoFx[id]=1; return; }   // 前からのセーブ: 今できる分は見せたことにする
   const id=av.find(x=>!SAVE.evoFx[x]); if(id==null) return; SAVE.evoFx[id]=1; saveGame(); evoFxShow(id); }
-function evoFxShow(to){ const P=window.Progress; const ln=P.lineOf(to); const from=ln[Math.max(0,ln.indexOf(+to)-1)]; EVOFX=true; const wasP=PAUSED; PAUSED=true; IN.active=false;
-  if(!document.getElementById('evoFxCss')){ const st=document.createElement('style'); st.id='evoFxCss'; st.textContent=`
+function evoFxCss(){ if(document.getElementById('evoFxCss')) return; const st=document.createElement('style'); st.id='evoFxCss'; st.textContent=`
 #evoFx{position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(circle at 50% 45%,#3a2a10 0%,#120c1e 55%,#05040a 100%);opacity:0;transition:opacity .35s;overflow:hidden;font-family:inherit}
 #evoFx.on{opacity:1}
 #evoFx .st{position:relative;width:min(62vw,300px);height:min(62vw,300px)}
@@ -2309,6 +2308,27 @@ function evoFxShow(to){ const P=window.Progress; const ln=P.lineOf(to); const fr
 @keyframes evW{0%{opacity:.95}100%{opacity:0}}
 @keyframes evT{to{opacity:1}}
 @keyframes evS{0%{opacity:0;transform:translate(0,0) scale(.4)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1)}}`; document.head.appendChild(st); }
+// ---- 融合を覚えた時の演出(2026-11-17 オーナー「融合を覚えたというのもエフェクトを出さないと。実際にできるかわからない」) ----
+//  物語の勝負で初めて使える融合(GR_FIGHTS の fuse)を、勝負の前に一度だけ見せる。素材2体が寄って光り、融合体になる。見せた印=SAVE.fuseFx
+function fuseFxShow(fid){ return new Promise(res=>{ const P=window.Progress; const m=P&&P.mon(fid); if(!m){ res(); return; } const mats=(m.recipe3||m.recipe||m.fusion_from||[]).slice(0,3); if(mats.length<2){ res(); return; }
+  evoFxCss(); if(!document.getElementById('fuseFxCss')){ const st=document.createElement('style'); st.id='fuseFxCss'; st.textContent=`
+#evoFx .fm{position:absolute;top:18%;width:56%;height:56%;object-fit:contain}
+#evoFx .fl{left:-14%;animation:fuL 2.4s ease-in forwards}
+#evoFx .fr{right:-14%;animation:fuR 2.4s ease-in forwards}
+@keyframes fuL{0%{transform:translateX(0)}55%{transform:translateX(18%);filter:brightness(1.5) drop-shadow(0 0 16px #9fd8ff)}88%{transform:translateX(38%);filter:brightness(0) invert(1);opacity:1}100%{transform:translateX(40%);filter:brightness(0) invert(1);opacity:0}}
+@keyframes fuR{0%{transform:translateX(0)}55%{transform:translateX(-18%);filter:brightness(1.5) drop-shadow(0 0 16px #ffb0e0)}88%{transform:translateX(-38%);filter:brightness(0) invert(1);opacity:1}100%{transform:translateX(-40%);filter:brightness(0) invert(1);opacity:0}}`; document.head.appendChild(st); }
+  EVOFX=true; const wasP=PAUSED; PAUSED=true; IN.active=false; const img=id=>P.img(id);
+  const W=document.createElement('div'); W.id='evoFx'; W.style.background='radial-gradient(circle at 50% 45%,#16304a 0%,#120c1e 55%,#05040a 100%)';
+  const nm=mats.map(x=>monName(x));
+  W.innerHTML=`<div class="st"><div class="ray"></div><img class="fm fl" src="${img(mats[0])}" alt=""><img class="fm fr" src="${img(mats[1])}" alt=""><img class="b" src="${img(fid)}" alt=""><div class="ring"></div></div><div class="tx">${nm.join('と')}の<br>融合を覚えた！<small>勝負の中で、2段目の${nm.join('と')}を<br>となりのマスに重ねると ${monName(fid)}になる<br>（どちらかが その勝負の中で進化していること）</small></div><div class="go">タップでとじる</div><div class="wh"></div>`;
+  const stg=W.querySelector('.st'); for(let k=0;k<22;k++){ const d=document.createElement('i'); d.className='sp'; const a=Math.random()*Math.PI*2, r=90+Math.random()*120; d.style.cssText=`left:50%;top:50%;--dx:${Math.cos(a)*r}px;--dy:${Math.sin(a)*r}px;animation:evS ${1+Math.random()*0.8}s ease-out ${2.2+Math.random()*0.5}s forwards`; stg.appendChild(d); }
+  document.body.appendChild(W); requestAnimationFrame(()=>W.classList.add('on')); setTimeout(()=>{ const bi=W.querySelector('.b'); if(bi) bi.classList.add('col'); },2700);
+  try{ if(typeof seBeep==='function') seBeep('lvup'); }catch(e){}
+  const t0=performance.now(); const close=e=>{ if(e) e.stopPropagation(); if(performance.now()-t0<3600) return; W.classList.remove('on'); setTimeout(()=>{ W.remove(); EVOFX=false; PAUSED=wasP; LAST=performance.now(); res(); },360); };
+  for(const ev of ['pointerdown','touchstart']) W.addEventListener(ev,e=>e.stopPropagation()); W.addEventListener('click',close); }); }
+async function grFuseFx(F){ if(!SAVE||!F||!F.fuse||!F.fuse.length) return; SAVE.fuseFx=SAVE.fuseFx||{}; for(const fid of F.fuse){ if(SAVE.fuseFx[fid]) continue; SAVE.fuseFx[fid]=1; saveGame(); await fuseFxShow(fid); } }
+function evoFxShow(to){ const P=window.Progress; const ln=P.lineOf(to); const from=ln[Math.max(0,ln.indexOf(+to)-1)]; EVOFX=true; const wasP=PAUSED; PAUSED=true; IN.active=false;
+  evoFxCss();
   const W=document.createElement('div'); W.id='evoFx'; const img=id=>P.img(id);
   W.innerHTML=`<div class="st"><div class="ray"></div><img class="a" src="${img(from)}" alt=""><img class="b" src="${img(to)}" alt=""><div class="ring"></div></div><div class="tx">${monName(from)}は ${monName(to)}への<br>進化を覚えた！<small>勝負の中で ${monName(to)}に進化できる</small></div><div class="go">タップでとじる</div><div class="wh"></div>`;
   const stg=W.querySelector('.st'); for(let k=0;k<22;k++){ const d=document.createElement('i'); d.className='sp'; const a=Math.random()*Math.PI*2, r=90+Math.random()*120; d.style.cssText=`left:50%;top:50%;--dx:${Math.cos(a)*r}px;--dy:${Math.sin(a)*r}px;animation:evS ${1+Math.random()*0.8}s ease-out ${2.2+Math.random()*0.5}s forwards`; stg.appendChild(d); }
@@ -2664,9 +2684,9 @@ const ST={el:$('st'),bg:$('stBg'),L:$('stL'),R:$('stR'),R2:$('stR2'),ph:$('stPh'
 const PDIR='../v3/portraits/';
 const E7=['normal','smile','surprised','serious','sad','angry','hurt'];
 const FACES={hero_m:E7,hero_f:E7,genichi:['normal'],misaki:['normal','smile'],hana:['normal'],ryo:['normal'],
-  elly:['normal','smile','surprised','sad','serious'],alek:['normal'],dimi:['normal','smile','surprised','serious'],elena:['normal','smile','serious'],tasos:['normal','smile','surprised'],petra:['normal','smile','surprised'],stavros:['normal','smile','serious'],
+  elly:['normal','smile','surprised','sad','serious'],alek:['normal'],dimi:['normal'],elena:['normal','smile','serious'],tasos:['normal','smile','surprised'],petra:['normal','smile','surprised'],stavros:['normal','smile','serious'],
   kasia:['normal'],zeno:['normal'],hao:['normal'],tarik:['normal'],victor:['normal'],nina:['normal'],marco:['normal']};   // 2026-11-08 アニメ側の立ち絵(キャラ立ち絵_追加_20261108)を v3/portraits に足した(白い背景を外して胸から上)
-// 立ち絵の鍵: elly=エリー(anime/chars/elly)・alek=アレク(anime/chars/alek)・dimi=レン(絵は dimi のまま)・stavros=ヤニス(絵は仮)。patch/log/x は絵なし(名前だけ)
+// 立ち絵の鍵: elly=エリー(anime/chars/elly)・alek=アレク(anime/chars/alek)・dimi=レン(絵は11/17に新デザインの顔へ)・stavros=ヤニス(絵は仮)。patch/log/x は絵なし(名前だけ)
 const WHO={genichi:'じいちゃん',misaki:'母',hana:'ハナ',ryo:'父',elly:'エリー',alek:'アレク',dimi:'レン',elena:'クロエ博士',tasos:'タソス',petra:'ペトラ',stavros:'ヤニス',patch:'パッチ',log:'ログ',mihalis:'ミハリス',sophia:'ソフィア',bella:'ベラドンナ',yusuf:'ユスフ',hao:'ハオ',lifa:'リーファ',ransom:'ランサム',shifu:'師範',x:''};   // 中国編(2026-10-26): ハオ・リーファ・ランサム・師範は絵なし(名前だけ)
 Object.assign(WHO,{nadia:'ナディア',mira:'ミラ',joe:'ジョー',liv:'リヴ',bot:'ボット',yuki:'ユキ',haru:'ハル',adrian:'スペクター'});   // 北欧編(2026-10-27): 絵なし(名前だけ)
 const DEFN=g=>'ヤマト';   // 主人公はヤマトだけ(女の子版 hero_f は使わない)
@@ -3624,7 +3644,7 @@ window.GR_FR_DBG=()=>GR_FRS&&{x:GR_FRS.x,z:GR_FRS.z,st:GR_FRS.st,pi:GR_FRS.pi,n:
 const GR_CREW={elly:ep=>(ep>=2&&ep<=13)||ep>=18, alek:ep=>ep>=5};
 function grCrewTick(s){ if(!SAVE||!s||EVOFX||STORY||TRANS||ENC||PAUSED) return; const ep=+s.ep||0; if(!ep) return;
   if(!SAVE.crew){ SAVE.crew={}; for(const w in GR_CREW) if(GR_CREW[w](ep)) SAVE.crew[w]=1; return; }   // 前からのセーブ: 今の連れは見せたことにする
-  for(const w in GR_CREW){ const inn=GR_CREW[w](ep); if(!inn&&SAVE.crew[w]){ delete SAVE.crew[w]; continue; }
+  for(const w in GR_CREW){ const inn=GR_CREW[w](ep);   // 一度見せたら二度と出さない(抜けて戻っても出さない 2026-11-17 オーナー「毎回ださなくてもわかる」)
     if(inn&&!SAVE.crew[w]&&(w!=='elly'||grEllyWith(s))){ SAVE.crew[w]=1; saveGame(); crewFxShow(w); return; } } }
 function crewFxShow(who){ const A=GR_GUIDE_ART[who]; if(!A) return; EVOFX=true; const wasP=PAUSED; PAUSED=true; IN.active=false;
   if(!document.getElementById('crewFxCss')){ const st=document.createElement('style'); st.id='crewFxCss'; st.textContent=`
@@ -3685,6 +3705,7 @@ function grBond(){ if(!SAVE) return; const f=SAVE.flags;
 async function grFight(s){ const F=s.F; F._ep=s.ep; const say=GR_SAY[s.ep];
   if(!SAVE.flags.gr_bond) grBond();
   if(say&&!GF()['seen_'+s.id]){ bgmCue('idea'); await runScene([{w:say[0],f:say[1],t:say[2]}],{field:true}); SAVE.flags['seen_'+s.id]=1; }
+  await grFuseFx(F);   // 2026-11-17 初めて使える融合を、勝負の前に演出で知らせる
   GR_TEAM=await grPickTeam(s);
   const stop=grInbStart(s.ep);
   try{
@@ -3733,7 +3754,7 @@ function grFightOpt(opt,F){ const lv=F.lv; if(!opt.player) opt.player={}; let pa
     for(const e of EX){ let q=MN(e.mid), g=0; while(q&&q.evolves_to!=null&&g++<4){ if(!ow.has(+q.evolves_to)) break; exOwn.push(+q.evolves_to); q=MN(q.evolves_to); } } }
   party.length=0; L.forEach(p=>party.push(p)); EX.forEach(p=>party.push(p));
   opt.player.owned=[...new Set(L.map(p=>p.mid).concat(F.own||[]).concat(EX.map(p=>p.mid)).concat(exOwn))];
-  { const P=window.Progress; if(P&&P.formsList&&P.lineOf&&P.knowsForm&&!(SAVE&&SAVE.unlock&&!SAVE.unlock.evo)){ const lines=new Set(L.concat(EX).map(p=>+P.baseOf(+p.mid))); const add=P.formsList().filter(id=>lines.has(+P.baseOf(+id))&&P.knowsForm(id)); if(add.length) opt.player.owned=[...new Set(opt.player.owned.concat(add))]; } }   // 2026-11-17 オーナー「Lv12でフォルレオンに進化したのに進化できない」: 物語の勝負でも、Lvで覚えた進化の姿は使える opt.player.fusionKnown=(F.fuse||[]).slice(); opt.player.stageFree=true;
+  { const P=window.Progress; if(P&&P.formsList&&P.lineOf&&P.knowsForm&&!(SAVE&&SAVE.unlock&&!SAVE.unlock.evo)){ const lines=new Set(L.concat(EX).map(p=>+P.baseOf(+p.mid))); const add=P.formsList().filter(id=>lines.has(+P.baseOf(+id))&&P.knowsForm(id)); for(const p of L) if(P.evoLv) for(const id of P.lineOf(+p.mid)){ const nd=P.evoLv(id); if(nd&&(+p.lv||1)>=nd) add.push(+id); }   /* 2026-11-17 オーナー「クロッコがLvを超えても進化しなかった」: 連れの子(アレクのクロッコ等)もLvで覚えた進化は使える */ if(add.length) opt.player.owned=[...new Set(opt.player.owned.concat(add))]; } }   // 2026-11-17 オーナー「Lv12でフォルレオンに進化したのに進化できない」: 物語の勝負でも、Lvで覚えた進化の姿は使える opt.player.fusionKnown=(F.fuse||[]).slice(); opt.player.stageFree=true;
   opt.fusionUnlocked=!!(F.fuse&&F.fuse.length); opt.tripleUnlocked=false; opt.startStage=1; opt.alignMinions=true;
   opt.budget=L.reduce((a,p)=>a+grStageOf(p.mid),0)+EX.reduce((a,p)=>a+grStageOf(p.mid),0); const adj=grTeamAdj(F, EX.length);
   const bd=grBoard(F.board,F.look); if(bd){ opt.terrainTheme=bd; opt.backdrop=undefined; }
@@ -3849,7 +3870,7 @@ function grInit(){ Object.assign(SC,GR_SC);
   { const _at=arriveTown; arriveTown=async function(){ await _at(); grArrive(); }; }   // 第1話: 村に下りたら、そのまま続きを流す
   for(const m of new Set(GR_STEPS.map(s=>s.map))) AREA_RULE[m+':*']=f=>{ const s=grCur(); return (s&&grHere(s))?grRun:null; };
   window.GR_DBG={ cur:()=>{ const s=grCur(); return s&&{id:s.id,ep:s.ep,map:s.map,at:s.at,kind:s.kind}; }, steps:GR_STEPS, run:()=>grRun(), here:()=>grHere(grCur()), obj:()=>grObjText(GF()), retry:()=>GR_RETRY, art:GR_GUIDE_ART, elly:()=>GR_ELLY, onScreen:(x,z)=>grOnScreen(x,z), auto:(v)=>{ AUTO=v; }, cast:(w,x,z)=>{ const m=grSprite(w); grPlace(m,x,z); return m; },
-    skipTo:(ep)=>{ const f=GF(); f.g22=1; f.g22b=1; f.g22c=1; for(const s of GR_STEPS){ if(s.ep>=ep) break; f[s.id]=1; if(s.last) f['a'+pad2g(s.ep)]=1; } f.gr_bond=1; if(ep>4&&SAVE.unlock) SAVE.unlock.evo=true; if(ep>11&&SAVE.unlock) SAVE.unlock.fusion=true; saveGame(); objUpdate(); } }; }
+    fuseFx:(id)=>fuseFxShow(id), skipTo:(ep)=>{ const f=GF(); f.g22=1; f.g22b=1; f.g22c=1; for(const s of GR_STEPS){ if(s.ep>=ep) break; f[s.id]=1; if(s.last) f['a'+pad2g(s.ep)]=1; } f.gr_bond=1; if(ep>4&&SAVE.unlock) SAVE.unlock.evo=true; if(ep>11&&SAVE.unlock) SAVE.unlock.fusion=true; saveGame(); objUpdate(); } }; }
 
 // ギリシャ編 22話版の会話の場面(story/gr22_extract.py でアニメの台本から機械で抜き出したもの。ここは直接直さない)
 //  正本: マイドライブ/テリオンアニメ/台本_ギリシャ編_22話版/第NN話.md。直す時は台本を直してから抜き出し直す(python story/gr22_update.py)。

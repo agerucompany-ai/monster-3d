@@ -407,7 +407,12 @@ function canEvolveHere(u){ return !!u && gaugeReady(u) && !u.acted && !u.wait &&
 // (1) 進化のマスに「入った」時(前のマスはその段の進化のマスでない)に1段だけ進化。その姿を覚えている時だけ(敵=今までの進化の決まり aiCanEvo)
 function zoneEvoOK(u, fr, fc){ if(!u || !state.units[u.uid] || u.anc) return false; const m=mon(u); if(m.evolves_to==null || m.role==='fusion') return false;
   if(!evoZoneOK(u,u.r,u.c) || evoZoneOK(u,fr,fc)) return false; return aiCanEvo(u); }
-function zoneEvolve(u, fr, fc){ if(!zoneEvoOK(u,fr,fc)) return false; if(state.stats){ const s=state.stats.zoneEvo||(state.stats.zoneEvo=[0,0]); s[u.owner]++; } return evolveUnit(u,true,'zone'); }
+function evoHintOf(u){ const m=mon(u); try{ const P=(typeof window!=='undefined')&&window.Progress; let cl=0; try{ cl=lvOf(u); }catch(e){} const t=P&&P.evoHint?P.evoHint(m.evolves_to,cl):''; if(t) return t; }catch(e){} return 'まだこの進化を覚えていない'; }
+// 2026-11-17 オーナー「クロッコが進化のマスに行っても進化しなかった・条件がわからない」: 覚えていない子が進化のマスに入った時に わけを出す(1戦に1体1回)
+function zoneEvoWhyNot(u, fr, fc){ if(!u||u.owner!==0||ONLINE||BT.headless||u.anc) return; const m=mon(u); if(m.evolves_to==null||m.role==='fusion') return;
+  if(!evoZoneOK(u,u.r,u.c) || evoZoneOK(u,fr,fc) || aiCanEvo(u)) return; if(u._whyEvo) return; u._whyEvo=1;
+  toast(`${m.name}はまだ進化できない：${evoHintOf(u)}`); }
+function zoneEvolve(u, fr, fc){ if(!zoneEvoOK(u,fr,fc)){ zoneEvoWhyNot(u,fr,fc); return false; } if(state.stats){ const s=state.stats.zoneEvo||(state.stats.zoneEvo=[0,0]); s[u.owner]++; } return evolveUnit(u,true,'zone'); }
 // 2026-10-27 技 v2: 古代テリオン・人(9×9 以上)の戦いも 最後の left ターンは「決戦」(ダメージ +step ずつ)。時間切れを減らすつまみ(人の3段目は STAGE_HUMAN.final のまま)
 const FINAL_V2={left:6, step:0.35}; try{ if(IS_NODE && process.env.FINV2) Object.assign(FINAL_V2, JSON.parse(process.env.FINV2)); }catch(e){}
 function finCfg(){ if(state&&state.sp) return null; if(noTL()) return null; if(BT.sh&&BT.sh.final) return BT.sh.final; if(V2ON() && FINAL_V2 && BT.size!==7 && (BT.kind==='ancient'||BT.kind==='trainer'||BT.kind==='master')) return (T3()&&TACT.final)||FINAL_V2; return null; }   // 戦術v3: かげ・陣地で長引くので 決戦を2ターン早く(TACT.final)
@@ -1288,11 +1293,12 @@ function tryFusion(a, b, r, c){
   const fid=fusionResult(a,b);
   if(fid==null){
     const A=mon(a), B=mon(b);
-    if(A.level<2||B.level<2||A.role==='fusion'||B.role==='fusion') toast('融合は2段目か3段目どうし');
+    if(!campFusionOK()) toast('融合はまだできない（物語で融合を知ってから）');
+    else if(A.level<2||B.level<2||A.role==='fusion'||B.role==='fusion') toast('融合は2段目か3段目どうし（1段目は先に進化させる）');
 
     else if(fusePair(a.mid,b.mid)==null) toast(`${A.name}と${B.name}の組み合わせでは融合できない`);
     else if(!fuseKnownOk(a.owner, fusePair(a.mid,b.mid))) toast('融合の仕方を覚えていない');
-    else if(!(a.evo||b.evo)) toast('どちらかが戦闘中に進化したLv2なら融合できる');
+    else if(!(a.evo||b.evo)) toast('どちらかが、この勝負の中で進化した子なら融合できる');
     else toast(`${A.name}と${B.name}は融合できない`);
     return;
   }
@@ -4984,9 +4990,9 @@ function updateUI(){ if(BT.headless) return;
       if(m.evolves_to!=null){
         const nm=MID[m.evolves_to];
         let ok=true, why='';
-        if(!ONLINE && !STORY.owned.includes(m.evolves_to)){ ok=false; why='(まだ覚えていない)'; }
+        if(!ONLINE && !STORY.owned.includes(m.evolves_to)){ ok=false; why=`(まだ覚えていない：${evoHintOf(sel)})`; }   // 2026-11-17 覚えるわけを出す
         else if(sel.acted){ ok=false; why='(行動済)'; }
-        else if(!gaugeReady(sel)){ ok=false; why=`(闘気${gaugeOf(sel)}/${evoNeed(sel)})`; }
+        else if(!gaugeReady(sel)){ ok=false; why=`(闘気${gaugeOf(sel)}/${evoNeed(sel)}・${m.level===1?'まん中の3列':'相手の陣'}に入っても進化)`; }
         ac.appendChild(mkbt(`${IC('evolve')}進化→${nm.name}${why}`,'evo'+(ok&&BT.guide&&BT.guide.evo?' guide':''), ok, ()=>setMode('evolve')));
       }
       appendFuseBtns();
@@ -5106,6 +5112,21 @@ function detailV2(id, u, unitRow, recipeHtml, fuseHtml, chain, isFusion){ const 
     +(isFusion ? `<div class="sec">入手方法</div><div class="chain">融合でだけ生まれる子</div>` : `<div class="sec">進化ライン</div><div class="chain">${chain.join(' → ')||'進化なし'}</div>`)
     +recipeHtml+fuseHtml
     +`<button class="bt go" id="mb-detailClose" style="margin-top:12px;width:100%">とじる</button>`; }
+// 2026-11-17 オーナー「進化の条件とか融合の条件がわからない」: 味方の子を開くと、この子が今 進化/融合できるか・できないわけ・やり方を出す
+function condHtml(u){ if(!u||u.owner!==0||ONLINE||!state) return ''; const m=mon(u); const L=[];
+  if(m.role!=='fusion' && m.evolves_to!=null && MID[m.evolves_to]){ const nm=MID[m.evolves_to].name;
+    if(aiCanEvo(u)) L.push(`${icTag('evolve')}進化 → <b>${nm}</b>：<span style="color:#9be89b">できる</span>。${m.level===1?'まん中の3列':'相手の陣の3列'}に入る／闘気が${evoNeed(u)}たまる（いま${Math.floor(u.g||0)}）`);
+    else L.push(`${icTag('evolve')}進化 → <b>${nm}</b>：<span style="color:#ff9a8a">まだできない</span>。${evoHintOf(u)}`); }
+  else if(m.role!=='fusion') L.push(`${icTag('evolve')}進化：これ以上は進化しない`);
+  if(!campFusionOK()) L.push(`${icTag('fuse')}融合：まだできない（物語で融合を知ってから）`);
+  else if(m.role==='fusion') {}
+  else if(m.level<2) L.push(`${icTag('fuse')}融合：先に2段目へ進化してから`);
+  else { const pals=[]; const mine=Object.values(state.units).filter(x=>x&&x.owner===0&&x.uid!==u.uid);
+    for(const x of mine){ const f=fusePair(u.mid,x.mid); if(f!=null&&fuseKnownOk(0,f)&&MID[f]) pals.push(`${mon(x).name}と → <b>${MID[f].name}</b>`); }
+    const need=(!fuseRelaxed(0))?'（どちらかが この勝負の中で進化していること）':'';
+    if(pals.length) L.push(`${icTag('fuse')}融合：${pals.join('／')}。仲間の上に動かして重ねる${need}${(u.evo||fuseRelaxed(0))?'':' <span style="color:#ff9a8a">この子はまだ進化していない</span>'}`);
+    else L.push(`${icTag('fuse')}融合：いま盤にいる仲間とは組めない（覚えた組み合わせだけ）`); }
+  return L.length?`<div style="background:#1d2633;border-radius:6px;padding:4px 7px;margin:4px 0;font-size:12px;line-height:1.55">${L.map(t=>`<div>${t}</div>`).join('')}</div>`:''; }
 function showMonsterDetail(id, u){
   const m=MID[id]; const box=$id('detailBox');
   let unitRow='';
@@ -5137,6 +5158,7 @@ function showMonsterDetail(id, u){
   const asMat=[]; for(const k in FUSE_IDX){ const [xa,xb]=k.split(',').map(Number); if(xa===id||xb===id) asMat.push({others:[xa===id?xb:xa], f:FUSE_IDX[k]}); }
   for(const f of FUSE3){ if(f.mats.includes(id)) asMat.push({others:f.mats.filter(x=>x!==id), f:f.id, triple:true}); }
   if(asMat.length){ fuseHtml = `<div class="sec">融合素材になる</div>`+asMat.map(o=>`<div class="chain">+ ${o.others.map(x=>MID[x]?MID[x].name:'?').join('＋')} → <b>${MID[o.f].name}</b>${o.triple?'（3体融合）':''}</div>`).join(''); }
+  unitRow+=condHtml(u);
   if(V2ON()){ box.innerHTML=detailV2(id,u,unitRow,recipeHtml,fuseHtml,chain,isFusion); $id('ovDetail').style.display='flex'; $id('detailClose').onclick=()=>{ $id('ovDetail').style.display='none'; }; return; }
   box.innerHTML =
     `<div class="hd"><img src="${IMG[id]}"><div><h3>${m.name}${m.archetype?` <span style="font-size:12px;color:#9be1ff;font-weight:700">${m.archetype}</span>`:''}</h3>`
@@ -6645,7 +6667,7 @@ const API={ init, startBattle, simulate, TACT, PVE_STAGE, PVE_EVO, get guideLog(
   get MID(){ return MID; }, get MONSTERS(){ return MONSTERS; }, baseFormId:(m)=>baseFormId(m), lineOf:(m)=>lineUpIds(m),
   setAuto(v){ if(v===2||v==='fast'){ BT.fastPref=true; setAutoMode(2); } else if(!!v!==BT.auto) toggleAuto(); return BT.auto; },
   // 確認用(test.html・puppeteer)
-  _dbg:{ get state(){ return state; }, sync(){ syncUnits(); updateUI(); }, busy(){ try{ return !!(animBusy()||(_seq&&!_seq.done)); }catch(e){ return false; } },   // 2026-11-06 演出・技の帯・ダメージの数字が出ている間(物語の勝負の中の吹き出しを待たせる)
+  _dbg:{ get state(){ return state; }, cond(u){ return condHtml(u); }, detail(u){ showMonsterDetail(u.mid,u); }, sync(){ syncUnits(); updateUI(); }, busy(){ try{ return !!(animBusy()||(_seq&&!_seq.done)); }catch(e){ return false; } },   // 2026-11-06 演出・技の帯・ダメージの数字が出ている間(物語の勝負の中の吹き出しを待たせる)
     cam(){ return {uz:CAMV.uz, z:CAMV.cZ, x:CAMV.cx, zz:CAMV.cz, show:CAMV.showZ, ptrs:CAMV.ptrs.size, dragged:CAMV.dragged, pick:pickEnabled}; }, camAll(){ camAll(); }, camZoom(z){ CAMV.uz=z; CAMV.cZ=z; camBtnSync(); },   // 2026-10-30 確認用: 寄りのカメラ
     unitPx(uid){ const s=sprites[uid]; if(!s||!camera) return null; const rc=renderer.domElement.getBoundingClientRect(); const h=(s.m3d&&s.m3d.h)||s.sc||1; const p=s.grp.position; const a=new THREE.Vector3(p.x,p.y,p.z).project(camera), b=new THREE.Vector3(p.x,p.y+h,p.z).project(camera); const c=new THREE.Vector3(p.x+1,p.y,p.z).project(camera); return {w:Math.round((c.x-a.x)*rc.width/2), h:Math.round((b.y-a.y)*rc.height/2), x:Math.round((a.x*0.5+0.5)*rc.width), y:Math.round((-a.y*0.5+0.5)*rc.height)}; }, clear(){ clearSel(); }, tagURL(t,k){ const tx=tagTex(t,k); return tx.image.toDataURL(); },
     cellPx(r,c){ if(!renderer||!camera) return null; const w=cell2world(r,c); const v=new THREE.Vector3(w.x, cellH(r,c)+0.05, w.z).project(camera); const rc=renderer.domElement.getBoundingClientRect(); return [rc.left+(v.x+1)/2*rc.width, rc.top+(-v.y+1)/2*rc.height]; },

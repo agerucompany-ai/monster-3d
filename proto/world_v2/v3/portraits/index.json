@@ -105,20 +105,7 @@
    },
    "note": "旧ヒロイン。2026-10-26 以降ゲームでは使わない(エリーに置きかえ)"
   },
-  "dimi": {
-   "name": "レン",
-   "faces": {
-    "normal": "dimi_normal.webp",
-    "smile": "dimi_smile.webp",
-    "surprised": "dimi_surprised.webp",
-    "serious": "dimi_serious.webp"
-   },
-   "facing": {
-    "normal": "right",
-    "smile": "right",
-    "surprised": "right",
-    "serious": "right"
-   }
+  "dimi": {"name": "レン", "note": "2026-11-17 新デザイン(こげ茶の流した髪・黒いロングコート・ren_決定.png の顔アップ)を rembg で背景抜き→640角", "faces": {"normal": "dimi_normal.webp"}, "facing": {"normal": "front"}
   },
   "elena": {
    "name": "エレナ",

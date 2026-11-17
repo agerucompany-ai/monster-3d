@@ -179,6 +179,9 @@ P.fusionKnownList=()=>Object.values(MON).filter(m=>m.role==='fusion'&&P.knowsFus
 P.formsList=()=>{ const pg=prog(); const o=new Set(pg&&pg.forms?Object.keys(pg.forms).map(Number).filter(id=>mon(id)&&!(lvForm(id)&&starterLine(id))):[]); for(const id of lvLineForms()) if(lvFormOk(id)) o.add(id); return [...o]; };
 function lvLineForms(){ const pg=prog(); const bs=new Set(pg?pg.roster.map(c=>baseOf(c.mid)):[]); const o=[]; for(const b of bs) for(const id of lineOf(b)) if(lvForm(id)) o.push(id); return o; }
 P.evoLv=(mid)=>lvForm(mid)?EVO_LV[stageOf(mid)]:null;   // レベルで覚える姿なら その Lv
+P.evoHint=(id,cur)=>{ id=+id; const m=mon(id); if(!m) return ''; if(!(SAVE&&SAVE.unlock&&SAVE.unlock.evo)) return '物語で進化を知るまで、まだできない';   // 2026-11-17 オーナー「進化の条件がわからない」: 覚えていない理由を勝負の中で見せる
+  if(P.knowsForm&&P.knowsForm(id)) return ''; if(lvForm(id)){ const need=EVO_LV[stageOf(id)], b=baseOf(id); return `Lv${need}で覚える・いまLv${cur||lineLv(b)||1}`; }
+  return 'この姿の相手に勝つと覚えることがある'; };
 P.evoAvail=()=>{ if(!(SAVE&&SAVE.unlock&&SAVE.unlock.evo)) return []; return lvLineForms().filter(id=>P.knowsForm(id)); };   // 今 進化できる(レベルで覚えた)姿
 // その姿を手に入れた(野生のリーダー・生み出す・ボス): 2段目以上 → 進化の仕方を覚える / その系統の子がいなければ1段目の子を1体
 function obtain(mid, lv, src){ const out={mid:+mid, forms:[], gave:null}; if(stageOf(mid)>=2) out.forms=learnForm(mid); if(!P.hasLine(mid)) out.gave=P.add(baseOf(mid), lv, src); return out; }
