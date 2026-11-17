@@ -105,7 +105,15 @@
    },
    "note": "旧ヒロイン。2026-10-26 以降ゲームでは使わない(エリーに置きかえ)"
   },
-  "dimi": {"name": "レン", "note": "2026-11-17 新デザイン(こげ茶の流した髪・黒いロングコート・ren_決定.png の顔アップ)を rembg で背景抜き→640角", "faces": {"normal": "dimi_normal.webp"}, "facing": {"normal": "front"}
+  "dimi": {
+   "name": "レン",
+   "note": "2026-11-17 新デザイン(こげ茶の流した髪・黒いロングコート・ren_決定.png の顔アップ)を rembg で背景抜き→640角",
+   "faces": {
+    "normal": "dimi_normal.webp"
+   },
+   "facing": {
+    "normal": "front"
+   }
   },
   "elena": {
    "name": "エレナ",
@@ -147,16 +155,12 @@
    }
   },
   "stavros": {
-   "name": "スタヴロス",
+   "name": "ヤニス",
    "faces": {
-    "normal": "stavros_normal.webp",
-    "smile": "stavros_smile.webp",
-    "serious": "stavros_serious.webp"
+    "normal": "stavros_normal.webp"
    },
    "facing": {
-    "normal": "right",
-    "smile": "right",
-    "serious": "right"
+    "normal": "front"
    }
   },
   "elly": {
@@ -245,6 +249,42 @@
    "name": "マルコ",
    "faces": {
     "normal": "marco_normal.webp"
+   },
+   "facing": {
+    "normal": "front"
+   }
+  },
+  "ana": {
+   "name": "アナ",
+   "faces": {
+    "normal": "ana_normal.webp"
+   },
+   "facing": {
+    "normal": "front"
+   }
+  },
+  "marina": {
+   "name": "マリナ",
+   "faces": {
+    "normal": "marina_normal.webp"
+   },
+   "facing": {
+    "normal": "front"
+   }
+  },
+  "nomos": {
+   "name": "ノモス",
+   "faces": {
+    "normal": "nomos_normal.webp"
+   },
+   "facing": {
+    "normal": "front"
+   }
+  },
+  "oba": {
+   "name": "おばあさん",
+   "faces": {
+    "normal": "oba_normal.webp"
    },
    "facing": {
     "normal": "front"
