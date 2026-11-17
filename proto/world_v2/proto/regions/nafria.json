@@ -59,6 +59,18 @@
    ],
    "to": "facility",
    "at": "from_nafria"
+  },
+  {
+   "r": [
+    -34,
+    49.5,
+    -26,
+    52.5
+   ],
+   "to": "athens",
+   "at": "from_crete",
+   "need": "a09",
+   "lock": "マリナの船は、まだ出ない"
   }
  ],
  "nature": true,

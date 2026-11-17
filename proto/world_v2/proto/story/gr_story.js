@@ -143,23 +143,23 @@ const GR_PLAN={
   //  pre=N = 勝負の前に、台本の勝負の場面の頭 N かたまり(出会いの台詞)を流す。after={場面:'bond'} = その場面のあとでフォルンが仲間になってついてくる
   1: {map:'oliva_town', at:'*', tod:'noon', pro:['g01_01','g01_02','g01_03'], after:{g01_06:'bond'},
       walk:{g01_05:{at:'神殿の丘', obj:'狐を追って、村の上の神殿のあとへ'}, g01_07:{at:'いこいの広場', obj:'フォルンをつれて、村の広場へもどろう', field:1}}},
-  2: {map:'oliva_town', at:'いこいの広場', tod:'morning', obj:'あくる朝。村の広場へ', go:{after:'g02_03', to:'oliva_hill', at:'from_town'}, pre:2,
+  2: {map:'oliva_town', at:'いこいの広場', tod:'morning', obj:'あくる朝。村の広場へ', go:{after:'g02_03', to:'oliva_hill', at:'from_town', obj:'エリーと、村の坂を上って丘へ'}, pre:2,
       walk:{g02_04:{at:'研究所あと', obj:'エリーと、丘の上のため池へ'}, g02_07:{at:'競技場の跡', obj:'次の日。村の外れの、古代の競技場へ'}, g02_09:{at:'競技場の下の扉', obj:'競技場の下の、石の扉へ'}, B:{at:'小川', obj:'通路を出て、丘のすその水路へ'}}},
-  3: { walk:{'g03_03': {'at': 'ラドン川の渓流', 'obj': '夜の森の道を、小川の方へ'}, 'g03_05': {'at': 'ラドン川の淵', 'obj': 'アレクについて、川の淵へ'}},map:'arcadia', at:'森の入口', tod:'evening', obj:'村の裏の、森の小川へ', end:{to:'oliva_town', at:'start'}},
+  3: { walk:{'g03_03': {'at': 'ラドン川の渓流', 'obj': '夜の森の道を、小川の方へ'}, 'g03_05': {'at': 'ラドン川の淵', 'obj': 'アレクについて、川の淵へ'}},map:'arcadia', at:'森の入口', tod:'evening', obj:'村の裏の、森の小川へ', end:{to:'oliva_town', at:'start', after:'g03_07', obj:'夜ふけ。森を出て、村のホテルへ帰ろう'}},
   4: { walk:{'g04_05': {'at': '港の見える丘', 'obj': 'マルコと、林のそばの畑へ'}},map:'oliva_town', at:'いこいの広場', tod:'dawn', obj:'あくる朝。村の広場へ'},
   5: { walk:{'g05_03': {'at': '研究所あと', 'obj': '丘のいちばん上の、ヤニスさんの畑へ'}, 'g05_09': {'at': '道しるべ', 'obj': '夕方。丘の奥の、道しるべまで行こう'}},map:'oliva_hill', at:['オリーブ畑','花の野原','小川'], tod:'dawn', obj:'丘の畑を通って、東へ'},
-  6: { walk:{'g06_03': {'at': '森の空き地', 'obj': '焦げたにおいの方へ。森の奥の空き地へ'}, 'g06_07': {'at': 'ラドン川の淵', 'obj': '森は通れない。川の船着き場へ'}},map:'arcadia', at:'森の入口', tod:'noon', obj:'アルカディアの森の入口へ', end:{to:'dig', at:'from_forest'}},
-  7: { walk:{'g07_03': {'at': '研究者の小屋', 'obj': 'ふるいの係。小屋の前へ'}, 'g07_04': {'at': '発掘場', 'obj': '骨の型の前の、レンの所へ'}}, pre:2,map:'dig', at:'発掘場', tod:'night', obj:'森の外れの、発掘場へ', end:{to:'oliva_hill', at:'from_town'}},
-  8: { walk:{'g08_03': {'at': '花の野原', 'obj': '村はずれの、エリーのぶどう小屋へ'}},map:'oliva_hill', at:['オリーブ畑','花の野原','小川'], tod:'morning', obj:'村はずれの、ぶどう畑へ', end:{to:'nafria', at:'from_lion'}},   // 11/08 新: エリーのぶどう小屋(丘の畑で)
-  9: { walk:{'g09_02': {'at': '防波堤のとりで', 'obj': '客を乗せる船をさがして、防波堤の方へ'}},map:'nafria', at:'ナフリアの港', tod:'morning', obj:'港町ナフリアの港へ', end:{to:'athens', at:'from_crete'}},   // 11/08: 旧8＋9(港・客船・ゼノ)
-  10:{ walk:{'g10_02': {'at': 'モナスティラキ', 'obj': '大会の屋台の町を通って、受付へ'}, 'g10_03': {'at': '大競技場', 'obj': '坂の上の、古い競技場の受付へ'}}, pre:1,map:'athens', at:'空の港', tod:'morning', obj:'白い都の港に着いた'},
-  11:{ walk:{'g11_02': {'at': '大競技場', 'obj': '準決勝。大競技場の選手の通路へ'}}, pre:1,map:'athens', at:'モナスティラキ', tod:'morning', obj:'大会の二日目。屋台の町の安い宿から'},
-  12:{ walk:{'g12_03': {'at': '大競技場', 'obj': '決勝の日。大競技場へ'}, 'g12_10': {'at': 'モナスティラキ', 'obj': 'お祝いの夜。屋台の町へ'}},map:'athens', at:'モナスティラキ', tod:'night', obj:'決勝の前の夜。屋台の町の宿へ'},
-  13:{ walk:{'g13_04': {'at': '空の港', 'obj': 'エリーを追って、海の桟橋へ'}},map:'athens', at:'モナスティラキ', tod:'night', obj:'優勝の夜。屋台の町へ', end:{to:'liongate', at:'from_nafria'}},
-  14:{ walk:{'g14_03': {'at': '獅子の門', 'obj': '丘の上の、獅子の門へ'}, 'g14_04': {'at': '丘の上の館', 'obj': 'ヴィクターの屋敷へ上がる'}, 'g14_06': {'at': '城あとの坂', 'obj': '夕方。丘を下りる'}},map:'liongate', at:'丘のオリーブ', tod:'morning', obj:'獅子門の丘の、ふもとのオリーブ林へ', end:{to:'corinth', at:'from_ship'}},
-  15:{ walk:{'g15_04': {'at': 'ディオルコス', 'obj': '運河ぞいの石の道へ。黒い荷の船がいる'}, 'g15_07': {'at': '港', 'obj': '夕方。待合所の裏の岸でひと休み'}, 'g15_08': {'at': '運河の大橋', 'obj': 'ノモスの机へもどる'}},map:'corinth', at:'運河の大橋', tod:'morning', obj:'運河の町コリンタの、大橋へ', end:{to:'marble', at:'from_corinth'}},
-  16:{ walk:{'g16_03': {'at': '保管庫', 'obj': '谷のいちばん奥の、保管庫へ'}, 'g16_07': {'at': '大理石の崖', 'obj': 'その夜。山の中腹の岩かげで休む'}},map:'marble', at:'谷の入口', tod:'dawn', obj:'大理石の谷へ', end:{to:'crete_maze', at:'from_surface'}},
-  17:{ walk:{'g17_03': {'at': '迷宮', 'obj': 'グリフォについて、右の道へ'}, 'g17_04': {'at': '広間の前', 'obj': '迷宮の奥の、広間の上へ'}, 'B': {'at': '迷宮の広間', 'obj': '階段を下りて、広間へ'}}, pre:2,map:'crete_maze', at:'迷宮の入口', obj:'がけの下の、迷宮の入口へ', end:{to:'oliva_hill', at:'from_sky'}},
+  6: { walk:{'g06_03': {'at': '森の空き地', 'obj': '焦げたにおいの方へ。森の奥の空き地へ'}, 'g06_07': {'at': 'ラドン川の淵', 'obj': '森は通れない。川の船着き場へ'}},map:'arcadia', at:'森の入口', tod:'noon', obj:'アルカディアの森の入口へ', end:{to:'dig', at:'from_forest', obj:'船を下りた。森の外れの発掘場へ歩こう'}},
+  7: { walk:{'g07_03': {'at': '研究者の小屋', 'obj': 'ふるいの係。小屋の前へ'}, 'g07_04': {'at': '発掘場', 'obj': '骨の型の前の、レンの所へ'}}, pre:2,map:'dig', at:'発掘場', tod:'night', obj:'森の外れの、発掘場へ', end:{to:'oliva_hill', at:'from_town', obj:'森を通って、オリーブの丘へ帰ろう'}},
+  8: { walk:{'g08_03': {'at': '花の野原', 'obj': '村はずれの、エリーのぶどう小屋へ'}},map:'oliva_hill', at:['オリーブ畑','花の野原','小川'], tod:'morning', obj:'村はずれの、ぶどう畑へ', end:{to:'nafria', at:'from_lion', obj:'港町ナフリアへ。森と発掘場を通っていこう'}},   // 11/08 新: エリーのぶどう小屋(丘の畑で)
+  9: { walk:{'g09_02': {'at': '防波堤のとりで', 'obj': '客を乗せる船をさがして、防波堤の方へ'}},map:'nafria', at:'ナフリアの港', tod:'morning', obj:'港町ナフリアの港へ', end:{to:'athens', at:'from_crete', after:'g09_02', obj:'マリナの客船へ。桟橋から乗りこもう'}},   // 11/08: 旧8＋9(港・客船・ゼノ)
+  10:{ walk:{'g10_02': {'at': 'モナスティラキ', 'obj': '大会の屋台の町を通って、受付へ'}, 'g10_03': {'at': '大競技場', 'obj': '坂の上の、古い競技場の受付へ'}}, pre:1,map:'athens', at:'空の港', tod:'morning', obj:'白い都の港に着いた', stay:{at:'大競技場', keys:['g10_04','g10_05','B','g10_07','g10_08']}},
+  11:{ walk:{'g11_02': {'at': '大競技場', 'obj': '準決勝。大競技場の選手の通路へ'}}, pre:1,map:'athens', at:'モナスティラキ', tod:'morning', obj:'大会の二日目。屋台の町の安い宿から', stay:{at:'大競技場', keys:['g11_03','B','g11_05','g11_06']}},
+  12:{ walk:{'g12_03': {'at': '大競技場', 'obj': '決勝の日。大競技場へ'}, 'g12_10': {'at': 'モナスティラキ', 'obj': 'お祝いの夜。屋台の町へ'}},map:'athens', at:'モナスティラキ', tod:'night', obj:'決勝の前の夜。屋台の町の宿へ', stay:{at:'大競技場', keys:['B','g12_05','g12_06','g12_07','g12_08']}},
+  13:{ walk:{'g13_04': {'at': '空の港', 'obj': 'エリーを追って、海の桟橋へ'}},map:'athens', at:'モナスティラキ', tod:'night', obj:'優勝の夜。屋台の町へ', end:{to:'liongate', at:'from_nafria', obj:'獅子門の丘へ。港の船に乗ろう'}},
+  14:{ walk:{'g14_03': {'at': '獅子の門', 'obj': '丘の上の、獅子の門へ'}, 'g14_04': {'at': '丘の上の館', 'obj': 'ヴィクターの屋敷へ上がる'}, 'g14_06': {'at': '獅子の門', 'obj': '夕方。アレクと、獅子の門まで丘を下りる'}},map:'liongate', at:'丘のオリーブ', tod:'morning', obj:'獅子門の丘の、ふもとのオリーブ林へ', end:{to:'corinth', at:'from_ship', obj:'運河の町コリンタへ。雲の山道を通っていこう'}},
+  15:{ walk:{'g15_04': {'at': 'ディオルコス', 'obj': '運河ぞいの石の道へ。黒い荷の船がいる'}, 'g15_07': {'at': '港', 'obj': '夕方。待合所の裏の岸でひと休み'}, 'g15_08': {'at': '運河の大橋', 'obj': 'ノモスの机へもどる'}},map:'corinth', at:'運河の大橋', tod:'morning', obj:'運河の町コリンタの、大橋へ', end:{to:'marble', at:'from_corinth', obj:'大理石の谷へ'}},
+  16:{ walk:{'g16_03': {'at': '保管庫', 'obj': '谷のいちばん奥の、保管庫へ'}, 'g16_07': {'at': '大理石の崖', 'obj': 'その夜。山の中腹の岩かげで休む'}},map:'marble', at:'谷の入口', tod:'dawn', obj:'大理石の谷へ', end:{to:'crete_maze', at:'from_surface', obj:'白い都を通って、丘の下の迷宮へ'}},
+  17:{ walk:{'g17_03': {'at': '迷宮', 'obj': 'グリフォについて、右の道へ'}, 'g17_04': {'at': '広間の前', 'obj': '迷宮の奥の、広間の上へ'}, 'B': {'at': '迷宮の広間', 'obj': '階段を下りて、広間へ'}}, pre:2,map:'crete_maze', at:'迷宮の入口', obj:'がけの下の、迷宮の入口へ', end:{to:'oliva_hill', at:'from_sky', obj:'白い都の空の港へ。空の船でオリーヴァへ帰ろう'}},
   18:{ walk:{'g18_02': {'at': '競技場の下の扉', 'obj': '競技場の下の、石の扉へ'}},map:'oliva_hill', at:'競技場の跡', tod:'night', obj:'夜。村の古代の競技場へ'},
   19:{ walk:{'g19_04': {'at': '研究所あと', 'obj': 'アナさんがまだ池に！丘の上の研究所あとへ'}, 'g19_09': {'at': 'オリーブ畑', 'obj': 'フォルンの足を見せに、村へ下りる'}},map:'oliva_hill', at:'オリーブ畑', tod:'dawn', obj:'夜ふけ。裏の畑の道から、ホテルへ'},
   20:{ walk:{'g20_02': {'at': '小川', 'obj': '夜明け前。丘のすその、おばあさんの家へ'}, 'g20_05': {'at': 'オリーブ畑', 'obj': '夜。ホテルの裏のぶどう畑へ'}, 'g20_06': {'at': '研究所あと', 'obj': 'ため池の土手へ。チップの子が待っている'}},map:'oliva_hill', at:'研究所あと', tod:'night', obj:'夜。丘の、ため池の堰へ'},
@@ -233,7 +233,7 @@ const GR_SAY={ 1:['elly','surprised','あの大きな木の根もとだと、火
   11:['alek','normal','くっつけたら、やられる時は二体いっぺんやで。'], 12:['hero','serious','待ってくれ、フォルコン。目を合わせるな。'],
   13:['alek','serious','羽の音がせえへん。目、離すなよ、ヤマト！'],
   15:['alek','normal','木の中に入られたら、当たらへんで。'], 16:['hero','normal','左の羽には撃つなよ。逃げ道に先に立て。'],
-  17:['alek','serious','クロベク、まだや！　気ぃ抜くな！'], 18:['hero','normal','大波は二回。数えて、撃ちつくさせる。'],
+  17:['alek','serious','クロベク、まだや！　気を抜くな！'], 18:['hero','normal','大波は二回。数えて、撃ちつくさせる。'],
   19:['alek','serious','……レベル70。光と地や。'], 20:['hero','serious','……まん中だと、雷、細くなってた。'],
   21:['hero','serious','アレク、エリー。行くぞ。'], 22:['hero','normal','目を閉じて待て。出る所をねらう。'] };
 // 話の中の決まった所で動かすしかけ(場面の前)
@@ -268,44 +268,92 @@ function grBuild(){ GR_STEPS.length=0; for(const k in GR_BY) delete GR_BY[k];
     const list=[]; sc.forEach((x,i)=>{ if(bi<0||i<bi||i>bl){ list.push(x[0]); return; } if(!x[2]) list.push(x[0]); if(i===bl) list.push('B'); });
     let map=P.map, first=true;
     for(const k of list){
-      const W=P.walk&&P.walk[k]; const head=first?{at:P.at, tod:P.tod, obj:P.obj, head:1}:(W?{at:W.at, wobj:W.obj}:{at:'*'}); first=false;
+      const W=P.walk&&P.walk[k]; const head=first?{at:P.at, tod:P.tod, obj:P.obj, head:1}:(W?{at:W.at, wobj:W.obj}:(P.stay&&P.stay.keys.includes(k))?{at:P.stay.at}:{at:'*'}); first=false;   // stay=続きの場面もその場所で(セーブから続けた時も大競技場で)
       if(P.tp&&P.tp.before===k) grS(Object.assign({id:'g'+pad2g(ep)+'_t', ep, kind:'tp', map, x:P.tp.x, z:P.tp.z, yaw:P.tp.yaw}, head.head?head:{at:'*'}));
       if(k==='B') grS(Object.assign({id:'g'+pad2g(ep)+'_b', ep, kind:'battle', map, F:GR_FIGHTS[ep]}, head));
       else grS(Object.assign({id:k, ep, kind:'scene', key:k, map, bg:(W&&W.field)?undefined:GR_BG[k], pro:!!(P.pro&&P.pro.includes(k))}, head));
-      if(P.go&&P.go.after===k){ grS({id:'g'+pad2g(ep)+'_g', ep, kind:'go', map, to:P.go.to, toAt:P.go.at, at:'*'}); map=P.go.to; } }
-    if(P.end) grS({id:'g'+pad2g(ep)+'_e', ep, kind:'go', map, to:P.end.to, toAt:P.end.at, at:'*'}); }
+      if(P.go&&P.go.after===k){ grS({id:'g'+pad2g(ep)+'_g', ep, kind:'go', map, to:P.go.to, toAt:P.go.at, at:'*', wobj:P.go.obj}); map=P.go.to; }
+      if(P.end&&P.end.after===k){ grS({id:'g'+pad2g(ep)+'_e', ep, kind:'go', map, to:P.end.to, toAt:P.end.at, at:'*', wobj:P.end.obj}); map=P.end.to; } }   // 2026-11-17 end.after=その場面のあとで歩いて移る(あとの場面は着いた先で)
+    if(P.end&&!P.end.after) grS({id:'g'+pad2g(ep)+'_e', ep, kind:'go', map, to:P.end.to, toAt:P.end.at, at:'*', wobj:P.end.obj}); }
   GR_STEPS.forEach((s,i)=>{ const n=GR_STEPS[i+1]; s.last=!n||n.ep!==s.ep; }); }
 
 // ---- 段を進める ----
 let GR_RUN=false, GR_RETRY=false;
 function grCur(){ if(!grOn()) return null; const f=GF(); for(const s of GR_STEPS) if(!f[s.id]) return s; return null; }
-function grHere(s){ if(!s||s.map!==MAP) return false; if(!s.at||s.at==='*') return true; if(!(Array.isArray(s.at)?s.at:[s.at]).includes(AREA)) return false; return grGuideNear(s); }
+function grHere(s){ if(s&&s.kind==='go') return MAP===s.to;   // 2026-11-17 地図を移る段は、ヤマトが歩いて出口を通り、行き先の地図に着いた時に終わる
+  if(!s||s.map!==MAP) return false; if(!s.at||s.at==='*') return true;
+  if(!(Array.isArray(s.at)?s.at:[s.at]).includes(AREA)){ const g=GR_GUIDE; if(!(s.wobj&&g&&g.id===s.id&&g.walk&&!g.lead&&Math.hypot(HERO.x-g.x,HERO.z-g.z)<3.4)) return false; }   // 話す人のそばまで来たら(場所の名前の外でも)始める
+  return grGuideNear(s); }
 // ---- 2026-11-14 場面に出る人を、その場に立たせる(オーナー: アレクがいないのに会話が始まる・話したあとどこにいるか分からない・エリーもアニメで出てる人も全員いる) ----
 //  歩く段: 行き先に その場面で話す人を立たせ、近くまで行ったら話が始まる。続きの場面(その場)では そのまま残る。エリーは 一緒にいる場面ではヤマトのうしろを歩く。
 //  3Dの無い人は全身の絵の立て看板(高さ=ヤマト158cm を 1.3 として身長で割る)
 const GR_GUIDE_ART={
-  alek:{img:'../v3/chars/alek_stand.webp', h:1.44, n:'アレク'},
-  elly:{img:'../v3/chars/elly_stand.webp', h:1.34, n:'エリー'},
-  nina:{img:'../v3/chars/nina_stand.webp', h:1.30, n:'ニーナ'},
-  marco:{img:'../v3/chars/marco_stand.webp', h:1.48, n:'マルコ'} };
+  alek:{img:'../v3/chars/alek_stand.webp', glb:'../chars/alek.glb', h:1.33, n:'アレク', ol:0x6a4a34},
+  elly:{img:'../v3/chars/elly_stand.webp', glb:'../chars/elly.glb', h:1.24, n:'エリー', ol:0x7a5a3c, pose:[-0.32,0.2], sp:[1.055,1.279,1.3,1.2,1.6]},   // 2026-11-16 膝を伸ばした凛とした早歩き(歩幅広め・ウォーキング本2冊から)。sp=[歩き,速歩きの再生1倍の地面の速さ, 再生倍率の上限, 速歩きに切りかえる速さ, 移動の上限の速さ]。足がすべらないよう エリーだけ移動を遅く
+  nina:{img:'../v3/chars/nina_stand.webp', glb:'../chars/nina.glb', h:1.20, n:'ニーナ', ol:0x6a4a34},
+  marco:{img:'../v3/chars/marco_stand.webp', glb:'../chars/marco.glb', h:1.36, n:'マルコ', ol:0x6a4a34},
+  // 2026-11-17 オーナー「登場人物が全くできていない」: 場面で話す人・勝負の相手は全員その場に立たせる。絵は設定画(キャラ立ち絵_追加_20261108)から切り抜いた立て看板。
+  //  cut=絵に写っている体の割合(ひざ下が切れている絵は下をぼかしてあり、地面から頭までを身長の高さで立てる=草の中に立って見える)・guest=旅の連れでない人(全画面の絵の場面=その場にいない時は立たせない)
+  dimi:{img:'../v3/chars/dimi_stand.webp', h:1.42, n:'レン', cut:0.72, guest:1},
+  hao:{img:'../v3/chars/hao_stand.webp', h:1.30, n:'ハオ', cut:0.70, guest:1},
+  kasia:{img:'../v3/chars/kasia_stand.webp', h:1.42, n:'カシア', cut:0.72, guest:1},
+  tarik:{img:'../v3/chars/tarik_stand.webp', h:1.30, n:'タリク', cut:0.75, guest:1},
+  zeno:{img:'../v3/chars/zeno_stand.webp', h:1.62, n:'ゼノ', cut:0.68, guest:1},
+  victor:{img:'../v3/chars/victor_stand.webp', h:1.55, n:'ヴィクター', guest:1} };
+const GR_FOEKEY={'ニーナ':'nina','マルコ':'marco','アレク':'alek','レン':'dimi','ゼノ':'zeno','タリク':'tarik','ハオ':'hao','カシア':'kasia','ヴィクター':'victor'};
+// 2026-11-15 ol=縁の色(絵の色×ol。黒い縁をやめて髪は濃い金・服は灰茶に)・pose=[あごを上げる,首のかしげを戻す](エリーは下を向いて前髪で顔が隠れていた)
 let GR_GUIDE=null;   // 立たせている組 {id,map,x,z,walk,mem:{who:{grp,sp,mk,lbl,x,z,h}}}
 let GR_ELLY=null;    // うしろを歩くエリー
 function grLines(s){ if(!s) return []; if(s.kind==='scene') return GR_SC[s.key]||SC[s.key]||[];
   if(s.kind==='battle'){ const P=GR_PLAN[s.ep]||{}, B=GR_BT[s.ep]; if(P.pre&&B&&B.midAll) return B.midAll.slice(0,P.pre).flat(); } return []; }
-function grWho(s){ const o=[]; for(const x of grLines(s)) if(x&&GR_GUIDE_ART[x.w]&&!o.includes(x.w)) o.push(x.w); return o; }
-function grEllyWith(s){ if(!s||s.map!==MAP) return false; if(grWho(s).includes('elly')) return true; const i=GR_STEPS.indexOf(s), p=GR_STEPS[i-1];
+function grWho(s){ const o=[]; for(const x of grLines(s)) if(x&&GR_GUIDE_ART[x.w]&&!o.includes(x.w)) o.push(x.w);
+  if(s&&s.kind==='battle'&&s.F&&s.F.foe){ const k=GR_FOEKEY[s.F.foe.n]; if(k&&!o.includes(k)) o.push(k); }   // 勝負の相手も立たせる
+  if(s&&s.bg) return o.filter(w=>!GR_GUIDE_ART[w].guest); return o; }
+function grEllyWith(s){ if(!s||(s.map!==MAP&&s.kind!=='go')) return false; if(grWho(s).includes('elly')) return true; const i=GR_STEPS.indexOf(s), p=GR_STEPS[i-1];
   return !!(p&&p.ep===s.ep&&grWho(p).includes('elly')); }
 const GR_CASTPT={};
-function grCastPt(n){ const k=MAP+':'+n; if(GR_CASTPT[k]) return GR_CASTPT[k]; let p=grAreaPt(n);
-  if(!p){ const w=D.walk||D.bounds, pts=[]; for(let x=w[0];x<=w[2];x+=1.5) for(let z=w[1];z<=w[3];z+=1.5) if(zoneAt(x,z)===n&&walkOK(x,z)&&colFree(x,z,0.4)) pts.push([x,z]);
+// 2026-11-17 オーナー「ヴィクターの丘を降りたあと、アレクに会えない」(14話 g14_06 城あとの坂): 立たせる所を、まわりの区画(建物の当たり)ができる前に決めて覚えていたので、
+//  城あとの石の当たりの中(歩いて近づけない所)に立っていた。まわりの区画ができてから決め、当たりの中になっていたら決め直す
+function grChunksReady(x,z){ const C=(D&&D.chunk)||48; for(const dx of [-C,0,C]) for(const dz of [-C,0,C]){ const c=chunkAt(x+dx,z+dz); if(c&&c.state!==2) return false; } return true; }
+function grCastPt(n){ const k=MAP+':'+n; const q=GR_CASTPT[k]; if(q&&grFree(q[0],q[1])) return q; delete GR_CASTPT[k]; let p=grAreaPt(n);
+  if(!p){ const w=D.walk||D.bounds, pts=[]; for(let x=w[0];x<=w[2];x+=1.5) for(let z=w[1];z<=w[3];z+=1.5) if(zoneAt(x,z)===n&&walkOK(x,z)&&grFree(x,z)) pts.push([x,z]);
     if(pts.length){ const cx=pts.reduce((a,q)=>a+q[0],0)/pts.length, cz=pts.reduce((a,q)=>a+q[1],0)/pts.length; p=pts.reduce((b,q)=>Math.hypot(q[0]-cx,q[1]-cz)<Math.hypot(b[0]-cx,b[1]-cz)?q:b); } }
-  if(p) GR_CASTPT[k]=p; return p; }
-function grGuideNear(s){ const g=GR_GUIDE; if(!g||g.id!==s.id||!g.walk) return true; return Math.hypot(HERO.x-g.x,HERO.z-g.z)<3.4; }
-function grSprite(who){ const A=GR_GUIDE_ART[who], grp=new THREE.Group();
-  const sp=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,alphaTest:0.1,depthWrite:false,depthTest:false})); sp.renderOrder=998; sp.visible=false; grp.add(sp);
-  new THREE.TextureLoader().load(A.img,t=>{ if(THREE.sRGBEncoding) t.encoding=THREE.sRGBEncoding; sp.material.map=t; sp.material.needsUpdate=true; const r=t.image.width/t.image.height; sp.scale.set(A.h*r,A.h,1); sp.center.set(0.5,0); sp.visible=true; });
-  scene.add(grp); return {who,grp,sp,h:A.h,lbl:makeLabel(A.n)}; }
-function grSpriteDrop(m){ scene.remove(m.grp); m.lbl.remove(); }
+  if(p&&grChunksReady(p[0],p[1])){ const a=(D.areas||[]).find(a=>a.n===n), c=a&&(a.c?a.c:a.r?[(a.r[0]+a.r[2])/2,(a.r[1]+a.r[3])/2]:null); if(!c||grChunksReady(c[0],c[1])) GR_CASTPT[k]=p; } return p; }
+function grGuideNear(s){ const g=GR_GUIDE; if(!g||g.id!==s.id||!g.walk) return true; if(g.lead) return false; return Math.hypot(HERO.x-g.x,HERO.z-g.z)<3.4; }
+const GR_PLANE=new THREE.PlaneGeometry(1,1).translate(0,0.5,0);
+function grFace(m){ if(m&&m.grp&&!m.rig) m.grp.rotation.y=Math.atan2(camera.position.x-m.x,camera.position.z-m.z); }
+// 2026-11-15 オーナー「全員3Dにしろ」: 3Dの人(chars/<key>.glb・Idle/Walk/Run 入り)は歩いて動く。読めなかった時だけ全身の絵の立て看板
+const GR_CAST=new Set(); window.GR_CAST=GR_CAST;
+function grSprite(who){ const A=GR_GUIDE_ART[who], grp=new THREE.Group(); scene.add(grp);
+  const m={who,grp,sp:null,rig:null,h:A.h,lbl:makeLabel(A.n)}; GR_CAST.add(m);
+  if(A.glb) loadGLB(A.glb).then(g=>{ if(!m.dead) grRig(m,g); }).catch(e=>{ console.warn('cast 3D→2D',who,e&&e.message); if(!m.dead) grBill(m); }); else grBill(m);
+  return m; }
+function grBill(m){ const A=GR_GUIDE_ART[m.who];
+  const sp=new THREE.Mesh(GR_PLANE,new THREE.MeshBasicMaterial({transparent:true,alphaTest:0.1,depthWrite:false,depthTest:false,side:THREE.DoubleSide})); sp.renderOrder=998; sp.visible=false; m.grp.add(sp); m.sp=sp;   // 2026-11-15 立てた板(真上からは縮んで見える=3Dのヤマトと同じ見え方)
+  new THREE.TextureLoader().load(A.img,t=>{ if(THREE.sRGBEncoding) t.encoding=THREE.sRGBEncoding; sp.material.map=t; sp.material.needsUpdate=true; const r=t.image.width/t.image.height, bh=A.h; sp.scale.set(bh*r,bh,1); sp.visible=true; }); }
+function grRig(m,g){ const root=g.scene, outl=[];
+  root.traverse(o=>{ if(o.isMesh){ o.frustumCulled=false; o.castShadow=!IS_MOBILE; const mp=o.material&&o.material.map; if(mp){ mp.encoding=THREE.LinearEncoding; mp.anisotropy=4; }
+    if(o.isSkinnedMesh&&window.V83){ o.material=V83.toonMat(mp); o.material.color.setScalar(CHAR_LIGHT); outl.push(o); } } }); if(window.V83) for(const o of outl) V83.addOutline(o,{tex:GR_GUIDE_ART[m.who].ol});
+  root.updateMatrixWorld(true); const bb=new THREE.Box3().setFromObject(root), hg=bb.max.y-bb.min.y, k=m.h/(hg>0.05&&isFinite(hg)?hg:1);
+  root.scale.multiplyScalar(k); root.position.y=-bb.min.y*k; m.grp.add(root);
+  const mixer=new THREE.AnimationMixer(root), act={};
+  for(const c of g.animations){ const n=c.name.toLowerCase(), q=n.includes('run')?'run':n.includes('walk')?'walk':n.includes('idle')?'idle':null; if(q&&!act[q]) act[q]=mixer.clipAction(c); }
+  let head=null; root.traverse(o=>{ if(o.isBone&&/Head$/.test(o.name)&&!head) head=o; });   // 頭を少し大きく(ヤマト・街の人と同じ頭身の世界に寄せる)
+  m.rig={mixer,act,cur:'',spd:0,head}; m.vx=m.x; m.vz=m.z; m.yaw=Math.atan2(HERO.x-m.x,HERO.z-m.z); grPlay(m,'idle'); if(act.idle) act.idle.time=Math.random()*act.idle.getClip().duration; mixer.update(0); }
+function grPlay(m,k){ const r=m.rig, to=r.act[k]||r.act.idle; if(!to||r.cur===k) return; const from=r.act[r.cur]; to.enabled=true; to.setEffectiveWeight(1); to.reset().play(); if(from&&from!==to) from.crossFadeTo(to,0.2,false); r.cur=k; }
+// 毎フレーム: 50ms ごとに動く位置(m.x/m.z)をなめらかに追い、速さで Idle/Walk/Run・進む向きを向く(止まったらヤマトの方を向く)
+let GR_CT=0;
+function grCastAnim(t){ requestAnimationFrame(grCastAnim); const dt=GR_CT?Math.min(0.1,(t-GR_CT)/1000):0; GR_CT=t; if(!dt) return;
+  for(const m of GR_CAST){ const r=m.rig; if(!r||m.x==null) continue; if(m.vx==null){ m.vx=m.x; m.vz=m.z; }
+    const dx=m.x-m.vx, dz=m.z-m.vz, d=Math.hypot(dx,dz); let mv=0;
+    if(d>3){ m.vx=m.x; m.vz=m.z; } else { const f=Math.min(1,dt*9); m.vx+=dx*f; m.vz+=dz*f; mv=d*f/dt; }
+    r.spd+=(mv-r.spd)*Math.min(1,dt*6); const sc=m.h/1.2;
+    const SPk=GR_GUIDE_ART[m.who].sp, k=SPk?(r.spd>SPk[3]?'run':r.spd>0.12?'walk':'idle'):(r.spd>2.4*sc?'run':r.spd>0.3?'walk':'idle'); grPlay(m,k);
+    if(k!=='idle'){ const a=r.act[k], SP=GR_GUIDE_ART[m.who].sp; if(a) a.timeScale=SP?clamp(r.spd/SP[k==='run'?1:0],0.6,k==='run'?SP[2]:1.8):clamp(r.spd/((k==='run'?3.2:1.25)*sc),0.6,1.8); }
+    const ty=k!=='idle'&&d>0.02?Math.atan2(dx,dz):Math.atan2(HERO.x-m.vx,HERO.z-m.vz); m.yaw+=angD(ty,m.yaw)*Math.min(1,dt*(k==='idle'?4:9));
+    m.grp.rotation.y=m.yaw; m.grp.position.set(m.vx,groundAt(m.vx,m.vz),m.vz); r.mixer.update(dt); if(r.head){ r.head.scale.setScalar(1.12); const q=GR_GUIDE_ART[m.who].pose; if(q){ r.head.rotateX(q[0]); r.head.rotateZ(q[1]); } } } }
+requestAnimationFrame(grCastAnim);
+function grSpriteDrop(m){ m.dead=true; GR_CAST.delete(m); scene.remove(m.grp); m.lbl.remove(); }
 function grGuideDrop(){ const g=GR_GUIDE; if(!g) return; for(const k in g.mem) grSpriteDrop(g.mem[k]); if(g.mk) scene.remove(g.mk); GR_GUIDE=null; window.GR_GUIDE=null; }
 function grSpot(x,z){ for(let r=0;r<=4;r+=0.5) for(let i=0;i<(r?10:1);i++){ const t=i/10*Math.PI*2, a=x+Math.cos(t)*r, b=z+Math.sin(t)*r; if(walkOK(a,b)) return [a,b]; } return [x,z]; }
 function grPlace(m,x,z){ const p=grSpot(x,z); m.x=p[0]; m.z=p[1]; m.grp.position.set(p[0],groundAt(p[0],p[1]),p[1]); }
@@ -316,42 +364,177 @@ function grLabel(m,txt,arrowOK){ const W=innerWidth, H=innerHeight, v=new THREE.
   const cx=W/2, cy=H/2, a=Math.atan2(sy-cy,sx-cx), k=Math.min((W/2-60)/Math.abs(Math.cos(a)||1e-6),(H/2-90)/Math.abs(Math.sin(a)||1e-6));
   const ar=['→','↘','↓','↙','←','↖','↑','↗'][((Math.round(a/(Math.PI/4))%8)+8)%8];
   m.lbl.textContent=txt+' '+ar; m.lbl.style.left=(cx+Math.cos(a)*k)+'px'; m.lbl.style.top=(cy+Math.sin(a)*k+12)+'px'; }
-function grCastTick(s){ const ellyF=grEllyWith(s); const need=s&&s.map===MAP?grWho(s).filter(w=>!(w==='elly'&&ellyF)):[];
-  let g=GR_GUIDE; if(g&&(g.map!==MAP||!s)) { grGuideDrop(); g=null; }
+function grCastTick(s){ const ellyF=grEllyWith(s); const away=!!(s&&!s.wobj&&s.at&&s.at!=='*'&&s.map===MAP&&!grHere(s));   // 2026-11-17 その場所(大競技場など)に着くまでは、話す人を手前に出さない(着いた所で出す)
+  const need=s&&s.map===MAP&&!away?grWho(s).filter(w=>!(w==='elly'&&ellyF)):[];
+  let g=GR_GUIDE; if(g&&(g.map!==MAP||!s||(away&&!g.walk))) { grGuideDrop(); g=null; }
   if(s&&s.wobj&&s.map===MAP){   // 歩く段: 行き先に立たせる(話す人がいなければ誰も立たせない)
-    if(g&&g.id!==s.id){ grGuideDrop(); g=null; }
+    if(g&&g.id!==s.id){ const at=Array.isArray(s.at)?s.at[0]:s.at; const pt=grCastPt(at);
+      const pv=GR_STEPS[GR_STEPS.indexOf(s)-1], pw=pv&&pv.ep===s.ep?grWho(pv):[];
+      if(pt&&need.some(w=>g.mem[w]&&pw.includes(w)&&Math.hypot(HERO.x-g.mem[w].x,HERO.z-g.mem[w].z)<8)){   // 2026-11-15 さっき話した人は消さず、先を歩いて行き先へ連れていく
+        for(const k of Object.keys(g.mem)) if(!need.includes(k)){ grSpriteDrop(g.mem[k]); delete g.mem[k]; }
+        g.id=s.id; g.walk=true; g.lead=true; g.x=pt[0]; g.z=pt[1]; g.stk=0; if(g.mk) scene.remove(g.mk); g.mk=grMark(); }
+      else { grGuideDrop(); g=null; } }
     if(!g&&need.length){ const at=Array.isArray(s.at)?s.at[0]:s.at; const pt=grCastPt(at); if(!pt) return;
-      g=GR_GUIDE={id:s.id,map:MAP,x:pt[0],z:pt[1],walk:true,mem:{}}; window.GR_GUIDE=g;
-      const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); x.fillStyle='#ffd23a'; x.strokeStyle='#5a3a00'; x.lineWidth=5; x.beginPath(); x.moveTo(8,14); x.lineTo(56,14); x.lineTo(32,54); x.closePath(); x.stroke(); x.fill();
-      g.mk=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false,depthWrite:false})); g.mk.scale.set(0.5,0.5,1); g.mk.renderOrder=999; scene.add(g.mk); } }
+      g=GR_GUIDE={id:s.id,map:MAP,x:pt[0],z:pt[1],walk:true,mem:{}}; window.GR_GUIDE=g; g.mk=grMark(); } }
   else if(g){ g.walk=false; g.id=s?s.id:null; if(g.mk){ scene.remove(g.mk); g.mk=null; } }
-  else if(need.length){ const a=HERO.yaw||0; g=GR_GUIDE={id:s.id,map:MAP,x:HERO.x+Math.sin(a)*2.4,z:HERO.z+Math.cos(a)*2.4,walk:false,mem:{}}; window.GR_GUIDE=g; }
+  else if(need.length){ const a=Math.atan2(HERO.x-camera.position.x,HERO.z-camera.position.z); g=GR_GUIDE={id:s.id,map:MAP,x:HERO.x+Math.sin(a)*2.4,z:HERO.z+Math.cos(a)*2.4,walk:false,mem:{}}; window.GR_GUIDE=g; }   // 2026-11-17 カメラから見てヤマトの向こう(顔が見える)
   if(!g) return;
   need.forEach((w,i)=>{ if(g.mem[w]) return; const m=g.mem[w]=grSprite(w); const n=Object.keys(g.mem).length-1, off=(n%2?1:-1)*Math.ceil(n/2)*0.95; grPlace(m,g.x+off,g.z+(n?0.3:0)); });
+  if(g.walk&&!g.lead&&s&&s.wobj&&g.id===s.id&&(!GR_CASTPT[MAP+':'+(Array.isArray(s.at)?s.at[0]:s.at)]||!grFree(g.x,g.z))){ const at=Array.isArray(s.at)?s.at[0]:s.at, pt=grCastPt(at); if(pt&&(pt[0]!==g.x||pt[1]!==g.z)&&(GR_CASTPT[MAP+':'+at]||!grFree(g.x,g.z))){ g.x=pt[0]; g.z=pt[1]; Object.values(g.mem).forEach((m,n)=>grPlace(m,g.x+(n%2?1:-1)*Math.ceil(n/2)*0.95,g.z+(n?0.3:0))); } }   // 当たりの中に立っていた・まわりの区画ができる前に決めた所だったら、歩いて行ける本来の所へ
+  if(g.lead) grLeadTick(g);
   const first=g.mem[Object.keys(g.mem)[0]];
   if(g.mk&&first){ g.mk.position.set(first.x,first.grp.position.y+first.h+0.35+Math.sin(performance.now()/260)*0.08,first.z); g.mk.visible=!STORY; }
   Object.values(g.mem).forEach((m,i)=>grLabel(m,GR_GUIDE_ART[m.who].n,g.walk&&i===0)); }
-function grEllyTick(s){ const on=!!s&&grEllyWith(s)&&!(GR_GUIDE&&GR_GUIDE.mem.elly);
+function grMark(){ const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); x.fillStyle='#ffd23a'; x.strokeStyle='#5a3a00'; x.lineWidth=5; x.beginPath(); x.moveTo(8,14); x.lineTo(56,14); x.lineTo(32,54); x.closePath(); x.stroke(); x.fill();
+  const mk=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false,depthWrite:false})); mk.scale.set(0.5,0.5,1); mk.renderOrder=999; scene.add(mk); return mk; }
+// 先を歩く: ヤマトが離れたら立ち止まって待つ。道がふさがって進めない時は行き先へ移る
+function grLeadTick(g){ if(STORY||TRANS||ENC) return; let done=true, moved=false;
+  Object.values(g.mem).forEach((m,n)=>{ const off=(n%2?1:-1)*Math.ceil(n/2)*0.95, tx=g.x+off, tz=g.z+(n?0.3:0), d=Math.hypot(tx-m.x,tz-m.z);
+    if(d<0.4) return; done=false; const hd=Math.hypot(HERO.x-m.x,HERO.z-m.z); if(hd>16||Math.hypot(HERO.x-g.x,HERO.z-g.z)<5){ grPlace(m,tx,tz); return; } if(hd>7) return;
+    const SPm=GR_GUIDE_ART[m.who].sp, st=Math.min(d,SPm?SPm[4]*0.05:0.17), a0=Math.atan2(tx-m.x,tz-m.z);   // エリーは遅く(先導はヤマトが7より離れると待つ)
+    for(const da of [0,0.6,-0.6,1.2,-1.2,1.8,-1.8]){ const nx=m.x+Math.sin(a0+da)*st, nz=m.z+Math.cos(a0+da)*st; if(walkOK(nx,nz)){ m.x=nx; m.z=nz; moved=true; break; } }
+    m.grp.position.set(m.x,groundAt(m.x,m.z)+Math.abs(Math.sin(performance.now()/130))*0.05,m.z); });
+  const fd=Object.values(g.mem).reduce((a,m)=>a+Math.hypot(g.x-m.x,g.z-m.z),0);   // 行き先までの残りが2秒縮まなければ、先に着いたことにする
+  if(g.bd==null||fd<g.bd-0.3){ g.bd=fd; g.stk=0; } else if(moved) g.stk=(g.stk||0)+1;
+  if(!done&&g.stk>40){ Object.values(g.mem).forEach((m,n)=>grPlace(m,g.x+(n%2?1:-1)*Math.ceil(n/2)*0.95,g.z+(n?0.3:0))); g.stk=0; g.bd=null; }
+  if(done) g.lead=false; }
+function grOnScreen(x,z){ const v=new THREE.Vector3(x,groundAt(x,z)+0.6,z).project(camera); return v.z<1&&Math.abs(v.x)<1.08&&Math.abs(v.y)<1.08; }
+function grEllyBehind(e){ const a=HERO.yaw||0; let last=null;   // ヤマトの後ろ(進む向きの逆)で、画面に映らない一番近い所
+  for(let r=5;r<=16;r+=1) for(const da of [0,0.5,-0.5,1.0,-1.0]){ const x=HERO.x-Math.sin(a+da)*r, z=HERO.z-Math.cos(a+da)*r; if(!walkOK(x,z)) continue; last=[x,z]; if(!grOnScreen(x,z)){ grPlace(e,x,z); return true; } }
+  return false; }
+function grEllyTick(s){ const on=!!s&&grEllyWith(s)&&!(GR_GUIDE&&GR_GUIDE.mem.elly)&&!(SAVE&&SAVE.crew&&GR_CREW.elly(+s.ep||0)&&!SAVE.crew.elly);   // 仲間になる演出の前には出さない
   if(!on||(GR_ELLY&&GR_ELLY.map!==MAP)){ if(GR_ELLY){ grSpriteDrop(GR_ELLY); GR_ELLY=null; } if(!on) return; }
   if(!GR_ELLY){ GR_ELLY=grSprite('elly'); GR_ELLY.map=MAP; const a=HERO.yaw||0; grPlace(GR_ELLY,HERO.x-Math.sin(a)*1.4+Math.cos(a)*0.9,HERO.z-Math.cos(a)*1.4-Math.sin(a)*0.9); }
   const e=GR_ELLY, a=HERO.yaw||0, tx=HERO.x-Math.sin(a)*1.5+Math.cos(a)*0.9, tz=HERO.z-Math.cos(a)*1.5-Math.sin(a)*0.9, d=Math.hypot(tx-e.x,tz-e.z);
-  if(d>12){ grPlace(e,tx,tz); }
-  else if(d>0.35&&!STORY){ const st=Math.min(d,Math.max(0.06,d*0.12)); const nx=e.x+(tx-e.x)/d*st, nz=e.z+(tz-e.z)/d*st; if(walkOK(nx,nz)){ e.x=nx; e.z=nz; } else { e.x+=(tx-e.x)*0.2; e.z+=(tz-e.z)*0.2; } }
+  // 2026-11-16 エリーは見えている間は瞬間移動しない(遠くても速歩きで追う)。画面に映っていない時に12より離れたら、ヤマトの後ろの画面の外のすぐそばへ移し、そこから歩いて寄る
+  const SPe=GR_GUIDE_ART.elly.sp;
+  if(d>12&&!grOnScreen(e.x,e.z)&&grEllyBehind(e)){}
+  else if(d>0.35&&!STORY){ const st=Math.min(d,Math.max(0.06,d*0.12),SPe?SPe[4]*0.05:1e9); const nx=e.x+(tx-e.x)/d*st, nz=e.z+(tz-e.z)/d*st; if(walkOK(nx,nz)){ e.x=nx; e.z=nz; } else { const f=SPe?Math.min(0.2,st/d):0.2; e.x+=(tx-e.x)*f; e.z+=(tz-e.z)*f; } }
   e.grp.position.set(e.x,groundAt(e.x,e.z)+(d>0.5&&!STORY?Math.abs(Math.sin(performance.now()/130))*0.05:0),e.z);
   grLabel(e,'エリー',false); e.lbl.style.display='none'; }
-function grGuideTick(){ try{ if(!SAVE||!HERO) return; const s=grCur(); grCastTick(s); grEllyTick(s);
+// ---- 2026-11-15 第1話のはじめ(オーナー「冒頭、フォルンが実際に神殿の方に逃げていくエフェクトほしい」): 「狐を追って神殿のあとへ」の歩く段(g01_05)で、
+//  狐(フォルン 1001 の3D)がヤマトの前に現れ、しっぽの火の粉をまきながら 歩ける道を通って神殿の丘へ走っていく。ヤマトが離れすぎたら立ち止まってふり返る。着いたら木の根もとで待つ。
+//  段が進む・地図が変わると消える。台詞・段・セーブには触らない(見た目だけ)
+const GR_FR={step:'g01_05', mid:1001, sc:0.62, sp:5.2};
+let GR_FRS=null;
+function grFrPath(x0,z0,x1,z1){ const w=D.walk||D.bounds, C=1, nx=Math.floor((w[2]-w[0])/C)+1, nz=Math.floor((w[3]-w[1])/C)+1, ok=new Uint8Array(nx*nz);
+  for(let i=0;i<nx;i++) for(let j=0;j<nz;j++){ const x=w[0]+i*C, z=w[1]+j*C; ok[i*nz+j]=walkOK(x,z)&&colFree(x,z,0.3)?1:0; }
+  const cell=(x,z)=>{ let bi=-1, bd=1e9; const ci=Math.round((x-w[0])/C), cj=Math.round((z-w[1])/C);
+    for(let i=Math.max(0,ci-4);i<=Math.min(nx-1,ci+4);i++) for(let j=Math.max(0,cj-4);j<=Math.min(nz-1,cj+4);j++) if(ok[i*nz+j]){ const d=Math.hypot(i-ci,j-cj); if(d<bd){ bd=d; bi=i*nz+j; } } return bi; };
+  const a=cell(x0,z0), b=cell(x1,z1); if(a<0||b<0) return null;
+  const prev=new Int32Array(nx*nz).fill(-1); prev[a]=a; const q=[a]; let h=0;
+  while(h<q.length){ const c=q[h++]; if(c===b) break; const ci=Math.floor(c/nz), cj=c%nz;
+    for(const [di,dj] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){ const i=ci+di, j=cj+dj; if(i<0||j<0||i>=nx||j>=nz) continue; const n=i*nz+j;
+      if(!ok[n]||prev[n]>=0) continue; if(di&&dj&&!(ok[ci*nz+j]&&ok[i*nz+cj])) continue; prev[n]=c; q.push(n); } }
+  if(prev[b]<0) return null; const pts=[]; for(let c=b;;c=prev[c]){ pts.push([w[0]+Math.floor(c/nz)*C, w[1]+(c%nz)*C]); if(c===a) break; } pts.reverse();
+  const clear=(p,r)=>{ const L=Math.hypot(r[0]-p[0],r[1]-p[1]), n=Math.ceil(L/0.4); for(let k=1;k<n;k++){ const t=k/n, x=p[0]+(r[0]-p[0])*t, z=p[1]+(r[1]-p[1])*t; if(!walkOK(x,z)||!colFree(x,z,0.25)) return false; } return true; };
+  const out=[pts[0]]; let i=0; while(i<pts.length-1){ let j=pts.length-1; while(j>i+1&&!clear(pts[i],pts[j])) j--; out.push(pts[j]); i=j; }
+  out.push([x1,z1]); return out; }
+function grFrSparkTex(){ const c=document.createElement('canvas'); c.width=c.height=32; const x=c.getContext('2d'), g=x.createRadialGradient(16,16,0,16,16,16);
+  g.addColorStop(0,'rgba(255,250,200,1)'); g.addColorStop(0.35,'rgba(255,170,40,0.9)'); g.addColorStop(1,'rgba(255,60,0,0)'); x.fillStyle=g; x.fillRect(0,0,32,32); return new THREE.CanvasTexture(c); }
+function grFrStart(){ const a=HERO.yaw||0, p=grSpot(HERO.x+Math.sin(a)*2.4,HERO.z+Math.cos(a)*2.4), goal=grCastPt('神殿の丘');
+  const F=GR_FRS={map:MAP, x:p[0], z:p[1], yaw:Math.atan2(HERO.x-p[0],HERO.z-p[1]), inst:null, path:null, pi:1, st:'look', t:0, spd:0, len:0.6, hgt:0.6, sparks:[], acc:0, lbl:makeLabel('狐'), grp:null, h:0.7, dead:false};
+  F.lbl.style.display='none';
+  if(goal){ try{ F.path=grFrPath(F.x,F.z,goal[0],goal[1]); }catch(e){ console.warn('fornrun path',e&&e.message); } if(!F.path) F.path=[[F.x,F.z],goal]; }
+  const tex=grFrSparkTex(); for(let i=0;i<48;i++){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,color:0xffffff,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending})); s.visible=false; s.renderOrder=997; scene.add(s); F.sparks.push({s,life:0,max:1,vx:0,vy:0,vz:0}); }
+  monProto(GR_FR.mid).then(g=>{ if(F.dead) return; F.inst=monMake(g); const R=F.inst.root; R.scale.setScalar(GR_FR.sc); R.position.set(F.x,groundAt(F.x,F.z),F.z); R.rotation.y=F.yaw; scene.add(R);
+    R.updateMatrixWorld(true); const bb=new THREE.Box3().setFromObject(R), sz=bb.getSize(new THREE.Vector3()); if(isFinite(sz.y)&&sz.y>0.05){ F.hgt=sz.y; F.len=Math.max(sz.x,sz.z); F.h=sz.y+0.1; }
+    F.grp=R; }).catch(e=>{ console.warn('fornrun 3D',e&&e.message); }); }
+function grFrDrop(){ const F=GR_FRS; if(!F) return; F.dead=true; if(F.inst&&F.inst.root.parent) scene.remove(F.inst.root); for(const p of F.sparks){ scene.remove(p.s); p.s.material.dispose(); } if(F.sparks[0]) F.sparks[0].s.material.map.dispose(); F.lbl.remove(); GR_FRS=null; }
+function grFrEmit(F,n){ for(const p of F.sparks){ if(n<=0) break; if(p.life>0) continue; n--;
+    const fx=Math.sin(F.yaw), fz=Math.cos(F.yaw), sd=(Math.random()<0.5?-1:1)*0.08, bx=F.x-fx*F.len*0.5+fz*sd, bz=F.z-fz*F.len*0.5-fx*sd;   // 二本のしっぽの先(左右)
+    p.s.position.set(bx+(Math.random()-0.5)*0.12, groundAt(F.x,F.z)+F.hgt*0.75+(Math.random()-0.3)*0.15, bz+(Math.random()-0.5)*0.12);
+    p.vx=(Math.random()-0.5)*0.6-fx*0.4; p.vz=(Math.random()-0.5)*0.6-fz*0.4; p.vy=0.5+Math.random()*0.9; p.max=p.life=0.45+Math.random()*0.5; p.s.visible=true; } }
+let GR_FRT=0;
+function grFornRunAnim(t){ requestAnimationFrame(grFornRunAnim); const dt=GR_FRT?Math.min(0.1,(t-GR_FRT)/1000):0; GR_FRT=t; if(!dt) return;
+  try{ if(!SAVE||!HERO||!D){ if(GR_FRS) grFrDrop(); return; } const s=grCur();
+    const want=!!s&&s.id===GR_FR.step&&s.map===MAP;
+    if(GR_FRS&&(!want||GR_FRS.map!==MAP)) grFrDrop();
+    if(!want) return;
+    if(!GR_FRS){ if(STORY||TRANS||ENC||PAUSED) return; if(zoneAt(HERO.x,HERO.z)==='神殿の丘') return; grFrStart(); }
+    const F=GR_FRS, frozen=STORY||TRANS||ENC||PAUSED; let mv=0;
+    if(!frozen&&F.inst){ F.t+=dt; const hd=Math.hypot(HERO.x-F.x,HERO.z-F.z);
+      if(F.st==='look'){ F.yaw+=angD(Math.atan2(HERO.x-F.x,HERO.z-F.z),F.yaw)*Math.min(1,dt*8); if(F.t>0.7){ F.st='run'; F.t=0; } }   // 一瞬ヤマトを見てから逃げる
+      else if(F.st==='run'||F.st==='wait'){ const P=F.path, last=F.pi>=P.length-1, tgt=P[Math.min(F.pi,P.length-1)];
+        const toEnd=Math.hypot(P[P.length-1][0]-F.x,P[P.length-1][1]-F.z);
+        if(F.st==='run'&&hd>12&&toEnd>6) F.st='wait'; else if(F.st==='wait'&&(hd<7||toEnd<=6)) F.st='run';
+        if(F.st==='wait') F.yaw+=angD(Math.atan2(HERO.x-F.x,HERO.z-F.z),F.yaw)*Math.min(1,dt*5);
+        else { const dx=tgt[0]-F.x, dz=tgt[1]-F.z, d=Math.hypot(dx,dz), st=Math.min(d,GR_FR.sp*Math.min(1,0.35+F.t*1.6)*dt);
+          if(d>1e-3){ F.x+=dx/d*st; F.z+=dz/d*st; mv=st/dt; F.yaw+=angD(Math.atan2(dx,dz),F.yaw)*Math.min(1,dt*10); }
+          if(d-st<0.15){ if(last) F.st='end'; else F.pi++; } } }
+      else if(F.st==='end'){ F.yaw+=angD(Math.atan2(HERO.x-F.x,HERO.z-F.z),F.yaw)*Math.min(1,dt*3); } }
+    F.spd=(F.spd||0)+(mv-(F.spd||0))*Math.min(1,dt*10);
+    if(F.inst){ const R=F.inst.root; R.position.set(F.x,groundAt(F.x,F.z),F.z); R.rotation.y=F.yaw; monGait(F.inst,frozen?0:F.spd,frozen?0:dt,GR_FR.sc); }
+    if(!frozen&&F.inst){ F.acc+=dt*(F.spd>0.5?38:5); const n=Math.floor(F.acc); F.acc-=n; if(n) grFrEmit(F,n); }
+    for(const p of F.sparks){ if(p.life<=0) continue; if(!frozen){ p.life-=dt; p.vy-=0.6*dt; p.s.position.x+=p.vx*dt; p.s.position.y+=p.vy*dt; p.s.position.z+=p.vz*dt; }
+      const k=Math.max(0,p.life/p.max); p.s.material.opacity=k; p.s.material.color.setRGB(1,0.55+0.45*k,0.2+0.6*k*k); p.s.scale.setScalar(0.07+0.16*k); if(p.life<=0) p.s.visible=false; }
+    if(F.grp&&!PAUSED) grLabel(F,'狐',F.st!=='end'); else F.lbl.style.display='none';
+  }catch(e){ console.warn('fornrun',e&&e.message); } }
+requestAnimationFrame(grFornRunAnim);
+window.GR_FR_DBG=()=>GR_FRS&&{x:GR_FRS.x,z:GR_FRS.z,st:GR_FRS.st,pi:GR_FRS.pi,n:GR_FRS.path&&GR_FRS.path.length,inst:!!GR_FRS.inst,path:GR_FRS.path};
+// ---- 2026-11-17 オーナー「エリーとアレクが仲間になるのは飛ばせないエフェクトで出して。いつのまにかついてきたり一緒にいて気持ち悪い」 ----
+//  仲間(旅の連れ)の話の範囲: エリー=2〜13話・18話から(14〜17話はさらわれている)/アレク=5話から。入った時に一度だけ演出(飛ばせない・3秒たってからタップで閉じる)。見せた印=SAVE.crew
+const GR_CREW={elly:ep=>(ep>=2&&ep<=13)||ep>=18, alek:ep=>ep>=5};
+function grCrewTick(s){ if(!SAVE||!s||EVOFX||STORY||TRANS||ENC||PAUSED) return; const ep=+s.ep||0; if(!ep) return;
+  if(!SAVE.crew){ SAVE.crew={}; for(const w in GR_CREW) if(GR_CREW[w](ep)) SAVE.crew[w]=1; return; }   // 前からのセーブ: 今の連れは見せたことにする
+  for(const w in GR_CREW){ const inn=GR_CREW[w](ep);   // 一度見せたら二度と出さない(抜けて戻っても出さない 2026-11-17 オーナー「毎回ださなくてもわかる」)
+    if(inn&&!SAVE.crew[w]&&(w!=='elly'||grEllyWith(s))){ SAVE.crew[w]=1; saveGame(); crewFxShow(w); return; } } }
+function crewFxShow(who){ const A=GR_GUIDE_ART[who]; if(!A) return; EVOFX=true; const wasP=PAUSED; PAUSED=true; IN.active=false;
+  if(!document.getElementById('crewFxCss')){ const st=document.createElement('style'); st.id='crewFxCss'; st.textContent=`
+#crewFx{position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(circle at 50% 42%,#2a3f6a 0%,#101a33 55%,#05070f 100%);opacity:0;transition:opacity .35s;overflow:hidden}
+#crewFx.on{opacity:1}
+#crewFx .st{position:relative;height:min(62vh,520px);aspect-ratio:1/2;max-width:80vw}
+#crewFx .st img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transform:translateX(40px);filter:brightness(0) invert(1) drop-shadow(0 0 22px #9fd4ff);transition:filter 1s ease-out}
+#crewFx .st img.in{animation:cwIn .9s cubic-bezier(.2,.8,.2,1) .35s forwards}
+#crewFx .st img.col{filter:brightness(1) invert(0) drop-shadow(0 0 14px rgba(160,210,255,.55))}
+#crewFx .bd{position:absolute;left:-30vw;right:-30vw;top:58%;height:64px;background:linear-gradient(90deg,transparent,rgba(120,190,255,.35),transparent);transform:skewY(-6deg) scaleX(0);animation:cwBd .7s ease-out 1.2s forwards}
+#crewFx .tx{position:relative;color:#fff;font-weight:900;font-size:clamp(22px,6vw,32px);text-shadow:0 2px 12px #000;opacity:0;transform:translateY(10px);animation:cwT .5s ease-out 1.5s forwards}
+#crewFx .sub{color:#cfe6ff;font-size:14px;font-weight:700;opacity:0;animation:cwT .5s ease-out 1.9s forwards}
+#crewFx .go{color:#fff;font-size:13px;opacity:0;animation:cwT .5s ease-out 3s forwards}
+#crewFx .sp{position:absolute;width:5px;height:5px;border-radius:50%;background:#dff1ff;box-shadow:0 0 10px #8cc8ff;opacity:0}
+@keyframes cwIn{to{opacity:1;transform:translateX(0)}}
+@keyframes cwBd{to{transform:skewY(-6deg) scaleX(1)}}
+@keyframes cwT{to{opacity:1;transform:translateY(0)}}
+@keyframes cwS{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy))}}`; document.head.appendChild(st); }
+  const W=document.createElement('div'); W.id='crewFx';
+  W.innerHTML=`<div class="bd"></div><div class="st"><img src="${A.img}" alt=""></div><div class="tx">${A.n}が仲間になった！</div><div class="sub">これから いっしょに旅をする</div><div class="go">タップでとじる</div>`;
+  for(let k=0;k<26;k++){ const d=document.createElement('i'); d.className='sp'; const a=Math.random()*Math.PI*2, r=120+Math.random()*180; d.style.cssText=`left:50%;top:42%;--dx:${Math.cos(a)*r}px;--dy:${Math.sin(a)*r}px;animation:cwS ${1+Math.random()}s ease-out ${0.9+Math.random()*0.6}s forwards`; W.appendChild(d); }
+  document.body.appendChild(W); requestAnimationFrame(()=>{ W.classList.add('on'); W.querySelector('.st img').classList.add('in'); }); setTimeout(()=>{ const im=W.querySelector('.st img'); if(im) im.classList.add('col'); },1100);
+  const t0=performance.now(); const close=e=>{ if(e) e.stopPropagation(); if(performance.now()-t0<3000) return; W.classList.remove('on'); setTimeout(()=>{ W.remove(); EVOFX=false; PAUSED=wasP; LAST=performance.now(); },360); };
+  for(const ev of ['pointerdown','touchstart']) W.addEventListener(ev,e=>e.stopPropagation()); W.addEventListener('click',close); }
+// ---- 2026-11-17 オーナー「大会も闘技場じゃない」: 大会の間(10話の受付〜12話のおわり)は、大競技場に出場者が立っている(話す時は GR_GUIDE の方が前に出る) ----
+const GR_EXTRA=[{map:'athens', from:'g10_03', until:'a10', who:[['tarik',38.5,-61]]}, {map:'athens', from:'g10_03', until:'a11', who:[['hao',49.5,-61]]}, {map:'athens', from:'g10_03', until:'a12', who:[['dimi',50,-75.5]]}];   // 大競技場(regions/athens.json の arena 44,-68)の床のはし
+const GR_EXM={};
+function grExtrasTick(s){ const f=GF(); const idx=s?GR_STEPS.indexOf(s):-1;
+  for(const E of GR_EXTRA){ const i0=GR_STEPS.findIndex(x=>x.id===E.from);
+    const on=!!s&&MAP===E.map&&idx>=i0&&i0>=0&&!f[E.until]&&!ENC;
+    for(const [w,x,z] of E.who){ const k=E.map+':'+w, m=GR_EXM[k], busy=!!(GR_GUIDE&&GR_GUIDE.mem[w]);
+      if(!on||busy){ if(m){ grSpriteDrop(m); delete GR_EXM[k]; } continue; }
+      if(!m){ const n=GR_EXM[k]=grSprite(w); grPlace(n,x,z); }
+      const q=GR_EXM[k]; grFace(q); grLabel(q,GR_GUIDE_ART[w].n,false); } } }
+// 地図を移る段の行き先の印(出口の上に黄色の印と名前。画面の外なら矢印で向き)
+let GR_GOMK=null;
+function grGoMarkTick(){ const s=grGoStep(), e=s&&!ENC?grExitTo(s.to):null;
+  if(!e){ if(GR_GOMK){ scene.remove(GR_GOMK.mk); GR_GOMK.lbl.remove(); GR_GOMK=null; } return; }
+  const r=e.r, x=(r[0]+r[2])/2, z=(r[1]+r[3])/2, k=MAP+':'+e.to;
+  if(GR_GOMK&&GR_GOMK.k!==k){ scene.remove(GR_GOMK.mk); GR_GOMK.lbl.remove(); GR_GOMK=null; }
+  if(!GR_GOMK){ const mk=grMark(); mk.scale.set(0.9,0.9,1); GR_GOMK={k,mk,lbl:makeLabel(''),x,z,h:1.6,grp:{position:{y:0}}}; }
+  const g=GR_GOMK, y=groundAt(x,z); g.grp.position.y=y; g.mk.position.set(x,y+2.2+Math.sin(performance.now()/260)*0.12,z); g.mk.visible=!STORY&&!TRANS;
+  grLabel(g,(GR_MAPJ[e.to]||e.to)+'へ',true); }
+function grGuideTick(){ try{ if(!SAVE||!HERO) return; const s=grCur(); grCrewTick(s); grCastTick(s); grEllyTick(s); grGoMarkTick(); grExtrasTick(s);
+  if(GR_GUIDE) Object.values(GR_GUIDE.mem).forEach(grFace); grFace(GR_ELLY);
   const g=GR_GUIDE; if(s&&g&&g.walk&&g.id===s.id&&!STORY&&!TRANS&&!ENC&&!GR_RUN&&grHere(s)) grRun(); }catch(e){ console.warn('grGuide',e&&e.message); } }
 setInterval(grGuideTick,50);
 async function grRun(){ if(GR_RUN) return; GR_RUN=true;
   try{ for(let g=0;g<400;g++){ const s=grCur(); if(!s||!grHere(s)||STORY||TRANS||ENC) break; const ok=await grStep(s); if(!ok) break;
-      if(s.last){ const n=grCur(); if(!n||!(GR_PLAN[n.ep]&&GR_PLAN[n.ep].chain)) break; } } }
+      if(s.last){ const n=grCur(); if(!n||!((GR_PLAN[n.ep]&&GR_PLAN[n.ep].chain)||s.kind==='go')) break; } } }   // 歩いて着いた所が次の話の始まりの場所なら、そのまま続ける
   catch(e){ console.error('gr story',e); }
   finally{ GR_RUN=false; bgmScene(null); objUpdate(); } }
 async function grStep(s){ const f=GF();
   if(s.tod&&TODN!==s.tod&&TOD[s.tod]) setTime(s.tod,true);
   if(s.kind==='scene'){ bgmScene(s.key); if(GR_HOOK[s.key]) await GR_HOOK[s.key](); if(SC[s.key]){ if(s.bg) await runScene(SC[s.key],{bg:s.bg}); else await storyField(s.key); }
     const A=(GR_PLAN[s.ep]||{}).after; if(A&&A[s.key]==='bond'&&!SAVE.flags.gr_bond) grBond(); }
-  else if(s.kind==='go'){ await goMap(s.to,s.toAt); if(MAP!==s.to) return false; }
+  else if(s.kind==='go'){ if(MAP!==s.to){ if(grNextHop(MAP,s.to)) return false; await goMap(s.to,s.toAt); if(MAP!==s.to) return false; } }   // 道の無い時だけ前のように移す
   else if(s.kind==='tp'){ await grTp(s.x,s.z,s.yaw); }
   else if(s.kind==='battle'){ const b=f[s.id+'_b'];
     if(!b){ GR_RETRY=false; const P=GR_PLAN[s.ep]||{}, B=GR_BT[s.ep];
@@ -374,6 +557,7 @@ function grBond(){ if(!SAVE) return; const f=SAVE.flags;
 async function grFight(s){ const F=s.F; F._ep=s.ep; const say=GR_SAY[s.ep];
   if(!SAVE.flags.gr_bond) grBond();
   if(say&&!GF()['seen_'+s.id]){ bgmCue('idea'); await runScene([{w:say[0],f:say[1],t:say[2]}],{field:true}); SAVE.flags['seen_'+s.id]=1; }
+  await grFuseFx(F);   // 2026-11-17 初めて使える融合を、勝負の前に演出で知らせる
   GR_TEAM=await grPickTeam(s);
   const stop=grInbStart(s.ep);
   try{
@@ -411,21 +595,26 @@ function grInbStart(ep){ const B=GR_BT[ep]; const C=(B&&B.mid)||[]; if(!C.length
 // 物語の勝負の opt(シムの battle/sim/study_gr23.js と同じ組み立て)。隊は表どおり・覚えた姿は隊の子＋own だけ・相手1体(古代は子分なし)
 const grStageOf=mid=>{ const M=window.MonBattle&&MonBattle.MID; const m=(M&&M[+mid])||(window.Progress&&Progress.mon&&Progress.mon(+mid)); if(m) return m.role==='fusion'?3:(m.level||1);   // 2026-11-06: その回の最初の勝負では battle.js の表がまだ空なので monsters.json(Progress)で見る(前は借りる子が1段目と数えられ、盤に出せない子がいた)
   return +mid>=2000?3:(ENJU_LINE.indexOf(+mid)+1||1); };
+function grOwnLv(){ const P=window.Progress; const R=(P&&P.roster)?P.roster():[]; return mid=>{ if(!P||!P.baseOf) return null; const b=+P.baseOf(+mid); let best=null; for(const c of R) if(+P.baseOf(+c.mid)===b&&(!best||(+c.lv||1)>(+best.lv||1))) best=c; return best; }; }
 function grFightOpt(opt,F){ const lv=F.lv; if(!opt.player) opt.player={}; let party=opt.player.party; if(!Array.isArray(party)){ party=[]; opt.player.party=party; }
   const enju=party.find(p=>ENJU_LINE.includes(+p.mid))||null;
-  const L=F.me.map(m=>{ if(typeof m==='string'){ const mid=GR_PMID[m]; return enju&&enju.uid?{uid:enju.uid, mid, lv:Math.max(+enju.lv||1, lv)}:{mid, lv, guest:1}; } return {mid:+m, lv, guest:1}; });
+  const own=grOwnLv();   // 2026-11-17 オーナー「レベル上がったのに、バトルで反映されてない」: 自分の子は自分のLv(話のLvより低ければ話のLv)
+  const L=F.me.map(m=>{ if(typeof m==='string'){ const mid=GR_PMID[m]; return enju&&enju.uid?{uid:enju.uid, mid, lv:Math.max(+enju.lv||1, lv)}:{mid, lv, guest:1}; } const o=own(+m); return o?{uid:o.uid, mid:+m, lv:Math.max(+o.lv||1, lv)}:{mid:+m, lv, guest:1}; });
   // 2026-11-06 自分の仲間から足した子(grPickTeam で選んだ・GR_TEAM)。1段目・Lv はその話の Lv まで・覚えた進化の仕方まで
-  const EX=(GR_TEAM&&GR_TEAM.F===F?GR_TEAM.cards:[]).map(c=>({uid:c.uid, mid:+c.mid, lv:Math.min(+c.lv||1, lv)}));
+  const EX=(GR_TEAM&&GR_TEAM.F===F?GR_TEAM.cards:[]).map(c=>({uid:c.uid, mid:+c.mid, lv:Math.max(+c.lv||1, 1)}));   // 2026-11-17: 話のLvで頭打ちにしない(育てた分がそのまま効く)
   const exOwn=[]; { const MN=id=>(window.Progress&&Progress.mon&&Progress.mon(+id))||null; const ow=new Set(((window.Progress&&Progress.ownedList&&Progress.ownedList())||[]).map(Number));
     for(const e of EX){ let q=MN(e.mid), g=0; while(q&&q.evolves_to!=null&&g++<4){ if(!ow.has(+q.evolves_to)) break; exOwn.push(+q.evolves_to); q=MN(q.evolves_to); } } }
   party.length=0; L.forEach(p=>party.push(p)); EX.forEach(p=>party.push(p));
-  opt.player.owned=[...new Set(L.map(p=>p.mid).concat(F.own||[]).concat(EX.map(p=>p.mid)).concat(exOwn))]; opt.player.fusionKnown=(F.fuse||[]).slice(); opt.player.stageFree=true;
+  opt.player.owned=[...new Set(L.map(p=>p.mid).concat(F.own||[]).concat(EX.map(p=>p.mid)).concat(exOwn))];
+  { const P=window.Progress; if(P&&P.formsList&&P.lineOf&&P.knowsForm&&!(SAVE&&SAVE.unlock&&!SAVE.unlock.evo)){ const lines=new Set(L.concat(EX).map(p=>+P.baseOf(+p.mid))); const add=P.formsList().filter(id=>lines.has(+P.baseOf(+id))&&P.knowsForm(id)); for(const p of L) if(P.evoLv) for(const id of P.lineOf(+p.mid)){ const nd=P.evoLv(id); if(nd&&(+p.lv||1)>=nd) add.push(+id); }   /* 2026-11-17 オーナー「クロッコがLvを超えても進化しなかった」: 連れの子(アレクのクロッコ等)もLvで覚えた進化は使える */ if(add.length) opt.player.owned=[...new Set(opt.player.owned.concat(add))]; } }   // 2026-11-17 オーナー「Lv12でフォルレオンに進化したのに進化できない」: 物語の勝負でも、Lvで覚えた進化の姿は使える opt.player.fusionKnown=(F.fuse||[]).slice(); opt.player.stageFree=true;
   opt.fusionUnlocked=!!(F.fuse&&F.fuse.length); opt.tripleUnlocked=false; opt.startStage=1; opt.alignMinions=true;
   opt.budget=L.reduce((a,p)=>a+grStageOf(p.mid),0)+EX.reduce((a,p)=>a+grStageOf(p.mid),0); const adj=grTeamAdj(F, EX.length);
   const bd=grBoard(F.board,F.look); if(bd){ opt.terrainTheme=bd; opt.backdrop=undefined; }
   if(F.anc){ opt.kind='ancient'; opt.size=9; opt.enemy={party:[{mid:F.anc.mid, lv, fixed:true}], name:'古代テリオン '+monName(F.anc.mid), ancient:{tier:F.anc.tier, minions:(F.anc.minions||[]).slice(), tune:{hp:F.anc.tune.hp*adj, atk:F.anc.tune.atk*adj}}, catchable:!!F.learn};
     opt.recruit=F.learn?(()=>grLearn(F.anc.mid)):(()=>null); }
   else { opt.kind='trainer'; opt.size=9; const ai=Object.assign({},F.ai||{}); ai.hpX=(ai.hpX||1)*adj; ai.atkX=(ai.atkX||1)*adj; opt.enemy={name:F.foe.n, party:F.foe.party.map(x=>Object.assign({lv},x)), ai}; opt.recruit=()=>null; } }
+// 2026-11-17 オーナー「ゲーム中に第何話とか表示しなくて良い」: 場面の頭の「第N話　題」は題だけにする(題も無ければその行ごと出さない)
+function grNoEpNo(lines){ if(!Array.isArray(lines)) return lines; const RX=/^\s*第[0-9０-９一二三四五六七八九十]+話[　\s]*/; const out=[]; for(const L of lines){ if(L&&L.w==null&&typeof L.t==='string'&&RX.test(L.t)){ const t=L.t.replace(RX,''); if(!t) continue; out.push(Object.assign({},L,{t})); } else out.push(L); } return out; }
 // ---- 物語の勝負の前に、自分の仲間から隊に足す子を選ぶ(2026-11-06 オーナー「仲間にしたはずのトールキッドとかが使えないのは意味がない。クロッコ戦とかで使えるようにして」) ----
 //  表の隊(F.me・相棒と その話で必ず出る子)は必ず出る。残りの枠(grTeamSlots)に、仲間(パーティ・牧場)から選ぶ。表の隊と同じ系統の子は出せない。
 //  前に選んだ子(SAVE.grTeam)を はじめから選んでおく。選べる子がいない時は出さない。相手の強さは足した数で少し上がる(grTeamAdj)
@@ -449,9 +638,9 @@ function grPickTeam(s){ const F=s.F; GR_TEAM=null;
       const l=document.createElement('div'); l.style.cssText='font-size:11px;opacity:.8'; l.textContent='Lv'+lv; d.append(im,nm,l); return d; };
     const grid=()=>{ const g=document.createElement('div'); g.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;margin-bottom:12px'; return g; };
     const draw=()=>{ b.textContent='';
-      b.appendChild(h('第'+s.ep+'話の隊')); const g1=grid(); for(const m of fixed) g1.appendChild(card(m,F.lv,false,true)); b.appendChild(g1);
+      b.appendChild(h('いっしょに出る子')); const g1=grid(); const ol=grOwnLv(); for(const m of fixed){ const o=ol(m); g1.appendChild(card(m,o?Math.max(+o.lv||1,F.lv):F.lv,false,true)); } b.appendChild(g1);
       const hh=h('仲間'); const cnt=document.createElement('span'); cnt.textContent=sel.size+' / '+n; hh.appendChild(cnt); b.appendChild(hh);
-      const g2=grid(); for(const c of cand){ const on=sel.has(c.uid); const d=card(c.mid,Math.min(c.lv||1,F.lv),on,false);
+      const g2=grid(); for(const c of cand){ const on=sel.has(c.uid); const d=card(c.mid,c.lv||1,on,false);
         d.onclick=e=>{ e.stopPropagation(); if(sel.has(c.uid)) sel.delete(c.uid); else { if(sel.size>=n){ if(n===1) sel.clear(); else return; } sel.add(c.uid); } draw(); }; g2.appendChild(d); }
       b.appendChild(g2);
       const go=document.createElement('button'); go.textContent='勝負へ'; go.style.cssText='display:block;width:100%;padding:13px 0;border:0;border-radius:999px;background:#2c3e66;color:#fff;font-size:16px;font-weight:800;cursor:pointer';
@@ -472,10 +661,11 @@ async function ep1Open(){ const f=GF(); if(SAVE&&SAVE.flags){ SAVE.flags.g22=1; 
 const GR_MAPJ={oliva_town:'オリーヴァ村', oliva_hill:'オリーブの丘', arcadia:'アルカディアの森', dig:'森の外れの発掘場', facility:'森の奥の施設', nafria:'港町ナフリア', liongate:'獅子門の丘',
   cloudroad:'雲の山道', corinth:'運河の町コリンタ', marble:'大理石の谷', athens:'白い都', crete_maze:'丘の下の迷宮'};
 function grObjText(f){ if(!grOn()) return null; if(GR_RETRY) return 'もう一度、勝負'; const s=grCur(); if(!s) return null; const P=GR_PLAN[s.ep]||{};
+  if(s.kind==='go'){ const h=grNextHop(MAP,s.to); const t=s.wobj||((GR_MAPJ[s.to]||s.to)+'へ'); return (h&&h!==s.to&&!s.wobj)?t+'（'+(GR_MAPJ[h]||h)+'を通って）':t; }
   if(MAP!==s.map) return (P.obj&&s.head)?P.obj:(GR_MAPJ[s.map]||s.map)+'へ';
-  if(s.at&&s.at!=='*'&&!(Array.isArray(s.at)?s.at:[s.at]).includes(AREA)) return s.wobj||P.obj||(s.at+'へ');
+  if(s.at&&s.at!=='*'&&!(Array.isArray(s.at)?s.at:[s.at]).includes(AREA)) return s.wobj||(s.head&&P.obj)||((Array.isArray(s.at)?s.at[0]:s.at)+'へ');
   if(GR_GUIDE&&GR_GUIDE.walk&&GR_GUIDE.id===s.id&&!grGuideNear(s)) return s.wobj||P.obj;
-  return P.obj||'第'+s.ep+'話'; }
+  return P.obj||GR_MAPJ[s.map]||null; }
 
 // ---- 前の版のセーブの移しかえ(2026-11-07 22話版) ----
 //  印: 22話版=flags.g22(ep1Open・skipTo・移しかえで付く) / 23話版(11/04〜11/06)=flags.g23 か 23話版の旗(段 g01_01〜・話のおわり a01〜a23) / それより前の30話の版=どちらも無い(flags.arrived だけ)
@@ -519,10 +709,27 @@ function grMigrate1109(f){ let doneMax=0; for(let i=1;i<=22;i++) if(f['a'+pad2g(
   f.g22c=1; f.g22from1109=doneMax;
   const s=grCur(); if(s&&SAVE.map&&SAVE.map!==s.map){ SAVE.map=s.map; delete SAVE.x; delete SAVE.z; delete SAVE.yaw; }
   if(s&&s.head&&s.at&&s.at!=='*') GR_RESCUE_AT=Array.isArray(s.at)?s.at[0]:s.at; }
+// ---- 2026-11-17 オーナー「毎回戦いが終わったあと、その場から離れ、ワープしている。そこの移動もプレイヤーにさせないと」 ----
+//  地図を移る段(kind:'go')は、ヤマトが自分で歩いて出口を通る。遠い地図へは、出口のつながり(GR_LINKS・regions/*.json の exits と同じ)をたどった次の地図への出口を目的にする。
+//  道すじの出口は、話の旗(need)がまだでも通れる(grExitOk)。船・空の船は白い都・ナフリアの港の出口(regions の exits に足した)
+const GR_LINKS={oliva_town:['oliva_hill'], oliva_hill:['oliva_town','arcadia'], arcadia:['oliva_hill','dig'], dig:['arcadia','facility'], facility:['dig','nafria'],
+  nafria:['liongate','facility','athens'], liongate:['nafria','cloudroad'], cloudroad:['liongate','corinth'], corinth:['marble','cloudroad'], marble:['corinth','athens'],
+  athens:['marble','crete_maze','liongate','oliva_hill'], crete_maze:['athens'], stadium_under:['oliva_hill']};
+function grNextHop(from,to){ if(!from||!to||from===to) return null; const prev={[from]:from}, q=[from];
+  while(q.length){ const c=q.shift(); if(c===to) break; for(const n of GR_LINKS[c]||[]) if(!(n in prev)){ prev[n]=c; q.push(n); } }
+  if(!(to in prev)) return null; let c=to; while(prev[c]!==from) c=prev[c]; return c; }
+function grGoStep(){ const s=typeof grOn==='function'&&grOn()?grCur():null; return s&&s.kind==='go'&&MAP!==s.to?s:null; }
+function grExitTo(to){ const h=grNextHop(MAP,to); return h?(D.exits||[]).find(e=>e.to===h&&!e.todo)||null:null; }
+function grExitOk(e){ const s=grGoStep(); return !!(s&&grNextHop(MAP,s.to)===e.to); }
 // その場所(D.areas の名前)の中の、歩ける所(まん中から外へさがす)
 function grAreaPt(n){ const a=(D.areas||[]).find(a=>a.n===n); if(!a) return null; const c=a.c?[a.c[0],a.c[1]]:a.r?[(a.r[0]+a.r[2])/2,(a.r[1]+a.r[3])/2]:null; if(!c) return null;
   for(let r=0;r<=10;r+=1) for(let i=0;i<(r?12:1);i++){ const t=i/12*Math.PI*2, x=c[0]+Math.cos(t)*r, z=c[1]+Math.sin(t)*r;
-    if(zoneAt(x,z)===n&&walkOK(x,z)&&colFree(x,z,0.4)) return [x,z]; } return null; }
+    if(zoneAt(x,z)===n&&walkOK(x,z)&&grFree(x,z)) return [x,z]; }
+  if(!grChunksReady(c[0],c[1])) return null;   // まわりができるまでは外へ逃がさない(区画が無いだけで「ふさがっている」と見えるため)
+  for(let r=11;r<=26;r+=1) for(let i=0;i<24;i++){ const t=i/24*Math.PI*2, x=c[0]+Math.cos(t)*r, z=c[1]+Math.sin(t)*r; if(walkOK(x,z)&&grFree(x,z)) return [x,z]; }   // その場所が全部ふさがっている時(城あとの坂=劇場の当たり)は、すぐ外の歩ける所
+  return null; }
+// 当たりの外か(当たりのまん中ちょうどは押し出しが効かず「外」に見えるので、少しずらして2か所で見る)
+function grFree(x,z){ return colFree(x+0.013,z+0.011,0.4)&&colFree(x-0.011,z-0.013,0.4); }
 
 // ---- 本体の SC のすぐあとで呼ぶ ----
 function grInit(){ Object.assign(SC,GR_SC);
@@ -531,6 +738,7 @@ function grInit(){ Object.assign(SC,GR_SC);
   if(!TOD.dawn) TOD.dawn=Object.assign({},TOD.morning,{top:'#7d94c2',mid:'#c9bcd0',hor:'#ffd9b8',sunD:[0.7,0.18,0.6],sunC:'#ffc896',sunI:0.62,hS:'#b4bcd8',hI:0.42,fog:'#d8ccd4',expo:0.9,sat:1.05});
   grBuild();
   { const _at=arriveTown; arriveTown=async function(){ await _at(); grArrive(); }; }   // 第1話: 村に下りたら、そのまま続きを流す
-  for(const m of new Set(GR_STEPS.map(s=>s.map))) AREA_RULE[m+':*']=f=>{ const s=grCur(); return (s&&grHere(s))?grRun:null; };
-  window.GR_DBG={ cur:()=>{ const s=grCur(); return s&&{id:s.id,ep:s.ep,map:s.map,at:s.at,kind:s.kind}; }, steps:GR_STEPS, run:()=>grRun(), here:()=>grHere(grCur()), obj:()=>grObjText(GF()), retry:()=>GR_RETRY,
-    skipTo:(ep)=>{ const f=GF(); f.g22=1; f.g22b=1; f.g22c=1; for(const s of GR_STEPS){ if(s.ep>=ep) break; f[s.id]=1; if(s.last) f['a'+pad2g(s.ep)]=1; } f.gr_bond=1; if(ep>4&&SAVE.unlock) SAVE.unlock.evo=true; if(ep>11&&SAVE.unlock) SAVE.unlock.fusion=true; saveGame(); objUpdate(); } }; }
+  for(const m of new Set(GR_STEPS.map(s=>s.map).concat(GR_STEPS.map(s=>s.to).filter(Boolean)))) AREA_RULE[m+':*']=f=>{ const s=grCur(); return (s&&grHere(s))?grRun:null; };
+  window.GR_DBG={ cur:()=>{ const s=grCur(); return s&&{id:s.id,ep:s.ep,map:s.map,at:s.at,kind:s.kind}; }, steps:GR_STEPS, run:()=>grRun(), here:()=>grHere(grCur()), obj:()=>grObjText(GF()), retry:()=>GR_RETRY, art:GR_GUIDE_ART, elly:()=>GR_ELLY, onScreen:(x,z)=>grOnScreen(x,z), auto:(v)=>{ AUTO=v; }, cast:(w,x,z)=>{ const m=grSprite(w); grPlace(m,x,z); return m; },
+    goal:()=>{ const s=grCur(); if(!s||s.kind!=='go') return null; const e=grExitTo(s.to); const w=D.walk||D.bounds, r=e&&e.r, cl=(v,a,b)=>Math.max(a+0.05,Math.min(b-0.05,v)); return {map:MAP,to:s.to,hop:grNextHop(MAP,s.to),r, p:r?[cl(cl((r[0]+r[2])/2,r[0],r[2]),w[0],w[2]),cl(cl((r[1]+r[3])/2,r[1],r[3]),w[1],w[3])]:null}; }, extras:()=>Object.keys(GR_EXM), gnd:(x,z)=>groundAt(x,z), path:(x0,z0,x1,z1)=>grFrPath(x0,z0,x1,z1), areaPt:(n)=>{ delete GR_CASTPT[MAP+':'+n]; return grCastPt(n); }, guide:()=>GR_GUIDE&&{id:GR_GUIDE.id,x:GR_GUIDE.x,z:GR_GUIDE.z,walk:GR_GUIDE.walk,lead:!!GR_GUIDE.lead,mem:Object.fromEntries(Object.entries(GR_GUIDE.mem).map(([k,m])=>[k,[+m.x.toFixed(1),+m.z.toFixed(1)]]))}, st:()=>({TRANS:!!TRANS,STORY:!!STORY,ENC:!!ENC,BRIEF:!!BRIEF,PAUSED:!!PAUSED,EVOFX:!!EVOFX,hero:[HERO.x,HERO.z],ok:D.exits.map(e=>e.to+':'+(e.need||'')+':'+grExitOk(e))}),
+    fuseFx:(id)=>fuseFxShow(id), skipTo:(ep)=>{ const f=GF(); f.g22=1; f.g22b=1; f.g22c=1; for(const s of GR_STEPS){ if(s.ep>=ep) break; f[s.id]=1; if(s.last) f['a'+pad2g(s.ep)]=1; } f.gr_bond=1; if(ep>4&&SAVE.unlock) SAVE.unlock.evo=true; if(ep>11&&SAVE.unlock) SAVE.unlock.fusion=true; saveGame(); objUpdate(); } }; }
