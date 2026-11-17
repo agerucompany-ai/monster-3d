@@ -2126,15 +2126,30 @@ function initActors(){ for(const o of D.npcs){ const g=new THREE.Group(); g.posi
 const ICONS=[];
 function monUpdate(m,dt,now){ const dh=Math.hypot(m.x-HERO.x,m.z-HERO.z); if(!grShown(m.o)){ if(m.inst&&m.inst.root.parent) scene.remove(m.inst.root); return; }   // ---- 物語(gr_story.js): 野生の need/until
   if(!m.want&&dh<26){ m.want=true; monProto(m.o.id).then(g=>{ if(m.dead) return; m.inst=monMake(g); m.inst.root.scale.setScalar(m.o.h); }).catch(()=>{}); }
-  if(!m.inst) return; if(m.gone){ if(m.inst.root.parent) scene.remove(m.inst.root); return; } const vis=dh<(IS_MOBILE?40:60); if(vis!==!!m.inst.root.parent){ if(vis) scene.add(m.inst.root); else scene.remove(m.inst.root); } if(!vis) return;
+  if(!m.inst) return; if(m.gone){ if(m.inst.root.parent) scene.remove(m.inst.root); if(m.bang&&m.bang.parent) scene.remove(m.bang); return; } const vis=dh<(IS_MOBILE?40:60); if(vis!==!!m.inst.root.parent){ if(vis) scene.add(m.inst.root); else scene.remove(m.inst.root); } if(!vis) return;
   let moving=false;
-  if(m.wild){ if(dh<3.2){ m.st='look'; } else if(m.st==='look') { m.st='idle'; m.t=1; }
+  if(m.wild&&wildChaseTick(m,dh,dt)){ moving=true; }
+  else if(m.wild){ if(dh<3.2){ m.st='look'; } else if(m.st==='look') { m.st='idle'; m.t=1; }
     if(m.st==='look'){ const ty=Math.atan2(HERO.x-m.x,HERO.z-m.z); m.yaw+=angD(ty,m.yaw)*Math.min(1,dt*5); }
     else if(m.st==='idle'){ m.t-=dt; if(m.t<=0){ for(let k=0;k<6;k++){ const a=Math.random()*6.28, r=Math.random()*m.o.r; const tx=m.o.x+Math.cos(a)*r, tz=m.o.z+Math.sin(a)*r; if(walkOK(tx,tz)&&(!D.monCol||colFree(tx,tz,0.4))){ m.tx=tx; m.tz=tz; m.st='walk'; m.t=8; break; } } if(m.st==='idle') m.t=1; } }
     else if(m.st==='walk'){ const dx=m.tx-m.x, dz=m.tz-m.z, d=Math.hypot(dx,dz); m.t-=dt; if(d<0.25||m.t<0){ m.st='idle'; m.t=1.5+Math.random()*3.5; } else { const sp=0.95*dt; const nx=m.x+dx/d*sp, nz=m.z+dz/d*sp; if(walkOK(nx,nz)&&(!D.monCol||colFree(nx,nz,0.4))&&Math.hypot(nx-HERO.x,nz-HERO.z)>0.8){ m.x=nx; m.z=nz; moving=true; } else { m.st='idle'; m.t=1; } m.yaw+=angD(Math.atan2(dx,dz),m.yaw)*Math.min(1,dt*6); } } }
   else { if(dh<3) m.yaw+=angD(Math.atan2(HERO.x-m.x,HERO.z-m.z),m.yaw)*Math.min(1,dt*4); }
   const y=groundAt(m.x,m.z); const R=m.inst.root; R.position.set(m.x,y,m.z); R.rotation.y=m.yaw; R.scale.setScalar(m.o.h);
-  if(!IS_MOBILE||((FRAME+(m.x|0))&1)===0) monGait(m.inst,moving?0.95:0,dt*(IS_MOBILE?2:1),m.o.h); blobAt(m.x,y,m.z,m.o.h*0.9); }
+  if(!IS_MOBILE||((FRAME+(m.x|0))&1)===0) monGait(m.inst,moving?(m.st==='chase'?WILD_RUN:0.95):0,dt*(IS_MOBILE?2:1),m.o.h); blobAt(m.x,y,m.z,m.o.h*0.9); }
+// 2026-11-18 オーナー「野生のテリオンが全くでてこない」: 前は野生の子は持ち場をうろうろするだけで、主人公が自分から触らないと勝負にならなかった(案内どおり歩くと一度も会わない)。
+//   近くを通ると「！」を出して走って寄ってくる(主人公の走り 4.4 より遅い 3.0 なので、走れば逃げられる)。村・物語の場面・勝負のすぐあと・古代テリオン/ボス・再戦の子は寄ってこない
+const WILD_SEE=8.5, WILD_GIVEUP=13, WILD_RUN=3.0; let WILD_BANG=null;
+function wildBangTex(){ if(WILD_BANG) return WILD_BANG; const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); x.fillStyle='#fff'; x.strokeStyle='#d33'; x.lineWidth=5; x.beginPath(); x.arc(32,32,27,0,6.29); x.fill(); x.stroke(); x.fillStyle='#d33'; x.font='bold 44px sans-serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText('!',32,34); WILD_BANG=new THREE.CanvasTexture(c); return WILD_BANG; }
+function wildChaseTick(m,dh,dt){ const o=m.o; const can=!o.ancient&&!o.boss&&!m.rematch&&!STORY&&!TRANS&&!ENC&&!BRIEF&&!WORLD.noEnc&&encCool<-2&&grWildOk()&&!inTown(HERO.x,HERO.z);
+  if(m.st!=='chase'){ if(!can||dh>WILD_SEE) return false; m.st='chase'; m.t=0.45; m.yaw=Math.atan2(HERO.x-m.x,HERO.z-m.z);
+    if(!m.bang){ m.bang=new THREE.Sprite(new THREE.SpriteMaterial({map:wildBangTex(),depthTest:false,transparent:true})); m.bang.scale.set(0.55,0.55,1); m.bang.renderOrder=9; } scene.add(m.bang); }
+  const stop=()=>{ m.st='idle'; m.t=2+Math.random()*2; if(m.bang&&m.bang.parent) scene.remove(m.bang); return false; };
+  if(!can||dh>WILD_GIVEUP||Math.hypot(m.x-o.x,m.z-o.z)>o.r+16) return stop();
+  if(m.bang){ m.bang.position.set(m.x,groundAt(m.x,m.z)+o.h*1.7+0.3+Math.abs(Math.sin(NOW*0.012))*0.08,m.z); }
+  const ty=Math.atan2(HERO.x-m.x,HERO.z-m.z); m.yaw+=angD(ty,m.yaw)*Math.min(1,dt*8);
+  if(m.t>0){ m.t-=dt; return false; }   // 「！」のあと少し止まってから走る
+  const sp=WILD_RUN*dt, nx=m.x+Math.sin(ty)*sp, nz=m.z+Math.cos(ty)*sp; if(!walkOK(nx,nz)||(D.monCol&&!colFree(nx,nz,0.4))) return stop();
+  m.x=nx; m.z=nz; return true; }
 function angD(a,b){ let d=a-b; while(d>Math.PI) d-=Math.PI*2; while(d<-Math.PI) d+=Math.PI*2; return d; }
 
 // ---------------------------------------------------------------- 歩ける場所
@@ -3969,7 +3984,7 @@ function grInit(){ Object.assign(SC,GR_SC);
   grBuild();
   { const _at=arriveTown; arriveTown=async function(){ await _at(); grArrive(); }; }   // 第1話: 村に下りたら、そのまま続きを流す
   for(const m of new Set(GR_STEPS.map(s=>s.map).concat(GR_STEPS.map(s=>s.to).filter(Boolean)))) AREA_RULE[m+':*']=f=>{ const s=grCur(); return (s&&grHere(s))?grRun:null; };
-  window.GR_DBG={ cur:()=>{ const s=grCur(); return s&&{id:s.id,ep:s.ep,map:s.map,at:s.at,kind:s.kind}; }, steps:GR_STEPS, run:()=>grRun(), here:()=>grHere(grCur()), obj:()=>grObjText(GF()), retry:()=>GR_RETRY, art:GR_GUIDE_ART, elly:()=>GR_ELLY, onScreen:(x,z)=>grOnScreen(x,z), auto:(v)=>{ AUTO=v; }, cast:(w,x,z)=>{ const m=grSprite(w); grPlace(m,x,z); return m; },
+  window.GR_DBG={ enc:()=>{ const m=MONS.filter(m=>m.wild&&!m.gone).map(m=>({id:m.o.id,d:Math.hypot(m.x-HERO.x,m.z-HERO.z)})).sort((a,b)=>a.d-b.d)[0]; return {noEnc:!!WORLD.noEnc,ENC:!!ENC,STORY:!!STORY,TRANS:!!TRANS,BRIEF:!!BRIEF,encCool,hero:!!READY.hero,town:inTown(HERO.x,HERO.z),wildOk:grWildOk(),near:m}; }, cur:()=>{ const s=grCur(); return s&&{id:s.id,ep:s.ep,map:s.map,at:s.at,kind:s.kind}; }, steps:GR_STEPS, run:()=>grRun(), here:()=>grHere(grCur()), obj:()=>grObjText(GF()), retry:()=>GR_RETRY, art:GR_GUIDE_ART, elly:()=>GR_ELLY, onScreen:(x,z)=>grOnScreen(x,z), auto:(v)=>{ AUTO=v; }, cast:(w,x,z)=>{ const m=grSprite(w); grPlace(m,x,z); return m; },
     goal:()=>{ const s=grCur(); if(!s||s.kind!=='go') return null; const e=grExitTo(s.to); const w=D.walk||D.bounds, r=e&&e.r, cl=(v,a,b)=>Math.max(a+0.05,Math.min(b-0.05,v)); return {map:MAP,to:s.to,hop:grNextHop(MAP,s.to),r, p:r?[cl(cl((r[0]+r[2])/2,r[0],r[2]),w[0],w[2]),cl(cl((r[1]+r[3])/2,r[1],r[3]),w[1],w[3])]:null}; }, extras:()=>Object.keys(GR_EXM), gnd:(x,z)=>groundAt(x,z), path:(x0,z0,x1,z1)=>grFrPath(x0,z0,x1,z1), areaPt:(n)=>{ delete GR_CASTPT[MAP+':'+n]; return grCastPt(n); }, guide:()=>GR_GUIDE&&{id:GR_GUIDE.id,x:GR_GUIDE.x,z:GR_GUIDE.z,walk:GR_GUIDE.walk,lead:!!GR_GUIDE.lead,mem:Object.fromEntries(Object.entries(GR_GUIDE.mem).map(([k,m])=>[k,[+m.x.toFixed(1),+m.z.toFixed(1)]]))}, st:()=>({TRANS:!!TRANS,STORY:!!STORY,ENC:!!ENC,BRIEF:!!BRIEF,PAUSED:!!PAUSED,EVOFX:!!EVOFX,hero:[HERO.x,HERO.z],ok:D.exits.map(e=>e.to+':'+(e.need||'')+':'+grExitOk(e))}),
     fuseFx:(id)=>fuseFxShow(id), skipTo:(ep)=>{ const f=GF(); f.g22=1; f.g22b=1; f.g22c=1; for(const s of GR_STEPS){ if(s.ep>=ep) break; f[s.id]=1; if(s.last) f['a'+pad2g(s.ep)]=1; } f.gr_bond=1; if(ep>4&&SAVE.unlock) SAVE.unlock.evo=true; if(ep>11&&SAVE.unlock) SAVE.unlock.fusion=true; saveGame(); objUpdate(); } }; }
 
