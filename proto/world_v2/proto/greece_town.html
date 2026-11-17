@@ -1135,6 +1135,8 @@ OB.odeon=(o)=>{ const y0=o.y!=null?o.y:G(o.x,o.z), M=T(o.x,y0,o.z,(o.rot||0)*DEG
   P_(rbox(sw+0.4,0.4,1.5,0.06,1),PAL.marble,local(M,0,0.9+wh+0.2,3.6));
   addCol({t:'b',x:o.x,z:o.z+3.6,hw:sw/2,hd:0.7,rot:(o.rot||0)*DEG,top:y0+wh}); addCol({t:'c',x:o.x,z:o.z,r:r0+rows*st+1.4}); };
 // 2026-11-17 白い都の大会の競技場(オーナー「大会も闘技場じゃない」): 石の床・三方の段の客席(座った観客)・北の大きな画面・南の入口の門。南が開いている
+const CROWD_AR=[0.283, 0.367, 0.363, 0.38, 0.327, 0.41, 0.327, 0.387, 0.32, 0.43, 0.423, 0.377, 0.36, 0.367, 0.32, 0.413, 0.283, 0.437, 0.34, 0.35, 0.333, 0.447, 0.317, 0.353, 0.42, 0.317, 0.367, 0.333, 0.39, 0.38, 0.343, 0.317, 0.34, 0.377, 0.367, 0.37, 0.4, 0.353, 0.4, 0.317, 0.4, 0.417, 0.417, 0.3, 0.403, 0.32, 0.39, 0.387], CROWD_MAT=[];
+function crowdMat(i){ if(!CROWD_MAT[i]){ const t=new THREE.TextureLoader().load('../v3/crowd/c'+String(i).padStart(2,'0')+'.webp'); if(THREE.sRGBEncoding) t.encoding=THREE.sRGBEncoding; CROWD_MAT[i]=new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:0.35,depthWrite:true,color:0xf2eee8}); } return CROWD_MAT[i]; }
 OB.arena=(o)=>{ const rot=(o.rot||0)*DEG, hw=o.hw||8, L=o.L||26, rows=o.rows||6, st=o.st||1.1, rh=o.rh||0.45, y0=o.y!=null?o.y:G(o.x,o.z), M=T(o.x,y0,o.z,rot), R=rng(((o.x*13+o.z*7)|0)+11);
   const stone=0xe2d6bf, seat=[0xd9ccb4,PAL.marble2], wall=0xcdbd9f, W=hw+rows*st;
   P_(rbox(2*hw,0.08,L,0.02,1),0xd8cdb6,local(M,0,0.04,0),{ao:y0});   // 床
@@ -1155,10 +1157,12 @@ OB.arena=(o)=>{ const rot=(o.rot||0)*DEG, hw=o.hw||8, L=o.L||26, rows=o.rows||6,
   for(const sx of [-1,1]) P_(rbox(1.0,5.0,1.0,0.06,1),stone,local(M,sx*(hw+0.8),2.5,L/2+0.6),{ao:y0});
   for(const sx of [-1,1]) P_(rbox(0.06,1.6,0.9,0.01,1),0x3f74b0,local(M,sx*(hw+0.8),3.6,L/2+1.12,Math.PI/2));   // 門の上の横木はカメラをさえぎるので無し(柱に旗)
   // 座った観客(段の上・すき間あり)
-  const sit=(lx,lz,ry,y)=>{ _v.set(lx,0,lz).applyMatrix4(M); OB.folk({x:_v.x,z:_v.z,y:y0+y,rot:(ry+(o.rot||0)),sit:1}); };
+  // 2026-11-18 オーナー「観客がちゃっちい・観客は2Dでいい」: 箱の人形をやめ、PixAIで描いた座った観客の絵(v3/crowd 48人)を板にして並べる。少し跳ねて応援する
+  const cg=new THREE.Group(); CUR.extra.push(cg); const cl=[]; CUR.dyn.push({k:'crowd',g:cg,l:cl});
+  const sit=(lx,lz,ry,y)=>{ _v.set(lx,0,lz).applyMatrix4(M); const i=Math.floor(R()*CROWD_AR.length), h=1.25+R()*0.12, sp=new THREE.Sprite(crowdMat(i)); sp.center.set(0.5,0.03); sp.scale.set(h*CROWD_AR[i],h,1); sp.position.set(_v.x,y0+y,_v.z); cg.add(sp); cl.push({sp,y:y0+y,ph:R()*6.28,a:0.02+R()*0.07,w:0.004+R()*0.004}); };
   for(let i=0;i<rows;i++){ const y=rh*(i+1)+0.3, d=hw+(i+0.5)*st;
-    for(let z=-L/2+0.6;z<L/2-0.4;z+=1.05) for(const sx of [-1,1]) if(R()<0.55) sit(sx*d,z,sx>0?-90:90,y);
-    for(let x=-hw+0.6;x<hw-0.4;x+=1.05) if(R()<0.55) sit(x,-L/2-(i+0.5)*st,0,y); }
+    for(let z=-L/2+0.5;z<L/2-0.3;z+=0.88) for(const sx of [-1,1]) if(R()<0.85) sit(sx*d+(R()-0.5)*0.15,z,sx>0?-90:90,y);   // 2026-11-18 満員の客席(台本)
+    for(let x=-hw+0.5;x<hw-0.3;x+=0.88) if(R()<0.85) sit(x,-L/2-(i+0.5)*st+(R()-0.5)*0.15,0,y); }
   // 当たり(段と壁は通れない)
   const col=(lx,lz,bw,bd)=>{ _v.set(lx,0,lz).applyMatrix4(M); addCol({t:'b',x:_v.x,z:_v.z,hw:bw,hd:bd,rot,top:y0+top+1}); };
   for(const sx of [-1,1]) col(sx*(hw+rows*st/2+0.3),-rows*st/2,rows*st/2+0.3,L/2+rows*st/2+0.3);
@@ -2418,7 +2422,7 @@ function frame(now){ requestAnimationFrame(frame); if(PAUSED){ LAST=now; return;
   const _t2=performance.now(); for(const m of MONS) monUpdate(m,dt,now); partnerUpdate(dt); const _t3=performance.now();
   for(const dr of DRONES){ const d=dr.d, t=now/1000*d.sp+dr.ph; let x,z,yaw; if(d.c){ x=d.c[0]+Math.cos(t*6.28)*d.r; z=d.c[1]+Math.sin(t*6.28)*d.r; yaw=-t*6.28; } else { const k=0.5-0.5*Math.cos(t*6.28); x=lerp(d.line[0][0],d.line[1][0],k); z=lerp(d.line[0][1],d.line[1][1],k); yaw=Math.atan2(d.line[1][0]-d.line[0][0],d.line[1][1]-d.line[0][1]); }
     const gy2=G(x,z); dr.g.position.set(x,gy2+Math.min(d.y,4.2)+Math.sin(now*0.003+dr.ph)*0.15,z); dr.g.rotation.set(Math.sin(now*0.002)*0.06,yaw,0); if(Math.hypot(x-HERO.x,z-HERO.z)<40) blobAt(x,gy2,z,0.7); }
-  for(const c of CHUNKS.values()){ if(c.state!==2) continue; for(const o of c.dyn){ if(o.k==='boat'){ o.g.position.y=Math.sin(now*0.0012+o.ph)*0.06; o.g.rotation.z=Math.sin(now*0.0009+o.ph)*0.04; } else if(o.k==='sail') o.g.rotation.z=-now*0.0004; else if(o.k==='hover') o.g.position.y=o.y+Math.sin(now*0.0015)*0.08; else if(o.k==='geyser'){ const k=Math.max(0,Math.sin(now*0.0011+o.ph)); o.g.scale.y=0.05+Math.pow(k,8); o.g.visible=o.g.scale.y>0.07; } else if(o.k==='spin') o.g.rotation.y=now*0.0005*(o.sp||1); } }   // geyser/spin=北欧編(2026-10-27)
+  for(const c of CHUNKS.values()){ if(c.state!==2) continue; for(const o of c.dyn){ if(o.k==='boat'){ o.g.position.y=Math.sin(now*0.0012+o.ph)*0.06; o.g.rotation.z=Math.sin(now*0.0009+o.ph)*0.04; } else if(o.k==='sail') o.g.rotation.z=-now*0.0004; else if(o.k==='hover') o.g.position.y=o.y+Math.sin(now*0.0015)*0.08; else if(o.k==='crowd'){ for(const c of o.l) c.sp.position.y=c.y+Math.max(0,Math.sin(now*c.w+c.ph))*c.a; } else if(o.k==='geyser'){ const k=Math.max(0,Math.sin(now*0.0011+o.ph)); o.g.scale.y=0.05+Math.pow(k,8); o.g.visible=o.g.scale.y>0.07; } else if(o.k==='spin') o.g.rotation.y=now*0.0005*(o.sp||1); } }   // geyser/spin=北欧編(2026-10-27)
   if(AIR){ const t=now*0.000004; AIR.position.set(-260+((t*1000)%1)*520,62,-190); AIR.rotation.y=0; }
   for(let i=blobI;i<BLOBN;i++){ _bm.makeScale(0,0,0); blobs.setMatrixAt(i,_bm); } blobs.instanceMatrix.needsUpdate=true;
   // 粒の中心
