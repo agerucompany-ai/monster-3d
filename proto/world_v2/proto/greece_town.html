@@ -112,7 +112,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 /* 向き: 絵ごとの向き(v3/portraits/index.json の facing)と置く側から --fx(1/-1)を決める。左の枠=右向き、右の枠=左向き */
 .stP{transform:scaleX(var(--fx,1))}.stP.dim{transform:scaleX(var(--fx,1))}
 /* 2026-11-13 オーナー「ヤマトがぱかぱか出る」: 話す人が替わるたびに縮んだり戻ったりしない。歩ける場面(field)の会話は立ち絵を出さず箱だけ(ポケモン式) */
-#st.field .stP{display:none}
+#st.field:not(.trio) .stP{width:min(56vw,390px);height:min(56vw,390px)}   /* 2026-11-18 オーナー「物語シーンで必ず人登場させて。下の会話ボックスだけだとよく分からない」: 歩く場面の会話でも話す人の立ち絵を出す(前は display:none) */
 #stR2{right:max(-16vw,calc(50% - 560px));bottom:calc(132px + env(safe-area-inset-bottom));width:min(58vw,396px);height:min(58vw,396px);filter:brightness(.72) drop-shadow(0 6px 14px rgba(0,0,0,.25))}
 /* 3人の場面: 3人を横に並べ直す(顔は重ねない。重なるのは体の端だけ)。話している人を前に出して明るく、ほかは少し下げて暗く */
 #st.trio .stP{--wc:min(100vw,760px);width:calc(var(--wc)*.46);height:calc(var(--wc)*.46);right:auto;bottom:calc(112px + env(safe-area-inset-bottom));transition:opacity .2s,transform .25s,filter .2s,left .25s}
@@ -235,7 +235,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 <script src="lib/v83char.js"></script>
 <script src="../chars/viewer/hero_v2.js"></script>
 <script src="../v3/chars/char_v3.js"></script>
-<script src="lib/progress.js"></script>
+<script src="lib/progress.js?v=20261118"></script>
 <script src="lib/pay.js"></script>
 <script>
 (function(){
@@ -2109,7 +2109,7 @@ function npcMesh(o){ const B=new Builder(); CUR={B,cols:[],dyn:[],extra:[]}; con
   if(o.trainer){ P_(rbox(0.26,0.3,0.12,0.05,1),0x6a4a32,T(0,h*0.55,-0.22)); }
   CUR=null; const g=new THREE.Group(); B.build(g); return g; }
 function makeLabel(text){ const e=document.createElement('div'); e.className='lbl'; e.textContent=text; document.body.appendChild(e); return e; }
-const WILD_EXTRA=1;   // 野生の子を何倍に増やすか(1=2倍)
+const WILD_EXTRA=2;   // 野生の子を何倍に増やすか(1=2倍・2026-11-18 オーナー「野生もどんどん出して」で 2=3倍)
 function wildDupPlace(){ if(typeof D==='undefined'||!D||!D.spawn) return; for(const m of MONS){ if(!m.pend) continue; const o=m.o; for(let t=0;t<10;t++){ const a=Math.random()*6.28, rr=2.5+Math.random()*3.5, x=o.x+Math.cos(a)*rr, z=o.z+Math.sin(a)*rr;   // 増やした野生の子の置き場所: 歩ける所・壁に触れない所・出入り口から4以上
     try{ if(walkOK(x,z)&&colFree(x,z,0.5)&&Math.hypot(x-D.spawn[0],z-D.spawn[1])>4){ o.x=x; o.z=z; m.x=m.tx=x; m.z=m.tz=z; m.pend=false; m.gone=false; break; } }catch(e){} } } }
 setInterval(wildDupPlace, 1500);
@@ -2138,9 +2138,9 @@ function monUpdate(m,dt,now){ const dh=Math.hypot(m.x-HERO.x,m.z-HERO.z); if(!gr
   if(!IS_MOBILE||((FRAME+(m.x|0))&1)===0) monGait(m.inst,moving?(m.st==='chase'?WILD_RUN:0.95):0,dt*(IS_MOBILE?2:1),m.o.h); blobAt(m.x,y,m.z,m.o.h*0.9); }
 // 2026-11-18 オーナー「野生のテリオンが全くでてこない」: 前は野生の子は持ち場をうろうろするだけで、主人公が自分から触らないと勝負にならなかった(案内どおり歩くと一度も会わない)。
 //   近くを通ると「！」を出して走って寄ってくる(主人公の走り 4.4 より遅い 3.0 なので、走れば逃げられる)。村・物語の場面・勝負のすぐあと・古代テリオン/ボス・再戦の子は寄ってこない
-const WILD_SEE=8.5, WILD_GIVEUP=13, WILD_RUN=3.0; let WILD_BANG=null;
+const WILD_SEE=10, WILD_GIVEUP=15, WILD_RUN=3.0; let WILD_BANG=null;
 function wildBangTex(){ if(WILD_BANG) return WILD_BANG; const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); x.fillStyle='#fff'; x.strokeStyle='#d33'; x.lineWidth=5; x.beginPath(); x.arc(32,32,27,0,6.29); x.fill(); x.stroke(); x.fillStyle='#d33'; x.font='bold 44px sans-serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText('!',32,34); WILD_BANG=new THREE.CanvasTexture(c); return WILD_BANG; }
-function wildChaseTick(m,dh,dt){ const o=m.o; const can=!o.ancient&&!o.boss&&!m.rematch&&!STORY&&!TRANS&&!ENC&&!BRIEF&&!WORLD.noEnc&&encCool<-2&&grWildOk()&&!inTown(HERO.x,HERO.z);
+function wildChaseTick(m,dh,dt){ const o=m.o; const can=!o.ancient&&!o.boss&&!m.rematch&&!STORY&&!TRANS&&!ENC&&!BRIEF&&!WORLD.noEnc&&encCool<-2&&!encBusy()&&grWildOk()&&!inTown(HERO.x,HERO.z);
   if(m.st!=='chase'){ if(!can||dh>WILD_SEE) return false; m.st='chase'; m.t=0.45; m.yaw=Math.atan2(HERO.x-m.x,HERO.z-m.z);
     if(!m.bang){ m.bang=new THREE.Sprite(new THREE.SpriteMaterial({map:wildBangTex(),depthTest:false,transparent:true})); m.bang.scale.set(0.55,0.55,1); m.bang.renderOrder=9; } scene.add(m.bang); }
   const stop=()=>{ m.st='idle'; m.t=2+Math.random()*2; if(m.bang&&m.bang.parent) scene.remove(m.bang); return false; };
@@ -2178,6 +2178,9 @@ cv.addEventListener('pointerup',pend); cv.addEventListener('pointercancel',pend)
 // ---------------------------------------------------------------- カメラ(少し後ろ上から、ゆっくり追う)
 // 固定の斜め見下ろし(北向き・回らない)。主人公を少し遅れて追うだけ
 const CAM={yaw:0,yawT:0,pitch:45*DEG,dist:27,tx:0,ty:3,tz:19,fixed:null,lead:0};
+// 進む向きが +z の地図(村→丘→森、施設→港町→獅子門、雲の道→コリントス→大理石): 出口と着く所の向きをそろえ、進む先がいつも画面の上になるようカメラを反対側に置く
+const CAM_FLIP={oliva_town:1, oliva_hill:1, oliva_maze:0, nafria:1, corinth:1};
+function camFlip(){ return !!(typeof D!=='undefined'&&D&&(D.camFlip!=null?D.camFlip:CAM_FLIP[MAP])&&!(CAM.lv&&CAM.vk>0.01)); }
 function camDist(){ return camera.aspect<1?27:32; }
 function camFov(port){ const cb=typeof D!=='undefined'&&D&&D.cam; return cb&&cb.fov?(port?cb.fov:(cb.fovW||cb.fov)):(port?34:26); }   // 地図ごとの画角(D.cam.fov/fovW)。白い都は少し広く撮って通りの両側の建物まで入れる(2026-11-17)
 function camUpdate(dt){ if(CAM.fixed){ const f=CAM.fixed; camera.position.set(f[0],f[1],f[2]); camera.lookAt(f[3],f[4],f[5]); return; }
@@ -2189,8 +2192,9 @@ function camUpdate(dt){ if(CAM.fixed){ const f=CAM.fixed; camera.position.set(f[
   if(Math.abs(camera.fov-camFov(camera.aspect<1))>0.01) resize();
   const cb=D&&D.cam, bd=cb?(camera.aspect<1?cb.dist:(cb.distW||cb.dist)):camDist(), bp=cb?cb.pitch*DEG:CAM.pitch;
   const d=CAM.dist=lerp(bd,lv.dist||bd,vk), p=lerp(bp,(lv.pitch||45)*DEG,vk); const ah=camera.aspect<1?1.6:0.8;   // 主人公を画面の少し下に置く(進む先=北を広く)
-  const fx=CAM.tx, fz=CAM.tz-ah-vk*(lv.ahead||0), fy=CAM.ty+0.6+vk*(lv.yOff||0);
-  camera.position.set(fx,fy+Math.sin(p)*d,fz+Math.cos(p)*d); camera.lookAt(fx,fy,fz);
+  const fl=camFlip()?-1:1; CAM.yaw=fl<0?Math.PI:0;   // 2026-11-18 オーナー「上に進んだら、画面の下からマップが広がるはず」: 物語で進む向きが南(+z)の地図は、カメラを北から見下ろす(進む先=画面の上)
+  const fx=CAM.tx, fz=CAM.tz-fl*(ah+vk*(lv.ahead||0)), fy=CAM.ty+0.6+vk*(lv.yOff||0);
+  camera.position.set(fx,fy+Math.sin(p)*d,fz+fl*Math.cos(p)*d); camera.lookAt(fx,fy,fz);
   POST.U.uFocus.value=d; POST.U.uDof.value=(cb&&cb.dof!=null?cb.dof:1)*(1-vk*0.9); }
 
 // ---------------------------------------------------------------- 時間帯(朝・昼・夕)
@@ -2276,7 +2280,9 @@ let ENC=null, encCool=0;
 function loadScript(src){ return new Promise((res,rej)=>{ const e=document.createElement('script'); e.src=src; e.onload=res; e.onerror=rej; document.head.appendChild(e); }); }
 function placeAt(x,z){ if(TER.streamQ(x,z)[0]<8) return 'stream'; if(TER.coastD(x,z)<14) return 'seaside'; for(const e of D.grass.tall){ if(inEll(x,z,[e[0],e[1],e[2]+2,e[3]+2])<1) return 'meadow'; } if(x>-34&&x<46&&z>23&&z<50) return 'olive'; return 'meadow'; }
 function inTown(x,z){ if(!D) return true; if(D.quiet) return D.quiet.some(r=>x>r[0]&&x<r[2]&&z>r[1]&&z<r[3]); return !D.nature; }   // 街のマップは全部が静域。quiet(矩形の列)があればその中だけ静域(アテネ・クレタ 2026-10-25)
-function encounterCheck(dt){ encCool-=dt; if(WORLD.noEnc||ENC||STORY||TRANS||BRIEF||encCool>0||!READY.hero) return; const town=inTown(HERO.x,HERO.z);
+// 2026-11-18 オーナー「進まない・バトルでまた動かなくなった」: 物語の段の合間(grRun)・調べる場所・演出(進化/仲間/融合)・物語の行き先に着いた所では勝負を始めない(物語と勝負が重なって止まっていた)
+function encBusy(){ if(GR_RUN||SPOT_BUSY||EVOFX||PAUSED||document.getElementById('crewFx')||document.getElementById('evoFx')||document.getElementById('fuseFx')) return true; try{ const s=grCur(); if(s&&s.map===MAP&&s.at&&s.at!=='*'&&grHere(s)) return true; }catch(e){} return false; }
+function encounterCheck(dt){ encCool-=dt; if(WORLD.noEnc||ENC||STORY||TRANS||BRIEF||encCool>0||!READY.hero||encBusy()) return; const town=inTown(HERO.x,HERO.z);
   if(!town) for(const m of MONS){ if(!m.wild||!m.inst||m.gone||m.rematch||!grShown(m.o)||(!(m.o.ancient||m.o.boss)&&!grWildOk())) continue; if(Math.hypot(m.x-HERO.x,m.z-HERO.z)<(m.o.ancient||m.o.boss?2.8:1.5)){ startEncounter({type:'wild',m}); return; } }
   if(!chasing()) for(const n of NPCS){ if(!n.rig||!trainerLive(n)||!npcShown(n)) continue; const dn=Math.hypot(n.x-HERO.x,n.z-HERO.z); if(n.loseCool){ if(dn>4.2) n.loseCool=false; continue; } if(dn<3.4){ startEncounter({type:'trainer',n}); return; } } }   // ---- 物語(gr_story.js): TRAINER_RULE・負けたら一度はなれるまで勝負しない
 async function startEncounter(e){ ENC=e; BGM.bt=bgmBattleTrack(e); BGM.res=false; bgmMoodReset(); AUTO=null; IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; enterEl.classList.remove('on');
@@ -2323,7 +2329,7 @@ function endEncounter(e,res){ BGM.res=false; if(res&&res.result==='quit'){ WORLD
       e.m.rematch=true;   // 勝ったあとも同じ場所に残る(再戦・覚えたあとも)
       flag(fk); if(first&&e.m.o.after&&SC[e.m.o.after]) after=e.m.o.after; } if(!win&&gr&&gr.after) after=gr.after;   // 物語(旗・あとの場面)は初めて勝った時だけ   // 古代テリオン・ボスは認められた(勝った)ら広間からいなくなる
     const dx=HERO.x-e.m.x, dz=HERO.z-e.m.z, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*1.6,HERO.z+dz/L*1.6); }
-  else if(e.m){ if(res&&(res.result==='win'||res.result==='draw'||res.result==='flee')){ e.m.gone=true; if(e.m.inst&&e.m.inst.root.parent) scene.remove(e.m.inst.root); setTimeout(()=>{ e.m.gone=false; e.m.x=e.m.o.x; e.m.z=e.m.o.z; },30000); }   // 2026-11-16 また出るまで 60秒→30秒(レベル上げしやすく)
+  else if(e.m){ if(res&&(res.result==='win'||res.result==='draw'||res.result==='flee')){ e.m.gone=true; if(e.m.inst&&e.m.inst.root.parent) scene.remove(e.m.inst.root); setTimeout(()=>{ e.m.gone=false; e.m.x=e.m.o.x; e.m.z=e.m.o.z; },15000);   /* 2026-11-18 倒した子は15秒で戻る(前は30秒) */ }   // 2026-11-16 また出るまで 60秒→30秒(レベル上げしやすく)
     const dx=HERO.x-e.m.x, dz=HERO.z-e.m.z, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*1.2,HERO.z+dz/L*1.2); }
   if(e.n){ if(win&&!(gr&&gr.keep)&&!e.n.stub){ e.n.beaten=true; e.n.o.line=e.n.o.lineAfter||'……'; } if(!e.n.stub){ const dx=HERO.x-e.n.x, dz=HERO.z-e.n.z, L=Math.hypot(dx,dz)||1; moveHero(HERO.x+dx/L*1.5,HERO.z+dz/L*1.5); } }   // 仮の相手(地図が無い間の代わり)の時は押し戻さない(置き場所に残って次の段へ)
   if(HERO.hv&&win) HERO.hv.play('Cheer',0.15);
@@ -2481,7 +2487,7 @@ async function loadMap(id,at,pos){ const t0=performance.now();
   // 地下(迷宮)は暗い時間帯 tod:'cave' に固定して朝昼夕のボタンを隠す。外へ出たら元の時間帯へ
   if(D.tod0===undefined) D.tod0=D.tod||null; { const tr=storyOn()&&MAP_TOD_RULE[MAP]&&MAP_TOD_RULE[MAP](SAVE.flags); D.tod=tr||D.tod0; }   // ---- 物語(gr_story.js): 地図の時間を旗で(MAP_TOD_RULE)
   { const todEl=document.getElementById('tod'); if(D.tod){ if(!TODPREV) TODPREV=(!['morning','noon','evening'].includes(TODN)?'noon':TODN); setTime(D.tod,true); todEl.style.display='none'; } else { if(TODPREV||!['morning','noon','evening'].includes(TODN)){ setTime(TODPREV||'noon',true); TODPREV=null; } todEl.style.display=''; } if(PETALS) PETALS.visible=!D.tod; }
-  TER=makeTerrain(D); initChunks(); buildWaters(); buildClouds(); if(!AIR) buildFar(); initActors(); await briefGuides();
+  TER=makeTerrain(D); initChunks(); buildWaters(); buildClouds(); if(!AIR) buildFar(); initActors();   // 2026-11-18 オーナー「案内役の人もいらない」: 出口の手前の「案内」の人(briefGuides)は置かない。土地の案内は地図の「盤」から
   for(const n of NPCS) if(SAVE&&(SAVE.flags[npcKey(n)]||SAVE.flags['beat_'+n.o.n])){ n.beaten=true; if(n.o.lineAfter) n.o.line=n.o.lineAfter; }
   const p=pos||(D.arrive&&D.arrive[at])||D.spawn; HERO.x=p[0]; HERO.z=p[1]; HERO.yaw=p[2]; HERO.speed=0; HERO.dir=null; CAM.tx=HERO.x; CAM.tz=HERO.z;
   for(const c of CHUNKS.values()){ if(c.state===0&&chunkDist(c,HERO.x,HERO.z)<22){ const it=buildChunk(c); while(!it.next().done){} } }
@@ -3609,27 +3615,25 @@ function grLabel(m,txt,arrowOK){ const W=innerWidth, H=innerHeight, v=new THREE.
   const cx=W/2, cy=H/2, a=Math.atan2(sy-cy,sx-cx), k=Math.min((W/2-60)/Math.abs(Math.cos(a)||1e-6),(H/2-90)/Math.abs(Math.sin(a)||1e-6));
   const ar=['→','↘','↓','↙','←','↖','↑','↗'][((Math.round(a/(Math.PI/4))%8)+8)%8];
   m.lbl.textContent=txt+' '+ar; m.lbl.style.left=(cx+Math.cos(a)*k)+'px'; m.lbl.style.top=(cy+Math.sin(a)*k+12)+'px'; }
-function grCastTick(s){ const ellyF=grEllyWith(s); const away=!!(s&&!s.wobj&&s.at&&s.at!=='*'&&s.map===MAP&&!grHere(s));   // 2026-11-17 その場所(大競技場など)に着くまでは、話す人を手前に出さない(着いた所で出す)
-  const need=s&&s.map===MAP&&!away?grWho(s).filter(w=>!(w==='elly'&&ellyF)):[];
-  let g=GR_GUIDE; if(g&&(g.map!==MAP||!s||(away&&!g.walk))) { grGuideDrop(); g=null; }
-  if(s&&s.wobj&&s.map===MAP){   // 歩く段: 行き先に立たせる(話す人がいなければ誰も立たせない)
-    if(g&&g.id!==s.id){ const at=Array.isArray(s.at)?s.at[0]:s.at; const pt=grCastPt(at);
-      const pv=GR_STEPS[GR_STEPS.indexOf(s)-1], pw=pv&&pv.ep===s.ep?grWho(pv):[];
-      if(pt&&need.some(w=>g.mem[w]&&pw.includes(w)&&Math.hypot(HERO.x-g.mem[w].x,HERO.z-g.mem[w].z)<8)){   // 2026-11-15 さっき話した人は消さず、先を歩いて行き先へ連れていく
-        for(const k of Object.keys(g.mem)) if(!need.includes(k)){ grSpriteDrop(g.mem[k]); delete g.mem[k]; }
-        g.id=s.id; g.walk=true; g.lead=true; g.x=pt[0]; g.z=pt[1]; g.stk=0; if(g.mk) scene.remove(g.mk); g.mk=grMark(); }
-      else { grGuideDrop(); g=null; } }
-    if(!g&&need.length){ const at=Array.isArray(s.at)?s.at[0]:s.at; const pt=grCastPt(at); if(!pt) return;
-      g=GR_GUIDE={id:s.id,map:MAP,x:pt[0],z:pt[1],walk:true,mem:{}}; window.GR_GUIDE=g; g.mk=grMark(); } }
-  else if(g){ g.walk=false; g.id=s?s.id:null; if(g.mk){ scene.remove(g.mk); g.mk=null; } }
-  else if(need.length){ const a=Math.atan2(HERO.x-camera.position.x,HERO.z-camera.position.z); g=GR_GUIDE={id:s.id,map:MAP,x:HERO.x+Math.sin(a)*2.4,z:HERO.z+Math.cos(a)*2.4,walk:false,mem:{}}; window.GR_GUIDE=g; }   // 2026-11-17 カメラから見てヤマトの向こう(顔が見える)
-  if(!g) return;
-  need.forEach((w,i)=>{ if(g.mem[w]) return; const m=g.mem[w]=grSprite(w); const n=Object.keys(g.mem).length-1, off=(n%2?1:-1)*Math.ceil(n/2)*0.95; grPlace(m,g.x+off,g.z+(n?0.3:0)); });
-  if(g.walk&&!g.lead&&s&&s.wobj&&g.id===s.id&&(!GR_CASTPT[MAP+':'+(Array.isArray(s.at)?s.at[0]:s.at)]||!grFree(g.x,g.z))){ const at=Array.isArray(s.at)?s.at[0]:s.at, pt=grCastPt(at); if(pt&&(pt[0]!==g.x||pt[1]!==g.z)&&(GR_CASTPT[MAP+':'+at]||!grFree(g.x,g.z))){ g.x=pt[0]; g.z=pt[1]; Object.values(g.mem).forEach((m,n)=>grPlace(m,g.x+(n%2?1:-1)*Math.ceil(n/2)*0.95,g.z+(n?0.3:0))); } }   // 当たりの中に立っていた・まわりの区画ができる前に決めた所だったら、歩いて行ける本来の所へ
-  if(g.lead) grLeadTick(g);
-  const first=g.mem[Object.keys(g.mem)[0]];
-  if(g.mk&&first){ g.mk.position.set(first.x,first.grp.position.y+first.h+0.35+Math.sin(performance.now()/260)*0.08,first.z); g.mk.visible=!STORY; }
-  Object.values(g.mem).forEach((m,i)=>grLabel(m,GR_GUIDE_ART[m.who].n,g.walk&&i===0)); }
+// 2026-11-18 オーナー「案内役の人もいらない。おくのなら会話が必要」: 話の場面(STORY・grRun の間)だけ人を立たせる。歩く段で行き先に人を立たせて先導させるのはやめ、行き先は黄色の印だけ。
+//   場面が終わったら立たせた人は消す(話しかけても何も言わない人を残さない)
+function grCastTick(s){ const ellyF=grEllyWith(s);
+  const live=!!((STORY||GR_RUN)&&s&&s.map===MAP&&grHere(s));
+  const need=live?grWho(s).filter(w=>!(w==='elly'&&ellyF)):[];
+  let g=GR_GUIDE; if(g&&(g.map!==MAP||!need.length)){ grGuideDrop(); g=null; }
+  grDestTick(s,live);
+  if(!need.length) return;
+  if(!g){ const a=Math.atan2(HERO.x-camera.position.x,HERO.z-camera.position.z); g=GR_GUIDE={id:s.id,map:MAP,x:HERO.x+Math.sin(a)*2.4,z:HERO.z+Math.cos(a)*2.4,walk:false,mem:{}}; window.GR_GUIDE=g; }   // カメラから見てヤマトの向こう(顔が見える)
+  g.id=s.id; for(const k of Object.keys(g.mem)) if(!need.includes(k)){ grSpriteDrop(g.mem[k]); delete g.mem[k]; }
+  need.forEach(w=>{ if(g.mem[w]) return; const m=g.mem[w]=grSprite(w); const n=Object.keys(g.mem).length-1, off=(n%2?1:-1)*Math.ceil(n/2)*0.95; grPlace(m,g.x+off,g.z+(n?0.3:0)); });
+  Object.values(g.mem).forEach(m=>grLabel(m,GR_GUIDE_ART[m.who].n,false)); }
+// 歩く段の行き先の印(人の代わり)。画面の外なら矢印で向き
+let GR_DEST=null;
+function grDestTick(s,live){ const at=s&&s.wobj&&s.map===MAP&&!live&&!grHere(s)?(Array.isArray(s.at)?s.at[0]:s.at):null; const pt=at?grCastPt(at):null;
+  if(!pt||ENC){ if(GR_DEST){ scene.remove(GR_DEST.mk); GR_DEST.lbl.remove(); GR_DEST=null; } return; }
+  if(!GR_DEST){ GR_DEST={mk:grMark(),lbl:makeLabel(''),x:pt[0],z:pt[1],h:1.4,grp:{position:{y:0}}}; GR_DEST.mk.scale.set(0.8,0.8,1); }
+  const d=GR_DEST; d.x=pt[0]; d.z=pt[1]; const y=groundAt(d.x,d.z); d.grp.position.y=y; d.mk.position.set(d.x,y+1.9+Math.sin(performance.now()/260)*0.12,d.z); d.mk.visible=!STORY&&!TRANS;
+  grLabel(d,'行き先',true); }
 function grMark(){ const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); x.fillStyle='#ffd23a'; x.strokeStyle='#5a3a00'; x.lineWidth=5; x.beginPath(); x.moveTo(8,14); x.lineTo(56,14); x.lineTo(32,54); x.closePath(); x.stroke(); x.fill();
   const mk=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false,depthWrite:false})); mk.scale.set(0.5,0.5,1); mk.renderOrder=999; scene.add(mk); return mk; }
 // 先を歩く: ヤマトが離れたら立ち止まって待つ。道がふさがって進めない時は行き先へ移る
@@ -3748,7 +3752,7 @@ function crewFxShow(who){ const A=GR_GUIDE_ART[who]; if(!A) return; EVOFX=true; 
   const t0=performance.now(); const close=e=>{ if(e) e.stopPropagation(); if(performance.now()-t0<3000) return; W.classList.remove('on'); setTimeout(()=>{ W.remove(); EVOFX=false; PAUSED=wasP; LAST=performance.now(); },360); };
   for(const ev of ['pointerdown','touchstart']) W.addEventListener(ev,e=>e.stopPropagation()); W.addEventListener('click',close); }
 // ---- 2026-11-17 オーナー「大会も闘技場じゃない」: 大会の間(10話の受付〜12話のおわり)は、大競技場に出場者が立っている(話す時は GR_GUIDE の方が前に出る) ----
-const GR_EXTRA=[{map:'athens', from:'g10_03', until:'a10', who:[['tarik',38.5,-61]]}, {map:'athens', from:'g10_03', until:'a11', who:[['hao',49.5,-61]]}, {map:'athens', from:'g10_03', until:'a12', who:[['dimi',50,-75.5]]}];   // 大競技場(regions/athens.json の arena 44,-68)の床のはし
+const GR_EXTRA=[];   // 2026-11-18 オーナー「おくのなら会話が必要」: 話しかけても何も言わない立ち人(大競技場のタリク・ハオ・レン)はやめた   // 大競技場(regions/athens.json の arena 44,-68)の床のはし
 const GR_EXM={};
 function grExtrasTick(s){ const f=GF(); const idx=s?GR_STEPS.indexOf(s):-1;
   for(const E of GR_EXTRA){ const i0=GR_STEPS.findIndex(x=>x.id===E.from);
@@ -3768,7 +3772,7 @@ function grGoMarkTick(){ const s=grGoStep(), e=s&&!ENC?grExitTo(s.to):null;
   grLabel(g,(GR_MAPJ[e.to]||e.to)+'へ',true); }
 function grGuideTick(){ try{ if(!SAVE||!HERO) return; const s=grCur(); grCrewTick(s); grCastTick(s); grEllyTick(s); grGoMarkTick(); grExtrasTick(s);
   if(GR_GUIDE) Object.values(GR_GUIDE.mem).forEach(grFace); grFace(GR_ELLY);
-  const g=GR_GUIDE; if(s&&g&&g.walk&&g.id===s.id&&!STORY&&!TRANS&&!ENC&&!GR_RUN&&grHere(s)) grRun(); }catch(e){ console.warn('grGuide',e&&e.message); } }
+  if(s&&s.wobj&&!STORY&&!TRANS&&!ENC&&!GR_RUN&&!SPOT_BUSY&&grHere(s)) grRun(); }catch(e){ console.warn('grGuide',e&&e.message); } }
 setInterval(grGuideTick,50);
 async function grRun(){ if(GR_RUN) return; GR_RUN=true;
   try{ for(let g=0;g<400;g++){ const s=grCur(); if(!s||!grHere(s)||STORY||TRANS||ENC) break; const ok=await grStep(s); if(!ok) break;
@@ -3984,7 +3988,7 @@ function grInit(){ Object.assign(SC,GR_SC);
   grBuild();
   { const _at=arriveTown; arriveTown=async function(){ await _at(); grArrive(); }; }   // 第1話: 村に下りたら、そのまま続きを流す
   for(const m of new Set(GR_STEPS.map(s=>s.map).concat(GR_STEPS.map(s=>s.to).filter(Boolean)))) AREA_RULE[m+':*']=f=>{ const s=grCur(); return (s&&grHere(s))?grRun:null; };
-  window.GR_DBG={ enc:()=>{ const m=MONS.filter(m=>m.wild&&!m.gone).map(m=>({id:m.o.id,d:Math.hypot(m.x-HERO.x,m.z-HERO.z)})).sort((a,b)=>a.d-b.d)[0]; return {noEnc:!!WORLD.noEnc,ENC:!!ENC,STORY:!!STORY,TRANS:!!TRANS,BRIEF:!!BRIEF,encCool,hero:!!READY.hero,town:inTown(HERO.x,HERO.z),wildOk:grWildOk(),near:m}; }, cur:()=>{ const s=grCur(); return s&&{id:s.id,ep:s.ep,map:s.map,at:s.at,kind:s.kind}; }, steps:GR_STEPS, run:()=>grRun(), here:()=>grHere(grCur()), obj:()=>grObjText(GF()), retry:()=>GR_RETRY, art:GR_GUIDE_ART, elly:()=>GR_ELLY, onScreen:(x,z)=>grOnScreen(x,z), auto:(v)=>{ AUTO=v; }, cast:(w,x,z)=>{ const m=grSprite(w); grPlace(m,x,z); return m; },
+  window.GR_DBG={ noFace:()=>{ const o={}; for(const s of GR_STEPS){ const L=(s.kind==='scene'?(GR_SC[s.key]||SC[s.key]):null)||[]; for(const x of L){ if(!x||!x.w||!x.t||x.w==='partner'||x.np) continue; if(!pSrc(x.w,x.f||'normal')){ const k=x.w+'/'+(x.n||''); o[k]=(o[k]||0)+1; } } } return o; }, enc:()=>{ const m=MONS.filter(m=>m.wild&&!m.gone).map(m=>({id:m.o.id,d:Math.hypot(m.x-HERO.x,m.z-HERO.z)})).sort((a,b)=>a.d-b.d)[0]; return {noEnc:!!WORLD.noEnc,ENC:!!ENC,STORY:!!STORY,TRANS:!!TRANS,BRIEF:!!BRIEF,encCool,hero:!!READY.hero,town:inTown(HERO.x,HERO.z),wildOk:grWildOk(),near:m}; }, cur:()=>{ const s=grCur(); return s&&{id:s.id,ep:s.ep,map:s.map,at:s.at,kind:s.kind}; }, steps:GR_STEPS, run:()=>grRun(), here:()=>grHere(grCur()), obj:()=>grObjText(GF()), retry:()=>GR_RETRY, art:GR_GUIDE_ART, elly:()=>GR_ELLY, onScreen:(x,z)=>grOnScreen(x,z), auto:(v)=>{ AUTO=v; }, cast:(w,x,z)=>{ const m=grSprite(w); grPlace(m,x,z); return m; },
     goal:()=>{ const s=grCur(); if(!s||s.kind!=='go') return null; const e=grExitTo(s.to); const w=D.walk||D.bounds, r=e&&e.r, cl=(v,a,b)=>Math.max(a+0.05,Math.min(b-0.05,v)); return {map:MAP,to:s.to,hop:grNextHop(MAP,s.to),r, p:r?[cl(cl((r[0]+r[2])/2,r[0],r[2]),w[0],w[2]),cl(cl((r[1]+r[3])/2,r[1],r[3]),w[1],w[3])]:null}; }, extras:()=>Object.keys(GR_EXM), gnd:(x,z)=>groundAt(x,z), path:(x0,z0,x1,z1)=>grFrPath(x0,z0,x1,z1), areaPt:(n)=>{ delete GR_CASTPT[MAP+':'+n]; return grCastPt(n); }, guide:()=>GR_GUIDE&&{id:GR_GUIDE.id,x:GR_GUIDE.x,z:GR_GUIDE.z,walk:GR_GUIDE.walk,lead:!!GR_GUIDE.lead,mem:Object.fromEntries(Object.entries(GR_GUIDE.mem).map(([k,m])=>[k,[+m.x.toFixed(1),+m.z.toFixed(1)]]))}, st:()=>({TRANS:!!TRANS,STORY:!!STORY,ENC:!!ENC,BRIEF:!!BRIEF,PAUSED:!!PAUSED,EVOFX:!!EVOFX,hero:[HERO.x,HERO.z],ok:D.exits.map(e=>e.to+':'+(e.need||'')+':'+grExitOk(e))}),
     fuseFx:(id)=>fuseFxShow(id), skipTo:(ep)=>{ const f=GF(); f.g22=1; f.g22b=1; f.g22c=1; for(const s of GR_STEPS){ if(s.ep>=ep) break; f[s.id]=1; if(s.last) f['a'+pad2g(s.ep)]=1; } f.gr_bond=1; if(ep>4&&SAVE.unlock) SAVE.unlock.evo=true; if(ep>11&&SAVE.unlock) SAVE.unlock.fusion=true; saveGame(); objUpdate(); } }; }
 

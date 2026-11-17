@@ -262,7 +262,9 @@ P.setArc=(a)=>{ if(prog()&&ARC_POOL[a]){ prog().arc=a; if(a==='norse' && prog().
 P.unlockFinal=()=>P.setPartyMax(CFG.partyMaxFinal);
 P.rule=function(area){ const arc=P.arc(); const r=Object.assign({}, ARC_RULE[arc]||ARC_RULE.greece); const a=area&&P.config.areas[area]; if(a){ if(a.lv) r.lv=a.lv; if(a.startStage) r.startStage=a.startStage; if(a.pack) r.pack=a.pack; } return r; };
 P.wildLv=function(area){ const [a,b]=P.rule(area).lv; return a+Math.floor(Math.random()*(b-a+1)); };
-P.wildEnemy=function(mid, area){ return {mid:+mid, lv:P.wildLv(area)}; };
+// 2026-11-18 オーナー「野生のレベルもあげてね」: 野生だけ(人の札は前のまま) マップの Lv 帯 +3
+const WILD_LV_ADD=3; P.wildLvW=function(area){ return Math.min(LV_MAX,P.wildLv(area)+WILD_LV_ADD); };
+P.wildEnemy=function(mid, area){ return {mid:+mid, lv:P.wildLvW(area)}; };
 P.startStage=(area)=>P.rule(area).startStage||1;
 // 野生の群れ(2026-10-27): リーダー=触った子(帯+packLeadLv・leader)+そのマップの野生(pool)から n-1 体(帯のレベル)。n = 編の pack と「自分が盤に出せる数」の小さい方
 // 自分が盤に出せる数 = battle.js の packCount と同じ数え方(先頭から・その段の姿のLv合計が 3×段 まで)。battle.js の表は init 前で空のことがあるので自分の表(MON)で数える
@@ -273,8 +275,8 @@ function fieldCount(party, st, owned, bud){ const cap=(bud||3)*st; let used=0, n
 const WILD_SIZE={3:7, 4:9, 5:11, 6:13}, WILD_BUD={7:3, 9:4, 11:5, 13:6};
 P.wildSize=function(party){ const n=Math.max(1,Math.min(6,(party||[]).length||1)); return WILD_SIZE[Math.max(3,n)]; };
 P.packSize=function(area, party, owned, size){ const st=P.startStage(area); const bud=WILD_BUD[size||P.wildSize(party)]||3; return Math.max(1, fieldCount(party, st, owned, bud)||1); };
-P.wildPack=function(lead, area, pool, n){ const L=Object.assign({}, lead, {leader:true}); L.lv=Math.min(LV_MAX,(+L.lv||P.wildLv(area))+CFG.packLeadLv); const out=[L];
-  const st=P.startStage(area); const ids=(pool||[]).map(Number).filter(id=>mon(id)&&!BOSS_FORMS.some(b=>lineOf(id).indexOf(b)>=0&&stageOf(b)<=st)); for(let k=1;k<n&&ids.length;k++) out.push({mid:ids[Math.floor(Math.random()*ids.length)], lv:P.wildLv(area), pack:true}); return out; };
+P.wildPack=function(lead, area, pool, n){ const L=Object.assign({}, lead, {leader:true}); L.lv=Math.min(LV_MAX,(+L.lv||P.wildLvW(area))+CFG.packLeadLv); const out=[L];
+  const st=P.startStage(area); const ids=(pool||[]).map(Number).filter(id=>mon(id)&&!BOSS_FORMS.some(b=>lineOf(id).indexOf(b)>=0&&stageOf(b)<=st)); for(let k=1;k<n&&ids.length;k++) out.push({mid:ids[Math.floor(Math.random()*ids.length)], lv:P.wildLvW(area), pack:true}); return out; };
 
 // ---------------------------------------------------------------- バトル(battle.js の startBattle に渡す物を作り、結果を反映)
 // 倒して仲間(G1): その系統を初めて → 段ごとの確率で仲間に / すでに持っている系統 → 何も起きない(null)
