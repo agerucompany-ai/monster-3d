@@ -235,7 +235,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 <script src="lib/v83char.js"></script>
 <script src="../chars/viewer/hero_v2.js"></script>
 <script src="../v3/chars/char_v3.js"></script>
-<script src="lib/progress.js?v=20261118"></script>
+<script src="lib/progress.js?v=20261118b"></script>
 <script src="lib/pay.js"></script>
 <script>
 (function(){
@@ -3522,6 +3522,7 @@ function grBuild(){ GR_STEPS.length=0; for(const k in GR_BY) delete GR_BY[k];
 // ---- 段を進める ----
 let GR_RUN=false, GR_RETRY=false;
 function grCur(){ if(!grOn()) return null; const f=GF(); for(const s of GR_STEPS) if(!f[s.id]) return s; return null; }
+if(window.Progress) Progress.storyEp=function(){ if(!grOn()) return 0; const s=grCur(); return s?+s.ep||0:22; };   // 2026-11-18 野生のLvは今の話数で(lib/progress.js wildLvW)
 function grHere(s){ if(s&&s.kind==='go') return MAP===s.to;   // 2026-11-17 地図を移る段は、ヤマトが歩いて出口を通り、行き先の地図に着いた時に終わる
   if(!s||s.map!==MAP) return false; if(!s.at||s.at==='*') return true;
   if(!(Array.isArray(s.at)?s.at:[s.at]).includes(AREA)){ const g=GR_GUIDE; if(!(s.wobj&&g&&g.id===s.id&&g.walk&&!g.lead&&Math.hypot(HERO.x-g.x,HERO.z-g.z)<3.4)) return false; }   // 話す人のそばまで来たら(場所の名前の外でも)始める

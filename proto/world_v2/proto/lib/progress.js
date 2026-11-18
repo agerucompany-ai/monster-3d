@@ -262,8 +262,11 @@ P.setArc=(a)=>{ if(prog()&&ARC_POOL[a]){ prog().arc=a; if(a==='norse' && prog().
 P.unlockFinal=()=>P.setPartyMax(CFG.partyMaxFinal);
 P.rule=function(area){ const arc=P.arc(); const r=Object.assign({}, ARC_RULE[arc]||ARC_RULE.greece); const a=area&&P.config.areas[area]; if(a){ if(a.lv) r.lv=a.lv; if(a.startStage) r.startStage=a.startStage; if(a.pack) r.pack=a.pack; } return r; };
 P.wildLv=function(area){ const [a,b]=P.rule(area).lv; return a+Math.floor(Math.random()*(b-a+1)); };
-// 2026-11-18 オーナー「野生のレベルもあげてね」: 野生だけ(人の札は前のまま) マップの Lv 帯 +3
-const WILD_LV_ADD=3; P.wildLvW=function(area){ return Math.min(LV_MAX,P.wildLv(area)+WILD_LV_ADD); };
+// 2026-11-18 オーナー「どのマップでも上げたらあかん。最初は苦しい。徐々に上げて、おれがいるところ(白い都)は15〜16」: 野生だけ(人の札は前のまま)マップごとの帯。始まりは元のまま・白い都で15〜16
+const WILD_LV_MAP={ oliva_hill:[2,4], oliva_maze:[4,6], arcadia:[5,7], dig:[6,8], facility:[7,9], nafria:[8,10], liongate:[9,11], cloudroad:[10,12], corinth:[11,13], marble:[12,14], delphi:[13,15], athens:[15,16], crete_maze:[16,17], stadium_under:[16,18] };
+// 2026-11-18 追記 オーナー「1話というか1面=+1〜1.5」: ギリシャのマップでは今の話数で決める(1話で約2〜4・1話ごとに+1.25・11話で15〜16)。話が無い時(試し等)は上の表
+P.storyEp=P.storyEp||null;
+P.wildLvW=function(area){ const r=WILD_LV_MAP[area]; if(!r) return P.wildLv(area); let lo=r[0], hi=r[1]; try{ const ep=P.storyEp?+P.storyEp()||0:0; if(ep>0){ const c=1.5+1.25*ep; lo=Math.floor(c); hi=Math.ceil(c+0.5); } }catch(e){} return Math.min(LV_MAX, lo+Math.floor(Math.random()*(hi-lo+1))); };
 P.wildEnemy=function(mid, area){ return {mid:+mid, lv:P.wildLvW(area)}; };
 P.startStage=(area)=>P.rule(area).startStage||1;
 // 野生の群れ(2026-10-27): リーダー=触った子(帯+packLeadLv・leader)+そのマップの野生(pool)から n-1 体(帯のレベル)。n = 編の pack と「自分が盤に出せる数」の小さい方
