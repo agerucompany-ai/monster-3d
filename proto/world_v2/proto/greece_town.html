@@ -3539,18 +3539,18 @@ const GR_GUIDE_ART={
   // 2026-11-17 オーナー「登場人物が全くできていない」: 場面で話す人・勝負の相手は全員その場に立たせる。絵は設定画(キャラ立ち絵_追加_20261108)から切り抜いた立て看板。
   //  cut=絵に写っている体の割合(ひざ下が切れている絵は下をぼかしてあり、地面から頭までを身長の高さで立てる=草の中に立って見える)・guest=旅の連れでない人(全画面の絵の場面=その場にいない時は立たせない)
   dimi:{img:'../v3/chars/dimi_stand.webp', glb:'../chars/ren.glb', h:1.38, n:'レン', ol:0x4a4048, guest:1},   // 2026-11-17 新デザインの3D(Tripo・手はポケット)
-  hao:{img:'../v3/chars/hao_stand.webp', h:1.30, n:'ハオ', guest:1},
-  kasia:{img:'../v3/chars/kasia_stand.webp', h:1.42, n:'カシア', guest:1},
-  tarik:{img:'../v3/chars/tarik_stand.webp', h:1.30, n:'タリク', guest:1},
-  zeno:{img:'../v3/chars/zeno_stand.webp', h:1.62, n:'ゼノ', guest:1},
-  victor:{img:'../v3/chars/victor_stand.webp', h:1.55, n:'ヴィクター', guest:1},
+  hao:{img:'../v3/chars/hao_stand.webp', glb:'../chars/hao.glb', h:1.30, n:'ハオ', guest:1},
+  kasia:{img:'../v3/chars/kasia_stand.webp', glb:'../chars/kasia.glb', h:1.42, n:'カシア', guest:1},
+  tarik:{img:'../v3/chars/tarik_stand.webp', glb:'../chars/tarik.glb', h:1.30, n:'タリク', guest:1},
+  zeno:{img:'../v3/chars/zeno_stand.webp', glb:'../chars/zeno.glb', h:1.62, n:'ゼノ', guest:1},
+  victor:{img:'../v3/chars/victor_stand.webp', glb:'../chars/victor.glb', h:1.55, n:'ヴィクター', guest:1},
   // 2026-11-17 オーナー「PixAIで元の絵のモデルから作って立たせて」: 上の5人(ひざ下が切れていた設定画)は PixAI で足を描き足して全身に(cutなし)。
   //  アナ=2話の原画から・マリナ/ノモス/ヤニス=台本の人物設定から PixAI で全身を描いた(画風は設定画を横に置いて合わせた)・おばあさん=設定画 C9 白衣案
-  ana:{img:'../v3/chars/ana_stand.webp', h:1.34, n:'アナ', guest:1},
-  marina:{img:'../v3/chars/marina_stand.webp?v=20261118w', h:1.38, n:'マリナ', guest:1},
-  nomos:{img:'../v3/chars/nomos_stand.webp', h:1.44, n:'ノモス', guest:1},
-  stavros:{img:'../v3/chars/stavros_stand.webp', h:1.46, n:'ヤニス', guest:1},
-  oba:{img:'../v3/chars/oba_stand.webp', h:1.33, n:'おばあさん', guest:1} };
+  ana:{img:'../v3/chars/ana_stand.webp', glb:'../chars/ana.glb', h:1.34, n:'アナ', guest:1},
+  marina:{img:'../v3/chars/marina_stand.webp?v=20261118w', glb:'../chars/marina.glb', h:1.38, n:'マリナ', guest:1},
+  nomos:{img:'../v3/chars/nomos_stand.webp', glb:'../chars/nomos.glb', h:1.44, n:'ノモス', guest:1},
+  stavros:{img:'../v3/chars/stavros_stand.webp', glb:'../chars/stavros.glb', h:1.46, n:'ヤニス', guest:1},
+  oba:{img:'../v3/chars/oba_stand.webp', glb:'../chars/oba.glb', h:1.33, n:'おばあさん', guest:1} };
 const GR_FOEKEY={'ヤニス':'stavros','ノモス':'nomos','ニーナ':'nina','マルコ':'marco','アレク':'alek','レン':'dimi','ゼノ':'zeno','タリク':'tarik','ハオ':'hao','カシア':'kasia','ヴィクター':'victor'};
 // 2026-11-15 ol=縁の色(絵の色×ol。黒い縁をやめて髪は濃い金・服は灰茶に)・pose=[あごを上げる,首のかしげを戻す](エリーは下を向いて前髪で顔が隠れていた)
 let GR_GUIDE=null;   // 立たせている組 {id,map,x,z,walk,mem:{who:{grp,sp,mk,lbl,x,z,h}}}
