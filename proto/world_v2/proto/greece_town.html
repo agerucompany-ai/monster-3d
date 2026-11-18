@@ -2749,7 +2749,8 @@ function fillT(t){ const g=SAVE?SAVE.g:'m'; return t.replace(/\{hero\}/g,SAVE?SA
 // 立ち絵の向き(絵ごと)。index.json を読むまでは全員右向きとして扱う
 const PFACE={}; fetch(PDIR+'index.json').then(r=>r.json()).then(j=>{ for(const k in j.chars){ const f=j.chars[k].facing||{}; for(const e in f) PFACE[PDIR+k+'_'+e+'.webp']=f[e]; } }).catch(()=>{});
 function pFace(img,side){ const src=img.getAttribute('src')||''; const f=PFACE[src]||'right'; const want=side==='L'?'right':'left'; img.style.setProperty('--fx',(f==='front'||f===want)?'1':'-1'); }
-function pSrc(who,face){ const k=who==='hero'?'hero_'+(SAVE?SAVE.g:'m'):who; const f=FACES[k]; if(!f) return null; return PDIR+k+'_'+(f.includes(face)?face:'normal')+'.webp'; }
+function pSrc(who,face){ const k=who==='hero'?'hero_'+(SAVE?SAVE.g:'m'):who; const f=FACES[k]; if(!f) return null; return PDIR+k+'_'+(f.includes(face)?face:'normal')+'.webp'+(PVER[k]?'?v='+PVER[k]:''); }
+const PVER={marina:'20261118w'};   // 2026-11-18 マリナを白い制服に描き替え(古い絵が残らないように)
 for(const im of [ST.L,ST.R,ST.R2]) im.onerror=()=>im.classList.add('off');
 const PIMG={}; let ADV=null; function advance(){ if(ADV){ const f=ADV; ADV=null; f(); } }
 ST.box.addEventListener('click',e=>{ e.stopPropagation(); advance(); });
@@ -3546,7 +3547,7 @@ const GR_GUIDE_ART={
   // 2026-11-17 オーナー「PixAIで元の絵のモデルから作って立たせて」: 上の5人(ひざ下が切れていた設定画)は PixAI で足を描き足して全身に(cutなし)。
   //  アナ=2話の原画から・マリナ/ノモス/ヤニス=台本の人物設定から PixAI で全身を描いた(画風は設定画を横に置いて合わせた)・おばあさん=設定画 C9 白衣案
   ana:{img:'../v3/chars/ana_stand.webp', h:1.34, n:'アナ', guest:1},
-  marina:{img:'../v3/chars/marina_stand.webp', h:1.38, n:'マリナ', guest:1},
+  marina:{img:'../v3/chars/marina_stand.webp?v=20261118w', h:1.38, n:'マリナ', guest:1},
   nomos:{img:'../v3/chars/nomos_stand.webp', h:1.44, n:'ノモス', guest:1},
   stavros:{img:'../v3/chars/stavros_stand.webp', h:1.46, n:'ヤニス', guest:1},
   oba:{img:'../v3/chars/oba_stand.webp', h:1.33, n:'おばあさん', guest:1} };
@@ -3989,7 +3990,7 @@ function grInit(){ Object.assign(SC,GR_SC);
   grBuild();
   { const _at=arriveTown; arriveTown=async function(){ await _at(); grArrive(); }; }   // 第1話: 村に下りたら、そのまま続きを流す
   for(const m of new Set(GR_STEPS.map(s=>s.map).concat(GR_STEPS.map(s=>s.to).filter(Boolean)))) AREA_RULE[m+':*']=f=>{ const s=grCur(); return (s&&grHere(s))?grRun:null; };
-  window.GR_DBG={ noFace:()=>{ const o={}; for(const s of GR_STEPS){ const L=(s.kind==='scene'?(GR_SC[s.key]||SC[s.key]):null)||[]; for(const x of L){ if(!x||!x.w||!x.t||x.w==='partner'||x.np) continue; if(!pSrc(x.w,x.f||'normal')){ const k=x.w+'/'+(x.n||''); o[k]=(o[k]||0)+1; } } } return o; }, enc:()=>{ const m=MONS.filter(m=>m.wild&&!m.gone).map(m=>({id:m.o.id,d:Math.hypot(m.x-HERO.x,m.z-HERO.z)})).sort((a,b)=>a.d-b.d)[0]; return {noEnc:!!WORLD.noEnc,ENC:!!ENC,STORY:!!STORY,TRANS:!!TRANS,BRIEF:!!BRIEF,encCool,hero:!!READY.hero,town:inTown(HERO.x,HERO.z),wildOk:grWildOk(),near:m}; }, cur:()=>{ const s=grCur(); return s&&{id:s.id,ep:s.ep,map:s.map,at:s.at,kind:s.kind}; }, steps:GR_STEPS, run:()=>grRun(), here:()=>grHere(grCur()), obj:()=>grObjText(GF()), retry:()=>GR_RETRY, art:GR_GUIDE_ART, elly:()=>GR_ELLY, onScreen:(x,z)=>grOnScreen(x,z), auto:(v)=>{ AUTO=v; }, cast:(w,x,z)=>{ const m=grSprite(w); grPlace(m,x,z); return m; },
+  window.GR_DBG={ scene:(L,o)=>runScene(L,o), noFace:()=>{ const o={}; for(const s of GR_STEPS){ const L=(s.kind==='scene'?(GR_SC[s.key]||SC[s.key]):null)||[]; for(const x of L){ if(!x||!x.w||!x.t||x.w==='partner'||x.np) continue; if(!pSrc(x.w,x.f||'normal')){ const k=x.w+'/'+(x.n||''); o[k]=(o[k]||0)+1; } } } return o; }, enc:()=>{ const m=MONS.filter(m=>m.wild&&!m.gone).map(m=>({id:m.o.id,d:Math.hypot(m.x-HERO.x,m.z-HERO.z)})).sort((a,b)=>a.d-b.d)[0]; return {noEnc:!!WORLD.noEnc,ENC:!!ENC,STORY:!!STORY,TRANS:!!TRANS,BRIEF:!!BRIEF,encCool,hero:!!READY.hero,town:inTown(HERO.x,HERO.z),wildOk:grWildOk(),near:m}; }, cur:()=>{ const s=grCur(); return s&&{id:s.id,ep:s.ep,map:s.map,at:s.at,kind:s.kind}; }, steps:GR_STEPS, run:()=>grRun(), here:()=>grHere(grCur()), obj:()=>grObjText(GF()), retry:()=>GR_RETRY, art:GR_GUIDE_ART, elly:()=>GR_ELLY, onScreen:(x,z)=>grOnScreen(x,z), auto:(v)=>{ AUTO=v; }, cast:(w,x,z)=>{ const m=grSprite(w); grPlace(m,x,z); return m; },
     goal:()=>{ const s=grCur(); if(!s||s.kind!=='go') return null; const e=grExitTo(s.to); const w=D.walk||D.bounds, r=e&&e.r, cl=(v,a,b)=>Math.max(a+0.05,Math.min(b-0.05,v)); return {map:MAP,to:s.to,hop:grNextHop(MAP,s.to),r, p:r?[cl(cl((r[0]+r[2])/2,r[0],r[2]),w[0],w[2]),cl(cl((r[1]+r[3])/2,r[1],r[3]),w[1],w[3])]:null}; }, extras:()=>Object.keys(GR_EXM), gnd:(x,z)=>groundAt(x,z), path:(x0,z0,x1,z1)=>grFrPath(x0,z0,x1,z1), areaPt:(n)=>{ delete GR_CASTPT[MAP+':'+n]; return grCastPt(n); }, guide:()=>GR_GUIDE&&{id:GR_GUIDE.id,x:GR_GUIDE.x,z:GR_GUIDE.z,walk:GR_GUIDE.walk,lead:!!GR_GUIDE.lead,mem:Object.fromEntries(Object.entries(GR_GUIDE.mem).map(([k,m])=>[k,[+m.x.toFixed(1),+m.z.toFixed(1)]]))}, st:()=>({TRANS:!!TRANS,STORY:!!STORY,ENC:!!ENC,BRIEF:!!BRIEF,PAUSED:!!PAUSED,EVOFX:!!EVOFX,hero:[HERO.x,HERO.z],ok:D.exits.map(e=>e.to+':'+(e.need||'')+':'+grExitOk(e))}),
     fuseFx:(id)=>fuseFxShow(id), skipTo:(ep)=>{ const f=GF(); f.g22=1; f.g22b=1; f.g22c=1; for(const s of GR_STEPS){ if(s.ep>=ep) break; f[s.id]=1; if(s.last) f['a'+pad2g(s.ep)]=1; } f.gr_bond=1; if(ep>4&&SAVE.unlock) SAVE.unlock.evo=true; if(ep>11&&SAVE.unlock) SAVE.unlock.fusion=true; saveGame(); objUpdate(); } }; }
 
