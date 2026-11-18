@@ -4876,13 +4876,17 @@ function updateUI(){ if(BT.headless) return;
       return `<span class="meter ${o?'foe':''}">${LMK()}<span class="track"><i style="width:${p}%;background:${col}"></i></span>${o===0&&L?`<em class="hpn">${Math.ceil(Math.max(0,L.hp))}</em>`:''}${tail}${state.phase==='battle'&&behindOf(o)?icTag('clutch'):''}</span>`; };   // 戦術v3: 背水のアイコン
     const am=autoMode();
     const autoB = BT.autoButton!==false && state.phase==='battle' ? `<button class="tbb ${am?'on':''}" data-m="cycleAuto">${am===2?'オート×2':am?'オート':'手動'}</button>` : '';
-    tb.innerHTML = (state.phase==='battle'
+    const tbH = (state.phase==='battle'
       ? (state.sp?`<span class="tchip ${state.cur===0?'me':'foe'}">のこり<b>${Math.max(0,MAX_TURN-state.turn+1)}</b><i>${state.cur===0?'自分':'相手'}</i></span>`+spChip()+(state.sp.mode==='sneak'&&!state.sp.alert?'':lm(0)+lm(1)):`<span class="tchip ${state.cur===0?'me':'foe'}">T<b>${state.turn}</b>${noTL()?'':'/'+MAX_TURN}<i>${state.cur===0?'自分':(BT.kind==='wild'?'野生':'相手')}</i></span>`+lm(0)+lm(1))
       : `<span class="tchip">配置</span><span class="sp"></span>`)
       +autoB+`<button class="tbb menu" data-m="menu" aria-label="メニュー">≡</button>`+(state.phase==='battle'&&state.spd?spdRowHTML():'');
+    if(tb._h!==tbH){ tb._h=tbH; tb.innerHTML=tbH; }   // 2026-11-18 オーナー「バトル中オートにできない」: 前は毎回作り直していた(オート中は6秒に27回)→押した指を離す前にボタンが消えて押せなかった。中身が同じなら作り直さない
     tb.classList.toggle('spdq', state.phase==='battle'&&!!state.spd);
-    if(!tb._wired){ tb._wired=true; tb.addEventListener('click',(e)=>{ const b=e.target.closest('[data-m]'); if(!b) return; e.stopPropagation(); const k=b.dataset.m;
-      if(k==='menu'){ menuOpen()?closeMenu():openMenu(); } else if(k==='cycleAuto'){ cycleAuto(); if(menuOpen()) renderMenu(); } }); }
+    if(!tb._wired){ tb._wired=true; let downAt=0;
+      const act=(k)=>{ if(k==='menu'){ menuOpen()?closeMenu():openMenu(); } else if(k==='cycleAuto'){ cycleAuto(); if(menuOpen()) renderMenu(); } };
+      // 2026-11-18: 指が触れた瞬間に効かせる(体力の数字などで帯が作り直されても押しそこねない)。そのあとの click は二度押しにしない
+      tb.addEventListener('pointerdown',(e)=>{ const b=e.target.closest('[data-m]'); if(!b) return; e.stopPropagation(); e.preventDefault(); downAt=Date.now(); act(b.dataset.m); });
+      tb.addEventListener('click',(e)=>{ const b=e.target.closest('[data-m]'); if(!b) return; e.stopPropagation(); if(Date.now()-downAt<800) return; act(b.dataset.m); }); }
   } else tb.innerHTML='';
   if(menuOpen()) renderMenu();
   guideCheck();   // 2026-10-31 はじめての案内(融合・進化ボタン・進化のマス)
@@ -5608,7 +5612,11 @@ function ancientEscort(){ const A=BT.anc; if(!A) return; const n=+(A.T.escort||0
   const lv=Math.max(1,(b.lv||1)-ANCIENT.minionLvDown);
   for(let k=0;k<n&&k<cells.length;k++){ const [r,c]=cells[k]; const top=enemyStageForm(pool[k%pool.length], BT.startStage); const mid=BT.minionSt?enemyStageForm(baseFormId(top), Math.min(BT.minionSt, lvStage(top))):top; if(mid!==top){ const eo=BT.enemyOwned||(BT.enemyOwned=new Set()); let q=MID[mid], g=0; while(q&&q.evolves_to!=null&&q.id!==top&&g++<4){ eo.add(q.evolves_to); q=MID[q.evolves_to]; } } const nu=addUnit(1,mid,r,c); unitMul(nu, lvRank(lv), A.T.escortX||1, A.T.escortX||1); nu.lv=lv; nu.src=[]; nu.mid0=mid; nu.summoned=true; nu.hmp=0; nu.hmpMax=0; nu.hg=0; } }
 // 2026-10-27 野生は群れの数まで(自分が出せる数=群れの数・盤の budget が上限)。人は今まで(budget×段)
-function baseBudget(){ const n=BT.kind==='wild'?Math.max(1,Math.min(BT.rules.budget, BT.enemyParty.length)):BT.rules.budget; return n*BT.startStage; }
+function baseBudget(){ const n=BT.kind==='wild'?Math.max(1,Math.min(BT.rules.budget, BT.enemyParty.length)):BT.rules.budget; let b=n*BT.startStage;
+  // 2026-11-18 オーナー「おまかせ配置ができない」: 進化した子(フォルレオン=3段)がリーダーだと、野生1体の時 Lv合計1 に入らず誰も置けず「バトル開始」も押せなかった。
+  //  野生は「出せる体の数=群れの数」なので、並び順の先頭から n 体の段の合計まで、人の勝負もリーダーの段までは必ず出せるようにする
+  try{ const lv=p=>(MID[playerStartMid(p.mid)]||{}).level||1; const P=BT.party||[]; if(BT.kind==='wild') b=Math.max(b, P.slice(0,n).reduce((a,p)=>a+lv(p),0)); if(P[0]) b=Math.max(b, lv(P[0])); }catch(e){}
+  return b; }
 function ancientBudget(){ return Math.max(1, BT.party.reduce((s,p)=>s+((MID[playerStartMid(p.mid)]||{}).level||1),0)); }   // 全パーティがその段で出せる
 // 2026-10-31 挑む側の段 = 隊の段の「平均の強さ」(各自の段の stageRef の平均)。前=隊でいちばん上の段(3段目の相棒＋1段目4体でも 3段目の隊と同じ強さの古代が出ていた)。隊が同じ段なら前と同じ
 function ancRef(k){ const R=ANCIENT.stageRef[k]; const P=BT.party||[]; if(!P.length) return R[BT.anc.pst]; let s=0; for(const p of P) s+=R[Math.min(3,lvStage(playerStartMid(p.mid)))]; return s/P.length; }
