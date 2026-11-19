@@ -9,10 +9,10 @@
   {"id":"insect", "name":"ムシ", "icon":"s_insect", "color":"#7cc040",
    "lines":[1033,1019,1039,1056], "fusions":[2061,2006,2063],
    "combos":[
-    {"id":"tsunotsuno", "name":"ツノツノクロス", "n":2, "need":[1033,1039], "range":2, "area":0, "mult":1.3, "fx":{"pierce":0.5}, "tx":"カブトの角とクワガタのあごで はさむ"},
-    {"id":"kamarush", "name":"カマカマラッシュ", "n":2, "need":[1019], "range":2, "area":0, "mult":1.2, "fx":{"debuff":{"stat":"def","x":-0.25,"turns":2}}, "tx":"カマで守りを切りさく"},
-    {"id":"hotaruring", "name":"ホタルサークル", "n":2, "need":[1056], "range":3, "area":1, "mult":1.1, "fx":{"heal":0.35}, "tx":"ホタルの光の輪で なかまを回復"},
-    {"id":"mushiparade", "name":"ムシムシパレード", "n":3, "range":3, "area":1, "mult":1.35, "fx":{"ail":"poison","chance":0.6}, "tx":"ムシのむれで おしよせる"}
+    {"id":"tsunotsuno", "name":"クロスホーンブレイク", "n":2, "need":[1033,1039], "range":2, "area":0, "mult":1.3, "fx":{"pierce":0.5}, "tx":"カブトの角とクワガタのあごで はさむ"},
+    {"id":"kamarush", "name":"ブレードストーム", "n":2, "need":[1019], "range":2, "area":0, "mult":1.2, "fx":{"debuff":{"stat":"def","x":-0.25,"turns":2}}, "tx":"カマで守りを切りさく"},
+    {"id":"hotaruring", "name":"ルミナスヒール", "n":2, "need":[1056], "range":3, "area":1, "mult":1.1, "fx":{"heal":0.35}, "tx":"ホタルの光の輪で なかまを回復"},
+    {"id":"mushiparade", "name":"インセクトレギオン", "n":3, "range":3, "area":1, "mult":1.35, "fx":{"ail":"poison","chance":0.6}, "tx":"ムシのむれで おしよせる"}
    ]},
   {"id":"greek", "name":"ギリシャ", "icon":"s_greek", "color":"#e8c860",
    "lines":[1001,1007,1030,1033,166,1053,1062], "fusions":[2061,2005,2014,2015,2017,2020,2045,2054,2055,2066,2067],
