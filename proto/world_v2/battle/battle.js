@@ -5373,7 +5373,7 @@ const TACT={ on:true,
   first:{mode:null, turns:1, gauge:{1:0, 2:0, 3:0}, guard:{1:0, 2:0, 3:0}, skip:['wild','ancient']},   // 2026-10-31 オーナー「先手が絶対有利・後手が有利はあり得ない」: 後手を助ける決まり(後手の闘気50/30・3段目の守り+50%)はなくした(前＝mode:'guard+gauge' gauge{1:50,2:30} guard{3:0.5})。'noatk'(先手の1ターン目攻撃なし)も使わない。   // 段ごと(BT.startStage): 1段目=闘気50・2段目=闘気30(2026-10-29 進化の2段構えで 闘気でどこでも進化できるので 70→30・40→50。sim_tactics3 A 150試合で先手 53/46/48%)・3段目=最初の相手の手番だけ守り+50%   // 先手と後手(sim_tactics3.js A で決めた 2026-10-28): 後手(相手)の子は闘気40から(3段目から始まる戦いはなし=もとから後手が少し有利)。'noatk'=先手は1ターン目攻撃なし / 'guard'=後手は turns 回目の手番まで守り+guard / 'guard+gauge' / null=なし
   behind:{share:0.45, gaugeMax:1.8, gaugeK:3.0, healX:1.3, evoHeal:0.45, evoAtk:0.2, evoTurns:2, selfHp:0.5},   // 背水・土壇場進化
   healGauge:10,                                           // 回復の技を使った子の闘気
-  combo:{k:0.55, minX:1.1, reach:3, gather:2, power:100, mult2:1.15, mult3:1.35, small:{1:0.2, 2:0.1}, gauge:0, cost:{2:35, 3:25}},   // cost=参加する子それぞれが使う闘気(2体の合体/3体の合体)
+  combo:{k:0.85, minX:1.5,   /* 2026-11-20 オーナー「合体攻撃の攻撃力も弱そう」: k 0.55→0.85・下限 1.1→1.5(2体の合体=単独の約2倍・3体=約3.4倍。前は2体で単独の1.2〜1.5倍=2体が別々に打つより弱かった) */ reach:3, gather:2, power:100, mult2:1.15, mult3:1.35, small:{1:0.2, 2:0.1}, gauge:0, cost:{2:35, 3:25}},   // cost=参加する子それぞれが使う闘気(2体の合体/3体の合体)
   bal:{光:{atk:1.15,def:1.05}, 水:{atk:0.9,def:0.97}, 氷:{atk:1.45,def:1.12}, 森:{atk:1.45,def:1.08}, 地:{atk:1.25,def:1.05}, 闇:{atk:1.3,def:1.05}, 竜:{atk:1.2,def:1.03}, 炎:{atk:0.95}, 雷:{atk:1.25}, 風:{atk:1.2,def:1.05}},   // 2026-11-01 夕 真ん中に水を必ず置いたあと 水0.8/0.92→0.9/0.97(study_types 水 M 34→48%)。2026-11-01 盤に水を足したあと 水1.45/1.12→0.8/0.92・雷1.04→1.25(study_types 海の盤・水の少ない盤・ぜんぶ)。2026-11-01 光・風・水の決まりのあと study_types で 光1/1→1.15/1.05・風1.03→1.2/1.05・森1.28/1.06→1.45/1.08   // タイプごとの {atk, def} の倍率(バランスのつまみ)。2026-10-30 タイプ相性の作り直しのあと sim/study_types.js(タイプだけの隊)で合わせた。2つのタイプの子は 両方を掛ける。2026-10-31 オーナー「光 弱すぎちゃう？」: 光は atk0.7/def0.88→1/1(体の数の攻撃×0.92も戻した)
   ai:{formation:20, cover:8, healLeader:0.75, zoneEvo:600, fusePull:45, fuseAdj:350, comboVsSolo:0.6, placeCombo:90, placeFuse:160},   // 2026-11-19 オーナー「オートは融合と合体攻撃を積極的に・初期配置も・敵も同じ」: formation 10→40・融合の引き寄せ 25→45・隣 160→350・合体は単独の6割の点でも撃つ・配置で合体/融合の相手のそば   // zoneEvo=進化のマスに入る点(2026-10-29 進化の2段構え)
   final:{left:8, step:0.35},
@@ -5968,7 +5968,7 @@ function init(o){
     try{ applySeries(rd(CFG.series)); }catch(e){ applySeries(null); }   // 戦術v3: シリーズと合体攻撃
     return (_loadP=Promise.resolve(true)); }
   const gj=(f)=>fetch(CFG.base+f).then(r=>{ if(!r.ok) throw new Error(f+' '+r.status); return r.json(); });
-  _loadP=gj(CFG.data+'?v=20261120').then(list=>{ setMonsters(list); return Promise.all([gj(CFG.stats),gj(CFG.moves)]).then(([st,mv])=>applyV2Data(st,mv)).catch(e=>{ console.warn('技 v2 のデータが読めない',e); V2DATA=false; }); })
+  _loadP=gj(CFG.data+'?v=20261120b').then(list=>{ setMonsters(list); return Promise.all([gj(CFG.stats+'?v=20261120b'),gj(CFG.moves+'?v=20261120b')]).then(([st,mv])=>applyV2Data(st,mv)).catch(e=>{ console.warn('技 v2 のデータが読めない',e); V2DATA=false; }); })
     .then(()=>gj(CFG.series).then(applySeries).catch(e=>{ console.warn('シリーズの表が読めない',e); applySeries(null); }))   // 戦術v3
     .then(()=>true);   // 2026-10-27 技 v2
   return _loadP;
