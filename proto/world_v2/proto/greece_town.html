@@ -1190,11 +1190,33 @@ OB.evzone=(o)=>{ const y=G(o.x,o.z), M=T(o.x,y,o.z,(o.rot||0)*DEG);
 // 2026-11-19 オーナー「白い都に1人もいないのは変。都会の人の服装で何人か」: 箱の人形(変な3D)はやめ、PixAI(Tsubaki.3)で描いた都会の服の人(v3/folk 30人)を板で立たせる
 const FOLK_AR=[0.278,0.26,0.292,0.285,0.315,0.305,0.273,0.273,0.372,0.258,0.278,0.285,0.325,0.318,0.3,0.292,0.242,0.355,0.315,0.285,0.29,0.323,0.32,0.33,0.315,0.33,0.292,0.278,0.292,0.302], FOLK_MAT=[];
 function folkMat(i){ if(!FOLK_MAT[i]){ const t=new THREE.TextureLoader().load('../v3/folk/f'+String(i).padStart(2,'0')+'.webp'); if(THREE.sRGBEncoding) t.encoding=THREE.sRGBEncoding; t.anisotropy=4; FOLK_MAT[i]=new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:0.35,depthWrite:true,color:0xf2eee8}); } return FOLK_MAT[i]; }
+// 2026-11-19 オーナーがTripoをチャージ: 白い都の人を3Dに(PixAIの都会の服の10人→Tripo→chars/folk0〜9.glb)。近くの人だけ組み立て、4人に1人は行ったり来たり歩く。読めなければ板の絵(folkSprite)
+const TF_ON=true, TF_OL=false, TF_KEYS=['folk0','folk1','folk2','folk3','folk4','folk5','folk6','folk7','folk8','folk9'], TF_SRC={}; let TF=[];
+function tfKey(o){ return TF_KEYS[(((Math.round(o.x*7)*31+Math.round(o.z*5)*17)%TF_KEYS.length)+TF_KEYS.length)%TF_KEYS.length]; }
+function tfWalker(o){ return !o.sit&&((((Math.round(o.x*3)+Math.round(o.z*7))%4)+4)%4)===0; }
+function tfPos(o){ if(!o.sit) return [o.x,o.z]; const r=(o.rot||0)*DEG; return [o.x+Math.sin(r)*0.6,o.z+Math.cos(r)*0.6]; }
+function tfSrc(k){ return TF_SRC[k]||(TF_SRC[k]=loadGLB('../chars/'+k+'.glb').then(g=>{ const root=g.scene; root.traverse(o=>{ if(o.isMesh){ o.frustumCulled=false; o.castShadow=false; const mp=o.material&&o.material.map; if(mp){ mp.encoding=THREE.LinearEncoding; mp.anisotropy=4; } if(o.isSkinnedMesh&&window.V83){ o.material=V83.toonMat(mp); o.material.color.setScalar(CHAR_LIGHT); } } });
+  root.updateMatrixWorld(true); const bb=new THREE.Box3().setFromObject(root); return {root,anims:g.animations,hg:Math.max(0.05,bb.max.y-bb.min.y),y0:bb.min.y}; })); }
+function tfInit(){ for(const m of TF) if(m.g) scene.remove(m.g); TF=[]; if(MAP!=='athens'||!D) return;
+  for(const o of D.objects||[]) if(o.t==='folk'){ const q=tfPos(o), R=rng(((o.x*53+o.z*29)|0)+7), m={o,k:tfKey(o),x:q[0],z:q[1],yaw:(o.rot||0)*DEG,h:(o.kid?1.05:1.36+R()*0.08),g:null,ld:0};
+    if(tfWalker(o)){ const a=m.yaw+Math.PI/2, L=4+R()*3, bx=m.x+Math.sin(a)*L, bz=m.z+Math.cos(a)*L; if(walkOK(bx,bz)&&walkOK((m.x+bx)/2,(m.z+bz)/2)) m.w={ax:m.x,az:m.z,bx,bz,t:R(),sp:0.9+R()*0.3,L}; }
+    TF.push(m); } }
+function tfBuild(m,S){ const root=SkeletonUtils.clone(S.root), outl=[]; root.traverse(o=>{ if(o.isSkinnedMesh) outl.push(o); }); if(window.V83&&TF_OL) for(const o of outl) V83.addOutline(o,{});
+  const k=m.h/S.hg; root.scale.multiplyScalar(k); root.position.y=-S.y0*k; const g=new THREE.Group(); g.add(root); scene.add(g);
+  const mixer=new THREE.AnimationMixer(root), act={}; for(const c of S.anims){ const n=c.name.toLowerCase(), q=n.includes('run')?'run':n.includes('walk')?'walk':n.includes('idle')?'idle':null; if(q&&!act[q]) act[q]=mixer.clipAction(c); }
+  const a=(m.w&&act.walk)||act.idle; if(a){ a.play(); a.time=Math.random()*a.getClip().duration; } m.g=g; m.mixer=mixer; m.walking=!!(m.w&&act.walk); mixer.update(0); }
+function tfUpdate(dt){ if(!TF.length) return;
+  for(const m of TF){ const d=Math.hypot(m.x-HERO.x,m.z-HERO.z);
+    if(!m.g&&!m.ld&&d<34){ m.ld=1; tfSrc(m.k).then(S=>{ if(TF.includes(m)&&m.ld===1&&!m.g) tfBuild(m,S); }).catch(e=>{ console.warn('folk3d',m.k,e&&e.message); }); }
+    else if(m.g&&d>44){ scene.remove(m.g); m.g=null; m.ld=0; continue; }
+    if(!m.g) continue;
+    if(m.walking){ const w=m.w; w.t+=dt*w.sp/w.L; const ph=w.t%2, f=ph<1?ph:2-ph, e=f*f*(3-2*f); m.x=w.ax+(w.bx-w.ax)*e; m.z=w.az+(w.bz-w.az)*e; const dir=ph<1?1:-1; m.yaw=Math.atan2((w.bx-w.ax)*dir,(w.bz-w.az)*dir); }
+    m.g.position.set(m.x,groundAt(m.x,m.z),m.z); m.g.rotation.y=m.yaw; if(d<30) m.mixer.update(dt); } }
 function folkSprite(o){ if(o.sit&&!o._mv){ const r=(o.rot||0)*DEG; o=Object.assign({},o,{x:o.x+Math.sin(r)*0.6,z:o.z+Math.cos(r)*0.6,_mv:1,y:null}); }   // 座る席の人は、ベンチの前に立たせる
   const y=o.y!=null?o.y:G(o.x,o.z), i=(((Math.round(o.x*7)*31+Math.round(o.z*5)*17)%FOLK_AR.length)+FOLK_AR.length)%FOLK_AR.length, R=rng(((o.x*53+o.z*29)|0)+7), h=1.62+R()*0.12;
   const g=new THREE.Group(); CUR.extra.push(g); const sp=new THREE.Sprite(folkMat(i)); sp.center.set(0.5,0.02); sp.scale.set(h*FOLK_AR[i],h,1); sp.position.set(o.x,y,o.z); g.add(sp);
   addCol({t:'c',x:o.x,z:o.z,r:0.28,top:y+1.6}); }
-OB.folk=(o)=>{ if(MAP==='athens') return folkSprite(o);
+OB.folk=(o)=>{ if(MAP==='athens'){ if(TF_ON){ if(!tfWalker(o)){ const q=tfPos(o); addCol({t:'c',x:q[0],z:q[1],r:0.28,top:G(q[0],q[1])+1.6}); } return; } return folkSprite(o); }
   const R=rng(((o.x*91+o.z*37)|0)+3), y=o.y!=null?o.y:G(o.x,o.z), k=o.kid?0.66:(0.84+R()*0.1), M=T(o.x,y,o.z,(o.rot||0)*DEG,k,k,k);
   const cloth=col3(o.c||pick(['#3f74b0','#e2574c','#f2c14e','#3c8f9a','#fbf7ee','#9b7fd1','#5aa36a','#e58a8a','#f4efe6','#2f4f7f','#d9604f'],R)).getHex(), pants=pick([0x3a3f4a,0x5a4a3a,0xf1ece2,0x2f4f7f,0x6a6f7a],R), skin=pick([0xf2d2b6,0xe8c0a0,0xc89878,0xf5dcc6,0xa87858],R), hair=pick([0x2a2222,0x4a3226,0x6a4a2a,0xd8c8a0,0x1e1e24,0x8a5a3a],R), dress=!o.sit&&R()<0.4;
   const hip=o.sit?0.46:0.8;
@@ -2477,7 +2499,7 @@ function frame(now){ requestAnimationFrame(frame); if(PAUSED){ LAST=now; return;
   MON_U.uUpV.value.set(0,1,0).transformDirection(camera.matrixWorldInverse); MON_U.uSunV.value.copy(sd).transformDirection(camera.matrixWorldInverse);
   sky.position.copy(camera.position);
   const _tu=performance.now(); uiUpdate(dt); exitCheck(); WORLD.prof.ui+=performance.now()-_tu;
-  const _t4=performance.now(); renderFrame(); darkDraw(now); const _t5=performance.now(); const PF=WORLD.prof; PF.n++; PF.chunk+=_t1-_t0; PF.npc+=_t2-_t1; PF.mon+=_t3-_t2; PF.render+=_t5-_t4; PF.all+=_t5-now;
+  tfUpdate(dt); const _t4=performance.now(); renderFrame(); darkDraw(now); const _t5=performance.now(); const PF=WORLD.prof; PF.n++; PF.chunk+=_t1-_t0; PF.npc+=_t2-_t1; PF.mon+=_t3-_t2; PF.render+=_t5-_t4; PF.all+=_t5-now;
   if(FRAME%20===0&&fpsEl.style.display==='block') fpsEl.textContent=(FPSB.length/FPSB.reduce((a,b)=>a+b,0)).toFixed(0)+'fps '+renderer.info.render.calls+'dc '+(renderer.info.render.triangles/1000).toFixed(0)+'k';
 }
 let AUTO=null, PAUSED=true;
@@ -2510,7 +2532,7 @@ async function loadMap(id,at,pos){ const t0=performance.now();
   // 地下(迷宮)は暗い時間帯 tod:'cave' に固定して朝昼夕のボタンを隠す。外へ出たら元の時間帯へ
   if(D.tod0===undefined) D.tod0=D.tod||null; { const tr=storyOn()&&MAP_TOD_RULE[MAP]&&MAP_TOD_RULE[MAP](SAVE.flags); D.tod=tr||D.tod0; }   // ---- 物語(gr_story.js): 地図の時間を旗で(MAP_TOD_RULE)
   { const todEl=document.getElementById('tod'); if(D.tod){ if(!TODPREV) TODPREV=(!['morning','noon','evening'].includes(TODN)?'noon':TODN); setTime(D.tod,true); todEl.style.display='none'; } else { if(TODPREV||!['morning','noon','evening'].includes(TODN)){ setTime(TODPREV||'noon',true); TODPREV=null; } todEl.style.display=''; } if(PETALS) PETALS.visible=!D.tod; }
-  TER=makeTerrain(D); initChunks(); buildWaters(); buildClouds(); if(!AIR) buildFar(); initActors();   // 2026-11-18 オーナー「案内役の人もいらない」: 出口の手前の「案内」の人(briefGuides)は置かない。土地の案内は地図の「盤」から
+  TER=makeTerrain(D); initChunks(); buildWaters(); buildClouds(); if(!AIR) buildFar(); initActors(); tfInit();   // 2026-11-18 オーナー「案内役の人もいらない」: 出口の手前の「案内」の人(briefGuides)は置かない。土地の案内は地図の「盤」から
   for(const n of NPCS) if(SAVE&&(SAVE.flags[npcKey(n)]||SAVE.flags['beat_'+n.o.n])){ n.beaten=true; if(n.o.lineAfter) n.o.line=n.o.lineAfter; }
   const p=pos||(D.arrive&&D.arrive[at])||D.spawn; HERO.x=p[0]; HERO.z=p[1]; HERO.yaw=p[2]; HERO.speed=0; HERO.dir=null; CAM.tx=HERO.x; CAM.tz=HERO.z;
   for(const c of CHUNKS.values()){ if(c.state===0&&chunkDist(c,HERO.x,HERO.z)<22){ const it=buildChunk(c); while(!it.next().done){} } }
