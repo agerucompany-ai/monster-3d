@@ -1697,12 +1697,12 @@ function aiBestMove(u){
   const evoGo = (gaugeReady(u) && aiCanEvo(u)) || (V2ON() && !u.anc && !u.awoke && !canEvolveSomeday(u) && gaugeOf(u)>=GAUGE_MAX*0.6);   // 覚醒(進化できない子)も中央へ
   const evoReady = gaugeReady(u) && aiCanEvo(u);   // 覚醒はどこでもできる(盤 v4)ので、進化だけ その段の進化のマスへ
   const zoneGo=aiZoneGo(u);   // 2026-10-29: 進化のマスに入れば闘気なしで進化 → 近ければ(2手番で届く)そこへ。リーダーの2段目は相手の陣まで行かない
-  const fp0=aiFusePartner(u); if(fp0){ goal=fp0.p; mode='fuse'; }   // 2026-11-19 オーナー「オートでは融合を積極的に狙う・敵も同じ」: 融合できる相手がいれば 進化のマスより先に そちらへ
-  if(!goal && zoneGo){ let bd=1e9, bg=null; for(const [r,c] of evoZoneCells(u)){ const o=unitAt(r,c); if(o && o.uid!==u.uid) continue; const d=man(u.r,u.c,r,c); if(d<bd){ bd=d; bg={r,c}; } } if(bg && bd<=(mon(u).level===1?effMove(u)*2+1:effMove(u))){ goal=bg; mode='evo'; } }   // 1段目(中央)は2手番まで・2段目(相手の陣の奥)はこの手番で届く時だけ
+  const fp0=aiFusePartner(u); if(fp0 && Math.abs(fp0.p.r-u.r)+Math.abs(fp0.p.c-u.c)<=effMove(u)+effMove(fp0.p)+2){ goal=fp0.p; mode='fuse'; }   /* 2026-11-20 遠い相手を待って自陣に固まらない: 2体がこの手番で寄れる時だけ */   // 2026-11-19 オーナー「オートでは融合を積極的に狙う・敵も同じ」: 融合できる相手がいれば 進化のマスより先に そちらへ
+  if(!goal && zoneGo){ let bd=1e9, bg=null; for(const [r,c] of evoZoneCells(u)){ const o=unitAt(r,c); if(o && o.uid!==u.uid) continue; const d=man(u.r,u.c,r,c); if(d<bd){ bd=d; bg={r,c}; } } if(bg && bd<=effMove(u)*2+1){ goal=bg; mode='evo'; } }   /* 2026-11-20 2段目も2手番で届くなら相手の陣へ(進化しに攻めこむ) */   // 1段目(中央)は2手番まで・2段目(相手の陣の奥)はこの手番で届く時だけ
   const fp=null;   // 盤 v4: 融合はどこでも → 相手のそばへ
   if(!goal && myL && !u.leader){ let nd=1e9, nf=null; for(const e of foes){ const d=man(e.r,e.c,myL.r,myL.c); if(d<nd){ nd=d; nf=e; } } if(nf && nd<=effMove(nf)+effRange(nf)+1){ goal=nf; mode='guard'; } }
   if(!goal){ const near=foes.slice().sort((a,b)=>man(a.r,a.c,u.r,u.c)-man(b.r,b.c,u.r,u.c))[0]||null;
-    goal = (foeL && (!near || man(foeL.r,foeL.c,u.r,u.c)<=effMove(u)*2+effRange(u)+1)) ? foeL : (near||foeL); }   // 敵リーダーが近ければ狙う・遠ければ目の前の敵と戦う
+    goal = foeL || near; }   // 2026-11-20 オーナー「オートモードはお互い、相手のリーダーを狙う」: 進化・融合・自分のリーダーを守る時のほかは、いつも相手のリーダーへ   // 敵リーダーが近ければ狙う・遠ければ目の前の敵と戦う
   const hpR=u.hp/u.maxhp;
   // 2026-10-25: 1体だけの側(野生の1対1・最後の1体)は引きこもると時間切れ＝決着しないので、敵への引き寄せを強く・敵の射程を恐れる重みを弱くする
   // (旧: 引き寄せ12/マス・リーダーの脅威回避0.7〜1.1 → 川(地形-36)や相手の射程(-23前後)を越えられず、7x7で両軍が4行離れたまま一度も攻撃せず終わっていた)
@@ -5375,7 +5375,7 @@ const TACT={ on:true,
   healGauge:10,                                           // 回復の技を使った子の闘気
   combo:{k:0.55, minX:1.1, reach:3, gather:2, power:100, mult2:1.15, mult3:1.35, small:{1:0.2, 2:0.1}, gauge:0, cost:{2:35, 3:25}},   // cost=参加する子それぞれが使う闘気(2体の合体/3体の合体)
   bal:{光:{atk:1.15,def:1.05}, 水:{atk:0.9,def:0.97}, 氷:{atk:1.45,def:1.12}, 森:{atk:1.45,def:1.08}, 地:{atk:1.25,def:1.05}, 闇:{atk:1.3,def:1.05}, 竜:{atk:1.2,def:1.03}, 炎:{atk:0.95}, 雷:{atk:1.25}, 風:{atk:1.2,def:1.05}},   // 2026-11-01 夕 真ん中に水を必ず置いたあと 水0.8/0.92→0.9/0.97(study_types 水 M 34→48%)。2026-11-01 盤に水を足したあと 水1.45/1.12→0.8/0.92・雷1.04→1.25(study_types 海の盤・水の少ない盤・ぜんぶ)。2026-11-01 光・風・水の決まりのあと study_types で 光1/1→1.15/1.05・風1.03→1.2/1.05・森1.28/1.06→1.45/1.08   // タイプごとの {atk, def} の倍率(バランスのつまみ)。2026-10-30 タイプ相性の作り直しのあと sim/study_types.js(タイプだけの隊)で合わせた。2つのタイプの子は 両方を掛ける。2026-10-31 オーナー「光 弱すぎちゃう？」: 光は atk0.7/def0.88→1/1(体の数の攻撃×0.92も戻した)
-  ai:{formation:40, cover:8, healLeader:0.75, zoneEvo:600, fusePull:45, fuseAdj:350, comboVsSolo:0.6, placeCombo:90, placeFuse:160},   // 2026-11-19 オーナー「オートは融合と合体攻撃を積極的に・初期配置も・敵も同じ」: formation 10→40・融合の引き寄せ 25→45・隣 160→350・合体は単独の6割の点でも撃つ・配置で合体/融合の相手のそば   // zoneEvo=進化のマスに入る点(2026-10-29 進化の2段構え)
+  ai:{formation:20, cover:8, healLeader:0.75, zoneEvo:600, fusePull:45, fuseAdj:350, comboVsSolo:0.6, placeCombo:90, placeFuse:160},   // 2026-11-19 オーナー「オートは融合と合体攻撃を積極的に・初期配置も・敵も同じ」: formation 10→40・融合の引き寄せ 25→45・隣 160→350・合体は単独の6割の点でも撃つ・配置で合体/融合の相手のそば   // zoneEvo=進化のマスに入る点(2026-10-29 進化の2段構え)
   final:{left:8, step:0.35},
   flag:{on:false},   // 2026-10-29 盤 v4: 旗はなくした(旗を取る決まり・旗のアイコン・説明も)。旧   // 古代テリオン(ボス)の戦いは旗なし   // second='center'|'flanks'=後手が最初から持つ旗 / openTurn=このターンから取れる   // 旗(2026-10-28 オーナー「風の売りは機動力・中間地点にいかに早く到達して進化ポイントを上げるか」): 真ん中の行の3本(中央・左右)。乗ると自分の旗・相手が乗ると取られる・手番の始めに旗1本につき味方全員 闘気+gauge
   charge:{min:2, per:0.08, cap:0.3, windPer:0.1, windCap:0.4, windEvade:0.12, away:2},   // away=風は攻撃のあと このマス数まで動ける(ヒット＆アウェイ)   // windEvade=風が2マス以上動いた手番は 次の自分の手番まで よけ+   // 突進: この手番に min マス以上動いてから攻撃 = 動いたマス×per(上限 cap・風は windPer/windCap)・かげをむし
@@ -5649,8 +5649,8 @@ const SIZE_RULES={
 // 相手の種類ごとの既定(盤の大きさ・敵のAI)。evo=敵が進化できる回数 / eg=敵の闘気のたまりやすさ / skill=1なら毎回いちばん良い手(低いほど迷う)
 const KIND_DEFAULTS={
   wild:   {size:7,  ai:{evo:0, eg:0.5,  skill:0.7, hpX:0.85, atkX:0.85}},   // 2026-10-25: 野生は鍛えられていない=体力・攻撃0.85倍・手が少し雑(相性の悪い組でも勝率7割に乗せるため)
-  trainer:{size:9,  ai:{evo:1, eg:0.65, skill:0.9}},
-  master: {size:11, ai:{evo:1, eg:0.75, skill:1}},
+  trainer:{size:9,  ai:{evo:3, eg:0.65, skill:0.9}},   // 2026-11-20 オーナー「相手がこっちの陣に来なくて進化してこないから弱くなった」: 進化は1回まで→3回まで(1回進化すると進化のマスへ向かう理由がなくなり、自陣にこもっていた)
+  master: {size:11, ai:{evo:4, eg:0.75, skill:1}},
   ancient:{size:9,  ai:{evo:0, eg:0.5,  skill:1}},   // 2026-10-26: 古代テリオン(守り・王)・ボス。1体の3段目と全パーティで戦う(下の ANCIENT)
 };
 // ---- 古代テリオン(守り・王)・ボスの戦い kind:'ancient'(2026-10-26) ----

@@ -2152,9 +2152,10 @@ function wildDupPlace(){ if(typeof D==='undefined'||!D||!D.spawn) return; for(co
 setInterval(wildDupPlace, 1500);
 function initActors(){ for(const o of D.npcs){ if(MAP==='athens'&&String(o.m||'').startsWith('v3:')) continue;   // 2026-11-19 オーナー「白い都の住人が変な3D。出さなくてよい」
   const g=new THREE.Group(); g.position.set(o.x,0,o.z); g.rotation.y=(o.rot||0)*DEG; NPCS.push({o,g,x:o.x,z:o.z,r:0.36,yaw:(o.rot||0)*DEG,lbl:makeLabel(o.n),ph:Math.random()*6,pi:0,wait:0}); }
-  for(const o of D.wild){ let re=false; if((o.ancient||o.boss)&&SAVE&&SAVE.flags[o.flag||'guard1']) re=true;   // 2026-10-28 オーナー「倒した後もずっと残るでいいよ。仮に覚えたとしても何度でも戦える」: 認められたあとも同じ場所に残り「再戦」で何度でも(自分からは寄ってこない)。覚える判定は覚えるまでだけ(Progress.learnBoss)
+  let darkI=0; for(const o of D.wild){ if(D.dark&&!(o.ancient||o.boss)&&(darkI++%3)!==0) continue;   /* 2026-11-20 オーナー「迷宮がめっちゃ多くて困ってる」: 闇の地図(迷宮)は暗くて野生が見えず勝負ばかりになる → 野生は3体に1体だけ・増やさない */
+    let re=false; if((o.ancient||o.boss)&&SAVE&&SAVE.flags[o.flag||'guard1']) re=true;   // 2026-10-28 オーナー「倒した後もずっと残るでいいよ。仮に覚えたとしても何度でも戦える」: 認められたあとも同じ場所に残り「再戦」で何度でも(自分からは寄ってこない)。覚える判定は覚えるまでだけ(Progress.learnBoss)
     MONS.push({o,x:o.x,z:o.z,yaw:Math.random()*6.28,st:'idle',t:Math.random()*3,tx:o.x,tz:o.z,inst:null,want:false,wild:true,r:0.32,rematch:re});
-    if(!(o.ancient||o.boss)) for(let k=0, nx=Math.floor(WILD_EXTRA)+((WILD_ACC+=WILD_EXTRA%1)>=1-1e-9?(WILD_ACC-=1,1):0);k<nx;k++){ const o2=Object.assign({},o,{dup:1}); MONS.push({o:o2,x:o.x,z:o.z,yaw:Math.random()*6.28,st:'idle',t:Math.random()*3,tx:o.x,tz:o.z,inst:null,want:false,wild:true,r:0.32,rematch:false,gone:true,pend:true}); } }   // 2026-11-16 オーナー「野生の数を増やしてレベル上げしやすく」: 野生の子1体ごとに近くへ同じ種類をもう1体。置き場所は地面が読めてから(wildDupPlace)
+    if(!(o.ancient||o.boss)&&!D.dark) for(let k=0, nx=Math.floor(WILD_EXTRA)+((WILD_ACC+=WILD_EXTRA%1)>=1-1e-9?(WILD_ACC-=1,1):0);k<nx;k++){ const o2=Object.assign({},o,{dup:1}); MONS.push({o:o2,x:o.x,z:o.z,yaw:Math.random()*6.28,st:'idle',t:Math.random()*3,tx:o.x,tz:o.z,inst:null,want:false,wild:true,r:0.32,rematch:false,gone:true,pend:true}); } }   // 2026-11-16 オーナー「野生の数を増やしてレベル上げしやすく」: 野生の子1体ごとに近くへ同じ種類をもう1体。置き場所は地面が読めてから(wildDupPlace)
   for(const o of D.helpers) MONS.push({o,x:o.x,z:o.z,yaw:(o.rot||0)*DEG,st:'still',t:0,inst:null,want:false,wild:false,r:0.32});
   for(const d of D.drones){ const B=new Builder(); CUR={B,cols:[],dyn:[],extra:[]}; P_(rbox(0.56,0.16,0.56,0.07,1),0xf6f6f4,T(0,0,0)); P_(rbox(0.58,0.05,0.12,0.02,1),0x3c9a9a,T(0,0.05,0));
     for(let i=0;i<4;i++){ const a=i/4*6.28+0.785; P_(rbox(0.4,0.04,0.05,0.02,1),0xd0d4da,T(Math.cos(a)*0.28,0.04,Math.sin(a)*0.28,-a)); P_(cyl(0.16,0.16,0.015,14),0xbfc8d4,T(Math.cos(a)*0.46,0.1,Math.sin(a)*0.46)); }
@@ -2329,7 +2330,7 @@ async function startEncounter(e){ ENC=e; BGM.bt=bgmBattleTrack(e); BGM.res=false
   if(e.n){ HERO.yaw=Math.atan2(e.n.x-HERO.x,e.n.z-HERO.z); e.n.yaw=Math.atan2(HERO.x-e.n.x,HERO.z-e.n.z); talkTo(e.n,e.n.o.n+'が勝負をしかけてきた！'); { const sc0=grTrainerScene(e.n); if(sc0&&SC[sc0]&&!(SAVE&&SAVE.flags['seen_'+sc0])){ await sleep(500); bangEl.style.display='none'; talkClose(); await grScene(sc0,e.n); if(SAVE) SAVE.flags['seen_'+sc0]=1; } } }
   if(e.m) toast(e.m.o.ancient?'古代テリオン・'+monName(e.m.o.id)+'が、こちらを見た！':(e.m.o.boss?monName(e.m.o.id)+'が、嵐の中から現れた！':'野生の'+monName(e.m.o.id)+'が飛び出してきた！'));
   if(e.m&&e.m.o.scene&&SC[e.m.o.scene]&&!(SAVE&&SAVE.flags['seen_'+e.m.o.scene])){ await sleep(500); bangEl.style.display='none'; await storyField(e.m.o.scene); if(SAVE) SAVE.flags['seen_'+e.m.o.scene]=1; }   // 古代テリオン(守り)・ボスに会う場面
-  const load=window.startBattle?Promise.resolve():loadScript('../battle/battle.js?v=20261119s');
+  const load=window.startBattle?Promise.resolve():loadScript('../battle/battle.js?v=20261120a');
   await new Promise(r=>setTimeout(r,e.n?1300:700)); bangEl.style.display='none'; talkClose();
   flashEl.style.opacity=1; await load; await new Promise(r=>setTimeout(r,350));
   PAUSED=true; flashEl.style.opacity=0; const place=placeAt(HERO.x,HERO.z); STATS.battles=(STATS.battles||0)+1;
@@ -2577,7 +2578,7 @@ const BRIEF_NO={};   // 野生のいない土地(村)
 const briefRegion=id=>MAPC[id]?Promise.resolve(MAPC[id]):fetch('regions/'+id+'.json').then(r=>r.json()).then(j=>(MAPC[id]=j));
 const briefHas=R=>!!(R&&(R.wild||[]).some(w=>!w.ancient&&!w.boss));
 const briefArc=id=>id.startsWith('cn_')?'china':id.startsWith('eg_')?'egypt':id.startsWith('nr_')?'norse':'greece';
-async function briefLib(){ if(!window.MonBattle) await loadScript('../battle/battle.js?v=20261119s'); await MONS_P; return window.MonBattle; }
+async function briefLib(){ if(!window.MonBattle) await loadScript('../battle/battle.js?v=20261120a'); await MONS_P; return window.MonBattle; }
 const BRIEF_TK=['plain','forest','wasteland','sea','water','ruins','lava','snow','gloom'];
 function briefBoards(R){ const B=R.battle, out=[]; const add=(tt,a)=>{ if(!tt||typeof tt!=='string') return; let o=out.find(x=>x.tt===tt); if(!o){ o={tt,areas:[]}; out.push(o); } if(a&&!o.areas.includes(a)) o.areas.push(a); };
   if(!B){ add('meadow'); add('olive'); if(R.terrain&&(R.terrain.streams||[]).length) add('stream','川ぞい'); if(R.terrain&&(R.terrain.coast||[]).length) add('seaside','海ぞい'); return out; }   // 盤の指定が無いマップ(オリーブの丘)は placeAt と同じ(草原・オリーブ畑・小川・海辺)
@@ -3942,7 +3943,7 @@ function grFightOpt(opt,F){ const lv=F.lv; if(!opt.player) opt.player={}; let pa
   const bd=grBoard(F.board,F.look); if(bd){ opt.terrainTheme=bd; opt.backdrop=undefined; }
   if(F.anc){ opt.kind='ancient'; opt.size=9; opt.enemy={party:[{mid:F.anc.mid, lv, fixed:true}], name:'古代テリオン '+monName(F.anc.mid), ancient:{tier:F.anc.tier, minions:(F.anc.minions||[]).slice(), tune:{hp:F.anc.tune.hp*adj, atk:F.anc.tune.atk*adj}}, catchable:!!F.learn};
     opt.recruit=F.learn?(()=>grLearn(F.anc.mid)):(()=>null); }
-  else { opt.kind='trainer'; opt.size=9; const ai=Object.assign({},F.ai||{}); ai.hpX=(ai.hpX||1)*adj; ai.atkX=(ai.atkX||1)*adj; opt.enemy={name:F.foe.n, party:F.foe.party.map(x=>Object.assign({lv},x)).concat(grFoeHelpers(foeAdd,lv)), ai}; opt.recruit=()=>null; } }
+  else { opt.kind='trainer'; opt.size=9; const ai=Object.assign({},F.ai||{}); if(ai.evo==null&&(+F._ep||0)<GR_FOE4_EP) ai.evo=1; /* 2026-11-20 人の敵の進化は3回までにしたが、12話まで(序盤〜決勝)の物語の勝負は今までどおり1回 */ ai.hpX=(ai.hpX||1)*adj; ai.atkX=(ai.atkX||1)*adj; opt.enemy={name:F.foe.n, party:F.foe.party.map(x=>Object.assign({lv},x)).concat(grFoeHelpers(foeAdd,lv)), ai}; opt.recruit=()=>null; } }
 const GR_FOE4_EP=13;
 function grFoeHelpers(n,lv){ if(!(n>0)) return []; const P=window.Progress; if(!P||!P.lineOf) return [];
   let pool=[...new Set(((typeof D!=='undefined'&&D&&D.wild)||[]).filter(w=>!w.ancient&&!w.boss&&!grGrifLocked(w.id)).map(w=>+P.baseOf(+w.id)))].filter(b=>!(P.config.starters||[]).includes(b));
