@@ -1193,7 +1193,8 @@ function folkMat(i){ if(!FOLK_MAT[i]){ const t=new THREE.TextureLoader().load('.
 // 2026-11-19 オーナーがTripoをチャージ: 白い都の人を3Dに(PixAIの都会の服の10人→Tripo→chars/folk0〜9.glb)。近くの人だけ組み立て、4人に1人は行ったり来たり歩く。読めなければ板の絵(folkSprite)
 const TF_ON=true, TF_OL=false, TF_KEYS=['folk0','folk1','folk2','folk3','folk4','folk5','folk6','folk7','folk8','folk9'], TF_SRC={}; let TF=[];
 function tfKey(o){ return TF_KEYS[(((Math.round(o.x*7)*31+Math.round(o.z*5)*17)%TF_KEYS.length)+TF_KEYS.length)%TF_KEYS.length]; }
-function tfWalker(o){ return !o.sit&&((((Math.round(o.x*3)+Math.round(o.z*7))%4)+4)%4)===0; }
+const TF_WALK=false;   // 2026-11-19 オーナー「歩かなくていい」: 全員その場で立つだけ
+function tfWalker(o){ return TF_WALK&&!o.sit&&((((Math.round(o.x*3)+Math.round(o.z*7))%4)+4)%4)===0; }
 function tfPos(o){ if(!o.sit) return [o.x,o.z]; const r=(o.rot||0)*DEG; return [o.x+Math.sin(r)*0.6,o.z+Math.cos(r)*0.6]; }
 function tfSrc(k){ return TF_SRC[k]||(TF_SRC[k]=loadGLB('../chars/'+k+'.glb').then(g=>{ const root=g.scene; root.traverse(o=>{ if(o.isMesh){ o.frustumCulled=false; o.castShadow=false; const mp=o.material&&o.material.map; if(mp){ mp.encoding=THREE.LinearEncoding; mp.anisotropy=4; } if(o.isSkinnedMesh&&window.V83){ o.material=V83.toonMat(mp); o.material.color.setScalar(CHAR_LIGHT); } } });
   root.updateMatrixWorld(true); const bb=new THREE.Box3().setFromObject(root); return {root,anims:g.animations,hg:Math.max(0.05,bb.max.y-bb.min.y),y0:bb.min.y}; })); }
