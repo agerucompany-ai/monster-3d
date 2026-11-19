@@ -1827,6 +1827,7 @@ function camBounds(){ let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9; for(const p of camFitPo
 function fit(){
   { const hud=$id('hud'), on=!!(state&&(state.phase==='battle'||state.phase==='end')); if(hud && hud._on!==on){ hud._on=on; hud.style.display=on?'':'none'; } }
   const cv=renderer.domElement; const cw=cv.clientWidth, ch=cv.clientHeight;
+  darkSync();
   if(cw===0||ch===0) return;
   if(cw!==_cw||ch!==_ch){ renderer.setSize(cw,ch,false); _cw=cw;_ch=ch; }
   const pb=(state&&state.phase==='place')?$id('placeBar'):null;   // 配置の帯の上に盤を収める
@@ -1844,7 +1845,7 @@ function fit(){
       if(ok){ best={d,tz}; hi=d; } else lo=d; }
     fit._c=best||{d:hi,tz:0}; }
   const dist=fit._c.d; camPlace(dist, fit._c.tz, polar);
-  if(scene.fog){ scene.fog.near=dist*0.95; scene.fog.far=dist*2.6; }   // 霧は全体の距離で(寄っても盤は霧の手前)
+  if(scene.fog){ scene.fog.near=dist*0.95; scene.fog.far=dist*((typeof _curLook!=='undefined'&&_curLook&&_curLook.fogK)||2.6); }   // 2026-11-19 迷宮(闇)は盤の外をすぐ暗く fogK   // 霧は全体の距離で(寄っても盤は霧の手前)
   _camDist = window._camZoom ? dist : camRun(dist, polar, yLo, yHi, xLim, topPx, ch);
   if(window._camZoom){ const z=window._camZoom; camera.clearViewOffset(); camera.fov=30; const d=z.d||4.2;   // 確認用: 1体に寄る(盤と同じ見下ろし角)
     camera.position.set(z.x, (z.y||0)+0.8+Math.sin(polar)*d, z.z+Math.cos(polar)*d); camera.lookAt(z.x,(z.y||0)+0.8,z.z); camera.updateProjectionMatrix(); }
@@ -2299,6 +2300,8 @@ const THEME_LOOK={
  gloom:     {sky:['#0b081a','#271a42','#4a3268'], fog:'#271c3a', ground:'#3a2a48', sun:0xb08aff, sunI:0.8, hemi:[0x7a60b0,0x1a1028,0.55], amb:0.32, far:'ruins', stars:true, leaf:['#3a2a4a','#4a3a5a'], sunGlow:'rgba(200,170,255,0.8)', sunGlow2:'rgba(120,90,200,0.35)', sunU:0.3, sunV:0.3},
  desert:    {sky:['#3b84d8','#f2cc92','#ffeac4'], fog:'#efd8ab', ground:'#dcc27c', sun:0xfff0c0, sunI:1.45, hemi:[0xffe8c0,0x9a7a4a,0.6], amb:0.3, far:'dunes', cloudN:8, leaf:['#4f9a46','#5aa852','#3f8a3a']},
  castle:    {sky:['#15172a','#363a58','#6c6e8e'], fog:'#3b3b52', ground:'#67656f', sun:0xffd8a0, sunI:0.95, hemi:[0x8a90b0,0x3a3038,0.55], amb:0.36, far:'walls', stars:true, leaf:['#4a6a3a','#3a5a30']},
+ // 2026-11-19 オーナー「迷宮のバトルのマップが明るい。闇のマップじゃない」: 地下の迷宮=空は無く真っ暗・たいまつの橙の光だけ・霧を近くに(地図の dark:1 と同じ闇)
+ labyrinth: {sky:['#020203','#07050a','#120c0a'], fog:'#0c0907', ground:'#241b14', sun:0xffa860, sunI:0.5, hemi:[0x7a5438,0x050302,0.24], amb:0.08, fill:0.08, dark:true, fogK:1.55, far:'walls', cloudN:0, leaf:['#2a2a20','#33302a'], hill:['#2a221c','#231c16'], sunU:0.5, sunV:0.52, sunGlow:'rgba(255,140,60,0.22)', sunGlow2:'rgba(160,70,30,0.08)'},
  volcano:   {sky:['#160806','#5a1c10','#c84a22'], fog:'#4c1b12', ground:'#3a2420', sun:0xff9a50, sunI:1.0, hemi:[0xff8a60,0x2a1010,0.5], amb:0.3, far:'volcano', stars:true, leaf:['#3a2a2a','#4a3a30'], sunU:0.5, sunV:0.47, sunGlow:'rgba(255,140,60,0.9)', sunGlow2:'rgba(220,80,30,0.4)'},
 };
 function lookOf(k){ return THEME_LOOK[k]||THEME_LOOK.forest; }
@@ -2328,12 +2331,16 @@ function cloudTex(){ if(_cloudTex) return _cloudTex; const S=512; const cv=docum
   for(let i=0;i<34;i++){ const cx=rnd()*S, cy=rnd()*S, w=40+rnd()*90; for(let j=0;j<8;j++){ const px=cx+(rnd()-0.5)*w, py=cy+(rnd()-0.5)*w*0.5, rr=12+rnd()*26;
     for(const [ox,oy] of [[0,0],[-S,0],[S,0],[0,-S],[0,S]]){ const cg=x.createRadialGradient(px+ox,py+oy,0,px+ox,py+oy,rr*2); cg.addColorStop(0,'rgba(255,255,255,0.28)'); cg.addColorStop(1,'rgba(255,255,255,0)'); x.fillStyle=cg; x.beginPath(); x.ellipse(px+ox,py+oy,rr*2.2,rr,0,0,6.283); x.fill(); } } }
   _cloudTex=new THREE.CanvasTexture(cv); _cloudTex.wrapS=_cloudTex.wrapT=THREE.RepeatWrapping; return _cloudTex; }
+// 2026-11-19 闇の盤(look に dark): 盤のまわりを暗く落とす(地図の dark:1 の闇と同じ見え方)。盤の上は見える
+function darkSync(){ if(IS_NODE||!renderer) return; const wrap=$id('wrap'); if(!wrap) return; let d=$id('dark'); const on=!!(_curLook&&_curLook.dark);
+  if(!d){ if(!on) return; d=document.createElement('div'); d.id='mb-dark'; d.style.cssText='position:absolute;left:0;right:0;top:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse 62% 48% at 50% 52%,rgba(0,0,0,0) 45%,rgba(4,2,1,.55) 75%,rgba(2,1,0,.92) 100%)'; wrap.appendChild(d); }
+  d.style.display=on?'':'none'; if(on){ const cv=renderer.domElement; d.style.top=cv.offsetTop+'px'; d.style.height=cv.offsetHeight+'px'; } }
 function applyAtmosphere(k){
   const L=lookOf(k); _curLook=L; _curTheme=k;
   if(!skyDome){ skyDome=new THREE.Mesh(new THREE.SphereGeometry(320,32,18), new THREE.MeshBasicMaterial({side:THREE.BackSide,fog:false,depthWrite:false})); skyDome.renderOrder=-100; skyDome.frustumCulled=false; skyDome.material.toneMapped=false; scene.add(skyDome);
     cloudLayer=new THREE.Mesh(new THREE.PlaneGeometry(900,900), new THREE.MeshBasicMaterial({map:cloudTex(),transparent:true,opacity:0.55,depthWrite:false,fog:false})); cloudLayer.rotation.x=Math.PI/2; cloudLayer.position.y=46; cloudLayer.renderOrder=-99; cloudLayer.material.map.repeat.set(5,5); scene.add(cloudLayer); }
   skyDome.material.map=makeSkyTex(k); skyDome.material.needsUpdate=true;
-  cloudLayer.visible = L.far!=='walls' && L.far!=='ruins' && !L.stars;
+  cloudLayer.visible = L.far!=='walls' && L.far!=='ruins' && !L.stars && L.cloudN!==0;
   cloudLayer.material.opacity = k==='sky'?0.8:0.5;
   scene.background=new THREE.Color(L.fog);
   if(!scene.fog) scene.fog=new THREE.Fog(L.fog,30,120); scene.fog.color.set(L.fog);
@@ -2341,9 +2348,9 @@ function applyAtmosphere(k){
   hemiLight.color.set(L.hemi[0]); hemiLight.groundColor.set(L.hemi[1]); hemiLight.intensity=L.hemi[2]*LM;
   ambLight.intensity=L.amb*LM;
   sunLight.color.set(L.sun); sunLight.intensity=L.sunI*LM;
-  fillLight.intensity=(L.stars?0.25:0.4)*LM;
+  fillLight.intensity=(L.fill!=null?L.fill:(L.stars?0.25:0.4))*LM;
   if(baseMat) baseMat.color.set(L.ground);
-  buildFarScape(k);
+  buildFarScape(k); darkSync();
 }
 let _edgeTex=null;
 function edgeFadeTex(){ if(_edgeTex) return _edgeTex; const cv=document.createElement('canvas'); cv.width=cv.height=256; const x=cv.getContext('2d'); const g=x.createRadialGradient(128,128,90,128,128,128); g.addColorStop(0,'rgba(255,255,255,0)'); g.addColorStop(0.45,'rgba(255,255,255,0.85)'); g.addColorStop(1,'rgba(255,255,255,1)'); x.fillStyle=g; x.fillRect(0,0,256,256); _edgeTex=new THREE.CanvasTexture(cv); return _edgeTex; }
@@ -2481,6 +2488,7 @@ const THEME_TERR={
   snow:{wasteland:['#9ea8b4','#8e98a4','#b0b9c4'], forest:['#4b7a5c','#3f6a4e','#577e66'], plain:['#a9bf9c','#9db493','#b5caa8']},   // 2026-10-27 雪原のマス(白)と見分けられるよう、雪の盤の平原は霜の草の色
   underworld:{wasteland:['#5a4a46','#4e3f3b','#665652'], plain:['#7a6a52','#6c5d47','#88775d']},
   volcano:{wasteland:['#5a4238','#4c3730','#684d42']},
+  labyrinth:{plain:['#3e4236','#363a2f','#464a3d'], forest:['#25331f','#1f2b1a','#2c3b25'], wasteland:['#463a2c','#3d3226','#504332'], ruins:['#4a4744','#3f3d3a','#55524e'], water:['#1f3436','#1a2d2f','#26403f'], mountain:['#3a3633','#33302d','#433f3b']},   // 2026-11-19 オーナー「地形を黒っぽく」: 闇の迷宮の石と苔(種類は色合いで見分けられるまま)
   rift:{wasteland:['#a0704c','#8e6240','#ae7e58'], plain:['#9a9a5a','#8a8a4e','#a8a866']},
   gloom:{wasteland:['#5a5064','#4e4458','#665c70'], lava:['#152815','#102010','#1a321a']},
   mountain:{wasteland:['#8a8070','#7a7262','#9a9080'], plain:['#7fae5a','#6f9e4c','#8fbd68']},
@@ -5768,7 +5776,7 @@ const PLACES={
   kingsvalley:{jp:'王家の谷', mix:{wasteland:0.58, ruins:0.16, gloom:0.12, plain:0.14}, look:'desert'},
   nightwood: {jp:'夜の森',   mix:{forest:0.50, gloom:0.18, plain:0.32},                look:'grove'},
   arkcore:   {jp:'アークの中心', mix:{ruins:0.45, gloom:0.22, wasteland:0.18, plain:0.15}, indoor:true, look:'gloom'},
-  maze:      {jp:'迷宮',     mix:{ruins:0.50, plain:0.32, wasteland:0.18},             indoor:true, look:'agora'},   // 2026-11-01 迷宮・地下(川・湖を足さない)
+  maze:      {jp:'迷宮',     mix:{ruins:0.50, plain:0.32, wasteland:0.18},             indoor:true, look:'labyrinth'},   // 2026-11-19 闇の迷宮   // 2026-11-01 迷宮・地下(川・湖を足さない)
   undercroft:{jp:'地下の回廊', mix:{ruins:0.42, plain:0.38, wasteland:0.12, forest:0.08}, indoor:true, look:'agora'},
 };
 const TERR_ALL=['plain','forest','wasteland','sea','water','ruins','lava','snow','gloom'];
