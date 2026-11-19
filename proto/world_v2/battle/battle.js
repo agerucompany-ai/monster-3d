@@ -1295,8 +1295,7 @@ function fuseHpSet(nu, mats, s3, T, wasLeader){
   const sumMax=mats.reduce((s,x)=>s+x.maxhp/(x._lbuf||1),0); const dmg=mats.reduce((s,x)=>s+Math.max(0,x.maxhp-Math.max(0,x.hp)),0);
   let mx=Math.max(mon(nu).hp*hx*s3*(T.fuseHpX||1), sumMax*(T.fuseHpSum||0)); nu.hx=mx/Math.max(1,mon(nu).hp);
   if(wasLeader){ const LX=(BT.rules&&BT.rules.leaderHpX)||LEADER_HP_X; nu._lbuf=LX; nu.hx*=LX; mx*=LX; }
-  const hpSum=mats.reduce((s,x)=>s+Math.max(0,x.hp),0), mxSum=mats.reduce((s,x)=>s+Math.max(1,x.maxhp),0);
-  nu.maxhp=Math.round(mx); nu.hp=Math.max(1, Math.round(nu.maxhp*hpSum/mxSum)); nu.fuseDmg=Math.round(dmg); }   // 2026-11-20 ダメージは割合で引き継ぐ(材料の今の体力の合計 ÷ 最大体力の合計)
+  nu.maxhp=Math.round(mx); nu.hp=Math.max(1, nu.maxhp-Math.round(dmg)); nu.fuseDmg=Math.round(dmg); }
 function tryFusion(a, b, r, c){
   const fid=fusionResult(a,b);
   if(fid==null){
@@ -1381,13 +1380,13 @@ function evolveUnit(u, free, why){
     if(!gaugeReady(u)){ toast(`闘気 ${gaugeOf(u)}/${evoNeed(u)}`); return false; }
     u.g=0;
   }
-  const hpR0 = Math.max(0,u.hp)/Math.max(1,u.maxhp);   // 2026-11-20 オーナー「進化や融合してもダメージが引き継がれてないのは不公平」: 受けたダメージは「割合」で引き継ぐ(前は量で引き継ぎ、最大体力が3倍になるので ほぼ全快に見えた)
+  const dmgTaken = u.maxhp - u.hp;           // 受けたダメージは進化後も維持(2026-11-20 オーナー「量で引き継いでるならそれでいい」: 割合にはしない)
   const clutch = T3() && (behindOf(u.owner) || u.hp/u.maxhp<=TACT.behind.selfHp);   // 戦術v3: 土壇場進化(背水か その子の体力が半分以下)
   const clutchShow = clutch && u.hp/u.maxhp<=TACT.behind.selfHp;   // 2026-10-30 表示だけ: 「土壇場進化！」は その子の体力が半分以下の時だけ(古代・ボス戦の背水で満タンでも出ていた)。決まり(強さ)は clutch のまま
   const mv0 = V2ON() ? movesV2(u).map(x=>x.id) : null;
   u.mid=m.evolves_to; const nm=mon(u);
-  u.maxhp=Math.max(1,Math.round(nm.hp*(u.hx||1))); u.hp=Math.max(1, Math.round(u.maxhp*hpR0));
-  if(clutch){ const h=Math.min(u.maxhp-u.hp, Math.round(u.maxhp*TACT.behind.evoHeal)); if(h>0){ u.hp+=h; floatText(u.r,u.c,'+'+h,'#7ee08a'); } }   // 進化でもどるのは土壇場進化(45%)だけ(2026-11-20 ふつうの進化の回復はなくした)
+  u.maxhp=Math.max(1,Math.round(nm.hp*(u.hx||1))); u.hp=Math.max(1, u.maxhp - dmgTaken);
+  { const T=BT.tune||TUNE; const h=Math.min(u.maxhp-u.hp, Math.round(u.maxhp*(clutch?TACT.behind.evoHeal:T.evoHeal))); if(h>0){ u.hp+=h; floatText(u.r,u.c,'+'+h,'#7ee08a'); } }   // 進化で体力が少し戻る(土壇場は45%)
   if(clutch){ setBuf(u,'buf',{stat:'atk', x:TACT.behind.evoAtk, turns:TACT.behind.evoTurns},false); if(state.stats){ const s=state.stats.clutch||(state.stats.clutch=[0,0]); s[u.owner]++; }
     if(!BT.headless && clutchShow){ floatText(u.r,u.c,IC('clutch')+'土壇場','#ff9a60','tag'); showBanner(`${IC('clutch')}土壇場進化！`); } }
   (state.stats.ev||(state.stats.ev=[])).push({k:'evo', o:u.owner, sh:hpShare(u.owner), t:state.turn});   // 上限だけ上がる（全快しない）。world_v2: 成長ランク・リーダー・敵の強さの倍率(hx)は継ぐ
