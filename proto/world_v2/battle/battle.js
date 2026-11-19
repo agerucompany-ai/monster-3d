@@ -1726,7 +1726,7 @@ function aiBestMove(u){
     if(T3()){ if(TACT.cover.terr.includes(terrAt(r,c))) sc+=TACT.ai.cover*(u.leader?2:1); sc+=aiFormationScore(u,r,c); }   // 戦術v3: かげ・合体の陣形
     const th=threat(r,c)*(idle?Math.max(0.25,1-idle*0.25):1);
     if(u.dug>0 && u.digWhy==='flee') sc-=th*0.4;   // 2026-10-30: にげるために潜った子は 浮かぶ所も相手から離れる
-    const push = u.leader && !u.anc && (bossHoldOn(u) ? bossAdv : shPush(me));   // 人の3段目: 押している/長引いたらリーダーも前へ(STAGE_HUMAN.push)。2026-10-30 相手のリーダーは bossAdvance(手下が減った・近づかれた・長引いた)
+    const push = u.leader && !u.anc && ((BT.kind==='wild' && me===1) || (bossHoldOn(u) ? bossAdv : shPush(me)));   // 2026-11-20 オーナー「クマッパとか全然攻めてこないので進化せず弱い」: 野生の群れの頭は自陣の奥で待たず前へ出る   // 人の3段目: 押している/長引いたらリーダーも前へ(STAGE_HUMAN.push)。2026-10-30 相手のリーダーは bossAdvance(手下が減った・近づかれた・長引いた)
     sc-=th*(u.anc?0.15:(u.leader?(lone?(me===0?0.7:0.2):(push?(hpR<0.35?0.6:0.25):(hpR<0.6?1.1:0.7))):(hpR<0.35?0.35:0.08)));   // 1体だけ: 自軍は相手の射程の外で待てる時は待つ(先手を取る)・敵(野生)は気にせず詰める。古代テリオンは恐れない
     if(u.leader && !u.anc && !push && mode!=='evo' && alive(me).length>1){ const back=START_ROWS[me][0]; sc-=Math.max(0, (me===0?(back-r):(r-back))-2)*70; }
     else if(bossHoldOn(u) && !bossAdv){ const back=START_ROWS[me][0]; sc-=Math.max(0, Math.abs(r-back)-BOSS_HOLD.depth)*BOSS_HOLD.w; }   // 2026-10-30: 古代テリオン・ボス(1体だけの時も)は 前に出る時まで自陣の奥   // リーダーは前に出すぎない(進化に向かう時を除く・古代テリオンは除く)
@@ -5968,7 +5968,7 @@ function init(o){
     try{ applySeries(rd(CFG.series)); }catch(e){ applySeries(null); }   // 戦術v3: シリーズと合体攻撃
     return (_loadP=Promise.resolve(true)); }
   const gj=(f)=>fetch(CFG.base+f).then(r=>{ if(!r.ok) throw new Error(f+' '+r.status); return r.json(); });
-  _loadP=gj(CFG.data).then(list=>{ setMonsters(list); return Promise.all([gj(CFG.stats),gj(CFG.moves)]).then(([st,mv])=>applyV2Data(st,mv)).catch(e=>{ console.warn('技 v2 のデータが読めない',e); V2DATA=false; }); })
+  _loadP=gj(CFG.data+'?v=20261120').then(list=>{ setMonsters(list); return Promise.all([gj(CFG.stats),gj(CFG.moves)]).then(([st,mv])=>applyV2Data(st,mv)).catch(e=>{ console.warn('技 v2 のデータが読めない',e); V2DATA=false; }); })
     .then(()=>gj(CFG.series).then(applySeries).catch(e=>{ console.warn('シリーズの表が読めない',e); applySeries(null); }))   // 戦術v3
     .then(()=>true);   // 2026-10-27 技 v2
   return _loadP;

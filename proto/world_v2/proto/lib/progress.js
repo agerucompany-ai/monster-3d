@@ -51,6 +51,8 @@ function evoNeed(id){ const st=stageOf(id); return (STARTERS.includes(baseOf(id)
 P.evo3Gate=P.evo3Gate||null;   // greece_town が入れる(12話の決勝に勝ったか)。無い時(試し等)は通す
 function gateOk(id){ if(stageOf(id)<3) return true; try{ return !P.evo3Gate||!!P.evo3Gate(); }catch(e){ return true; } }
 P.storyEvoLv=(mid)=>lvForm(mid)?EVO_LV[stageOf(mid)]:null;
+// 2026-11-20 進化の解禁: 4話の場面(SAVE.unlock.evo)か、物語が5話より先なら解禁(立っていないセーブがあった→トールキッドが進化を覚えなかった)
+function evoOn(){ if(SAVE&&SAVE.unlock&&SAVE.unlock.evo) return true; let ep=0; try{ ep=P.storyEp?+P.storyEp()||0:0; }catch(e){} if(ep>4){ if(SAVE&&SAVE.unlock) SAVE.unlock.evo=true; return true; } return false; }
 function lineLv(b){ const pg=prog(); let mx=0; if(pg) for(const c of pg.roster) if(baseOf(c.mid)===b) mx=Math.max(mx,+c.lv||1); return mx; }
 // 2026-11-17 オーナー「他のやつがなかなか進化を覚えないのはなぜ？」: 御三家だけでなく ふつうの系統はみな Lv で進化を覚える(ボス・切り札の姿とその先は今まで通り倒して覚える)。御三家は Lv だけ(早すぎないように)
 function lvForm(id){ const m=mon(id); if(!m||m.role==='fusion'||stageOf(id)<2) return false; const ln=lineOf(id); for(const x of ln.slice(0,ln.indexOf(+id)+1)) if(BOSS_FORMS.includes(+x)||TRUMP_FORMS.includes(+x)) return false; return true; }   // レベルで覚える姿か
@@ -196,10 +198,10 @@ P.fusionKnownList=()=>Object.values(MON).filter(m=>m.role==='fusion'&&P.knowsFus
 P.formsList=()=>{ const pg=prog(); const o=new Set(pg&&pg.forms?Object.keys(pg.forms).map(Number).filter(id=>mon(id)&&!(lvForm(id)&&starterLine(id))):[]); for(const id of lvLineForms()) if(lvFormOk(id)) o.add(id); return [...o]; };
 function lvLineForms(){ const pg=prog(); const bs=new Set(pg?pg.roster.map(c=>baseOf(c.mid)):[]); const o=[]; for(const b of bs) for(const id of lineOf(b)) if(lvForm(id)) o.push(id); return o; }
 P.evoLv=(mid)=>lvForm(mid)?evoNeed(mid):null;   // レベルで覚える姿なら その Lv
-P.evoHint=(id,cur)=>{ id=+id; const m=mon(id); if(!m) return ''; if(!(SAVE&&SAVE.unlock&&SAVE.unlock.evo)) return '物語で進化を知るまで、まだできない';   // 2026-11-17 オーナー「進化の条件がわからない」: 覚えていない理由を勝負の中で見せる
+P.evoHint=(id,cur)=>{ id=+id; const m=mon(id); if(!m) return ''; if(!evoOn()) return '物語で進化を知るまで、まだできない';   // 2026-11-17 オーナー「進化の条件がわからない」: 覚えていない理由を勝負の中で見せる
   if(P.knowsForm&&P.knowsForm(id)) return ''; if(lvForm(id)){ const need=evoNeed(id), b=baseOf(id); return (gateOk(id)?'':'12話の決勝に勝ったあと、')+`Lv${need}で覚える・いまLv${cur||lineLv(b)||1}`; }
   return 'この姿の相手に勝つと覚えることがある'; };
-P.evoAvail=()=>{ if(!(SAVE&&SAVE.unlock&&SAVE.unlock.evo)) return []; return lvLineForms().filter(id=>P.knowsForm(id)); };   // 今 進化できる(レベルで覚えた)姿
+P.evoAvail=()=>{ if(!evoOn()) return []; return lvLineForms().filter(id=>P.knowsForm(id)); };   // 今 進化できる(レベルで覚えた)姿
 // その姿を手に入れた(野生のリーダー・生み出す・ボス): 2段目以上 → 進化の仕方を覚える / その系統の子がいなければ1段目の子を1体
 function obtain(mid, lv, src){ const out={mid:+mid, forms:[], gave:null}; if(stageOf(mid)>=2) out.forms=learnForm(mid); if(!P.hasLine(mid)) out.gave=P.add(baseOf(mid), lv, src); return out; }
 P.obtain=obtain;
@@ -233,7 +235,8 @@ P.swap=function(uParty,uRanch){ const pg=prog(); if(!pg) return false; const i=p
 P.setLeader=function(u){ const pg=prog(); if(!pg||!pg.party.includes(u)) return false; pg.party=[u].concat(pg.party.filter(x=>x!==u)); SAVE.partner=P.get(u).mid; P.save(); return true; };
 P.release=function(u){ const pg=prog(); if(!pg) return false; if(pg.party.includes(u)&&pg.party.length<=1) return false; pg.roster=pg.roster.filter(c=>c.uid!==u); pg.party=pg.party.filter(x=>x!==u); P.save(); return true; };
 // 持っている種類(バトルの進化の判定に渡す): 持っている子(1段目)＋覚えた進化の仕方(物語で進化が解禁されたあと)。2026-10-28
-P.ownedList=function(){ const pg=prog(); const o=new Set(); const evo=!!(SAVE&&SAVE.unlock&&SAVE.unlock.evo); for(const c of (pg?pg.roster:[])) o.add(baseOf(c.mid)); if(evo) for(const id of P.formsList()) o.add(id); if(SAVE&&SAVE.test) for(const id of (SAVE.owned||[])) o.add(+id); return [...o]; };
+P.evoOn=()=>evoOn();
+P.ownedList=function(){ const pg=prog(); const o=new Set(); const evo=evoOn();   /* 2026-11-20 オーナー「トールキッドが謎に進化を覚えない」: 進化の解禁(4話の場面で立つ)が立っていないセーブがあった → 5話より先なら解禁あつかい */ for(const c of (pg?pg.roster:[])) o.add(baseOf(c.mid)); if(evo) for(const id of P.formsList()) o.add(id); if(SAVE&&SAVE.test) for(const id of (SAVE.owned||[])) o.add(+id); return [...o]; };
 P.legacyBox=function(){ const box={}; for(const c of P.roster()){ const b=baseOf(c.mid); if(!box[b]||box[b].lv<c.lv) box[b]={rank:Math.round(lvRank(c.lv)), lv:c.lv}; } return box; };
 P.battleParty=()=>P.party().map(c=>({mid:c.mid, lv:c.lv, uid:c.uid}));
 
@@ -338,7 +341,7 @@ P.applyResult=function(res, ctx){ const rows=[]; const pg=prog(); if(!pg) return
   const total=Math.round(ctx.enemy.reduce((s,e)=>s+CFG.expGain(e.lv||1, stage(e.mid), ctx.kind)*(e.pack?CFG.packExp:1),0))||CFG.expGain(1,1,ctx.kind);
   (res.party||[]).forEach((p,i)=>{ const ent=ctx.party[i]; const c=ent&&P.get(ent.uid); if(!c) return; const n=Math.max(1,Math.round(total*(p.out?1:CFG.benchExp))); const r=addExp(c,n); res.progress.exp.push(r);
     rows.push(`${nameOf(c.mid)}　EXP +${n}`); if(r.after>r.before){ res.progress.lvup.push(r); rows.push(`<span class="lvup">${nameOf(c.mid)}　Lv${r.before} → Lv${r.after}</span>`);
-      for(const id of lineOf(c.mid)) if(lvForm(id)&&gateOk(id)){ const need=evoNeed(id); if(SAVE&&SAVE.unlock&&SAVE.unlock.evo&&r.before<need&&r.after>=need&&lineLv(baseOf(id))<=r.after&&!(!starterLine(id)&&pg.forms&&pg.forms[id])){ (res.progress.evo||(res.progress.evo=[])).push({from:lineOf(c.mid)[stageOf(id)-2], to:id}); rows.push(`<span class="lvup">${nameOf(lineOf(c.mid)[stageOf(id)-2])}は ${nameOf(id)}への進化を覚えた！</span>`); } }
+      for(const id of lineOf(c.mid)) if(lvForm(id)&&gateOk(id)){ const need=evoNeed(id); if(evoOn()&&r.before<need&&r.after>=need&&lineLv(baseOf(id))<=r.after&&!(!starterLine(id)&&pg.forms&&pg.forms[id])){ (res.progress.evo||(res.progress.evo=[])).push({from:lineOf(c.mid)[stageOf(id)-2], to:id}); rows.push(`<span class="lvup">${nameOf(lineOf(c.mid)[stageOf(id)-2])}は ${nameOf(id)}への進化を覚えた！</span>`); } }
       const f=formFor(c); const nw=newMovesBetween(f, r.before, r.after); if(nw.length){ const L={uid:c.uid, mid:f, name:nameOf(f), moves:nw.map(x=>x.name)}; (res.progress.learn||(res.progress.learn=[])).push(L); rows.push(`<span class="lvup">新しい技を覚えた　${nameOf(f)}「${L.moves.map(rubyByName).join('」「')}」</span>`); } } });
   if(res.progress.learn&&res.progress.learn.length) UI.learnNotice(res.progress.learn);
   if(res.rewards){ if(ctx.zeroday&&ctx.kind!=='wild'){ res.progress.gems=res.rewards.gems; if(res.rewards.gems) P.addGems(res.rewards.gems,'zeroday'); } else res.rewards.gems=0; }   // ジェムはヴィクター(手下・幹部)を倒した時だけ(G2)
