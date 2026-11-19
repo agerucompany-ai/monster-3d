@@ -2799,8 +2799,8 @@ const $=id=>document.getElementById(id);
 const ST={el:$('st'),bg:$('stBg'),L:$('stL'),R:$('stR'),R2:$('stR2'),ph:$('stPh'),box:$('stBox'),nm:$('stBox').querySelector('b'),tx:$('stBox').querySelector('p'),card:$('stCard'),cap:$('stCard').querySelector('.cap'),skip:$('stSkip'),title:$('stTitle'),pick:$('stPick')};
 const PDIR='../v3/portraits/';
 const E7=['normal','smile','surprised','serious','sad','angry','hurt'];
-const FACES={hero_m:E7,hero_f:E7,genichi:['normal'],misaki:['normal','smile'],hana:['normal'],ryo:['normal'],
-  elly:['normal','smile','surprised','sad','serious'],alek:['normal','smile','serious','surprised','angry','sad'],dimi:['normal'],elena:['normal','smile','serious'],tasos:['normal','smile','surprised'],petra:['normal','smile','surprised'],stavros:['normal'],ana:['normal'],marina:['normal'],nomos:['normal'],oba:['normal'],
+const FACES={hero_m:E7,hero_f:E7,genichi:['normal'],misaki:['normal','smile'],hana:['normal','smile','calling','serious','surprised','sad'],ryo:['normal'],
+  elly:['normal','smile','surprised','sad','serious'],alek:['normal','smile','serious','surprised','angry','sad'],dimi:['normal'],elena:['normal','smile','serious'],tasos:['normal','smile','surprised'],petra:['normal','smile','surprised'],stavros:['normal'],ana:['normal','smile','calling','serious','surprised','sad'],marina:['normal'],nomos:['normal'],oba:['normal'],
   kasia:['normal'],zeno:['normal'],hao:['normal'],tarik:['normal'],victor:['normal'],nina:['normal'],marco:['normal']};   // 2026-11-08 アニメ側の立ち絵(キャラ立ち絵_追加_20261108)を v3/portraits に足した(白い背景を外して胸から上)
 // 立ち絵の鍵: elly=エリー(anime/chars/elly)・alek=アレク(anime/chars/alek)・dimi=レン(絵は11/17に新デザインの顔へ)・stavros=ヤニス(11/17 PixAIで描いた全身から顔)。patch/log/x は絵なし(名前だけ)
 const WHO={genichi:'じいちゃん',misaki:'母',hana:'ハナ',ryo:'父',elly:'エリー',alek:'アレク',dimi:'レン',elena:'クロエ博士',tasos:'タソス',petra:'ペトラ',stavros:'ヤニス',patch:'パッチ',log:'ログ',mihalis:'ミハリス',sophia:'ソフィア',bella:'ベラドンナ',yusuf:'ユスフ',hao:'ハオ',lifa:'リーファ',ransom:'ランサム',shifu:'師範',x:''};   // 中国編(2026-10-26): ハオ・リーファ・ランサム・師範は絵なし(名前だけ)
@@ -2811,10 +2811,13 @@ function fillT(t){ const g=SAVE?SAVE.g:'m'; return t.replace(/\{hero\}/g,SAVE?SA
 const PFACE={}; fetch(PDIR+'index.json').then(r=>r.json()).then(j=>{ for(const k in j.chars){ const f=j.chars[k].facing||{}; for(const e in f) PFACE[PDIR+k+'_'+e+'.webp']=f[e]; } }).catch(()=>{});
 function pFace(img,side){ const src=img.getAttribute('src')||''; const f=PFACE[src]||'right'; const want=side==='L'?'right':'left'; img.style.setProperty('--fx',(f==='front'||f===want)?'1':'-1'); }
 function pSrc(who,face){ const k=who==='hero'?'hero_'+(SAVE?SAVE.g:'m'):who; const f=FACES[k]; if(!f) return null; return PDIR+k+'_'+(f.includes(face)?face:'normal')+'.webp'+(PVER[k]?'?v='+PVER[k]:''); }
-const PVER={marina:'20261118w', alek:'20261120'};   // 2026-11-20 オーナー「アレクが明らかに古いデザイン。同じ顔ばっかり」: 同じ名前の古い絵(黒パーカー)がスマホに残っていた → 版をつけ、6つの顔(紺T・PixAI Tsubaki.3)に
+const PVER={marina:'20261118w', alek:'20261120', ana:'20261120'};   // 2026-11-20 オーナー「アレクが明らかに古いデザイン。同じ顔ばっかり」: 同じ名前の古い絵(黒パーカー)がスマホに残っていた → 版をつけ、6つの顔(紺T・PixAI Tsubaki.3)に
 // 台本に顔の指定が無い(normal)アレクの台詞は、言葉から顔を選ぶ(台詞の字は変えない)
 const ALEK_MOOD=[['surprised',/^(え[っ、！？…]|は[あっ]?[？?]|なっ|うそ|ちょ[、っ]|マジ)|[！!][？?]|[？?][！!]/],['angry',/アホ|ボケ|なめ|ふざけ|こら|コラ|どつ|しばく|待てや|やめえ|ええかげん|見いや|せえや|やめや|言うなや|ちゃうわ|なんでやねん|あほか|知らんわ/],['sad',/すまん|ごめん|しゃあない|悪かった|あかんかった/],['smile',/っす|ええで|任せ|余裕|やったで|勝った|でかなった|へへ|ええやん|まいど|儲|おおきに|やるやん|ええな|ラッキー|ジェム|コイン|貸し|ほな、|やろ？|せやろ/],['serious',/[！!]$|まだや|気を抜く|下がれ|出ろ|撃て|せえ[！!]|行くで/]];
-function lineFace(L){ const f=L.f||'normal'; if(L.w!=='alek'||f!=='normal'||typeof L.t!=='string') return f; for(const [k,rx] of ALEK_MOOD) if(rx.test(L.t)) return k; return 'normal'; }   // 2026-11-18 マリナを白い制服に描き替え(古い絵が残らないように)
+// 2026-11-20 アナも作り直した絵(明るい栗色・6つの顔)に合わせて、言葉から顔を選ぶ
+const ANA_MOOD=[['calling',/^(エリー|ヤマト|アレク|おばあちゃん)[！!]|^おーい/],['surprised',/[！!][？?]|[？?][！!]|^え[っ…、！？]/],['sad',/また、そんな|心配|ごめん|さびし/],['serious',/なさい|でしょ|だれなの|どうして|むかえに|止めても|ちゃんと聞く|[！!]$/],['smile',/ね。$|よかった|ありがと|おはよう|あげる|ちゃら|ねー/]];
+const MOOD={alek:ALEK_MOOD, ana:ANA_MOOD};
+function lineFace(L){ const f=L.f||'normal'; const M=MOOD[L.w]; if(!M||f!=='normal'||typeof L.t!=='string') return f; for(const [k,rx] of M) if(rx.test(L.t)) return k; return 'normal'; }   // 2026-11-18 マリナを白い制服に描き替え(古い絵が残らないように)
 for(const im of [ST.L,ST.R,ST.R2]) im.onerror=()=>im.classList.add('off');
 const PIMG={}; let ADV=null; function advance(){ if(ADV){ const f=ADV; ADV=null; f(); } }
 ST.box.addEventListener('click',e=>{ e.stopPropagation(); advance(); });
@@ -3628,7 +3631,7 @@ const GR_GUIDE_ART={
   victor:{img:'../v3/chars/victor_stand.webp', glb:'../chars/victor.glb', h:1.55, n:'ヴィクター', guest:1},
   // 2026-11-17 オーナー「PixAIで元の絵のモデルから作って立たせて」: 上の5人(ひざ下が切れていた設定画)は PixAI で足を描き足して全身に(cutなし)。
   //  アナ=2話の原画から・マリナ/ノモス/ヤニス=台本の人物設定から PixAI で全身を描いた(画風は設定画を横に置いて合わせた)・おばあさん=設定画 C9 白衣案
-  ana:{img:'../v3/chars/ana_stand.webp', glb:'../chars/ana.glb', h:1.34, n:'アナ', guest:1},
+  ana:{img:'../v3/chars/ana_stand.webp?v=20261120', glb:'../chars/ana.glb?v=20261120', h:1.34, n:'アナ', guest:1},
   marina:{img:'../v3/chars/marina_stand.webp?v=20261118w', glb:'../chars/marina.glb', h:1.38, n:'マリナ', guest:1},
   nomos:{img:'../v3/chars/nomos_stand.webp', glb:'../chars/nomos.glb', h:1.44, n:'ノモス', guest:1},
   stavros:{img:'../v3/chars/stavros_stand.webp', glb:'../chars/stavros.glb', h:1.46, n:'ヤニス', guest:1},
