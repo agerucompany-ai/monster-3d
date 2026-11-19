@@ -3173,6 +3173,28 @@ function fxBolt(r,c,o){ o=o||{}; const w=cell2world(r,c),h=cellH(r,c); const col
   effects.push({t0:performance.now(),dur:o.dur||230,update:t=>{ const f=(t<0.15||((t*40)|0)%2===0)?1:0.55; mat.opacity=(1-t)*f; mat2.opacity=0.55*(1-t)*f; gl.material.opacity=0.9*(1-t); gl.scale.setScalar(1.6+t*1.5); },cleanup:()=>{fxGroup.remove(tube);fxGroup.remove(tube2);fxGroup.remove(gl);tube.geometry.dispose();tube2.geometry.dispose();}});
   fxP({x:w.x,y:h+0.3,z:w.z,n:8,kind:'spark',color:0xfff060,size:0.3,sizeEnd:0.1,life:380,grav:2,vel:radial(2.2,1.4,1),spin:3,aspect:0.5});
 }
+// 2026-11-19 オーナー「フォックスファイヤーはダメ。ファルコンフレイムで ファルコンの形をした炎を出す」: 翼を広げた鷹の形の炎が 撃った子から相手へ羽ばたいて飛び、当たって弾ける
+let _falconTex=null;
+function falconTex(){ if(_falconTex) return _falconTex; const S=256, cv=document.createElement('canvas'); cv.width=cv.height=S; const x=cv.getContext('2d');
+  const body=()=>{ x.beginPath(); x.moveTo(128,62);   // 頭
+    x.quadraticCurveTo(142,64,146,80); x.lineTo(160,92);   // くちばしの下〜首
+    x.bezierCurveTo(196,74,232,58,252,40); x.bezierCurveTo(236,78,214,100,196,112); x.bezierCurveTo(222,108,238,104,248,100); x.bezierCurveTo(222,128,190,138,160,140);   // 右の翼(先が3つに割れる羽)
+    x.lineTo(150,176); x.lineTo(168,214); x.lineTo(140,200); x.lineTo(128,226); x.lineTo(116,200); x.lineTo(88,214); x.lineTo(106,176); x.lineTo(96,140);   // 尾羽
+    x.bezierCurveTo(66,138,34,128,8,100); x.bezierCurveTo(18,104,34,108,60,112); x.bezierCurveTo(42,100,20,78,4,40); x.bezierCurveTo(24,58,60,74,96,92);   // 左の翼
+    x.lineTo(110,80); x.quadraticCurveTo(114,64,128,62); x.closePath(); };
+  x.save(); x.shadowColor='rgba(255,120,20,1)'; x.shadowBlur=26; const g=x.createRadialGradient(128,110,6,128,120,130); g.addColorStop(0,'rgba(255,250,200,1)'); g.addColorStop(0.2,'rgba(255,200,60,1)'); g.addColorStop(0.5,'rgba(255,110,20,1)'); g.addColorStop(1,'rgba(200,30,0,1)'); x.fillStyle=g; body(); x.fill(); x.restore();
+  x.globalCompositeOperation='lighter'; x.fillStyle='rgba(255,250,200,0.9)'; x.beginPath(); x.ellipse(128,100,10,24,0,0,6.283); x.fill();   // 胸の白い芯
+  _falconTex=new THREE.CanvasTexture(cv); return _falconTex; }
+function fxFalcon(att, tgt){ if(BT.headless||!att||!tgt) return; const a=cell2world(att.r,att.c), b=cell2world(tgt.r,tgt.c); const ha=cellH(att.r,att.c)+1.0, hb=cellH(tgt.r,tgt.c)+0.8;
+  const mat=new THREE.SpriteMaterial({map:falconTex(),transparent:true,opacity:0,depthWrite:false,depthTest:false}); mat.toneMapped=false; const sp=new THREE.Sprite(mat); sp.renderOrder=20; fxGroup.add(sp); mat.rotation=-Math.atan2(b.x-a.x, a.z-b.z);   // 頭を相手の方へ
+  const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:ptex('glow'),color:0xff7a20,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false})); glow.material.toneMapped=false; fxGroup.add(glow);
+  let lastEmb=0; const dur=760;
+  effects.push({t0:performance.now(),dur,update:t=>{ const k=t<0.15?0:Math.min(1,(t-0.15)/0.85), e=k*k*(3-2*k); const x=a.x+(b.x-a.x)*e, z=a.z+(b.z-a.z)*e, y=ha+(hb-ha)*e+Math.sin(e*Math.PI)*1.1;
+      const flap=1+0.28*Math.sin(t*38); const sc=t<0.15?2.9*(t/0.15):2.9; sp.scale.set(sc*1.25,sc*flap*0.95,1); sp.position.set(x,y,z); mat.opacity=t<0.15?t/0.15:(t>0.92?(1-t)/0.08:1);
+      glow.position.set(x,y,z); glow.scale.set(sc*1.6,sc*1.6,1); glow.material.opacity=0.35*mat.opacity;
+      const now=performance.now(); if(k>0&&now-lastEmb>35){ lastEmb=now; const em=new THREE.Sprite(new THREE.SpriteMaterial({map:ptex('glow'),color:[0xffd060,0xff8a20,0xff5010][(Math.random()*3)|0],transparent:true,opacity:0.9,blending:THREE.AdditiveBlending,depthWrite:false})); em.material.toneMapped=false; em.position.set(x+(Math.random()-0.5)*0.4,y+(Math.random()-0.5)*0.3,z+(Math.random()-0.5)*0.4); const es=0.35+Math.random()*0.35; em.scale.set(es,es,1); fxGroup.add(em);
+        effects.push({t0:now,dur:420,update:u=>{ em.material.opacity=0.9*(1-u); em.position.y+=0.012; const q=es*(1-u*0.6); em.scale.set(q,q,1); },cleanup:()=>{ fxGroup.remove(em); em.material.dispose(); }}); } },
+    cleanup:()=>{ fxGroup.remove(sp); fxGroup.remove(glow); mat.dispose(); glow.material.dispose(); if(state&&tgt){ fxFlash(tgt.r,tgt.c,0xffa040); fxRing(tgt.r,tgt.c,0xff7020,{max:2.6,dur:520}); } }}); }
 function fxFlash(r,c,color){ const w=cell2world(r,c),h=cellH(r,c);
   const mat=new THREE.SpriteMaterial({map:ptex('glow'),color,transparent:true,opacity:0.95,blending:THREE.AdditiveBlending,depthWrite:false}); mat.toneMapped=false;
   const m=new THREE.Sprite(mat); m.position.set(w.x,h+0.8,w.z); fxGroup.add(m);
@@ -3959,6 +3981,7 @@ function spreadFx(sp0, ar, ac, cells, a, useT, sp){ const ty=sp0.ty, T=useT?(TFX
     else setTimeout(()=>fxTerrain(r,c,0.7), dl/sp); }); }
 let _fxCamAdd=null;   // 2026-11-01 合体: カメラに入れるマス(範囲の角)
 function attackFx(att, targets, def, move){ if(BT.headless) return;
+  if(att && move && move.id==='starter_enou'){ const tg=(def&&def.r!=null)?def:(Array.isArray(targets)?targets.find(t=>t&&t.r!=null):(targets&&targets.r!=null?targets:null)); fxFalcon(att, tg); }   // 2026-11-19 ファルコンフレイム
   if(att && move && /^fsig_/.test(move.id||'')){ try{ if(window.W2BGM) W2BGM.cue('fsig',{owner:att.owner, mid:+String(move.id).slice(5)}); }catch(e){} }   // 2026-11-19 融合した子の必殺技の曲
   if(BT.darkB && att){ const tys=move?mvTypes(move):[]; const lit=tys.includes('光')||tys.includes('炎')||(!tys.length&&(uHasType(att,'光')||uHasType(att,'炎'))); if(lit){ const cs=[[att.r,att.c]]; for(const t of (Array.isArray(targets)?targets:[targets])) if(t&&t.r!=null) cs.push([t.r,t.c]); if(def&&def.r!=null) cs.push([def.r,def.c]); darkReveal(cs); } }   // 2026-11-19 闇の盤: 光・炎の攻撃で まわりが見える
   const m=mon(att), ty=(move&&move.type)||m.type, cf=ATK_FX[ty]||ATK_FX['炎'];   // 技 v2: 色と当たりは技のタイプ
@@ -6725,7 +6748,7 @@ const TIME_MODEL={perUnit:8, turnSwitch:2, cpuStart:1.0, cpuPerUnit:0.64, cutAtk
 function estSeconds(r){ const T=TIME_MODEL; return Math.round(T.setup + r.act[0]*T.perUnit + r.sideTurns[0]*T.turnSwitch + r.sideTurns[1]*T.cpuStart + r.act[1]*T.cpuPerUnit + r.atk[1]*T.cutAtk + (r.evo[0]+r.evo[1])*T.cutEvo + (r.fuse[0]+r.fuse[1])*T.cutFuse); }
 
 // ---- 外に出すもの ----
-const API={ init, startBattle, simulate, TACT, PVE_STAGE, PVE_EVO, get guideLog(){ return (BT.guideLog||[]).slice(); }, get minionStage(){ return BT.minionSt; }, get SERIES(){ return SERIES; }, seriesOf:(mid)=>seriesOf(+mid).map(s=>s.id),   /* 2026-10-28 戦術v3 */ V2, FINAL_V2, TYPE_TERR, TERR_FX, TERR_BONUS, TERR_WEAK, dropDominated:(ids)=>dropDominated(ids.map(id=>MV2[id]).filter(Boolean),null).map(m=>m.id), get MOVES2(){ return MV2; }, get v2Ready(){ return V2DATA; }, learnedIds:(mid,lv)=>learnedIds(mid,lv,false), estSeconds, TIME_MODEL, SIZE_RULES, KIND_DEFAULTS, ANCIENT, STAGE_HUMAN, TUNE, STAGE_DMGX, WILD_STAGE, packCount, PLACES, THEME_LOOK, BRIEF:{TERR_JP, TERR_HEX, TERR_X, CAMP_THEMES, THEME_JP, STRONG, WEAK, TYPES, TYPE_COL},   /* 2026-10-27 地図の案内(greece_town.html の briefing)が読むだけの表。ルールは変えない */ rankX, STACK_RANK, STACK_GEM, LV_MAX, lvRank, stageForm:(mid,stage,owned)=>stageForm(mid,stage,owned),
+const API={ init, startBattle, simulate, _fxFalcon:(a,b)=>fxFalcon(a,b), TACT, PVE_STAGE, PVE_EVO, get guideLog(){ return (BT.guideLog||[]).slice(); }, get minionStage(){ return BT.minionSt; }, get SERIES(){ return SERIES; }, seriesOf:(mid)=>seriesOf(+mid).map(s=>s.id),   /* 2026-10-28 戦術v3 */ V2, FINAL_V2, TYPE_TERR, TERR_FX, TERR_BONUS, TERR_WEAK, dropDominated:(ids)=>dropDominated(ids.map(id=>MV2[id]).filter(Boolean),null).map(m=>m.id), get MOVES2(){ return MV2; }, get v2Ready(){ return V2DATA; }, learnedIds:(mid,lv)=>learnedIds(mid,lv,false), estSeconds, TIME_MODEL, SIZE_RULES, KIND_DEFAULTS, ANCIENT, STAGE_HUMAN, TUNE, STAGE_DMGX, WILD_STAGE, packCount, PLACES, THEME_LOOK, BRIEF:{TERR_JP, TERR_HEX, TERR_X, CAMP_THEMES, THEME_JP, STRONG, WEAK, TYPES, TYPE_COL},   /* 2026-10-27 地図の案内(greece_town.html の briefing)が読むだけの表。ルールは変えない */ rankX, STACK_RANK, STACK_GEM, LV_MAX, lvRank, stageForm:(mid,stage,owned)=>stageForm(mid,stage,owned),
   get MID(){ return MID; }, get MONSTERS(){ return MONSTERS; }, baseFormId:(m)=>baseFormId(m), lineOf:(m)=>lineUpIds(m),
   setAuto(v){ if(v===2||v==='fast'){ BT.fastPref=true; setAutoMode(2); } else if(!!v!==BT.auto) toggleAuto(); return BT.auto; },
   // 確認用(test.html・puppeteer)

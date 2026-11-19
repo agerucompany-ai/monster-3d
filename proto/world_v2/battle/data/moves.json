@@ -2643,7 +2643,7 @@
    "yomi": "しゃくねつじごく"
   },
   "starter_enou": {
-   "name": "フォックスファイヤー",
+   "name": "ファルコンフレイム",
    "type": "炎",
    "category": "attack",
    "role": "sig_starter",
@@ -2662,10 +2662,10 @@
     "ail": "burn",
     "chance": 0.5
    },
-   "desc": "火をまとって走り、体当たりする",
+   "desc": "鷹の形の炎を はばたかせて ぶつける",
    "range_class": "mid",
    "cost": "few",
-   "yomi": "フォックスファイヤー"
+   "yomi": "ファルコンフレイム"
   },
   "sig_sasori": {
    "name": "流星メテオ",
