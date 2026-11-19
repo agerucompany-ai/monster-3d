@@ -81,6 +81,11 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 #bang{position:fixed;left:0;top:0;transform:translate(-50%,-100%);font:900 34px/1 sans-serif;color:#e2574c;text-shadow:0 2px 0 #fff,0 0 6px #fff;display:none;pointer-events:none;z-index:5}
 #flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .35s;z-index:8}
 #fps{position:fixed;left:8px;bottom:8px;color:#fff;font:12px monospace;text-shadow:0 1px 2px #000;display:none}
+#cload{position:fixed;inset:0;z-index:40;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#0b0d14;color:#f3ead8;font-weight:800;letter-spacing:.2em;font-size:18px}
+#cload.on{display:flex}
+#cload .cb{width:min(60vw,260px);height:6px;border-radius:3px;background:#2a2e3c;overflow:hidden}
+#cload .cb i{display:block;height:100%;width:35%;border-radius:3px;background:linear-gradient(90deg,#e0b860,#f6e3a8);animation:cbar 1.1s ease-in-out infinite}
+@keyframes cbar{0%{transform:translateX(-110%)}100%{transform:translateX(300%)}}
 #fade{position:fixed;inset:0;background:#0b0d14;opacity:0;pointer-events:none;transition:opacity .25s;z-index:25}
 #fade.on{opacity:1;pointer-events:auto}
 #obj{position:fixed;top:calc(12px + env(safe-area-inset-top));left:12px;max-width:min(54vw,300px);padding:6px 12px 6px 10px;border-radius:12px;background:var(--cream);color:var(--ink);border:1px solid var(--line);
@@ -218,6 +223,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 <div id="fps"></div>
 <div id="talk"><b></b><p></p></div><div id="bang">!</div><div id="flash"></div>
 <div id="obj"></div><div id="fade"></div>
+<div id="cload"><div>よみこみ中</div><div class="cb"><i></i></div></div>
 <div id="load" style="display:none"><b>オリーヴァ村</b><div id="bar"><i></i></div></div>
 <div id="st">
   <div id="stBg"></div>
@@ -2857,18 +2863,22 @@ function bgmCh(){ const el=new Audio(); el.preload='auto'; const ch={el, g:null,
   el.addEventListener('ended',()=>{ if(ch===BGM.c){ ch.id=null; ch.f=ch.ft=0; return; } if(ch.id&&ch.id===BGM.cur&&BGM.m[BGM.a]===ch){ try{ el.currentTime=0; el.play().catch(()=>{}); }catch(e){} } });   // ループの重ねが間に合わなかった時の保険
   return ch; }
 BGM.m=[bgmCh(),bgmCh()]; BGM.c=bgmCh();
+try{ fetch('bgm/title_opening.mp3',{cache:'force-cache'}).catch(()=>{}); }catch(e){}   // 2026-11-20 タイトルの曲を先に読んでおく(鳴りだしを早く)
 const BGM_SIL='data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==';
 function bgmUnlock(){ if(BGM.ctx&&BGM.ctx.state!=='running') BGM.ctx.resume().catch(()=>{});
   if(!BGM.unlocked){ BGM.unlocked=true;
     try{ const C=window.AudioContext||window.webkitAudioContext; if(C) BGM.ctx=new C(); }catch(e){ BGM.ctx=null; }
     if(BGM.ctx) for(const ch of [...BGM.m,BGM.c]){ try{ const s=BGM.ctx.createMediaElementSource(ch.el); ch.g=BGM.ctx.createGain(); ch.g.gain.value=0; s.connect(ch.g); ch.g.connect(BGM.ctx.destination); }catch(e){ ch.g=null; } }
-    if(BGM.ctx&&BGM.ctx.state!=='running') BGM.ctx.resume().catch(()=>{}); }
+    if(BGM.ctx&&BGM.ctx.state!=='running') BGM.ctx.resume().catch(()=>{});
+    const w=bgmWant(); if(w==='title_opening'&&BGM.cur!==w){ BGM.wantP=w; bgmSwitch(w); } }   /* 2026-11-20 オーナー「タイトルで音楽が鳴りだすのが遅い」: 最初のタップの中ですぐ鳴らす(待ち0.35秒を飛ばす) */
+  for(const ch of [...BGM.m,BGM.c]){ if(ch.id&&!ch.stop&&ch.el.paused&&!ch.el.ended){ try{ const p=ch.el.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} } }   // 2026-11-20 タップ前に鳴らそうとして止められた曲は、タップの中で鳴らし直す
   for(const ch of [...BGM.m,BGM.c]){ if(ch.primed||ch.id) continue;   // タップの中で一度鳴らした audio は、あとで src を変えても鳴る(スマホ)
     try{ ch.el.src=BGM_SIL; const p=ch.el.play(); if(p&&p.then) p.then(()=>{ ch.primed=true; if(!ch.id) ch.el.pause(); },()=>{}); else ch.primed=true; }catch(e){} } }
 for(const ev of ['pointerdown','touchend','keydown']) document.addEventListener(ev,bgmUnlock,{capture:true,passive:true});
 function bgmPaint(){ for(const b of BGM.btns){ b.textContent='曲 '+BGM_LV[BGM.k]; b.classList.toggle('off',BGM.k===3); } }
 function bgmBtn(b){ if(!b) return; BGM.btns.push(b); b.addEventListener('click',e=>{ e.stopPropagation(); bgmUnlock(); BGM.k=(BGM.k+1)%4; try{ localStorage.setItem('w2_bgm',String(BGM.k)); }catch(err){} bgmPaint(); }); }
 bgmBtn($('stBgm')); bgmBtn($('btBgm')); bgmBtn($('btBgmT')); bgmPaint();
+function bgmTryAuto(){ if(BGM.unlocked) return; try{ const C=window.AudioContext||window.webkitAudioContext; if(C){ const t=new C(); const ok=t.state==='running'; t.close().catch(()=>{}); if(ok) bgmUnlock(); } }catch(e){} }   // 2026-11-20 タップ前でも音を出してよいブラウザ(パソコンの Chrome など)は、タイトルが出たらすぐ鳴らす
 function bgmMapTrack(){ const r=BGM_MAP[MAP]; if(!r) return 'map_olive_hill'; const z=r[2]&&BGM.zone&&r[2][BGM.zone]; if(z) return z; return (TODN==='night'&&r[1])||r[0]; }
 function bgmBattleTrack(e){ if(e.gr&&e.gr.s&&typeof GR_FIGHT_BGM!=='undefined'&&GR_FIGHT_BGM[e.gr.s.ep]) return GR_FIGHT_BGM[e.gr.s.ep];   // 物語の勝負(gr_story.js)
   if(e.m){ const o=e.m.o; if(o.ancient) return (+o.tier>=6)?'battle_boss_big':'battle_ancient'; if(o.boss) return 'battle_boss'; return 'battle_wild'; }
@@ -2886,7 +2896,7 @@ function bgmSwitch(id){ const was=BGM.cur, old=BGM.m[BGM.a]; BGM.cur=id;
   if(!id||BGM.miss.has(id)) return;
   const n=1-BGM.a, ch=BGM.m[n]; if(ch.id){ try{ ch.el.pause(); }catch(e){} ch.id=null; ch.f=0; }
   const p=BGM.pos[id]; const at=(p&&performance.now()-p.at<180000)?p.t:0; delete BGM.pos[id];
-  bgmStart(ch,id,at,bb?0.6:(toB?0.15:(fromB?1.4:1.6))); BGM.a=n; }
+  bgmStart(ch,id,at,bb?0.6:(toB?0.15:(fromB?1.4:(id==='title_opening'&&!was?0.25:1.6)))); BGM.a=n; }
 // 2026-11-19 オーナー「進化の曲は、上の進化が起こるか曲が止まる(12秒)まで流し続ける。そのあと普通の戦闘曲。ぶちぶち消える。敵の進化では流さない」:
 //   進化・融合の曲は 自分の子(owner 0)だけ。鳴っている間に同じか下の段の進化が来ても頭から鳴らし直さない(上の段=evo2<evo3<fuse2<fuse3 なら切りかえ)
 const BGM_CUE_RANK={evo2:1, evo3:2, fuse2:3, fuse3:4};
@@ -5675,10 +5685,13 @@ async function newGame(){ ST.title.style.display='none'; BGM.sc='title_opening';
   LOADP=loadMap('oliva_town','start').catch(e=>console.error(e));   // 会話のあいだに村を読んでおく
   await sleep(60); fadeEl.classList.remove('on');
   await ep1Open(); await arriveTown(); }   // ---- 物語(gr_story.js): 第1話 v11(村の坂→三日前の東京→今)。v10 の ep1Tokyo/ep1Sky/ep1Air は残してあるが使わない   // ---- 物語(gr_story.js): 第1話(東京→空中港→飛行船→港→村)
-async function contGame(sv){ ST.title.style.display='none'; SAVE=sv; if(sv.g!=='m'){ sv.g='m'; sv.name=DEFN('m'); } SAVE.unlock=SAVE.unlock||{evo:false,fusion:false}; SAVE.owned=SAVE.owned||[]; PARTY=sv.party||PARTY; BOX=sv.box||BOX; ITEMS=sv.items||ITEMS; heroGo(sv.g); await progInit();   // 古い記録(party:[{mid,rank}]・box)は progress.js が最初の init で移行する
+// 2026-11-20 オーナー「つづきからを押すとタイトルから一個すすみ表紙で止まる。止まるなら別画面でローディングに」: 押したらすぐ「よみこみ中」の画面(#cload)を出し、地図ができてから消す
+function cload(on){ const e=$('cload'); if(e) e.classList.toggle('on',!!on); }
+async function contGame(sv){ cload(true); try{ return await contGame0(sv); } finally{ cload(false); } }
+async function contGame0(sv){ ST.title.style.display='none'; SAVE=sv; if(sv.g!=='m'){ sv.g='m'; sv.name=DEFN('m'); } SAVE.unlock=SAVE.unlock||{evo:false,fusion:false}; SAVE.owned=SAVE.owned||[]; PARTY=sv.party||PARTY; BOX=sv.box||BOX; ITEMS=sv.items||ITEMS; heroGo(sv.g); await progInit();   // 古い記録(party:[{mid,rank}]・box)は progress.js が最初の init で移行する
   grMigrate(); { const f=SAVE.flags||{}; if(f.corinth&&!f.evo19&&!f.ep18) SAVE.unlock.evo=true; }   // ---- 物語(gr_story.js): 古いセーブの手当て(進化の解禁は第19話へ移した)
   if(!SAVE.flags||!SAVE.flags.arrived||!sv.map){ SAVE.flags=SAVE.flags||{}; stShow('full'); LOADP=loadMap('oliva_town','start');   // 判定はぜんぶ SAVE.stage で見る(第1話 2-3)
-    await ep1Open(); await arriveTown(); return; }   // 古いセーブ(tokyo/skyport/airship)も v11 の頭から
+    cload(false); await ep1Open(); await arriveTown(); return; }   // 古いセーブ(tokyo/skyport/airship)も v11 の頭から
   fadeEl.classList.add('on'); stHide(); await loadMap(sv.map,null,sv.x!=null&&sv.z!=null?[sv.x,sv.z,sv.yaw||0]:null); followersSet(); if(sv.tod) setTime(sv.tod,true);   // 位置の無いセーブ(grRescue で地図を移した時)はその地図の入口
   await settleMap(4000); LAST=performance.now(); PAUSED=false; await sleep(60); fadeEl.classList.remove('on'); showArea(D.name); AREA=D.name; objUpdate(); grArrive(); }
 // ---- 全部ためす(2026-10-27 オーナー「操作性を確かめたい・全部モンスターが使える・全マップ」) ----
@@ -5760,9 +5773,9 @@ function xferShow(mode, data){ const R=$('xfer'); const ex=TherionPay.transfer.i
   if($('xReload')) $('xReload').onclick=()=>TherionPay.transfer.reload();
 }
 function titleScreen(){ BGM.sc=null; if(TESTMODE){ saveGame(); SAVE=null; } SKEY=SKEY_MAIN; TESTMODE=false; testHud();   // 全部ためすから戻った時: テストの記録はテストの鍵に書いてから外す(ふつうのセーブに混ぜない) for(const c of INTRO){ const im=new Image(); PIMG[c.bg]=im; im.src=bgUrl(c.bg); for(const m of c.mons||[]){ const j=new Image(); PIMG['m'+m[0]]=j; j.src='../battle/img/'+m[0]+'.webp'; } }
-  stShow('full'); titleBgSet(); ST.bg.style.opacity=1; ST.el.classList.add('ttl'); ST.title.style.display='flex'; const sv=loadSave(); const bc=$('btCont'); bc.disabled=!sv; bc.classList.toggle('sub',!sv); $('btNew').classList.toggle('sub',!!sv);
+  stShow('full'); titleBgSet(); ST.bg.style.opacity=1; ST.el.classList.add('ttl'); ST.title.style.display='flex'; bgmTryAuto(); const sv=loadSave(); const bc=$('btCont'); bc.disabled=!sv; bc.classList.toggle('sub',!sv); $('btNew').classList.toggle('sub',!!sv);
   const off=()=>{ ST.el.classList.remove('ttl'); ST.bg.style.backgroundPosition=''; };
-  $('btNew').onclick=()=>{ vcUnlock(); off(); newGame().catch(e=>console.error(e)); }; bc.onclick=()=>{ if(sv){ vcUnlock(); off(); contGame(sv).catch(e=>console.error(e)); } };
+  $('btNew').onclick=()=>{ vcUnlock(); off(); newGame().catch(e=>console.error(e)); }; bc.onclick=()=>{ if(sv){ cload(true); vcUnlock(); off(); contGame(sv).catch(e=>console.error(e)); } };
   $('btTest').onclick=()=>{ off(); testGame().catch(e=>console.error(e)); }; $('btXfer').onclick=()=>xferOpen(); }
 
 // ---------------------------------------------------------------- 起動
