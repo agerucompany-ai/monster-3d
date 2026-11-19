@@ -2330,7 +2330,7 @@ async function startEncounter(e){ ENC=e; BGM.bt=bgmBattleTrack(e); BGM.res=false
   if(e.n){ HERO.yaw=Math.atan2(e.n.x-HERO.x,e.n.z-HERO.z); e.n.yaw=Math.atan2(HERO.x-e.n.x,HERO.z-e.n.z); talkTo(e.n,e.n.o.n+'が勝負をしかけてきた！'); { const sc0=grTrainerScene(e.n); if(sc0&&SC[sc0]&&!(SAVE&&SAVE.flags['seen_'+sc0])){ await sleep(500); bangEl.style.display='none'; talkClose(); await grScene(sc0,e.n); if(SAVE) SAVE.flags['seen_'+sc0]=1; } } }
   if(e.m) toast(e.m.o.ancient?'古代テリオン・'+monName(e.m.o.id)+'が、こちらを見た！':(e.m.o.boss?monName(e.m.o.id)+'が、嵐の中から現れた！':'野生の'+monName(e.m.o.id)+'が飛び出してきた！'));
   if(e.m&&e.m.o.scene&&SC[e.m.o.scene]&&!(SAVE&&SAVE.flags['seen_'+e.m.o.scene])){ await sleep(500); bangEl.style.display='none'; await storyField(e.m.o.scene); if(SAVE) SAVE.flags['seen_'+e.m.o.scene]=1; }   // 古代テリオン(守り)・ボスに会う場面
-  const load=window.startBattle?Promise.resolve():loadScript('../battle/battle.js?v=20261120b');
+  const load=window.startBattle?Promise.resolve():loadScript('../battle/battle.js?v=20261120c');
   await new Promise(r=>setTimeout(r,e.n?1300:700)); bangEl.style.display='none'; talkClose();
   flashEl.style.opacity=1; await load; await new Promise(r=>setTimeout(r,350));
   PAUSED=true; flashEl.style.opacity=0; const place=placeAt(HERO.x,HERO.z); STATS.battles=(STATS.battles||0)+1;
@@ -2341,12 +2341,13 @@ async function startEncounter(e){ ENC=e; BGM.bt=bgmBattleTrack(e); BGM.res=false
   let enemy;
   if(e.m){ const o=e.m.o; enemy={ party:[(anc||boss)?{mid:o.id, lv:Math.max(lvOf(o,0),Progress.wildLvW(area)+6), fixed:true}:Progress.wildEnemy(o.id,area)], name:anc?'古代テリオン '+monName(o.id):(boss?monName(o.id):undefined) }; if(anc||boss){ enemy.ancient={tier:+o.tier||1, minions:[...new Set((D.wild||[]).filter(w=>!w.ancient&&!w.boss).map(w=>+w.id))]}; if(o.tune) enemy.ancient.tune=o.tune; enemy.catchable=!!(boss&&!anc); } }   // tune=中国編(2026-10-26)の tier の上書き(マップの wild[].tune)   // 古代テリオン・ボス=kind:'ancient'(battle.js の ANCIENT・tier はマップの wild[].tier・子分はそのマップの野生)。野生のボス(トールガ)だけ仲間の判定あり
   else { const o=e.n.o, bump=o.master?3:1; enemy={ name:o.n, zeroday:!!o.zeroday, party:(o.party||[{mid:1059},{mid:1037}]).map(x=>{ const c={mid:+x.mid, lv:Math.max(lvOf(x,0),Progress.wildLvW(area)+bump)};   /* 2026-11-19 オーナー「後半の敵が弱すぎる」: 町の人は wildLv(編の帯=ギリシャは2〜4)のままだった→野生と同じ話数の帯+1(使い手+3)。地図に書いたLvより下げない */ if(x.fixed||x.stage!=null) c.fixed=true; if(x.evo) c.evo=true; if(x.leader) c.leader=true; if(x.boss){ c.boss=true; c.fixed=true; } if(x.circle) c.circle=true; return c; }) }; }   // evo=その子は戦いの中で進化できる(町いちばんの使い手)・leader=先頭でなくてもリーダー
-  if(e.m&&!(anc||boss)) enemy.pack=[...new Set((D.wild||[]).filter(w=>!w.ancient&&!w.boss&&!grGrifLocked(w.id)).map(w=>+w.id))];   // 野生の群れ(2026-10-27): 触った子がリーダー+このマップの野生から。数は progress.js(編の pack と自分の出せる数)
+  if(e.m&&!(anc||boss)) enemy.pack=[...new Set((D.wild||[]).filter(w=>!w.ancient&&!w.boss&&!grGrifLocked(w.id)&&grShown(w)).map(w=>+w.id))];   // 野生の群れ(2026-10-27): 触った子がリーダー+このマップの野生から。数は progress.js(編の pack と自分の出せる数)
   const opt={ kind:e.m?((anc||boss)?'ancient':'wild'):(e.n.o.master?'master':'trainer'), size:e.m?((anc||boss)?(+e.m.o.size||9):7):(+e.n.o.size||(e.n.o.master?11:9)), terrainTheme:place, backdrop:place==='seaside'?'aegean':'olive', player:{items:ITEMS}, enemy };
   try{ Progress.prepare(opt,{area, zeroday:enemy.zeroday}); }catch(err){ console.warn('progress.prepare',err&&err.message); opt.player={party:PARTY,items:ITEMS,box:BOX,rankCap:10,owned:ownedList()}; }
   if(anc||boss){ opt.enemy.catchable=true; opt.recruit=l=>Progress.learnBoss(l); }   // 2026-10-28 オーナー: 倒すと だいたい33%(Progress.config.cfg.bossLearn)で覚える。古代テリオン(融合体)=融合の仕方・ボスの姿(セイリュウ・ボルケン・トールガ)=進化の仕方。覚えるまで再戦できる   // 2026-10-28 オーナー「ボスだけは倒さないと仲間にならない」: 系統の子のボス(トールガ・ボルケン・セイリュウ)は倒すと必ず仲間(初めての時)。生み出すでは出ない。古代テリオン(融合の守り・王)は仲間にならない
   if(e.m&&e.m.o.ai&&!(anc||boss)) opt.enemy.ai=Object.assign({},e.m.o.ai);
-  if(e.n&&e.n.o.ai) opt.enemy.ai=Object.assign({},e.n.o.ai);   // 2026-10-27 人の札の強さ(北欧編の終盤のボス: 体力・攻撃の倍率 hpX/atkX)   // 野生の個別の強さ(任意)。古代テリオン・ボスの強さは battle.js の ANCIENT(tier)で決まる(2026-10-26: マップ側の hpX/atkX はやめた)
+  if(e.n&&e.n.o.ai) opt.enemy.ai=Object.assign({},e.n.o.ai);
+  if(e.m&&!(anc||boss)){ let ep=0; try{ ep=+(Progress.storyEp&&Progress.storyEp())||0; }catch(err){} if(ep>=13) opt.enemy.ai=Object.assign({evo:ep>=17?2:1, wildEvo:1, eg:0.6}, opt.enemy.ai||{}); }   // 2026-11-20 オーナー「後半の野生が進化してこない・弱すぎる・グリズガルドとかにガンガン進化して」: 13話からの野生は勝負の中で進化する(13〜16話は1回・ミノタスのあと17話からは2回)。はじめの姿はこちらと同じ1段目(シム AI同士 進化なし100%→1回88%・2回40%)   // 2026-10-27 人の札の強さ(北欧編の終盤のボス: 体力・攻撃の倍率 hpX/atkX)   // 野生の個別の強さ(任意)。古代テリオン・ボスの強さは battle.js の ANCIENT(tier)で決まる(2026-10-26: マップ側の hpX/atkX はやめた)
   if(unlocks().fusion) opt.fusionUnlocked=true; if(unlocks().triple) opt.tripleUnlocked=true;   // 3体融合はラグナディオのあと(北欧編 2026-10-27)   // 融合は解禁のあとだけ渡す(守り④のあと)
   if(D.battle){ const bt=(D.battle.byArea&&D.battle.byArea[zoneAt(HERO.x,HERO.z)])||D.battle[place]||D.battle.default; if(bt) Object.assign(opt,bt); }   // マップごとの盤の見た目(遺跡・海辺など)。バランスは触らない
   grBattleOpt(e,opt);   // ---- 物語(gr_story.js): 盤・強さ・相棒一体(one)・借りる子(guests)
@@ -2578,7 +2579,7 @@ const BRIEF_NO={};   // 野生のいない土地(村)
 const briefRegion=id=>MAPC[id]?Promise.resolve(MAPC[id]):fetch('regions/'+id+'.json').then(r=>r.json()).then(j=>(MAPC[id]=j));
 const briefHas=R=>!!(R&&(R.wild||[]).some(w=>!w.ancient&&!w.boss));
 const briefArc=id=>id.startsWith('cn_')?'china':id.startsWith('eg_')?'egypt':id.startsWith('nr_')?'norse':'greece';
-async function briefLib(){ if(!window.MonBattle) await loadScript('../battle/battle.js?v=20261120b'); await MONS_P; return window.MonBattle; }
+async function briefLib(){ if(!window.MonBattle) await loadScript('../battle/battle.js?v=20261120c'); await MONS_P; return window.MonBattle; }
 const BRIEF_TK=['plain','forest','wasteland','sea','water','ruins','lava','snow','gloom'];
 function briefBoards(R){ const B=R.battle, out=[]; const add=(tt,a)=>{ if(!tt||typeof tt!=='string') return; let o=out.find(x=>x.tt===tt); if(!o){ o={tt,areas:[]}; out.push(o); } if(a&&!o.areas.includes(a)) o.areas.push(a); };
   if(!B){ add('meadow'); add('olive'); if(R.terrain&&(R.terrain.streams||[]).length) add('stream','川ぞい'); if(R.terrain&&(R.terrain.coast||[]).length) add('seaside','海ぞい'); return out; }   // 盤の指定が無いマップ(オリーブの丘)は placeAt と同じ(草原・オリーブ畑・小川・海辺)
@@ -2799,7 +2800,7 @@ const ST={el:$('st'),bg:$('stBg'),L:$('stL'),R:$('stR'),R2:$('stR2'),ph:$('stPh'
 const PDIR='../v3/portraits/';
 const E7=['normal','smile','surprised','serious','sad','angry','hurt'];
 const FACES={hero_m:E7,hero_f:E7,genichi:['normal'],misaki:['normal','smile'],hana:['normal'],ryo:['normal'],
-  elly:['normal','smile','surprised','sad','serious'],alek:['normal'],dimi:['normal'],elena:['normal','smile','serious'],tasos:['normal','smile','surprised'],petra:['normal','smile','surprised'],stavros:['normal'],ana:['normal'],marina:['normal'],nomos:['normal'],oba:['normal'],
+  elly:['normal','smile','surprised','sad','serious'],alek:['normal','smile','serious','surprised','angry','sad'],dimi:['normal'],elena:['normal','smile','serious'],tasos:['normal','smile','surprised'],petra:['normal','smile','surprised'],stavros:['normal'],ana:['normal'],marina:['normal'],nomos:['normal'],oba:['normal'],
   kasia:['normal'],zeno:['normal'],hao:['normal'],tarik:['normal'],victor:['normal'],nina:['normal'],marco:['normal']};   // 2026-11-08 アニメ側の立ち絵(キャラ立ち絵_追加_20261108)を v3/portraits に足した(白い背景を外して胸から上)
 // 立ち絵の鍵: elly=エリー(anime/chars/elly)・alek=アレク(anime/chars/alek)・dimi=レン(絵は11/17に新デザインの顔へ)・stavros=ヤニス(11/17 PixAIで描いた全身から顔)。patch/log/x は絵なし(名前だけ)
 const WHO={genichi:'じいちゃん',misaki:'母',hana:'ハナ',ryo:'父',elly:'エリー',alek:'アレク',dimi:'レン',elena:'クロエ博士',tasos:'タソス',petra:'ペトラ',stavros:'ヤニス',patch:'パッチ',log:'ログ',mihalis:'ミハリス',sophia:'ソフィア',bella:'ベラドンナ',yusuf:'ユスフ',hao:'ハオ',lifa:'リーファ',ransom:'ランサム',shifu:'師範',x:''};   // 中国編(2026-10-26): ハオ・リーファ・ランサム・師範は絵なし(名前だけ)
@@ -2810,7 +2811,10 @@ function fillT(t){ const g=SAVE?SAVE.g:'m'; return t.replace(/\{hero\}/g,SAVE?SA
 const PFACE={}; fetch(PDIR+'index.json').then(r=>r.json()).then(j=>{ for(const k in j.chars){ const f=j.chars[k].facing||{}; for(const e in f) PFACE[PDIR+k+'_'+e+'.webp']=f[e]; } }).catch(()=>{});
 function pFace(img,side){ const src=img.getAttribute('src')||''; const f=PFACE[src]||'right'; const want=side==='L'?'right':'left'; img.style.setProperty('--fx',(f==='front'||f===want)?'1':'-1'); }
 function pSrc(who,face){ const k=who==='hero'?'hero_'+(SAVE?SAVE.g:'m'):who; const f=FACES[k]; if(!f) return null; return PDIR+k+'_'+(f.includes(face)?face:'normal')+'.webp'+(PVER[k]?'?v='+PVER[k]:''); }
-const PVER={marina:'20261118w'};   // 2026-11-18 マリナを白い制服に描き替え(古い絵が残らないように)
+const PVER={marina:'20261118w', alek:'20261120'};   // 2026-11-20 オーナー「アレクが明らかに古いデザイン。同じ顔ばっかり」: 同じ名前の古い絵(黒パーカー)がスマホに残っていた → 版をつけ、6つの顔(紺T・PixAI Tsubaki.3)に
+// 台本に顔の指定が無い(normal)アレクの台詞は、言葉から顔を選ぶ(台詞の字は変えない)
+const ALEK_MOOD=[['surprised',/^(え[っ、！？…]|は[あっ]?[？?]|なっ|うそ|ちょ[、っ]|マジ)|[！!][？?]|[？?][！!]/],['angry',/アホ|ボケ|なめ|ふざけ|こら|コラ|どつ|しばく|待てや|やめえ|ええかげん|見いや|せえや|やめや|言うなや|ちゃうわ|なんでやねん|あほか|知らんわ/],['sad',/すまん|ごめん|しゃあない|悪かった|あかんかった/],['smile',/っす|ええで|任せ|余裕|やったで|勝った|でかなった|へへ|ええやん|まいど|儲|おおきに|やるやん|ええな|ラッキー|ジェム|コイン|貸し|ほな、|やろ？|せやろ/],['serious',/[！!]$|まだや|気を抜く|下がれ|出ろ|撃て|せえ[！!]|行くで/]];
+function lineFace(L){ const f=L.f||'normal'; if(L.w!=='alek'||f!=='normal'||typeof L.t!=='string') return f; for(const [k,rx] of ALEK_MOOD) if(rx.test(L.t)) return k; return 'normal'; }   // 2026-11-18 マリナを白い制服に描き替え(古い絵が残らないように)
 for(const im of [ST.L,ST.R,ST.R2]) im.onerror=()=>im.classList.add('off');
 const PIMG={}; let ADV=null; function advance(){ if(ADV){ const f=ADV; ADV=null; f(); } }
 ST.box.addEventListener('click',e=>{ e.stopPropagation(); advance(); });
@@ -2976,14 +2980,14 @@ async function runScene(lines,opt){ opt=opt||{}; lines=grNoEpNo(lines); const fi
   stShow(field?'field':'full',opt.bg); if(!field) PAUSED=true; SKIP_SCENE=!!(opt.prologue&&OPEN_SKIP)||performance.now()-SKIP_CHAIN_T<8000; ST_FF.style.display='block'; ST.skip.style.display='block'; ST.skip.textContent=opt.prologue?'冒頭をスキップ':'スキップ'; ST_FF.style.right=(14+ST.skip.offsetWidth+8)+'px'; VC.btn.style.display=vcHas()?'block':'none'; VC.btn.style.right=(14+ST.skip.offsetWidth+8+ST_FF.offsetWidth+8)+'px'; { const bb=$('stBgm'); bb.style.display='block'; bb.style.right=(14+ST.skip.offsetWidth+8+ST_FF.offsetWidth+8+(vcHas()?VC.btn.offsetWidth+8:0))+'px'; }
   ST.skip.onclick=e=>{ e.stopPropagation(); SKIP_SCENE=true; vcStop(); if(opt.prologue) OPEN_SKIP=true; advance(); };
   if(ST.L.classList.contains('off')) ST.L.removeAttribute('src'); ST.R.removeAttribute('src'); ST.R2.removeAttribute('src');   // 2026-11-13 続けて始まる場面ではヤマトの立ち絵を消さない(場面の切れ目でぱかぱか出入りしない)
-  if(!SKIP_SCENE){ const ps=[]; for(const L of lines){ const q=L.w&&L.w!=='partner'?pSrc(L.w,L.f||'normal'):null; if(q&&!ps.includes(q)) ps.push(q); } await Promise.race([Promise.all(ps.map(u=>new Promise(r=>{ const im=new Image(); PIMG[u]=im; im.onload=im.onerror=r; im.src=u; }))),sleep(1500)]); }
+  if(!SKIP_SCENE){ const ps=[]; for(const L of lines){ const q=L.w&&L.w!=='partner'?pSrc(L.w,lineFace(L)):null; if(q&&!ps.includes(q)) ps.push(q); } await Promise.race([Promise.all(ps.map(u=>new Promise(r=>{ const im=new Image(); PIMG[u]=im; im.onload=im.onerror=r; im.src=u; }))),sleep(1500)]); }
   for(const L of lines){ if(L.todo||(!L.fn&&!L.t)) continue;   // 台詞の枠だけ(空)の行は飛ばす(物語はあとで貼る)
     if(L.if&&!L.if()) continue; if(L.fn){ if(SKIP_SCENE&&VISUAL_FN.test(String(L.fn))) continue; ST.box.style.display='none'; await L.fn(); continue; }
     if(SKIP_SCENE) continue;
     if(L.bg&&!field){ if(L.bg==='black'){ ST.bg.style.backgroundImage='none'; ST.bg.style.filter=''; } else ST.bg.style.backgroundImage=`url(${bgUrl(grBg(L.bg))})`; }   // 2026-11-08 行ごとの絵(GR_LBG)
     const w=L.w; const nar=!w; ST.box.classList.toggle('nar',nar); ST.box.style.display='block';
     ST.nm.textContent=w==='hero'?(SAVE?SAVE.name:DEFN(SAVE&&SAVE.g)):(w==='partner'?MONN[1001]:(L.n||WHO[w]||w||''));
-    const src=w&&w!=='partner'&&!L.np?pSrc(w,L.f||'normal'):null;   // np=絵の中に本人が描いてある時は立ち絵を出さない
+    const src=w&&w!=='partner'&&!L.np?pSrc(w,lineFace(L)):null;   // np=絵の中に本人が描いてある時は立ち絵を出さない
     // 置き方(style_v3 10章): 主人公=左(右向き)。相手=右(反転して左向き)。右に2人目が来たら、前の人は右のうしろの枠へ。電話は右上の画面
     ST.ph.style.display=L.ph&&src?'block':'none';
     if(L.ph&&src){ const im=ST.ph.querySelector('img'); if(im.getAttribute('src')!==src) im.src=src; im.style.transform=w==='ryo'?'':'scale(2.1)'; im.style.transformOrigin='50% 30%'; ST.L.classList.add('dim'); ST.R.classList.add('dim'); ST.R2.classList.add('dim'); }
@@ -3610,7 +3614,7 @@ function grHere(s){ if(s&&s.kind==='go') return MAP===s.to;   // 2026-11-17 地�
 //  歩く段: 行き先に その場面で話す人を立たせ、近くまで行ったら話が始まる。続きの場面(その場)では そのまま残る。エリーは 一緒にいる場面ではヤマトのうしろを歩く。
 //  3Dの無い人は全身の絵の立て看板(高さ=ヤマト158cm を 1.3 として身長で割る)
 const GR_GUIDE_ART={
-  alek:{img:'../v3/chars/alek_stand.webp', glb:'../chars/alek.glb', h:1.33, n:'アレク', ol:0x6a4a34},
+  alek:{img:'../v3/chars/alek_stand.webp?v=20261120', glb:'../chars/alek.glb', h:1.33, n:'アレク', ol:0x6a4a34},
   elly:{img:'../v3/chars/elly_stand.webp', glb:'../chars/elly.glb', h:1.24, n:'エリー', ol:0x7a5a3c, pose:[-0.32,0.2], sp:[1.055,1.279,1.3,1.2,1.6]},   // 2026-11-16 膝を伸ばした凛とした早歩き(歩幅広め・ウォーキング本2冊から)。sp=[歩き,速歩きの再生1倍の地面の速さ, 再生倍率の上限, 速歩きに切りかえる速さ, 移動の上限の速さ]。足がすべらないよう エリーだけ移動を遅く
   nina:{img:'../v3/chars/nina_stand.webp', glb:'../chars/nina.glb', h:1.20, n:'ニーナ', ol:0x6a4a34},
   marco:{img:'../v3/chars/marco_stand.webp', glb:'../chars/marco.glb', h:1.36, n:'マルコ', ol:0x6a4a34},

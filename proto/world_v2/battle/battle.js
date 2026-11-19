@@ -1576,7 +1576,7 @@ function aiCanEvo(u){ return canEverEvolve(u.owner, u.mid, !!u.isBoss); }   // 2
 function canEverEvolve(owner, mid, isBoss){ const m=MID[mid]; if(!m||m.evolves_to==null) return false;
   if(ONLINE) return true;
   if(owner===0) return STORY.owned.includes(m.evolves_to);                 // 自分の子: 進化先を持っていれば
-  if(BT.kind==='wild') return false;                                       // 野生: 進化しない
+  if(BT.kind==='wild'){ const D=storyDiff()||{}; if(!D.wildEvo) return false; const nx=MID[m.evolves_to]; if(!nx||nx.role==='fusion'||(BT.noWild&&BT.noWild.has(nx.id))) return false; return enemyEvoLeft()>0; }   // 野生: 進化しない。2026-11-20 オーナー「グリズガルドとかにガンガン進化して欲しい」: enemy.ai.wildEvo の時は 回数(evo)まで進化する
   if(!(BT.enemyOwned && BT.enemyOwned.has(m.evolves_to))) return false;    // 人: その人が進化先を持っている時だけ(enemy.owned / party の evo:true)
   const D=storyDiff()||{}; if(D.eg!=null && !(D.eg>0)) return false; if(D.bossEvo===false && isBoss) return false; return enemyEvoLeft()>0; }
 // 持っている種類: プレイヤー = player.owned(なければ party と box の子だけ=進化先なし) / 人の敵 = enemy.owned + party で evo:true の子の系統
