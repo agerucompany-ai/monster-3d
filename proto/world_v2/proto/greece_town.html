@@ -2848,7 +2848,7 @@ const BGM_MAP={   // 地図 → [昼, 夜, {場所の名前: 曲}]。ギリシ�
   eg_valley:['map_marble'], eg_tomb:['map_stadium_under'], eg_aswan:['map_ladon_river'], eg_abusimbel:['map_ruins'], eg_white:['map_marble'], eg_redsea:['map_nafria'],
   nr_oslo:['map_white_city'], nr_fjord:['map_ladon_river'], nr_lofoten:['map_nafria'], nr_iceland:['map_marble'], nr_uppsala:['map_ruins'], nr_lapland:['map_delfina'],
   nr_ygg:['map_olive_hill'], nr_svalbard:['map_cloud_road'], nr_glacier:['map_cloud_road'], nr_core:['map_stadium_under'] };
-const BGM_CUE={ evo2:['cue_evo2',9], evo3:['cue_evo3',12], fuse2:['cue_fuse2',10], fuse3:['cue_fuse3',13], idea:['cue_idea',7], win:['jingle_win',99], lose:['jingle_lose',99] };   // [曲, 長さの上限(秒)・そのあと1.2秒で消す]
+const BGM_CUE={ evo2:['cue_evo2',12], evo3:['cue_evo3',12], fuse2:['cue_fuse2',12], fuse3:['cue_fuse3',12], idea:['cue_idea',7], win:['jingle_win',99], lose:['jingle_lose',99] };   // [曲, 長さの上限(秒)・そのあと1.2秒で消す]
 const BGM_LV=['大','中','小','なし'], BGM_VOL=[1,.6,.3,0], BGM_MASTER=0.5, BGM_CUEV=0.62, BGM_DUCK=0.3;
 const BGM={k:0, ctx:null, unlocked:false, m:[], c:null, a:0, cur:null, wantP:null, wantT:0, sc:null, bt:null, res:false, duck:1, cueDuck:1, pos:{}, miss:new Set(), zone:'', zoneT:0, last:0, btns:[], hidden:false};
 try{ BGM.k=(+localStorage.getItem('w2_bgm')||0)%4; }catch(e){}
@@ -2887,7 +2887,11 @@ function bgmSwitch(id){ const was=BGM.cur, old=BGM.m[BGM.a]; BGM.cur=id;
   const n=1-BGM.a, ch=BGM.m[n]; if(ch.id){ try{ ch.el.pause(); }catch(e){} ch.id=null; ch.f=0; }
   const p=BGM.pos[id]; const at=(p&&performance.now()-p.at<180000)?p.t:0; delete BGM.pos[id];
   bgmStart(ch,id,at,bb?0.6:(toB?0.15:(fromB?1.4:1.6))); BGM.a=n; }
-function bgmCue(kind,info){ if(info) bgmMoodCue(kind,info); const q=BGM_CUE[kind]; if(!q||BGM.k===3||!BGM.unlocked||BGM.miss.has(q[0])) return; const c=BGM.c; bgmStart(c,q[0],0,0.05); c.f=1; c.kind=kind; c.until=performance.now()+q[1]*1000; }
+// 2026-11-19 オーナー「進化の曲は、上の進化が起こるか曲が止まる(12秒)まで流し続ける。そのあと普通の戦闘曲。ぶちぶち消える。敵の進化では流さない」:
+//   進化・融合の曲は 自分の子(owner 0)だけ。鳴っている間に同じか下の段の進化が来ても頭から鳴らし直さない(上の段=evo2<evo3<fuse2<fuse3 なら切りかえ)
+const BGM_CUE_RANK={evo2:1, evo3:2, fuse2:3, fuse3:4};
+function bgmCue(kind,info){ if(BGM_CUE_RANK[kind]){ if(!info||info.owner!==0) return; const c0=BGM.c; if(c0.id&&!c0.stop&&BGM_CUE_RANK[c0.kind]&&performance.now()<c0.until&&BGM_CUE_RANK[kind]<=BGM_CUE_RANK[c0.kind]) return; }
+  if(info) bgmMoodCue(kind,info); const q=BGM_CUE[kind]; if(!q||BGM.k===3||!BGM.unlocked||BGM.miss.has(q[0])) return; const c=BGM.c; bgmStart(c,q[0],0,0.05); c.f=1; c.kind=kind; c.until=performance.now()+q[1]*1000; }
 function bgmResult(r){ BGM.res=true; if(r==='win') bgmCue('win'); else if(r==='lose') bgmCue('lose'); }   // 勝負の結果の画面(battle.js の showResult)。そのあとは endEncounter で地図の曲へ
 window.W2BGM={cue:bgmCue, result:bgmResult, state:()=>({cur:BGM.cur, sc:BGM.sc, bt:BGM.bt, mood:BGM.mood||null, moodV:BGM.moodV||null, moodLog:(BGM.moodLog||[]).slice(), k:BGM.k, duck:+BGM.duck.toFixed(2), cueDuck:+BGM.cueDuck.toFixed(2), unlocked:BGM.unlocked, ctx:BGM.ctx?BGM.ctx.state:null, ch:[...BGM.m,BGM.c].map(c=>({id:c.id, f:+c.f.toFixed(2), t:+(c.el.currentTime||0).toFixed(1), paused:c.el.paused, vol:c.g?+c.g.gain.value.toFixed(3):c.el.volume}))})};
 // 劣勢・逆転(2026-11-06 オーナー「劣勢＝押されている時・逆転＝押されていた側が盛り返した時」・曲は テリオンアニメ/music の 劣勢 v4・逆転 v4)
