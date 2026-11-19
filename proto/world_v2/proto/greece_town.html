@@ -2848,7 +2848,7 @@ const BGM_MAP={   // 地図 → [昼, 夜, {場所の名前: 曲}]。ギリシ�
   eg_valley:['map_marble'], eg_tomb:['map_stadium_under'], eg_aswan:['map_ladon_river'], eg_abusimbel:['map_ruins'], eg_white:['map_marble'], eg_redsea:['map_nafria'],
   nr_oslo:['map_white_city'], nr_fjord:['map_ladon_river'], nr_lofoten:['map_nafria'], nr_iceland:['map_marble'], nr_uppsala:['map_ruins'], nr_lapland:['map_delfina'],
   nr_ygg:['map_olive_hill'], nr_svalbard:['map_cloud_road'], nr_glacier:['map_cloud_road'], nr_core:['map_stadium_under'] };
-const BGM_CUE={ evo2:['cue_evo2',12], evo3:['cue_evo3',12], fuse2:['cue_fuse2',12], fuse3:['cue_fuse3',12], idea:['cue_idea',7], win:['jingle_win',99], lose:['jingle_lose',99] };   // [曲, 長さの上限(秒)・そのあと1.2秒で消す]
+const BGM_CUE={ evo2:['cue_evo2',99], evo3:['cue_evo3',99], fuse2:['cue_fuse2',99], fuse3:['cue_fuse3',99],   /* 2026-11-19 オーナー「一回もとの長さにしてみよ」: 進化・融合の曲は終わりまで(27〜33秒)流す */ idea:['cue_idea',7], win:['jingle_win',99], lose:['jingle_lose',99] };   // [曲, 長さの上限(秒)・そのあと1.2秒で消す]
 const BGM_LV=['大','中','小','なし'], BGM_VOL=[1,.6,.3,0], BGM_MASTER=0.5, BGM_CUEV=0.62, BGM_DUCK=0.3;
 const BGM={k:0, ctx:null, unlocked:false, m:[], c:null, a:0, cur:null, wantP:null, wantT:0, sc:null, bt:null, res:false, duck:1, cueDuck:1, pos:{}, miss:new Set(), zone:'', zoneT:0, last:0, btns:[], hidden:false};
 try{ BGM.k=(+localStorage.getItem('w2_bgm')||0)%4; }catch(e){}
