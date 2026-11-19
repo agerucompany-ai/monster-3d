@@ -1697,9 +1697,9 @@ function aiBestMove(u){
   const evoGo = (gaugeReady(u) && aiCanEvo(u)) || (V2ON() && !u.anc && !u.awoke && !canEvolveSomeday(u) && gaugeOf(u)>=GAUGE_MAX*0.6);   // 覚醒(進化できない子)も中央へ
   const evoReady = gaugeReady(u) && aiCanEvo(u);   // 覚醒はどこでもできる(盤 v4)ので、進化だけ その段の進化のマスへ
   const zoneGo=aiZoneGo(u);   // 2026-10-29: 進化のマスに入れば闘気なしで進化 → 近ければ(2手番で届く)そこへ。リーダーの2段目は相手の陣まで行かない
-  if(zoneGo){ let bd=1e9, bg=null; for(const [r,c] of evoZoneCells(u)){ const o=unitAt(r,c); if(o && o.uid!==u.uid) continue; const d=man(u.r,u.c,r,c); if(d<bd){ bd=d; bg={r,c}; } } if(bg && bd<=(mon(u).level===1?effMove(u)*2+1:effMove(u))){ goal=bg; mode='evo'; } }   // 1段目(中央)は2手番まで・2段目(相手の陣の奥)はこの手番で届く時だけ
-  const fp=!goal?aiFusePartner(u):null;
-  if(fp){ goal=fp.p; mode='fuse'; }   // 盤 v4: 融合はどこでも → 相手のそばへ
+  const fp0=aiFusePartner(u); if(fp0){ goal=fp0.p; mode='fuse'; }   // 2026-11-19 オーナー「オートでは融合を積極的に狙う・敵も同じ」: 融合できる相手がいれば 進化のマスより先に そちらへ
+  if(!goal && zoneGo){ let bd=1e9, bg=null; for(const [r,c] of evoZoneCells(u)){ const o=unitAt(r,c); if(o && o.uid!==u.uid) continue; const d=man(u.r,u.c,r,c); if(d<bd){ bd=d; bg={r,c}; } } if(bg && bd<=(mon(u).level===1?effMove(u)*2+1:effMove(u))){ goal=bg; mode='evo'; } }   // 1段目(中央)は2手番まで・2段目(相手の陣の奥)はこの手番で届く時だけ
+  const fp=null;   // 盤 v4: 融合はどこでも → 相手のそばへ
   if(!goal && myL && !u.leader){ let nd=1e9, nf=null; for(const e of foes){ const d=man(e.r,e.c,myL.r,myL.c); if(d<nd){ nd=d; nf=e; } } if(nf && nd<=effMove(nf)+effRange(nf)+1){ goal=nf; mode='guard'; } }
   if(!goal){ const near=foes.slice().sort((a,b)=>man(a.r,a.c,u.r,u.c)-man(b.r,b.c,u.r,u.c))[0]||null;
     goal = (foeL && (!near || man(foeL.r,foeL.c,u.r,u.c)<=effMove(u)*2+effRange(u)+1)) ? foeL : (near||foeL); }   // 敵リーダーが近ければ狙う・遠ければ目の前の敵と戦う
@@ -1716,11 +1716,11 @@ function aiBestMove(u){
     if(V2ON()){ const pl=aiPlanFrom(u,r,c); if(pl) sc+=120+pl.sc*0.6; }   // 技 v2: その場所から使える一番の技(P×の技は動かない時だけ)
     else { const tg=aiTargetsFrom(u,r,c);
     if(tg.length){ let m=0; for(const e of tg) m=Math.max(m, aiTargetScore(u,e)); sc+=120+m*0.6; } }
-    if(goal) sc-=man(r,c,goal.r,goal.c)*(mode==='evo'?40:mode==='fuse'?25:pullW);
+    if(goal) sc-=man(r,c,goal.r,goal.c)*(mode==='evo'?40:mode==='fuse'?TACT.ai.fusePull:pullW);
     if(mode==='evo' && evoZoneOK(u,r,c)) sc+=(TACT.ai.zoneEvo!=null?TACT.ai.zoneEvo:600);   // 2026-10-29: 入れば闘気なしで進化
     if(V2ON() && EVO_CELLS.length && inCenterRow(r)) sc+=25;   // 中央をとりあう
     if(V2ON() && !u.leader){ const hr=u.hp/Math.max(1,u.maxhp); if(hr<0.4 && inCampRow(u.owner,r)) sc+=180; else if(hr>=0.6 && EVO_CELLS.length && inCampRow(1-u.owner,r)) sc+=30; }   // 2026-11-19 弱ったら自陣へ戻って回復・元気なら相手の陣で闘気
-    if(mode==='fuse' && goal && man(r,c,goal.r,goal.c)===1) sc+=160;
+    if(mode==='fuse' && goal && man(r,c,goal.r,goal.c)===1) sc+=TACT.ai.fuseAdj;
     sc+=terrBonusM(mon(u), terrAt(r,c))*120;
     if(V2ON() && hasType(mon(u),'水') && nearWetFront(r,c,me)) sc+=WET.aiPos;   // 2026-11-01 水の子は 水の近くに陣取る。夕: 自陣の側の水では陣取らない(真ん中の3行か相手の側の水へ=攻めに出る)
     if(T3()){ if(TACT.cover.terr.includes(terrAt(r,c))) sc+=TACT.ai.cover*(u.leader?2:1); sc+=aiFormationScore(u,r,c); }   // 戦術v3: かげ・合体の陣形
@@ -5345,7 +5345,7 @@ const TACT={ on:true,
   healGauge:10,                                           // 回復の技を使った子の闘気
   combo:{k:0.55, minX:1.1, reach:3, gather:2, power:100, mult2:1.15, mult3:1.35, small:{1:0.2, 2:0.1}, gauge:0, cost:{2:35, 3:25}},   // cost=参加する子それぞれが使う闘気(2体の合体/3体の合体)
   bal:{光:{atk:1.15,def:1.05}, 水:{atk:0.9,def:0.97}, 氷:{atk:1.45,def:1.12}, 森:{atk:1.45,def:1.08}, 地:{atk:1.25,def:1.05}, 闇:{atk:1.3,def:1.05}, 竜:{atk:1.2,def:1.03}, 炎:{atk:0.95}, 雷:{atk:1.25}, 風:{atk:1.2,def:1.05}},   // 2026-11-01 夕 真ん中に水を必ず置いたあと 水0.8/0.92→0.9/0.97(study_types 水 M 34→48%)。2026-11-01 盤に水を足したあと 水1.45/1.12→0.8/0.92・雷1.04→1.25(study_types 海の盤・水の少ない盤・ぜんぶ)。2026-11-01 光・風・水の決まりのあと study_types で 光1/1→1.15/1.05・風1.03→1.2/1.05・森1.28/1.06→1.45/1.08   // タイプごとの {atk, def} の倍率(バランスのつまみ)。2026-10-30 タイプ相性の作り直しのあと sim/study_types.js(タイプだけの隊)で合わせた。2つのタイプの子は 両方を掛ける。2026-10-31 オーナー「光 弱すぎちゃう？」: 光は atk0.7/def0.88→1/1(体の数の攻撃×0.92も戻した)
-  ai:{formation:10, cover:8, healLeader:0.75, zoneEvo:600},   // zoneEvo=進化のマスに入る点(2026-10-29 進化の2段構え)
+  ai:{formation:40, cover:8, healLeader:0.75, zoneEvo:600, fusePull:45, fuseAdj:350, comboVsSolo:0.6, placeCombo:90, placeFuse:160},   // 2026-11-19 オーナー「オートは融合と合体攻撃を積極的に・初期配置も・敵も同じ」: formation 10→40・融合の引き寄せ 25→45・隣 160→350・合体は単独の6割の点でも撃つ・配置で合体/融合の相手のそば   // zoneEvo=進化のマスに入る点(2026-10-29 進化の2段構え)
   final:{left:8, step:0.35},
   flag:{on:false},   // 2026-10-29 盤 v4: 旗はなくした(旗を取る決まり・旗のアイコン・説明も)。旧   // 古代テリオン(ボス)の戦いは旗なし   // second='center'|'flanks'=後手が最初から持つ旗 / openTurn=このターンから取れる   // 旗(2026-10-28 オーナー「風の売りは機動力・中間地点にいかに早く到達して進化ポイントを上げるか」): 真ん中の行の3本(中央・左右)。乗ると自分の旗・相手が乗ると取られる・手番の始めに旗1本につき味方全員 闘気+gauge
   charge:{min:2, per:0.08, cap:0.3, windPer:0.1, windCap:0.4, windEvade:0.12, away:2},   // away=風は攻撃のあと このマス数まで動ける(ヒット＆アウェイ)   // windEvade=風が2マス以上動いた手番は 次の自分の手番まで よけ+   // 突進: この手番に min マス以上動いてから攻撃 = 動いたマス×per(上限 cap・風は windPer/windCap)・かげをむし
@@ -5551,7 +5551,7 @@ function aiComboPlan(u){ const list=comboReady(u); if(!list.length) return null;
     if(!best||sc>best.sc) best={c,team,t,sc,dm}; }
   if(!best) return null;
   let solo=0; for(const x of best.team){ const p=aiPlanAt(x, x.moved, true); if(p && p.t){ const ev=expDmg(x,p.t,p.mv,p.mv.target==='area').ev; solo+=Math.min(ev, Math.max(1,p.t.hp))*(p.t.leader?1.6:1)+(ev>=p.t.hp?(p.t.leader?5000:400):0); } }
-  return best.sc>=solo*0.95 ? best : null; }
+  return best.sc>=solo*TACT.ai.comboVsSolo ? best : null; }   // 2026-11-19 オーナー「合体攻撃を積極的に」(0.95→comboVsSolo)
 // AI の移動: 同じシリーズの仲間(まだ動いていない)のそばはよい(合体の陣形)
 function awayArm(u){ if(T3() && TACT.charge.away>0 && state.units[u.uid] && u.hp>0 && hasType(mon(u),'風') && !u.anc) u.away=TACT.charge.away; }
 // AI: 攻撃のあと 相手の届きにくいマスへ
@@ -5561,7 +5561,7 @@ function aiAway(u){ if(!(u.away>0 && u.acted) || !state.units[u.uid]) return; co
   if(best && (best[0]!==u.r||best[1]!==u.c)) moveUnit(u,best[0],best[1]); u.away=0; }
 function aiFormationScore(u, r, c){ if(!T3()) return 0; let s=0; const ser=seriesOf(u.mid).filter(sr=>(sr.combos||[]).some(cb=>!comboUsed(u.owner,cb))); if(!ser.length) return 0;
   for(const a of alive(u.owner)){ if(a.uid===u.uid || a.acted || !ser.some(sr=>sr._ids.has(a.mid))) continue; const d=Math.max(Math.abs(a.r-r),Math.abs(a.c-c)); if(d<=TACT.combo.gather) s+=TACT.ai.formation; }
-  return Math.min(s, TACT.ai.formation*2); }
+  return Math.min(s, TACT.ai.formation*3); }
 // 配置: リーダー=奥の行の得意な地形(＞かげ＞中央)・ほかの子=前の行・得意な地形を先に
 function tactPlaceScore(mid, r, c, owner, isLeader){ const m=MID[mid]; const tr=state.terrain[r][c]; const tb=terrBonusM(m,tr); const cov=TACT.cover.terr.includes(tr);
   const rows=START_ROWS[owner]; const backRow=rows[0], front=rows[rows.length-1];
@@ -5569,7 +5569,14 @@ function tactPlaceScore(mid, r, c, owner, isLeader){ const m=MID[mid]; const tr=
   if(terrFx(m,tr,'guard')||terrFx(m,tr,'evade')) s+=20;
   if(isLeader) s+= r===backRow?W.back:0; else s+= r===front?W.front:0;
   return s; }
-function tactPickSpot(mid, owner, isLeader){ let best=null, bs=-1e9; for(const [r,c] of castleArea(owner)){ if(unitAt(r,c)) continue; const s=tactPlaceScore(mid,r,c,owner,isLeader)+Math.random()*0.5; if(s>bs){ bs=s; best=[r,c]; } } return best; }
+function placeSerSet(mid){ const o=new Set(); for(const id of lineUpIds(mid)) for(const sr of seriesOf(id)) if((sr.combos||[]).length) o.add(sr); return o; }
+function placeFuseOk(a, b, owner){ if(!campFusionOK()) return false; for(const x of lineUpIds(a)) for(const y of lineUpIds(b)){ const f=fusePair(x,y); if(f!=null && fuseKnownOk(owner,f)) return true; } return false; }
+function placeTeamScore(mid, r, c, owner){ const W=TACT.ai; let s=0; const ser=placeSerSet(mid);
+  for(const a of Object.values(state.units)){ if(a.owner!==owner) continue; const d=Math.max(Math.abs(a.r-r),Math.abs(a.c-c));
+    if(ser.size && d<=TACT.combo.gather){ const sa=placeSerSet(a.mid); for(const sr of ser) if(sa.has(sr)){ s+=W.placeCombo; break; } }
+    if(d<=2 && placeFuseOk(mid,a.mid,owner)) s+=W.placeFuse; }
+  return Math.min(s, W.placeCombo*2+W.placeFuse); }
+function tactPickSpot(mid, owner, isLeader){ let best=null, bs=-1e9; for(const [r,c] of castleArea(owner)){ if(unitAt(r,c)) continue; const s=tactPlaceScore(mid,r,c,owner,isLeader)+placeTeamScore(mid,r,c,owner)+Math.random()*0.5; if(s>bs){ bs=s; best=[r,c]; } } return best; }
 // 配置の画面: 選んだ子の地形の数をマスに
 function tactPlaceTags(mid){ if(BT.headless||!mid) return; const m=MID[mid];
   for(const [r,c] of castleArea(0)){ if(unitAt(r,c)) continue; const tr=state.terrain[r][c]; const tb=terrBonusM(m,tr); const cov=TACT.cover.terr.includes(tr);
