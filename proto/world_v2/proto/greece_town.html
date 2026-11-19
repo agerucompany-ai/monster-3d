@@ -235,7 +235,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 <script src="lib/v83char.js"></script>
 <script src="../chars/viewer/hero_v2.js"></script>
 <script src="../v3/chars/char_v3.js"></script>
-<script src="lib/progress.js?v=20261119h"></script>
+<script src="lib/progress.js?v=20261119i"></script>
 <script src="lib/pay.js"></script>
 <script>
 (function(){
@@ -3265,7 +3265,7 @@ const GR_FIGHTS={
       hint:'地の子は石の床で強い。穴から出た所をねらえ。'},
   11:{tadj:1.5, foe:{n:'ハオ', party:[{mid:1015,fixed:true,evo:true},{mid:1020,fixed:true},{mid:1040,fixed:true}]}, me:['P2',71,1012], lv:11, board:'ep11', look:'agora', must:1, fuse:[2072], ai:{hpX:0.359,atkX:0.359},
       hint:'炎は森によく効く。フォルコンとピリムサをくっつけると、エルレオンになれる。'},   // 11/08: 初めての融合はこの回(フォルコン＋ピリムサ→エルレオン 2072)
-  12:{tadj:1.5, foe:{n:'レン', party:[{mid:2054,fixed:true}]}, me:['P2',71,1012], lv:12, board:'ep12', look:'agora', must:1, own:[1003], ai:{hpX:0.596,atkX:0.596},
+  12:{tadj:1.0, foe:{n:'レン', party:[{mid:2054,fixed:true}]}, me:['P2',71,1012], lv:12, board:'ep12', look:'agora', must:1, own:[1003], ai:{hpX:0.596,atkX:0.596},   // 2026-11-19 tadj 1.5→1.0: 3段目が12話のあとになり、足す子は2段目まで。足すと難しくなっていた(シム 5%)
       hint:'相手の陣の三列まで入ると、フォルコンはフォルレオンに進化できる。'},
   13:{tadj:1.3, foe:{n:'カシア', party:[{mid:1063,fixed:true,evo:true}]}, me:['P2',1012], lv:12, board:'ep13', look:'aegean', must:0, ai:{hpX:0.890,atkX:0.890},
       hint:'炎は海ぎわで細る。桟橋のまん中で撃て。'},
@@ -3581,6 +3581,7 @@ function grBuild(){ GR_STEPS.length=0; for(const k in GR_BY) delete GR_BY[k];
 // ---- 段を進める ----
 let GR_RUN=false, GR_RETRY=false;
 function grCur(){ if(!grOn()) return null; const f=GF(); for(const s of GR_STEPS) if(!f[s.id]) return s; return null; }
+if(window.Progress) Progress.evo3Gate=function(){ if(!grOn()) return true; const f=SAVE&&SAVE.flags||{}; if(f.g12_b_b===2||f.g12_b) return true; const s=grCur(); return !s||(+s.ep||0)>12; };   // 2026-11-19 3段目は12話の決勝に勝ったあと(progress.js gateOk)
 if(window.Progress) Progress.storyEp=function(){ if(!grOn()) return 0; const s=grCur(); return s?+s.ep||0:22; };   // 2026-11-18 野生のLvは今の話数で(lib/progress.js wildLvW)
 function grHere(s){ if(s&&s.kind==='go') return MAP===s.to;   // 2026-11-17 地図を移る段は、ヤマトが歩いて出口を通り、行き先の地図に着いた時に終わる
   if(!s||s.map!==MAP) return false; if(!s.at||s.at==='*') return true;
@@ -3915,13 +3916,21 @@ function grFightOpt(opt,F){ const lv=F.lv; if(!opt.player) opt.player={}; let pa
     for(const e of EX){ let q=MN(e.mid), g=0; while(q&&q.evolves_to!=null&&g++<4){ if(!ow.has(+q.evolves_to)) break; exOwn.push(+q.evolves_to); q=MN(q.evolves_to); } } }
   party.length=0; L.forEach(p=>party.push(p)); EX.forEach(p=>party.push(p));
   opt.player.owned=[...new Set(L.map(p=>p.mid).concat(F.own||[]).concat(EX.map(p=>p.mid)).concat(exOwn))];
-  { const P=window.Progress; if(P&&P.formsList&&P.lineOf&&P.knowsForm&&!(SAVE&&SAVE.unlock&&!SAVE.unlock.evo)){ const lines=new Set(L.concat(EX).map(p=>+P.baseOf(+p.mid))); const add=P.formsList().filter(id=>lines.has(+P.baseOf(+id))&&P.knowsForm(id)); for(const p of L) if(P.evoLv) for(const id of P.lineOf(+p.mid)){ const nd=P.evoLv(id); if(nd&&(+p.lv||1)>=nd) add.push(+id); }   /* 2026-11-17 オーナー「クロッコがLvを超えても進化しなかった」: 連れの子(アレクのクロッコ等)もLvで覚えた進化は使える */ if(add.length) opt.player.owned=[...new Set(opt.player.owned.concat(add))]; } }   // 2026-11-17 オーナー「Lv12でフォルレオンに進化したのに進化できない」: 物語の勝負でも、Lvで覚えた進化の姿は使える opt.player.fusionKnown=(F.fuse||[]).slice(); opt.player.stageFree=true;
+  { const P=window.Progress; if(P&&P.formsList&&P.lineOf&&P.knowsForm&&!(SAVE&&SAVE.unlock&&!SAVE.unlock.evo)){ const lines=new Set(L.concat(EX).map(p=>+P.baseOf(+p.mid))); const add=P.formsList().filter(id=>lines.has(+P.baseOf(+id))&&P.knowsForm(id)); for(const p of L) if(P.evoLv) for(const id of P.lineOf(+p.mid)){ const nd=P.storyEvoLv?P.storyEvoLv(id):P.evoLv(id); if(nd&&(F.lv0||lv)>=nd) add.push(+id); }   /* 2026-11-19: 隊は台本どおり(その話の元の Lv で見る。12話でフォルレオン) */   /* 2026-11-17 オーナー「クロッコがLvを超えても進化しなかった」: 連れの子(アレクのクロッコ等)もLvで覚えた進化は使える */ if(add.length) opt.player.owned=[...new Set(opt.player.owned.concat(add))]; } }   // 2026-11-17 オーナー「Lv12でフォルレオンに進化したのに進化できない」: 物語の勝負でも、Lvで覚えた進化の姿は使える opt.player.fusionKnown=(F.fuse||[]).slice(); opt.player.stageFree=true;
   opt.fusionUnlocked=!!(F.fuse&&F.fuse.length); opt.tripleUnlocked=false; opt.startStage=1; opt.alignMinions=true;
-  opt.budget=L.reduce((a,p)=>a+grStageOf(p.mid),0)+EX.reduce((a,p)=>a+grStageOf(p.mid),0); const adj=grTeamAdj(F, EX.length);
+  opt.budget=L.reduce((a,p)=>a+grStageOf(p.mid),0)+EX.reduce((a,p)=>a+grStageOf(p.mid),0);
+  // 2026-11-19 オーナー「敵が弱いのはこちらが4体なのに敵は3とかやから。ある程度の話数いったら4でいい」: 13話(決勝のあと)からは 相手の数を こちらの数(4まで)にそろえる。足す子=その地図の野生の2段目(助っ人)。数がそろうので 足した数の埋め合わせ(tadj)はかけない
+  const foeAdd=(!F.anc&&(+F._ep||0)>=GR_FOE4_EP)?Math.max(0,Math.min(4,L.length+EX.length)-F.foe.party.length):0;
+  const adj=foeAdd>0?1:grTeamAdj(F, EX.length);
   const bd=grBoard(F.board,F.look); if(bd){ opt.terrainTheme=bd; opt.backdrop=undefined; }
   if(F.anc){ opt.kind='ancient'; opt.size=9; opt.enemy={party:[{mid:F.anc.mid, lv, fixed:true}], name:'古代テリオン '+monName(F.anc.mid), ancient:{tier:F.anc.tier, minions:(F.anc.minions||[]).slice(), tune:{hp:F.anc.tune.hp*adj, atk:F.anc.tune.atk*adj}}, catchable:!!F.learn};
     opt.recruit=F.learn?(()=>grLearn(F.anc.mid)):(()=>null); }
-  else { opt.kind='trainer'; opt.size=9; const ai=Object.assign({},F.ai||{}); ai.hpX=(ai.hpX||1)*adj; ai.atkX=(ai.atkX||1)*adj; opt.enemy={name:F.foe.n, party:F.foe.party.map(x=>Object.assign({lv},x)), ai}; opt.recruit=()=>null; } }
+  else { opt.kind='trainer'; opt.size=9; const ai=Object.assign({},F.ai||{}); ai.hpX=(ai.hpX||1)*adj; ai.atkX=(ai.atkX||1)*adj; opt.enemy={name:F.foe.n, party:F.foe.party.map(x=>Object.assign({lv},x)).concat(grFoeHelpers(foeAdd,lv)), ai}; opt.recruit=()=>null; } }
+const GR_FOE4_EP=13;
+function grFoeHelpers(n,lv){ if(!(n>0)) return []; const P=window.Progress; if(!P||!P.lineOf) return [];
+  let pool=[...new Set(((typeof D!=='undefined'&&D&&D.wild)||[]).filter(w=>!w.ancient&&!w.boss&&!grGrifLocked(w.id)).map(w=>+P.baseOf(+w.id)))].filter(b=>!(P.config.starters||[]).includes(b));
+  if(!pool.length) pool=((P.config.pools||{}).greece||[]).filter(b=>!grGrifLocked(b));
+  const out=[]; for(let i=0;i<n&&pool.length;i++){ const b=pool[Math.floor(Math.random()*pool.length)]; const ln=P.lineOf(b); out.push({mid:ln[Math.min(1,ln.length-1)], lv, fixed:true}); } return out; }
 // 2026-11-17 オーナー「ゲーム中に第何話とか表示しなくて良い」: 場面の頭の「第N話　題」は題だけにする(題も無ければその行ごと出さない)
 function grNoEpNo(lines){ if(!Array.isArray(lines)) return lines; const RX=/^\s*第[0-9０-９一二三四五六七八九十]+話[　\s]*/; const out=[]; for(const L of lines){ if(L&&L.w==null&&typeof L.t==='string'&&RX.test(L.t)){ const t=L.t.replace(RX,''); if(!t) continue; out.push(Object.assign({},L,{t})); } else out.push(L); } return out; }
 // ---- 物語の勝負の前に、自分の仲間から隊に足す子を選ぶ(2026-11-06 オーナー「仲間にしたはずのトールキッドとかが使えないのは意味がない。クロッコ戦とかで使えるようにして」) ----
