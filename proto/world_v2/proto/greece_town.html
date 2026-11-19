@@ -208,7 +208,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 </head>
 <body>
 <canvas id="cv"></canvas>
-<div id="vig"></div>
+<canvas id="darkFx" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;display:none"></canvas><div id="vig"></div>
 <div id="area"></div>
 <div id="tod"><button data-t="morning">朝</button><button data-t="noon" class="sel">昼</button><button data-t="evening">夕</button></div><button id="btSave">セーブ</button><button id="btBgm">曲 大</button><div id="pgHud"><button id="btMenu"><img class="ui-ic" src="../battle/img/ui/ally.webp" alt="">メニュー</button></div><div id="testBadge">テスト</div><button id="btWarp"><img class="ui-ic" src="../battle/img/ui/map.webp" alt="">ワープ</button><div id="warp"><div class="wt"><b>ワープ</b><button id="wpReset">リセット</button><button id="wpX">とじる</button></div><div class="wl" id="wpList"></div></div>
 <button id="btMap"><img class="ui-ic" src="../battle/img/ui/map.webp" alt="">地図</button><div id="brief"></div>
@@ -2411,6 +2411,20 @@ function uiUpdate(dt){ evoFxTick(dt); autosaveTick(dt); areaT-=dt; if(areaT<=0){
 // ---------------------------------------------------------------- 毎フレーム
 let NOW=0, FRAME=0, LAST=performance.now(); const FPSB=[]; const fpsEl=document.getElementById('fps'); if(Q.get('fps')) fpsEl.style.display='block';
 const _sv=new THREE.Vector3();
+// 2026-11-19 オーナー「迷宮のマップが全部明るい。闇マップないの？」: 地図に dark:1 があれば、画面を闇でおおい、ヤマトのまわりとたいまつの所だけ見える
+const DARKC=document.getElementById('darkFx'); const DARKX=DARKC.getContext('2d'); const _dv=new THREE.Vector3(); let DARKL=null, DARKD=null;
+function darkDraw(now){ const on=!!(D&&D.dark); if(!on){ if(DARKC.style.display!=='none') DARKC.style.display='none'; return; }
+  if(DARKC.style.display==='none') DARKC.style.display='block';
+  const w=innerWidth, h=innerHeight; if(DARKC.width!==w||DARKC.height!==h){ DARKC.width=w; DARKC.height=h; }
+  if(DARKD!==D){ DARKD=D; DARKL=(D.objects||[]).filter(o=>o.t==='torch'||o.t==='mazegate').map(o=>({x:o.x,z:o.z,g:o.t==='mazegate'})); }
+  const c=DARKX, m=Math.min(w,h); c.globalCompositeOperation='source-over'; c.clearRect(0,0,w,h); c.fillStyle='rgba(3,4,10,'+(+D.dark>0&&+D.dark<1?+D.dark:0.94)+')'; c.fillRect(0,0,w,h);
+  c.globalCompositeOperation='destination-out';
+  const hole=(x,y,z,r,k)=>{ _dv.set(x,y,z).project(camera); if(_dv.z>1) return; const sx=(_dv.x+1)/2*w, sy=(1-_dv.y)/2*h; if(sx<-r||sx>w+r||sy<-r||sy>h+r) return;
+    const g=c.createRadialGradient(sx,sy,0,sx,sy,r); g.addColorStop(0,'rgba(0,0,0,'+k+')'); g.addColorStop(0.45,'rgba(0,0,0,'+(k*0.85)+')'); g.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=g; c.fillRect(sx-r,sy-r,r*2,r*2); };
+  const fl=1+Math.sin(now*0.011)*0.03+Math.sin(now*0.023)*0.02;
+  hole(HERO.x,(HERO.y||0)+0.8,HERO.z,m*0.46*fl,1);
+  for(const L of DARKL){ if(Math.abs(L.x-HERO.x)>40||Math.abs(L.z-HERO.z)>40) continue; hole(L.x,groundAt(L.x,L.z)+(L.g?2:2.1),L.z,m*(L.g?0.3:0.2)*(1+Math.sin(now*0.013+L.x)*0.05),0.9); }
+}
 function frame(now){ requestAnimationFrame(frame); if(PAUSED){ LAST=now; return; } const dt=Math.min(0.05,(now-LAST)/1000); LAST=now; NOW=now; FRAME++; U.uT.value=now/1000;
   FPSB.push(dt); if(FPSB.length>60) FPSB.shift();
   if(TODT){ TODT.k=Math.min(1,TODT.k+dt/1.4); TODC=mixTod(TODT.from,TODT.to,sm(0,1,TODT.k)); applyTod(TODC); if(TODT.k>=1) TODT=null; }
@@ -2456,7 +2470,7 @@ function frame(now){ requestAnimationFrame(frame); if(PAUSED){ LAST=now; return;
   MON_U.uUpV.value.set(0,1,0).transformDirection(camera.matrixWorldInverse); MON_U.uSunV.value.copy(sd).transformDirection(camera.matrixWorldInverse);
   sky.position.copy(camera.position);
   const _tu=performance.now(); uiUpdate(dt); exitCheck(); WORLD.prof.ui+=performance.now()-_tu;
-  const _t4=performance.now(); renderFrame(); const _t5=performance.now(); const PF=WORLD.prof; PF.n++; PF.chunk+=_t1-_t0; PF.npc+=_t2-_t1; PF.mon+=_t3-_t2; PF.render+=_t5-_t4; PF.all+=_t5-now;
+  const _t4=performance.now(); renderFrame(); darkDraw(now); const _t5=performance.now(); const PF=WORLD.prof; PF.n++; PF.chunk+=_t1-_t0; PF.npc+=_t2-_t1; PF.mon+=_t3-_t2; PF.render+=_t5-_t4; PF.all+=_t5-now;
   if(FRAME%20===0&&fpsEl.style.display==='block') fpsEl.textContent=(FPSB.length/FPSB.reduce((a,b)=>a+b,0)).toFixed(0)+'fps '+renderer.info.render.calls+'dc '+(renderer.info.render.triangles/1000).toFixed(0)+'k';
 }
 let AUTO=null, PAUSED=true;
