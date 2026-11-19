@@ -435,6 +435,12 @@ function gaugeMul(o){ const sh=hpShare(o); if(T3()){ const B=TACT.behind; return
 // 2026-10-28 オーナー「進化のインセンティブがないと中央付近にモンスターが集まらない」: 中央の3列と相手の陣 = 闘気が1.5倍たまる・手番の始めに+15
 //   進化できない子(3段目・融合・進化先なし)は闘気MAXで「覚醒」(1戦1回・攻撃と守り+25%・3ターン)。2026-10-29 盤 v4: 覚醒と融合は どこでもできる
 const CENTER={gaugeX:1.5, tick:15, awake:{x:0.25, turns:3}};
+// 2026-11-19 オーナー「トウキがどれくらいでたまるかわからない・相手陣へ深く踏み込むインセンティブがない・移動力が広い意味がない。相手陣で異常にたまる・自陣に戻ると回復で戦略の幅を」:
+//   相手の陣 = 闘気×2・手番の始めに+30(まん中は今まで通り×1.5・+15)。自分の陣 = 手番の始めに体力+12%(リーダーは除く)
+const DEEP={gaugeX:2.0, tick:30}, HOMEZ={heal:0.12};
+function zoneGX(u){ return inCampRow(1-u.owner,u.r)?DEEP.gaugeX:CENTER.gaugeX; }
+function zoneTick(u){ return inCampRow(1-u.owner,u.r)?DEEP.tick:CENTER.tick; }
+function zoneText(u){ if(!u) return ''; if(inCampRow(1-u.owner,u.r)) return `相手の陣：闘気×${DEEP.gaugeX}・手番ごとに+${DEEP.tick}`; if(inCenterRow(u.r)) return `まん中：闘気×${CENTER.gaugeX}・手番ごとに+${CENTER.tick}`; if(inCampRow(u.owner,u.r)) return u.leader?'自分の陣':`自分の陣：手番ごとに体力+${Math.round(HOMEZ.heal*100)}%`; return ''; }
 function canEvolveSomeday(u){ const m=mon(u); return m.evolves_to!=null && canEverEvolve(u.owner,u.mid,!!u.isBoss); }
 function canAwaken(u){ return V2ON() && !!u && !u.anc && !u.awoke && !canEvolveSomeday(u) && gaugeOf(u)>=GAUGE_MAX && !u.acted && !u.wait && !(u.dug>0); }
 function doAwaken(u){ if(!canAwaken(u)) return false; u.awoke=true; u.g=0; setBuf(u,'buf',{stat:'atk',x:CENTER.awake.x,turns:CENTER.awake.turns},false); setBuf(u,'buf',{stat:'def',x:CENTER.awake.x,turns:CENTER.awake.turns},false); u.moved=true;
@@ -445,7 +451,7 @@ function addGauge(u, n){
   if(!u || !state.units[u.uid] || u.hp<=0) return;
   const D=storyDiff(); const eg=(u.owner===1&&D&&D.eg!=null)?D.eg:1;   // 序盤の章は敵の闘気がゆっくり溜まる
   const before=gaugeOf(u); const v=Math.max(1,Math.round(n*gaugeMul(u.owner)*eg));
-  const cx=(V2ON() && EVO_CELLS.length && gaugeZone(u)) ? CENTER.gaugeX : 1;   // 中央の3列と相手の陣では闘気がたまりやすい
+  const cx=(V2ON() && EVO_CELLS.length && gaugeZone(u)) ? zoneGX(u) : 1;   // 中央の3列と相手の陣では闘気がたまりやすい
   u.g=Math.min(GAUGE_MAX, before+Math.round(v*cx));
   const need=evoNeed(u);
   if(need!=null && before<need && u.g>=need && canEverEvolve(u.owner,u.mid,!!u.isBoss)){ floatText(u.r,u.c,'闘気MAX','#ffd24a');
@@ -1429,7 +1435,9 @@ function startTurn(side){
   if(state.sp) spTurnStart(side);   // 2026-10-31 専用の盤(水が上がる)
   if(T3()){ for(const u of alive(side)){ u.sr=u.r; u.sc=u.c; u.away=0; } }   // 戦術v3: 突進の起点
   if(T3()){ const tot=Object.values(state.units).reduce((a,x)=>a+Math.max(0,x.hp),0)+Object.keys(state.units).length*1e6; state.idle=(state._idleHp===tot)?(state.idle||0)+1:0; state._idleHp=tot; }   // 戦術v3: 体力が動かない手番の数
-  if(V2ON() && EVO_CELLS.length) for(const u of alive(side)) if(gaugeZone(u) && !(u.dug>0)) addGauge(u, CENTER.tick);   // 中央の3列・相手の陣にいると闘気+
+  if(V2ON() && EVO_CELLS.length) for(const u of alive(side)) if(gaugeZone(u) && !(u.dug>0)) addGauge(u, zoneTick(u));   // 中央の3列(+15)・相手の陣(+30)にいると闘気+
+  if(V2ON()) for(const u of alive(side)) if(!u.leader && !u.anc && !(u.dug>0) && inCampRow(u.owner,u.r) && u.hp>0 && u.hp<u.maxhp){ const h=Math.min(u.maxhp-u.hp, Math.max(1,Math.round(u.maxhp*HOMEZ.heal))); u.hp+=h; if(!BT.headless) floatText(u.r,u.c,'+'+h,'#7be0a0'); }   // 2026-11-19 自分の陣で回復
+  if(side===0 && V2ON() && !BT.headless && !window._SIM && state.turn<=1){ let seen=false; try{ seen=localStorage.getItem('mb_zone_v1')==='1'; localStorage.setItem('mb_zone_v1','1'); }catch(e){} if(!seen) setTimeout(()=>toast(`${IC('hint')}闘気：相手の陣は×${DEEP.gaugeX}・手番ごとに+${DEEP.tick}／まん中は×${CENTER.gaugeX}・+${CENTER.tick}。自分の陣にいると手番ごとに体力+${Math.round(HOMEZ.heal*100)}%`),900); }
   ancCheck();         // 古代テリオンの目覚め(毒などで体力ゲージが減った時)
   refreshEvoArea();
   syncUnits();
@@ -1711,6 +1719,7 @@ function aiBestMove(u){
     if(goal) sc-=man(r,c,goal.r,goal.c)*(mode==='evo'?40:mode==='fuse'?25:pullW);
     if(mode==='evo' && evoZoneOK(u,r,c)) sc+=(TACT.ai.zoneEvo!=null?TACT.ai.zoneEvo:600);   // 2026-10-29: 入れば闘気なしで進化
     if(V2ON() && EVO_CELLS.length && inCenterRow(r)) sc+=25;   // 中央をとりあう
+    if(V2ON() && !u.leader){ const hr=u.hp/Math.max(1,u.maxhp); if(hr<0.4 && inCampRow(u.owner,r)) sc+=180; else if(hr>=0.6 && EVO_CELLS.length && inCampRow(1-u.owner,r)) sc+=30; }   // 2026-11-19 弱ったら自陣へ戻って回復・元気なら相手の陣で闘気
     if(mode==='fuse' && goal && man(r,c,goal.r,goal.c)===1) sc+=160;
     sc+=terrBonusM(mon(u), terrAt(r,c))*120;
     if(V2ON() && hasType(mon(u),'水') && nearWetFront(r,c,me)) sc+=WET.aiPos;   // 2026-11-01 水の子は 水の近くに陣取る。夕: 自陣の側の水では陣取らない(真ん中の3行か相手の側の水へ=攻めに出る)
@@ -4917,7 +4926,7 @@ function updateUI(){ if(BT.headless) return;
       : `<span style="color:${atkLeft(sel)>=1?'#8fb4ff':'#e06060'}">${icTag('atk')}MP ${atkLeft(sel)}/${atkMax(sel)}</span>`
         +` <span style="color:${healLeft(sel)>=1?'#7be0a0':'#e06060'}">${icTag('heal')}MP ${healLeft(sel)}/${healMax(sel)}</span>`;
     const gN=evoNeed(sel); const gStr=`<span style="color:${gaugeReady(sel)?'#ffe066':'#e8a050'}">闘気 ${gaugeOf(sel)}${gN!=null?'/'+gN:''}</span>`;
-    sd.innerHTML = `<img src="${IMG[sel.mid]}"><div><b style="color:#ffd86b">${sel.leader?LMK():''}${m.name}</b>${terrChip(sel)} <span class="muted">${m.type}・${DAN[m.level]}・${rkStr(sel)}</span> ${mpStr} ${gStr}<br>`
+    sd.innerHTML = `<img src="${IMG[sel.mid]}"><div><b style="color:#ffd86b">${sel.leader?LMK():''}${m.name}</b>${terrChip(sel)} <span class="muted">${m.type}・${DAN[m.level]}・${rkStr(sel)}</span> ${mpStr} ${gStr}${zoneText(sel)?` <span style="color:#9fd4ff">${zoneText(sel)}</span>`:''}<br>`
       +`<span class="muted">HP ${sel.hp}/${sel.maxhp}・ATK ${m.atk}・防御-${Math.round(defReduction(sel)*100)}%・移動 ${effMove(sel)}・射程 ${R}${R>m.atk_range?'↑':''}</span>`
       +(note?`<br><span style="color:#7be0a0;font-size:11px">${note}</span>`:'')+`</div>`;
     if(V2ON()) sd.innerHTML = `<img src="${IMG[sel.mid]}"><div><b style="color:#ffd86b">${sel.leader?LMK():''}${m.name}</b>${terrChip(sel)}${T3()?seriesBadges(sel.mid):''} <span class="muted">${typeBadges(m)}・${DAN[m.level]}・${rkStr(sel)}</span> ${gStr}<br>`
