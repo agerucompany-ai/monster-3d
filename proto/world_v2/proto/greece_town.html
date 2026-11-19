@@ -2146,7 +2146,7 @@ function npcMesh(o){ const B=new Builder(); CUR={B,cols:[],dyn:[],extra:[]}; con
   if(o.trainer){ P_(rbox(0.26,0.3,0.12,0.05,1),0x6a4a32,T(0,h*0.55,-0.22)); }
   CUR=null; const g=new THREE.Group(); B.build(g); return g; }
 function makeLabel(text){ const e=document.createElement('div'); e.className='lbl'; e.textContent=text; document.body.appendChild(e); return e; }
-const WILD_EXTRA=2;   // 野生の子を何倍に増やすか(1=2倍・2026-11-18 オーナー「野生もどんどん出して」で 2=3倍)
+let WILD_ACC=0; const WILD_EXTRA=0.5;   // 2026-11-20 オーナー「野生多すぎ・半分に」: 3倍→1.5倍(野生の子2体に1体だけ、近くにもう1体)。小数は 何体目かで交互に足す ／ 野生の子を何倍に増やすか(1=2倍・2026-11-18 オーナー「野生もどんどん出して」で 2=3倍)
 function wildDupPlace(){ if(typeof D==='undefined'||!D||!D.spawn) return; for(const m of MONS){ if(!m.pend) continue; const o=m.o; for(let t=0;t<10;t++){ const a=Math.random()*6.28, rr=2.5+Math.random()*3.5, x=o.x+Math.cos(a)*rr, z=o.z+Math.sin(a)*rr;   // 増やした野生の子の置き場所: 歩ける所・壁に触れない所・出入り口から4以上
     try{ if(walkOK(x,z)&&colFree(x,z,0.5)&&Math.hypot(x-D.spawn[0],z-D.spawn[1])>4){ o.x=x; o.z=z; m.x=m.tx=x; m.z=m.tz=z; m.pend=false; m.gone=false; break; } }catch(e){} } } }
 setInterval(wildDupPlace, 1500);
@@ -2154,7 +2154,7 @@ function initActors(){ for(const o of D.npcs){ if(MAP==='athens'&&String(o.m||''
   const g=new THREE.Group(); g.position.set(o.x,0,o.z); g.rotation.y=(o.rot||0)*DEG; NPCS.push({o,g,x:o.x,z:o.z,r:0.36,yaw:(o.rot||0)*DEG,lbl:makeLabel(o.n),ph:Math.random()*6,pi:0,wait:0}); }
   for(const o of D.wild){ let re=false; if((o.ancient||o.boss)&&SAVE&&SAVE.flags[o.flag||'guard1']) re=true;   // 2026-10-28 オーナー「倒した後もずっと残るでいいよ。仮に覚えたとしても何度でも戦える」: 認められたあとも同じ場所に残り「再戦」で何度でも(自分からは寄ってこない)。覚える判定は覚えるまでだけ(Progress.learnBoss)
     MONS.push({o,x:o.x,z:o.z,yaw:Math.random()*6.28,st:'idle',t:Math.random()*3,tx:o.x,tz:o.z,inst:null,want:false,wild:true,r:0.32,rematch:re});
-    if(!(o.ancient||o.boss)) for(let k=0;k<WILD_EXTRA;k++){ const o2=Object.assign({},o,{dup:1}); MONS.push({o:o2,x:o.x,z:o.z,yaw:Math.random()*6.28,st:'idle',t:Math.random()*3,tx:o.x,tz:o.z,inst:null,want:false,wild:true,r:0.32,rematch:false,gone:true,pend:true}); } }   // 2026-11-16 オーナー「野生の数を増やしてレベル上げしやすく」: 野生の子1体ごとに近くへ同じ種類をもう1体。置き場所は地面が読めてから(wildDupPlace)
+    if(!(o.ancient||o.boss)) for(let k=0, nx=Math.floor(WILD_EXTRA)+((WILD_ACC+=WILD_EXTRA%1)>=1-1e-9?(WILD_ACC-=1,1):0);k<nx;k++){ const o2=Object.assign({},o,{dup:1}); MONS.push({o:o2,x:o.x,z:o.z,yaw:Math.random()*6.28,st:'idle',t:Math.random()*3,tx:o.x,tz:o.z,inst:null,want:false,wild:true,r:0.32,rematch:false,gone:true,pend:true}); } }   // 2026-11-16 オーナー「野生の数を増やしてレベル上げしやすく」: 野生の子1体ごとに近くへ同じ種類をもう1体。置き場所は地面が読めてから(wildDupPlace)
   for(const o of D.helpers) MONS.push({o,x:o.x,z:o.z,yaw:(o.rot||0)*DEG,st:'still',t:0,inst:null,want:false,wild:false,r:0.32});
   for(const d of D.drones){ const B=new Builder(); CUR={B,cols:[],dyn:[],extra:[]}; P_(rbox(0.56,0.16,0.56,0.07,1),0xf6f6f4,T(0,0,0)); P_(rbox(0.58,0.05,0.12,0.02,1),0x3c9a9a,T(0,0.05,0));
     for(let i=0;i<4;i++){ const a=i/4*6.28+0.785; P_(rbox(0.4,0.04,0.05,0.02,1),0xd0d4da,T(Math.cos(a)*0.28,0.04,Math.sin(a)*0.28,-a)); P_(cyl(0.16,0.16,0.015,14),0xbfc8d4,T(Math.cos(a)*0.46,0.1,Math.sin(a)*0.46)); }
