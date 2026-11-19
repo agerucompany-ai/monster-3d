@@ -1187,7 +1187,14 @@ OB.evzone=(o)=>{ const y=G(o.x,o.z), M=T(o.x,y,o.z,(o.rot||0)*DEG);
   for(const s of [-1,1]) P_(rbox(0.1,0.42,0.1,0.02,1),0xfbf8f2,MM(b,T(s*0.26,0.95,0))); P_(rbox(0.05,1.5,0.05,0.01,1),0x4a3a2a,MM(b,T(0.3,0.9,0.12)));
   addCol({t:'b',x:o.x,z:o.z-0.5,hw:0.65,hd:0.9,rot:(o.rot||0)*DEG,top:y+2.6}); };
 // 町の人(動かない人影・白い都のにぎわい 2026-11-17)。{t:'folk',x,z,rot,sit,kid,c(服の色),y}  話しかけられない飾り。足もとに小さな当たり
-OB.folk=(o)=>{ if(MAP==='athens') return;   // 2026-11-19 オーナー「白い都の住人が変な3D。出さなくてよい」
+// 2026-11-19 オーナー「白い都に1人もいないのは変。都会の人の服装で何人か」: 箱の人形(変な3D)はやめ、PixAI(Tsubaki.3)で描いた都会の服の人(v3/folk 30人)を板で立たせる
+const FOLK_AR=[0.278,0.26,0.292,0.285,0.315,0.305,0.273,0.273,0.372,0.258,0.278,0.285,0.325,0.318,0.3,0.292,0.242,0.355,0.315,0.285,0.29,0.323,0.32,0.33,0.315,0.33,0.292,0.278,0.292,0.302], FOLK_MAT=[];
+function folkMat(i){ if(!FOLK_MAT[i]){ const t=new THREE.TextureLoader().load('../v3/folk/f'+String(i).padStart(2,'0')+'.webp'); if(THREE.sRGBEncoding) t.encoding=THREE.sRGBEncoding; t.anisotropy=4; FOLK_MAT[i]=new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:0.35,depthWrite:true,color:0xf2eee8}); } return FOLK_MAT[i]; }
+function folkSprite(o){ if(o.sit&&!o._mv){ const r=(o.rot||0)*DEG; o=Object.assign({},o,{x:o.x+Math.sin(r)*0.6,z:o.z+Math.cos(r)*0.6,_mv:1,y:null}); }   // 座る席の人は、ベンチの前に立たせる
+  const y=o.y!=null?o.y:G(o.x,o.z), i=(((Math.round(o.x*7)*31+Math.round(o.z*5)*17)%FOLK_AR.length)+FOLK_AR.length)%FOLK_AR.length, R=rng(((o.x*53+o.z*29)|0)+7), h=1.62+R()*0.12;
+  const g=new THREE.Group(); CUR.extra.push(g); const sp=new THREE.Sprite(folkMat(i)); sp.center.set(0.5,0.02); sp.scale.set(h*FOLK_AR[i],h,1); sp.position.set(o.x,y,o.z); g.add(sp);
+  addCol({t:'c',x:o.x,z:o.z,r:0.28,top:y+1.6}); }
+OB.folk=(o)=>{ if(MAP==='athens') return folkSprite(o);
   const R=rng(((o.x*91+o.z*37)|0)+3), y=o.y!=null?o.y:G(o.x,o.z), k=o.kid?0.66:(0.84+R()*0.1), M=T(o.x,y,o.z,(o.rot||0)*DEG,k,k,k);
   const cloth=col3(o.c||pick(['#3f74b0','#e2574c','#f2c14e','#3c8f9a','#fbf7ee','#9b7fd1','#5aa36a','#e58a8a','#f4efe6','#2f4f7f','#d9604f'],R)).getHex(), pants=pick([0x3a3f4a,0x5a4a3a,0xf1ece2,0x2f4f7f,0x6a6f7a],R), skin=pick([0xf2d2b6,0xe8c0a0,0xc89878,0xf5dcc6,0xa87858],R), hair=pick([0x2a2222,0x4a3226,0x6a4a2a,0xd8c8a0,0x1e1e24,0x8a5a3a],R), dress=!o.sit&&R()<0.4;
   const hip=o.sit?0.46:0.8;
