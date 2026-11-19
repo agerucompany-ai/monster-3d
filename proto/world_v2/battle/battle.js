@@ -802,6 +802,7 @@ function fusionResult(a,b){
 }
 // 2026-10-28 オーナー「融合の仕方を覚える」: player.fusionKnown(融合体idの配列)を渡した時、自分の子はその融合だけ。渡さない(CPU対戦など)=全部・敵(AI)は今まで通り
 // 2026-10-30 バグ直し: ふつうの人(kind:'trainer')は融合しない(enemy.ai.fuse:true の時だけ)。エジプト後半の人の2体が1手目に融合して 体力1万の子になり、勝率3〜13%(tune_v4)になっていた。使い手(master)・古代・ボスはそのまま
+function fuseHintOf(fid){ try{ const P=(typeof window!=='undefined')&&window.Progress; const t=P&&P.fuseHint?P.fuseHint(fid):''; return t?'：'+t:''; }catch(e){ return ''; } }   // 2026-11-19 覚え方を出す
 function fuseKnownOk(owner, fid){ if(owner===1 && BT.opts && BT.opts.enemyNoFuse) return false; if(owner===1 && BT.kind==='trainer' && !(BT.diff&&BT.diff.fuse)) return false; return owner!==0 || ONLINE || !BT.fuseKnown || BT.fuseKnown.has(+fid); }   // 2026-10-28 物語: enemyNoFuse=敵の融合はエジプト11まで無し
 function attackTargets(u, range){
   if(V2ON()) return attackTargetsV2(u, (range&&typeof range==='object')?range:null);   // 技 v2: 2つめは技
@@ -1297,7 +1298,7 @@ function tryFusion(a, b, r, c){
     else if(A.level<2||B.level<2||A.role==='fusion'||B.role==='fusion') toast('融合は2段目か3段目どうし（1段目は先に進化させる）');
 
     else if(fusePair(a.mid,b.mid)==null) toast(`${A.name}と${B.name}の組み合わせでは融合できない`);
-    else if(!fuseKnownOk(a.owner, fusePair(a.mid,b.mid))) toast('融合の仕方を覚えていない');
+    else if(!fuseKnownOk(a.owner, fusePair(a.mid,b.mid))) toast('融合の仕方を覚えていない'+fuseHintOf(fusePair(a.mid,b.mid)));
     else if(!(a.evo||b.evo)) toast('どちらかが、この勝負の中で進化した子なら融合できる');
     else toast(`${A.name}と${B.name}は融合できない`);
     return;
@@ -4669,7 +4670,7 @@ function handlePick(sc, tc){
       }
       const u=unitAt(t[0],t[1]);
       if(u&&u.owner===0&&u.uid!==sel.uid){
-        if(fusionResult(sel,u)==null){ const fp=fusePair(sel.mid,u.mid); toast(fp!=null&&!fuseKnownOk(0,fp)?'融合の仕方を覚えていない':`${mon(sel).name}と${mon(u).name}は融合の組合せじゃない`); }
+        if(fusionResult(sel,u)==null){ const fp=fusePair(sel.mid,u.mid); toast(fp!=null&&!fuseKnownOk(0,fp)?'融合の仕方を覚えていない'+fuseHintOf(fp):`${mon(sel).name}と${mon(u).name}は融合の組合せじゃない`); }
         selectUnit(u); return;
       }
       if(u&&u.owner!==0){ showMonsterDetail(u.mid, u); return; }   // 射程外の敵=モンスター情報

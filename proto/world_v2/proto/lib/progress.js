@@ -173,7 +173,16 @@ function learnForm(mid){ const pg=prog(); if(!pg) return []; pg.forms=pg.forms||
   for(let j=1;j<=i;j++){ const id=ln[j]; if(stageOf(id)>=2&&!pg.forms[id]){ pg.forms[id]=1; out.push(id); } } return out; }
 P.hasLine=(mid)=>{ const pg=prog(); if(!pg) return false; const b=baseOf(mid); return pg.roster.some(c=>baseOf(c.mid)===b); };   // その系統の子(1段目)を持っている
 P.knowsForm=(mid)=>{ const pg=prog(); if(!pg||!mon(mid)) return false; if(stageOf(mid)<=1) return P.hasLine(mid); if(lvForm(mid)) return lvFormOk(mid) || (!starterLine(mid) && !!(pg.forms&&pg.forms[+mid])); return !!(pg.forms&&pg.forms[+mid]); };
-P.knowsFusion=(fid)=>{ const pg=prog(); const m=mon(fid); if(!pg||!m||m.role!=='fusion') return false; if(pg.fusions&&pg.fusions[+fid]) return true; return !!(SAVE&&SAVE.unlock&&SAVE.unlock.fusion) && !ANCIENT_FUSIONS.includes(+fid) && Array.isArray(m.recipe) && m.recipe.length===2; };
+// 2026-11-19 オーナー「融合も条件をクリアして融合の仕方を覚えてからにしたい。いまは2体あつめたら自動でできる」:
+//   融合が解禁(unlock.fusion)されても全部は覚えない。覚えた融合(prog.fusions)だけできる。覚え方 = ①物語の勝負で見せた融合 ②材料の2体の系統をどちらも Lv FUSE_LV まで育てる ③古代テリオンを倒す(今まで通り)
+const FUSE_LV=10;
+P.FUSE_LV=FUSE_LV;
+P.knowsFusion=(fid)=>{ const pg=prog(); const m=mon(fid); if(!pg||!m||m.role!=='fusion') return false; return !!(pg.fusions&&pg.fusions[+fid]); };
+function fuseLvOk(fid){ const m=mon(fid); if(!m||m.role!=='fusion'||ANCIENT_FUSIONS.includes(+fid)||!Array.isArray(m.recipe)||m.recipe.length!==2) return false; return m.recipe.every(r=>P.hasLine(r)&&lineLv(baseOf(r))>=FUSE_LV); }
+P.learnFusion=(fid)=>{ const pg=prog(); if(!pg||!mon(fid)) return false; pg.fusions=pg.fusions||{}; if(pg.fusions[+fid]) return false; pg.fusions[+fid]=1; return true; };
+P.fusionLearnCheck=()=>{ const pg=prog(); if(!pg||!(SAVE&&SAVE.unlock&&SAVE.unlock.fusion)) return []; const out=[]; for(const m of Object.values(MON)) if(m.role==='fusion'&&!(pg.fusions&&pg.fusions[m.id])&&fuseLvOk(m.id)){ P.learnFusion(m.id); out.push(m.id); } return out.sort(byOrd); };   // 今 条件を満たした融合を覚える(覚えた分を返す)
+P.fuseHint=(fid)=>{ const m=mon(fid); if(!m) return ''; if(P.knowsFusion(fid)) return ''; if(ANCIENT_FUSIONS.includes(+fid)) return 'この古代テリオンに勝つと覚えることがある'; if(!(SAVE&&SAVE.unlock&&SAVE.unlock.fusion)) return '物語で融合を知るまで、まだできない';
+  const r=m.recipe||[]; return r.map(x=>`${nameOf(x)}(いまLv${lineLv(baseOf(x))||0})`).join('と')+`を、どちらもLv${FUSE_LV}まで育てると覚える`; };
 P.hasForm=(mid)=>{ const m=mon(mid); if(!m) return false; return m.role==='fusion'?P.knowsFusion(mid):P.knowsForm(mid); };
 P.fusionKnownList=()=>Object.values(MON).filter(m=>m.role==='fusion'&&P.knowsFusion(m.id)).map(m=>m.id).sort(byOrd);   // 2026-11-13 monsters.json の順(Object.values は id の小さい順になる)
 P.formsList=()=>{ const pg=prog(); const o=new Set(pg&&pg.forms?Object.keys(pg.forms).map(Number).filter(id=>mon(id)&&!(lvForm(id)&&starterLine(id))):[]); for(const id of lvLineForms()) if(lvFormOk(id)) o.add(id); return [...o]; };
@@ -611,7 +620,9 @@ UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const 
     else if(tab==='fuse'){ const all=Object.values(MON).filter(m=>m.role==='fusion').length; const fk=P.fusionKnownList(); const anc=fk.filter(f=>ANCIENT_FUSIONS.includes(f)), nor=fk.filter(f=>!ANCIENT_FUSIONS.includes(f));
       B.appendChild(el('div','pgSec',`<span>融合の仕方</span><span>${fk.length} / ${all}</span>`)); if(!fk.length) B.appendChild(el('div','pgItem','<span>—</span>'));
       if(anc.length){ B.appendChild(el('div','pgSec',`<span>古代テリオン</span><span>${anc.length}</span>`)); for(const f of anc) B.appendChild(el('div','',fuseRow(f))); }
-      if(nor.length){ B.appendChild(el('div','pgSec',`<span>融合</span><span>${nor.length}</span>`)); for(const f of nor) B.appendChild(el('div','',fuseRow(f))); } }
+      if(nor.length){ B.appendChild(el('div','pgSec',`<span>融合</span><span>${nor.length}</span>`)); for(const f of nor) B.appendChild(el('div','',fuseRow(f))); }
+      if(SAVE&&SAVE.unlock&&SAVE.unlock.fusion){ const nx=Object.values(MON).filter(m=>m.role==='fusion'&&!P.knowsFusion(m.id)&&!ANCIENT_FUSIONS.includes(m.id)&&Array.isArray(m.recipe)&&m.recipe.length===2&&m.recipe.some(r=>P.hasLine(r))).map(m=>m.id).sort(byOrd);   // 2026-11-19 まだ覚えていない融合と覚え方
+        if(nx.length){ B.appendChild(el('div','pgSec',`<span>まだ覚えていない融合</span><span>${nx.length}</span>`)); for(const f of nx) B.appendChild(el('div','pgItem',`<span>${nameOf(f)}</span><small style="opacity:.8">${P.fuseHint(f)}</small>`)); } } }
     else if(tab==='items'){ const it=(SAVE&&SAVE.items)||{}; B.appendChild(el('div','pgSec','<span>もちもの</span>'));
       const ks=Object.keys(ITEMJ).filter(k=>+it[k]>0); for(const k of ks){ const j=ITEMJ[k]||[k,'potion']; B.appendChild(el('div','pgItem',`${ICON(j[1])}<span>${j[0]}</span><b>×${it[k]}</b>`)); } if(!ks.length) B.appendChild(el('div','pgItem','<span>なし</span>'));
       B.appendChild(el('div','pgSec','<span>ジェム</span>')); B.appendChild(el('div','pgItem',`${ICON('gem')}<span>ジェム</span><b>${P.gems()}</b>`));
