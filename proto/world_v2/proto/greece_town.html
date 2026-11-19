@@ -235,7 +235,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 <script src="lib/v83char.js"></script>
 <script src="../chars/viewer/hero_v2.js"></script>
 <script src="../v3/chars/char_v3.js"></script>
-<script src="lib/progress.js?v=20261119f"></script>
+<script src="lib/progress.js?v=20261119h"></script>
 <script src="lib/pay.js"></script>
 <script>
 (function(){
@@ -2332,8 +2332,8 @@ async function startEncounter(e){ ENC=e; BGM.bt=bgmBattleTrack(e); BGM.res=false
   const area=MAP, anc=!!(e.m&&e.m.o.ancient), boss=!!(e.m&&e.m.o.boss);
   const lvOf=(x,dflt)=>x.lv!=null?+x.lv:(x.rank!=null?Progress.rankLv(x.rank):dflt);
   let enemy;
-  if(e.m){ const o=e.m.o; enemy={ party:[(anc||boss)?{mid:o.id, lv:lvOf(o,Progress.wildLv(area)+6), fixed:true}:Progress.wildEnemy(o.id,area)], name:anc?'古代テリオン '+monName(o.id):(boss?monName(o.id):undefined) }; if(anc||boss){ enemy.ancient={tier:+o.tier||1, minions:[...new Set((D.wild||[]).filter(w=>!w.ancient&&!w.boss).map(w=>+w.id))]}; if(o.tune) enemy.ancient.tune=o.tune; enemy.catchable=!!(boss&&!anc); } }   // tune=中国編(2026-10-26)の tier の上書き(マップの wild[].tune)   // 古代テリオン・ボス=kind:'ancient'(battle.js の ANCIENT・tier はマップの wild[].tier・子分はそのマップの野生)。野生のボス(トールガ)だけ仲間の判定あり
-  else { const o=e.n.o, bump=o.master?3:1; enemy={ name:o.n, zeroday:!!o.zeroday, party:(o.party||[{mid:1059},{mid:1037}]).map(x=>{ const c={mid:+x.mid, lv:lvOf(x,Progress.wildLv(area)+bump)}; if(x.fixed||x.stage!=null) c.fixed=true; if(x.evo) c.evo=true; if(x.leader) c.leader=true; if(x.boss){ c.boss=true; c.fixed=true; } if(x.circle) c.circle=true; return c; }) }; }   // evo=その子は戦いの中で進化できる(町いちばんの使い手)・leader=先頭でなくてもリーダー
+  if(e.m){ const o=e.m.o; enemy={ party:[(anc||boss)?{mid:o.id, lv:Math.max(lvOf(o,0),Progress.wildLvW(area)+6), fixed:true}:Progress.wildEnemy(o.id,area)], name:anc?'古代テリオン '+monName(o.id):(boss?monName(o.id):undefined) }; if(anc||boss){ enemy.ancient={tier:+o.tier||1, minions:[...new Set((D.wild||[]).filter(w=>!w.ancient&&!w.boss).map(w=>+w.id))]}; if(o.tune) enemy.ancient.tune=o.tune; enemy.catchable=!!(boss&&!anc); } }   // tune=中国編(2026-10-26)の tier の上書き(マップの wild[].tune)   // 古代テリオン・ボス=kind:'ancient'(battle.js の ANCIENT・tier はマップの wild[].tier・子分はそのマップの野生)。野生のボス(トールガ)だけ仲間の判定あり
+  else { const o=e.n.o, bump=o.master?3:1; enemy={ name:o.n, zeroday:!!o.zeroday, party:(o.party||[{mid:1059},{mid:1037}]).map(x=>{ const c={mid:+x.mid, lv:Math.max(lvOf(x,0),Progress.wildLvW(area)+bump)};   /* 2026-11-19 オーナー「後半の敵が弱すぎる」: 町の人は wildLv(編の帯=ギリシャは2〜4)のままだった→野生と同じ話数の帯+1(使い手+3)。地図に書いたLvより下げない */ if(x.fixed||x.stage!=null) c.fixed=true; if(x.evo) c.evo=true; if(x.leader) c.leader=true; if(x.boss){ c.boss=true; c.fixed=true; } if(x.circle) c.circle=true; return c; }) }; }   // evo=その子は戦いの中で進化できる(町いちばんの使い手)・leader=先頭でなくてもリーダー
   if(e.m&&!(anc||boss)) enemy.pack=[...new Set((D.wild||[]).filter(w=>!w.ancient&&!w.boss&&!grGrifLocked(w.id)).map(w=>+w.id))];   // 野生の群れ(2026-10-27): 触った子がリーダー+このマップの野生から。数は progress.js(編の pack と自分の出せる数)
   const opt={ kind:e.m?((anc||boss)?'ancient':'wild'):(e.n.o.master?'master':'trainer'), size:e.m?((anc||boss)?(+e.m.o.size||9):7):(+e.n.o.size||(e.n.o.master?11:9)), terrainTheme:place, backdrop:place==='seaside'?'aegean':'olive', player:{items:ITEMS}, enemy };
   try{ Progress.prepare(opt,{area, zeroday:enemy.zeroday}); }catch(err){ console.warn('progress.prepare',err&&err.message); opt.player={party:PARTY,items:ITEMS,box:BOX,rankCap:10,owned:ownedList()}; }
@@ -3286,6 +3286,9 @@ const GR_FIGHTS={
   22:{tadj:1.3, foe:{n:'レン', party:[{mid:2054,fixed:true}]}, me:['P3'], lv:17, board:'ep22', look:'olive', must:0, ai:{hpX:0.444,atkX:0.444},
       hint:'目を閉じて待て。もぐった相手が出る所をねらえ。'},
 };
+// 2026-11-19 オーナー「後半の敵がちょっと弱すぎる」: 野生は話数で上がる(progress.js wildLvW=1.5+1.25×話)のに、物語の勝負は話のLv(22話で17)のままで、育てた子より10以上低かった。
+//   相手もこちらの隊も その話のころの野生の帯まで上げる(相手の強さの倍率 ai はそのまま=同じLvどうしで合わせた手ごたえ)。元のLvは F.lv0
+for(const k in GR_FIGHTS){ const F=GR_FIGHTS[k]; F.lv0=F.lv; F.lv=Math.max(F.lv, Math.round(1.5+1.25*(+k))); }
 // 隊の札 → mid('P1'〜'P3'=相棒の系統の1〜3段目)
 const GR_PMID={P1:1001,P2:1002,P3:1003};
 // 2026-11-06 オーナー「仲間にしたはずのトールキッドとかが使えないのは意味がない」: 物語の勝負でも、表の隊(me・必ず出る)に 自分の仲間から足せる。
