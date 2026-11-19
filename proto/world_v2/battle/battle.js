@@ -2338,13 +2338,18 @@ function darkSync(){ if(IS_NODE||!renderer) return; const wrap=$id('wrap'); if(!
 // 2026-11-19 オーナー「全部荒野マップで松明をつくり、松明のところだけ明るく。松明の3マスより外は真っ暗で敵の動きが見えないように」:
 //   闇の盤(look.dark): 松明9本(4隅とその間)。松明から3マス(縦横の歩数)以内だけ明るい。それより外のマスは黒くおおい、そこにいる相手の子は見えない(自分の子は見える)
 const DARK_R=3, DARK_TORCH=[[0,0],[0,4],[0,8],[6,0],[6,4],[6,8],[12,0],[12,4],[12,8]];   // 2026-11-19 オーナー「松明は9箇所。4隅とその間に等間隔」(13×9の盤)
-function darkLit(r,c){ const D=BT.darkB; if(!D) return true; return D.lit.has(r+','+c); }
+function darkLit(r,c){ const D=BT.darkB; if(!D) return true; const k=r+','+c; return D.lit.has(k) || (D.rev[k]||0)>performance.now(); }
+// 2026-11-19 オーナー「光や炎のモンスターのエフェクト時に相手が見える演出」: 光・炎の攻撃は 撃った子と当たった所のまわり3マスを しばらく(3.2秒)照らす(黒いおおいが消えて相手が見える)
+const DARK_REV_MS=3200;
+function darkReveal(cells){ const D=BT.darkB; if(!D) return; const until=performance.now()+DARK_REV_MS;
+  for(const [r0,c0] of cells) for(let r=Math.max(0,r0-DARK_R);r<=Math.min(NR-1,r0+DARK_R);r++) for(let c=Math.max(0,c0-DARK_R);c<=Math.min(NC-1,c0+DARK_R);c++){ if(Math.abs(r-r0)+Math.abs(c-c0)>DARK_R) continue; const k=r+','+c; if((D.rev[k]||0)<until) D.rev[k]=until; } }
 function darkBoardBuild(L){ BT.darkB=null; if(!L||!L.dark||IS_NODE) return;
   const torches=DARK_TORCH.map(([r,c])=>[Math.min(NR-1,r),Math.min(NC-1,c)]); const lit=new Set();
   for(let r=0;r<NR;r++) for(let c=0;c<NC;c++) if(torches.some(([tr,tc])=>Math.abs(tr-r)+Math.abs(tc-c)<=DARK_R)) lit.add(r+','+c);
-  BT.darkB={torches, lit};
-  const dg=new THREE.PlaneGeometry(1.002,1.002); dg.rotateX(-Math.PI/2); dg.userData.own=true; const dm=new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.86,depthWrite:false}); dm.userData.own=true;
-  for(let r=0;r<NR;r++) for(let c=0;c<NC;c++){ if(lit.has(r+','+c)) continue; const w=cell2world(r,c); const m=new THREE.Mesh(dg,dm); m.position.set(w.x,cellH(r,c)+0.035,w.z); m.renderOrder=-5; m.raycast=()=>{}; decoGroup.add(m); }
+  BT.darkB={torches, lit, rev:{}, cov:[]};
+  const dg=new THREE.PlaneGeometry(1.002,1.002); dg.rotateX(-Math.PI/2); dg.userData.own=true;
+  for(let r=0;r<NR;r++) for(let c=0;c<NC;c++){ if(lit.has(r+','+c)) continue; const w=cell2world(r,c); const dm=new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.86,depthWrite:false}); const m=new THREE.Mesh(dg,dm); m.position.set(w.x,cellH(r,c)+0.035,w.z); m.renderOrder=-5; m.raycast=()=>{}; decoGroup.add(m); BT.darkB.cov.push({k:r+','+c, m}); }
+  { const D=BT.darkB; let last=performance.now(); ambient.push(()=>{ if(BT.darkB!==D) return; const now=performance.now(), dt=Math.min(0.1,(now-last)/1000); last=now; for(const o of D.cov){ const on=(D.rev[o.k]||0)>now; const tg=on?0.08:0.86; const op=o.m.material.opacity; if(op!==tg) o.m.material.opacity=on?Math.max(tg,op-dt*4):Math.min(tg,op+dt*1.6); } }); }
   for(const [r,c] of torches){ const w=cell2world(r,c); const h=cellH(r,c); const x=w.x+0.36, z=w.z-0.36;   // マスの角に立てる(通れる)
     const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.05,0.9,6), new THREE.MeshLambertMaterial({color:0x4a3220})); pole.position.set(x,h+0.45,z); decoGroup.add(pole);
     const cup=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.06,0.12,8), new THREE.MeshLambertMaterial({color:0x2a2420})); cup.position.set(x,h+0.92,z); decoGroup.add(cup);
@@ -3954,6 +3959,7 @@ function spreadFx(sp0, ar, ac, cells, a, useT, sp){ const ty=sp0.ty, T=useT?(TFX
     else setTimeout(()=>fxTerrain(r,c,0.7), dl/sp); }); }
 let _fxCamAdd=null;   // 2026-11-01 合体: カメラに入れるマス(範囲の角)
 function attackFx(att, targets, def, move){ if(BT.headless) return;
+  if(BT.darkB && att){ const tys=move?mvTypes(move):[]; const lit=tys.includes('光')||tys.includes('炎')||(!tys.length&&(uHasType(att,'光')||uHasType(att,'炎'))); if(lit){ const cs=[[att.r,att.c]]; for(const t of (Array.isArray(targets)?targets:[targets])) if(t&&t.r!=null) cs.push([t.r,t.c]); if(def&&def.r!=null) cs.push([def.r,def.c]); darkReveal(cs); } }   // 2026-11-19 闇の盤: 光・炎の攻撃で まわりが見える
   const m=mon(att), ty=(move&&move.type)||m.type, cf=ATK_FX[ty]||ATK_FX['炎'];   // 技 v2: 色と当たりは技のタイプ
   const tys=(move&&move.power!=null)?mvTypes(move):[]; const tyFx=tys.length>1?tys.join('+'):ty;   // 2026-10-30: 2つのタイプの技は 2つの演出を混ぜる
   const special = !!att.spReady && att.owner!=null; if(special) att.spReady=false;
