@@ -3959,6 +3959,7 @@ function spreadFx(sp0, ar, ac, cells, a, useT, sp){ const ty=sp0.ty, T=useT?(TFX
     else setTimeout(()=>fxTerrain(r,c,0.7), dl/sp); }); }
 let _fxCamAdd=null;   // 2026-11-01 合体: カメラに入れるマス(範囲の角)
 function attackFx(att, targets, def, move){ if(BT.headless) return;
+  if(att && move && /^fsig_/.test(move.id||'')){ try{ if(window.W2BGM) W2BGM.cue('fsig',{owner:att.owner, mid:+String(move.id).slice(5)}); }catch(e){} }   // 2026-11-19 融合した子の必殺技の曲
   if(BT.darkB && att){ const tys=move?mvTypes(move):[]; const lit=tys.includes('光')||tys.includes('炎')||(!tys.length&&(uHasType(att,'光')||uHasType(att,'炎'))); if(lit){ const cs=[[att.r,att.c]]; for(const t of (Array.isArray(targets)?targets:[targets])) if(t&&t.r!=null) cs.push([t.r,t.c]); if(def&&def.r!=null) cs.push([def.r,def.c]); darkReveal(cs); } }   // 2026-11-19 闇の盤: 光・炎の攻撃で まわりが見える
   const m=mon(att), ty=(move&&move.type)||m.type, cf=ATK_FX[ty]||ATK_FX['炎'];   // 技 v2: 色と当たりは技のタイプ
   const tys=(move&&move.power!=null)?mvTypes(move):[]; const tyFx=tys.length>1?tys.join('+'):ty;   // 2026-10-30: 2つのタイプの技は 2つの演出を混ぜる
@@ -5526,6 +5527,7 @@ function doComboV3(u, c, t){
   (state.comboUsed||(state.comboUsed=[{},{}]))[o][c.id]=true;
   if(pickE){ const sp=new Set(); for(const ps of pickE) for(const p of ps){ if(p.base) continue; const k=p.x.uid+':'+p.mv.id; if(sp.has(k)) continue; sp.add(k); spendMove(p.x, p.mv); } }   // 回数は 使った技から1つずつ(同じ技を何体に撃っても1つ)
   const cost=comboCost(c); for(const x of team){ x.acted=true; x.moved=true; x.g=Math.max(0,gaugeOf(x)-cost); if(state.spd) x.sdone=true; }   // 闘気を分けあって使う
+  if(!BT.headless){ try{ if(window.W2BGM) W2BGM.cue('combo',{owner:o, id:c.id}); }catch(e){} }   // 2026-11-19 合体攻撃の曲
   const st=state.stats; if(st){ (st.combo||(st.combo=[0,0]))[o]++; const cb=st.comboBy||(st.comboBy={}); cb[c.name]=(cb[c.name]||0)+1; if(st.atk) st.atk[o]++; }
   if(!BT.headless){ comboFx(u, team); const sp=u.spReady; u.spReady=false;
     if(pickE){ const R=comboReach(c); const box=[{r:Math.max(0,u.r-R),c:Math.max(0,u.c-R)},{r:Math.min(NR-1,u.r+R),c:Math.min(NC-1,u.c+R)}];   // カメラ=範囲(中心±R)が入るように
