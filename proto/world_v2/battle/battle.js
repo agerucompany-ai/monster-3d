@@ -2335,6 +2335,22 @@ function cloudTex(){ if(_cloudTex) return _cloudTex; const S=512; const cv=docum
 function darkSync(){ if(IS_NODE||!renderer) return; const wrap=$id('wrap'); if(!wrap) return; let d=$id('dark'); const on=!!(_curLook&&_curLook.dark);
   if(!d){ if(!on) return; d=document.createElement('div'); d.id='mb-dark'; d.style.cssText='position:absolute;left:0;right:0;top:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse 62% 48% at 50% 52%,rgba(0,0,0,0) 45%,rgba(4,2,1,.55) 75%,rgba(2,1,0,.92) 100%)'; wrap.appendChild(d); }
   d.style.display=on?'':'none'; if(on){ const cv=renderer.domElement; d.style.top=cv.offsetTop+'px'; d.style.height=cv.offsetHeight+'px'; } }
+// 2026-11-19 オーナー「全部荒野マップで松明をつくり、松明のところだけ明るく。松明の3マスより外は真っ暗で敵の動きが見えないように」:
+//   闇の盤(look.dark): 松明9本(4隅とその間)。松明から3マス(縦横の歩数)以内だけ明るい。それより外のマスは黒くおおい、そこにいる相手の子は見えない(自分の子は見える)
+const DARK_R=3, DARK_TORCH=[[0,0],[0,4],[0,8],[6,0],[6,4],[6,8],[12,0],[12,4],[12,8]];   // 2026-11-19 オーナー「松明は9箇所。4隅とその間に等間隔」(13×9の盤)
+function darkLit(r,c){ const D=BT.darkB; if(!D) return true; return D.lit.has(r+','+c); }
+function darkBoardBuild(L){ BT.darkB=null; if(!L||!L.dark||IS_NODE) return;
+  const torches=DARK_TORCH.map(([r,c])=>[Math.min(NR-1,r),Math.min(NC-1,c)]); const lit=new Set();
+  for(let r=0;r<NR;r++) for(let c=0;c<NC;c++) if(torches.some(([tr,tc])=>Math.abs(tr-r)+Math.abs(tc-c)<=DARK_R)) lit.add(r+','+c);
+  BT.darkB={torches, lit};
+  const dg=new THREE.PlaneGeometry(1.002,1.002); dg.rotateX(-Math.PI/2); dg.userData.own=true; const dm=new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.86,depthWrite:false}); dm.userData.own=true;
+  for(let r=0;r<NR;r++) for(let c=0;c<NC;c++){ if(lit.has(r+','+c)) continue; const w=cell2world(r,c); const m=new THREE.Mesh(dg,dm); m.position.set(w.x,cellH(r,c)+0.035,w.z); m.renderOrder=-5; m.raycast=()=>{}; decoGroup.add(m); }
+  for(const [r,c] of torches){ const w=cell2world(r,c); const h=cellH(r,c); const x=w.x+0.36, z=w.z-0.36;   // マスの角に立てる(通れる)
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.05,0.9,6), new THREE.MeshLambertMaterial({color:0x4a3220})); pole.position.set(x,h+0.45,z); decoGroup.add(pole);
+    const cup=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.06,0.12,8), new THREE.MeshLambertMaterial({color:0x2a2420})); cup.position.set(x,h+0.92,z); decoGroup.add(cup);
+    const fl=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0xffa040,transparent:true,opacity:0.95,depthWrite:false,blending:THREE.AdditiveBlending})); fl.scale.set(0.5,0.7,1); fl.position.set(x,h+1.12,z); fl.material.toneMapped=false; decoGroup.add(fl);
+    const pl=IS_MOBILE?null:new THREE.PointLight(0xff9a48, 2.2, 4.6, 1.4); if(pl){ pl.position.set(x,h+1.3,z); decoGroup.add(pl); }   // スマホは光源9つが重いので炎の絵だけ(明るさは黒いおおいの有無で見せる)
+    const ph=r*1.7+c; ambient.push(t=>{ const k=1+0.12*Math.sin(t*9+ph)+0.07*Math.sin(t*23+ph*2); fl.scale.set(0.5*k,0.7*k,1); if(pl) pl.intensity=2.2*k; }); } }
 function applyAtmosphere(k){
   const L=lookOf(k); _curLook=L; _curTheme=k;
   if(!skyDome){ skyDome=new THREE.Mesh(new THREE.SphereGeometry(320,32,18), new THREE.MeshBasicMaterial({side:THREE.BackSide,fog:false,depthWrite:false})); skyDome.renderOrder=-100; skyDome.frustumCulled=false; skyDome.material.toneMapped=false; scene.add(skyDome);
@@ -2584,6 +2600,7 @@ function buildTerrain(){
   // 盤の外縁の崖(下地)
   const skirt=new THREE.Mesh(new THREE.BoxGeometry(WX-0.02,0.6,WZ-0.02), new THREE.MeshLambertMaterial({color:new THREE.Color(L.ground).multiplyScalar(0.55)})); skirt.position.y=_baseH-0.62; tileGroup.add(skirt);   // 上面=_baseH-0.32(溝より下)
   buildLiquid('sea',theme); buildLiquid('lava',theme); buildLiquid('water',theme);
+  darkBoardBuild(L);
   // 装飾
   const tufts=[]; const rnd=mulberry(NR*7+W);
   for(let r=-BOARD_M;r<NR+BOARD_M;r++)for(let c=-BOARD_M;c<NC+BOARD_M;c++){
@@ -2835,6 +2852,7 @@ let _m3dLast=0;
 function updateSpriteIdle(){
   const now=performance.now(), t=now*0.002; const _dt=Math.min(0.1,(now-(_m3dLast||now))/1000); _m3dLast=now;
   for(const uid in sprites){ const s=sprites[uid]; if(s.spBaseY==null) continue;
+    if(BT.darkB){ const u=state&&state.units[uid]; if(u&&u.owner!==0){ const p=s.grp.position; const vis=darkLit(Math.round(p.z+(NR-1)/2), Math.round(p.x+(NC-1)/2)); if(s.grp.visible!==vis) s.grp.visible=vis; } else if(!s.grp.visible) s.grp.visible=true; }
     if(s.scT!=null && Math.abs(s.scT-s.sc)>0.002){ s.sc+=(s.scT-s.sc)*Math.min(1,_dt*5); s.spBaseY=s.sc*0.5+0.03; }   // 進化・融合で大きくなる(なめらかに)
     if(s.m3d && s.m3d.hc!=null && Math.abs(s.m3d.h-s.m3d.hc)>0.002){ s.m3d.hc+=(s.m3d.h-s.m3d.hc)*Math.min(1,_dt*5); s.m3d.root.scale.setScalar(s.m3d.hc); }
     const ph=(uid%13)*0.5; let bob=Math.sin(t+ph)*0.035, sx=1, sy=1+0.012*Math.sin(t*1.6+ph), ox=0, oz=0, tilt=0.012*Math.sin(t*0.9+ph);
@@ -2892,6 +2910,8 @@ function r3dPref(){ try{ const v=localStorage.getItem('ms3d_3d'); if(v==='1') re
 let RENDER3D=r3dPref();
 function set3D(on){ RENDER3D=!!on; try{ localStorage.setItem('ms3d_3d', on?'1':'0'); }catch(e){} for(const uid in sprites){ const s=sprites[uid]; if(!on) m3dDetach(s); } if(state) syncUnits(); upd3DBtn(); return RENDER3D; }
 function upd3DBtn(){ const b=$id('bt3D'); if(b) b.textContent=RENDER3D?'3D':'2D'; }
+// 2026-11-19 オーナー「ブレイグリオがバトルのときに変な方を向いてる」: モデルの前が +Z でない子(並べて撮って確かめた)。値=足す向き(ラジアン)
+const M3D_YAW_FIX={2014:Math.PI/2};
 const M3D={ ids:new Set((window._M3D||[]).map(Number)), nw:new Set((window._M3D_NEW||[]).map(Number)), proto:{}, prom:{}, bytes:0, loaded:0,
   isNew(mid){ return true; },                                                   // world_v2: 80体とも描き直しの新モデル design_v2/models/n{id}.glb
   has(mid){ return !!MID[+mid] && MID[+mid].model3d!==false && typeof THREE!=='undefined' && !!THREE.GLTFLoader && !BT.no3d; },   // v3: monsters.json の model3d:false(3Dがまだ無い/古い)は2Dの絵
@@ -2911,7 +2931,7 @@ const M3D={ ids:new Set((window._M3D||[]).map(Number)), nw:new Set((window._M3D_
     return {root, clips:g.animations||[], shade}; },
   make(mid){ const p=this.proto[+mid]; if(!p) return null; const root=SkeletonUtils.clone(p.root); const mats=[];
     root.traverse(o=>{ if(o.isMesh||o.isSkinnedMesh){ o.material=o.material.clone(); if(p.shade) monMatApply(o.material,+mid); mats.push(o.material); o.raycast=()=>{}; o.frustumCulled=false; } });
-    const wrap=new THREE.Group(); wrap.add(root);
+    const wrap=new THREE.Group(); const yf=M3D_YAW_FIX[+mid]; if(yf){ const fx=new THREE.Group(); fx.rotation.y=yf; fx.add(root); wrap.add(fx); } else wrap.add(root);   // 2026-11-19 前が+Zでないモデルの向き直し
     const mixer=new THREE.AnimationMixer(root); const act={};
     for(const c of p.clips){ act[c.name]=mixer.clipAction(c); }
     if(act.Attack){ act.Attack.setLoop(THREE.LoopOnce,1); act.Attack.clampWhenFinished=true; }
@@ -5776,6 +5796,7 @@ const PLACES={
   kingsvalley:{jp:'王家の谷', mix:{wasteland:0.58, ruins:0.16, gloom:0.12, plain:0.14}, look:'desert'},
   nightwood: {jp:'夜の森',   mix:{forest:0.50, gloom:0.18, plain:0.32},                look:'grove'},
   arkcore:   {jp:'アークの中心', mix:{ruins:0.45, gloom:0.22, wasteland:0.18, plain:0.15}, indoor:true, look:'gloom'},
+  darkmaze:  {jp:'闇の迷宮', mix:{wasteland:1},                                         indoor:true, look:'labyrinth'},   // 2026-11-19 全部荒野・松明
   maze:      {jp:'迷宮',     mix:{ruins:0.50, plain:0.32, wasteland:0.18},             indoor:true, look:'labyrinth'},   // 2026-11-19 闇の迷宮   // 2026-11-01 迷宮・地下(川・湖を足さない)
   undercroft:{jp:'地下の回廊', mix:{ruins:0.42, plain:0.38, wasteland:0.12, forest:0.08}, indoor:true, look:'agora'},
 };

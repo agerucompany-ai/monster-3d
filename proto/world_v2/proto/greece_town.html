@@ -2323,7 +2323,7 @@ async function startEncounter(e){ ENC=e; BGM.bt=bgmBattleTrack(e); BGM.res=false
   if(e.n){ HERO.yaw=Math.atan2(e.n.x-HERO.x,e.n.z-HERO.z); e.n.yaw=Math.atan2(HERO.x-e.n.x,HERO.z-e.n.z); talkTo(e.n,e.n.o.n+'が勝負をしかけてきた！'); { const sc0=grTrainerScene(e.n); if(sc0&&SC[sc0]&&!(SAVE&&SAVE.flags['seen_'+sc0])){ await sleep(500); bangEl.style.display='none'; talkClose(); await grScene(sc0,e.n); if(SAVE) SAVE.flags['seen_'+sc0]=1; } } }
   if(e.m) toast(e.m.o.ancient?'古代テリオン・'+monName(e.m.o.id)+'が、こちらを見た！':(e.m.o.boss?monName(e.m.o.id)+'が、嵐の中から現れた！':'野生の'+monName(e.m.o.id)+'が飛び出してきた！'));
   if(e.m&&e.m.o.scene&&SC[e.m.o.scene]&&!(SAVE&&SAVE.flags['seen_'+e.m.o.scene])){ await sleep(500); bangEl.style.display='none'; await storyField(e.m.o.scene); if(SAVE) SAVE.flags['seen_'+e.m.o.scene]=1; }   // 古代テリオン(守り)・ボスに会う場面
-  const load=window.startBattle?Promise.resolve():loadScript('../battle/battle.js?v=20261119m');
+  const load=window.startBattle?Promise.resolve():loadScript('../battle/battle.js?v=20261119n');
   await new Promise(r=>setTimeout(r,e.n?1300:700)); bangEl.style.display='none'; talkClose();
   flashEl.style.opacity=1; await load; await new Promise(r=>setTimeout(r,350));
   PAUSED=true; flashEl.style.opacity=0; const place=placeAt(HERO.x,HERO.z); STATS.battles=(STATS.battles||0)+1;
@@ -2571,7 +2571,7 @@ const BRIEF_NO={};   // 野生のいない土地(村)
 const briefRegion=id=>MAPC[id]?Promise.resolve(MAPC[id]):fetch('regions/'+id+'.json').then(r=>r.json()).then(j=>(MAPC[id]=j));
 const briefHas=R=>!!(R&&(R.wild||[]).some(w=>!w.ancient&&!w.boss));
 const briefArc=id=>id.startsWith('cn_')?'china':id.startsWith('eg_')?'egypt':id.startsWith('nr_')?'norse':'greece';
-async function briefLib(){ if(!window.MonBattle) await loadScript('../battle/battle.js?v=20261119m'); await MONS_P; return window.MonBattle; }
+async function briefLib(){ if(!window.MonBattle) await loadScript('../battle/battle.js?v=20261119n'); await MONS_P; return window.MonBattle; }
 const BRIEF_TK=['plain','forest','wasteland','sea','water','ruins','lava','snow','gloom'];
 function briefBoards(R){ const B=R.battle, out=[]; const add=(tt,a)=>{ if(!tt||typeof tt!=='string') return; let o=out.find(x=>x.tt===tt); if(!o){ o={tt,areas:[]}; out.push(o); } if(a&&!o.areas.includes(a)) o.areas.push(a); };
   if(!B){ add('meadow'); add('olive'); if(R.terrain&&(R.terrain.streams||[]).length) add('stream','川ぞい'); if(R.terrain&&(R.terrain.coast||[]).length) add('seaside','海ぞい'); return out; }   // 盤の指定が無いマップ(オリーブの丘)は placeAt と同じ(草原・オリーブ畑・小川・海辺)

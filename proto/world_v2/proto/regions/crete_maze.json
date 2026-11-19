@@ -324,7 +324,7 @@
  ],
  "battle": {
   "default": {
-   "terrainTheme": "maze",
+   "terrainTheme": "darkmaze",
    "backdrop": "labyrinth"
   }
  },
