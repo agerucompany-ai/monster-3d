@@ -4985,11 +4985,11 @@ function updateUI(){ if(BT.headless) return;
     const tbH = (state.phase==='battle'
       ? (state.sp?`<span class="tchip ${state.cur===0?'me':'foe'}">のこり<b>${Math.max(0,MAX_TURN-state.turn+1)}</b><i>${state.cur===0?'自分':'相手'}</i></span>`+spChip()+(state.sp.mode==='sneak'&&!state.sp.alert?'':lm(0)+lm(1)):`<span class="tchip ${state.cur===0?'me':'foe'}">T<b>${state.turn}</b>${noTL()?'':'/'+MAX_TURN}<i>${state.cur===0?'自分':(BT.kind==='wild'?'野生':'相手')}</i></span>`+lm(0)+lm(1))
       : `<span class="tchip">配置</span><span class="sp"></span>`)
-      +autoB+`<button class="tbb menu" data-m="menu" aria-label="メニュー">≡</button>`+(state.phase==='battle'&&state.spd?spdRowHTML():'');
+      +autoB+`<button class="tbb help" data-m="help" aria-label="遊び方">？</button>`+`<button class="tbb menu" data-m="menu" aria-label="メニュー">≡</button>`+(state.phase==='battle'&&state.spd?spdRowHTML():'');
     if(tb._h!==tbH){ tb._h=tbH; tb.innerHTML=tbH; }   // 2026-11-18 オーナー「バトル中オートにできない」: 前は毎回作り直していた(オート中は6秒に27回)→押した指を離す前にボタンが消えて押せなかった。中身が同じなら作り直さない
     tb.classList.toggle('spdq', state.phase==='battle'&&!!state.spd);
     if(!tb._wired){ tb._wired=true; let downAt=0;
-      const act=(k)=>{ if(k==='menu'){ menuOpen()?closeMenu():openMenu(); } else if(k==='cycleAuto'){ cycleAuto(); if(menuOpen()) renderMenu(); } };
+      const act=(k)=>{ if(k==='help'){ helpOpen(); return; } if(k==='menu'){ menuOpen()?closeMenu():openMenu(); } else if(k==='cycleAuto'){ cycleAuto(); if(menuOpen()) renderMenu(); } };
       // 2026-11-18: 指が触れた瞬間に効かせる(体力の数字などで帯が作り直されても押しそこねない)。そのあとの click は二度押しにしない
       tb.addEventListener('pointerdown',(e)=>{ const b=e.target.closest('[data-m]'); if(!b) return; e.stopPropagation(); e.preventDefault(); downAt=Date.now(); act(b.dataset.m); });
       tb.addEventListener('click',(e)=>{ const b=e.target.closest('[data-m]'); if(!b) return; e.stopPropagation(); if(Date.now()-downAt<800) return; act(b.dataset.m); }); }
@@ -6043,6 +6043,7 @@ const CSS=`
 #mb-topbar .tbb{flex:0 0 auto;height:40px;transition:transform .16s cubic-bezier(.3,1.6,.5,1),filter .12s ease-out;-webkit-tap-highlight-color:transparent;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:linear-gradient(180deg,#3a4668,#2a3450);color:#fff;font:inherit;font-size:12px;font-weight:800;padding:0 9px;cursor:pointer;white-space:nowrap}
 #mb-topbar .tbb.on{background:linear-gradient(180deg,#2f6fd0,#22468a);border-color:#8fb4ff;box-shadow:0 0 0 2px rgba(143,180,255,.25)}
 #mb-topbar .tbb.menu{width:42px;padding:0;font-size:19px;line-height:1}
+#mb-topbar .tbb.help{width:40px;padding:0;font-size:18px;line-height:1;font-weight:800}
 #mb-topbar .track{display:inline-block;flex:1 1 auto;min-width:22px;width:auto;height:9px;background:#1a2030;border:1px solid #2c3346;border-radius:5px;overflow:hidden;vertical-align:middle;padding:0}
 #mb-topbar .track i{display:block;height:100%;transition:width .3s}
 #mb-sel{display:flex;align-items:center;gap:10px;min-height:54px;flex-wrap:wrap}
@@ -6412,6 +6413,27 @@ function setAutoMode(mode){ BT.auto=mode>0; BT.fast=mode>1; try{ localStorage.se
   updateUI(); if(BT.auto && state && state.phase==='battle' && state.cur===0) autoTurn(); }
 function autoMode(){ return BT.auto?(BT.fast?2:1):0; }
 function toggleAuto(){ setAutoMode(BT.auto?0:(BT.fastPref?2:1)); }
+// 2026-11-20 オーナー「バトルの仕方とかを実際にバトルマップでチュートリアルを聞くみたいなボタンを押したら、説明してくれる」: 上の帯の「？」で、1枚ずつめくる遊び方
+const HELP_PAGES=[
+  ['勝ち負け','両方の先頭の子が<b>リーダー</b>（王冠）。相手のリーダーを倒せば勝ち、自分のリーダーが倒れたら負け。リーダーは体力が多い。'],
+  ['手番','上の列が<b>動く順番</b>（素早い子から）。光っている子の番。<b>動く→技</b>で1手。技を撃ったらすぐ次の子へ。何もしないなら「待機」。'],
+  ['動く','自分の番の子をタップすると、<b>行けるマス</b>が出る。行きたいマスをタップ。二本指で寄る・引く、一本指で盤を動かせる。'],
+  ['技','「技」→技を選ぶ→<b>赤いマス</b>の相手をタップ。名前の横の数は残りの回数。範囲の技は、光ったマス全部に当たる。'],
+  ['相性','<b>よく効く(+20%)</b>：水→炎・地／雷→水・風／地→雷／炎→氷・森／氷→竜／光→闇／森→地・水。<br><b>効きにくい(−20%)</b>：雷→地・森／氷→炎／地→風／森→炎。'],
+  ['地形','得意な地形から撃つと<b>+30%</b>、苦手な地形からは−30%。例：炎=森、水=水辺と海、雷=海と遺跡、地=荒地と遺跡。光る足もとが得意なマス。'],
+  ['進化','盤の<b>まん中の3列</b>に入ると二段目、<b>相手の陣</b>に入ると三段目に進化できる。闘気がたまればどこでも「進化」。進化した子は次の技が必殺技になる。'],
+  ['融合','覚えた組み合わせの二段目・三段目の子どうしを<b>となりに並べる</b>と「融合」。二体が一体になり、とても強くなる（倒れる時は二体いっぺん）。'],
+  ['かくれる','地の子は地中へ。水の子は水のマスで潜水（雷だけ当たる）。森の子は森、闇の子は闇で1ターンかくれる（炎／光は当たる）。<b>その地形から出たら見つかる</b>。'],
+  ['オート','上の「手動」を押すと<b>オート</b>（もう一度で速いオート）。迷ったら「待った」で一手もどせる。']];
+function helpOpen(){ let el=$id('mb-help'); if(!el){ el=document.createElement('div'); el.id='mb-help'; (ROOT||document.body).appendChild(el);
+    if(!$id('mb-help-css')){ const st=document.createElement('style'); st.id='mb-help-css'; st.textContent=`#mb-help{position:fixed;inset:0;z-index:${(CFG.zIndex||9000)+50};display:flex;align-items:flex-end;justify-content:center;background:rgba(5,8,16,.55);padding:0 12px calc(18px + env(safe-area-inset-bottom))}
+#mb-help .hc{width:100%;max-width:460px;background:#fbf7ee;color:#2d2620;border-radius:14px;padding:14px 16px 12px;box-shadow:0 8px 30px rgba(0,0,0,.45);font-size:15px;line-height:1.65}
+#mb-help .hh{display:flex;align-items:center;gap:8px;margin-bottom:6px}#mb-help .hh b{font-size:17px}#mb-help .hh i{margin-left:auto;font-style:normal;font-size:12px;color:#8a7d6c}
+#mb-help .hb{display:flex;gap:8px;margin-top:12px}#mb-help button{flex:1;border:0;border-radius:10px;padding:11px 0;font-size:15px;font-weight:700;background:#e8dfcf;color:#3a3128}#mb-help button.pri{background:#2f6fe0;color:#fff}`; document.head.appendChild(st); } }
+  let i=0; const draw=()=>{ const [t,b]=HELP_PAGES[i]; el.innerHTML=`<div class="hc" role="dialog"><div class="hh"><b>${t}</b><i>${i+1} / ${HELP_PAGES.length}</i></div><div>${b}</div><div class="hb"><button data-h="prev" ${i?'':'disabled style="opacity:.4"'}>もどる</button><button data-h="close">とじる</button><button data-h="next" class="pri">${i<HELP_PAGES.length-1?'つぎへ':'おわり'}</button></div></div>`; };
+  draw(); el.style.display='flex';
+  el.onpointerdown=e=>e.stopPropagation();
+  el.onclick=e=>{ e.stopPropagation(); const b=e.target.closest('[data-h]'); if(!b){ if(e.target===el){ el.style.display='none'; } return; } const h=b.dataset.h; if(h==='prev'&&i>0){ i--; draw(); } else if(h==='next'){ if(i<HELP_PAGES.length-1){ i++; draw(); } else el.style.display='none'; } else if(h==='close') el.style.display='none'; }; }
 function cycleAuto(){ const m=(autoMode()+1)%3; if(m) BT.fastPref=(m===2); setAutoMode(m); }
 // ---- 戦闘中のメニュー(上のバーの ≡) ----
 function menuOpen(){ const m=$id('menu'); return !!m && m.style.display==='block'; }
