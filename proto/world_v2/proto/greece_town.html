@@ -2817,7 +2817,7 @@ function fillT(t){ const g=SAVE?SAVE.g:'m'; return t.replace(/\{hero\}/g,SAVE?SA
 const PFACE={}; fetch(PDIR+'index.json').then(r=>r.json()).then(j=>{ for(const k in j.chars){ const f=j.chars[k].facing||{}; for(const e in f) PFACE[PDIR+k+'_'+e+'.webp']=f[e]; } }).catch(()=>{});
 function pFace(img,side){ const src=img.getAttribute('src')||''; const f=PFACE[src]||'right'; const want=side==='L'?'right':'left'; img.style.setProperty('--fx',(f==='front'||f===want)?'1':'-1'); }
 function pSrc(who,face){ const k=who==='hero'?'hero_'+(SAVE?SAVE.g:'m'):who; const f=FACES[k]; if(!f) return null; return PDIR+k+'_'+(f.includes(face)?face:'normal')+'.webp'+(PVER[k]?'?v='+PVER[k]:''); }
-const PVER={marina:'20261118w', alek:'20261120', ana:'20261120'};   // 2026-11-20 オーナー「アレクが明らかに古いデザイン。同じ顔ばっかり」: 同じ名前の古い絵(黒パーカー)がスマホに残っていた → 版をつけ、6つの顔(紺T・PixAI Tsubaki.3)に
+const PVER={marina:'20261118w', alek:'20261120b', ana:'20261120'};   // 2026-11-20 オーナー「アレクが明らかに古いデザイン。同じ顔ばっかり」: 同じ名前の古い絵(黒パーカー)がスマホに残っていた → 版をつけ、6つの顔(紺T・PixAI Tsubaki.3)に
 // 台本に顔の指定が無い(normal)アレクの台詞は、言葉から顔を選ぶ(台詞の字は変えない)
 const ALEK_MOOD=[['surprised',/^(え[っ、！？…]|は[あっ]?[？?]|なっ|うそ|ちょ[、っ]|マジ)|[！!][？?]|[？?][！!]/],['angry',/アホ|ボケ|なめ|ふざけ|こら|コラ|どつ|しばく|待てや|やめえ|ええかげん|見いや|せえや|やめや|言うなや|ちゃうわ|なんでやねん|あほか|知らんわ/],['sad',/すまん|ごめん|しゃあない|悪かった|あかんかった/],['smile',/っす|ええで|任せ|余裕|やったで|勝った|でかなった|へへ|ええやん|まいど|儲|おおきに|やるやん|ええな|ラッキー|ジェム|コイン|貸し|ほな、|やろ？|せやろ/],['serious',/[！!]$|まだや|気を抜く|下がれ|出ろ|撃て|せえ[！!]|行くで/]];
 // 2026-11-20 アナも作り直した絵(明るい栗色・6つの顔)に合わせて、言葉から顔を選ぶ
