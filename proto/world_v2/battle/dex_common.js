@@ -111,7 +111,7 @@ DX.big=id=>`../../img/ci/${id}.webp`;
 DX.tyb=t=>`<span class="tyb" style="background:${DX.TYPE_COL[t]||'#666'}">${t}</span>`;
 DX.tybs=m=>DX.types(m).map(DX.tyb).join('');
 DX.mvTybs=mv=>[mv.type,mv.type2,mv.type3].filter((t,i,arr)=>t&&arr.indexOf(t)===i).map(DX.tyb).join('');   // 2026-10-30 2つ(3つ)のタイプの技はタイプの札を並べる
-DX.marks=id=>{ let s=''; if(DX.god(id)) s+='<span class="mk god">神</span>'; if(DX.ancientArcs(id).length) s+='<span class="mk anc">いにしえ</span>'; return s; };
+DX.marks=id=>{ let s=''; if(DX.god(id)) s+='<span class="mk god">神</span>'; return s; };
 DX.card=(id,cls)=>{ const m=DX.M[id]; if(!m) return ''; return `<button class="cd ${cls||''}" data-id="${id}"><span class="mks">${DX.marks(id)}</span><img class="a" src="${DX.img(id)}" loading="lazy" decoding="async" alt=""><span class="nm">${DX.esc(m.name)}</span><span class="ty">${DX.tybs(m)}</span></button>`; };
 
 // ---- くわしい画面(両方のページで同じ) ----
@@ -122,14 +122,14 @@ DX.fusionTags=f=>{ const id=f.id; let s=''; const a=DX.arcOf(id), mk=DX.md.make[
   if(a) s+=`<span class="mk arc">${DX.ARC_JP[a]}</span>`; if(mk && mk!==a) s+=`<span class="mk arc"><img class="ic" src="img/ui/fuse.webp" alt="" style="width:12px;height:12px;vertical-align:-2px">${DX.ARC_JP[mk]}から</span>`;
   if(f.parents.length>2) s+=`<span class="mk role">3体融合・3体とも3段目</span>`;
   const r=DX.roleTag(id); if(r) s+=`<span class="mk role">${DX.esc(r)}</span>`;
-  if(DX.god(id)) s+='<span class="mk god">神</span>'; if(DX.ancientArcs(id).length) s+='<span class="mk anc">いにしえ</span>';
+  if(DX.god(id)) s+='<span class="mk god">神</span>';
   const lw=DX.lostWeak(f); if(lw.length) s+=`<span class="mk lost">弱点が消える</span>${lw.map(DX.tyb).join('')}`;
   return s; };
 DX.detailHtml=id=>{ const m=DX.M[id], s=DX.S[id]||{}; if(!m) return '';
   const a=DX.arcOf(id), home=DX.md.home[id], god=DX.god(id), role=DX.roleTag(id), anc=DX.ancientArcs(id);
   let h=`<div class="hero"><img src="${DX.big(id)}" alt="" decoding="async"><h3>${DX.esc(m.name)}</h3>
     <div class="sub">${DX.tybs(m)}<span>${m.level}段</span>${m.line_name?`<span>${DX.esc(m.line_name)}</span>`:''}${DX.isFusion(m)?'<span>融合</span>':''}${m.archetype?`<span>${DX.esc(m.archetype)}</span>`:''}</div>
-    <div class="sub" style="margin-top:4px">${a?`<span class="mk arc">${DX.ARC_JP[a]}</span>`:''}${home?`<span class="mk arc">ふるさと ${DX.esc(home)}</span>`:''}${god?`<span class="mk god">神 ${DX.esc(god)}</span>`:''}${anc.length?`<span class="mk anc">いにしえ ${anc.map(k=>DX.ARC_JP[k]).join('・')}</span>`:''}${role?`<span class="mk role">${DX.esc(role)}</span>`:''}</div></div>`;
+    <div class="sub" style="margin-top:4px">${a?`<span class="mk arc">${DX.ARC_JP[a]}</span>`:''}${home?`<span class="mk arc">ふるさと ${DX.esc(home)}</span>`:''}${god?`<span class="mk god">神 ${DX.esc(god)}</span>`:''}${role?`<span class="mk role">${DX.esc(role)}</span>`:''}</div></div>`;
   const s1=DX.stats(id,1), s50=DX.stats(id,50);
   h+=`<section><h2><img src="img/ui/atk.webp" alt="">ステータス</h2><table class="tbl"><thead><tr><th></th><th>Lv1</th><th>Lv50</th></tr></thead><tbody>`
     +[['HP','hp'],['攻撃','atk'],['防御','def'],['素早さ','spd'],['機動','mob']].map(([l,k])=>`<tr><td>${l}</td><td>${s1[k]}</td><td>${s50[k]}</td></tr>`).join('')+`</tbody></table></section>`;

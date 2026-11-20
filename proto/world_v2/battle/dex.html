@@ -44,7 +44,7 @@ function render(){
     h+=`<section data-sec="${a}"><h2><img src="img/ui/evolve.webp" alt="">${DX.ARC_JP[a]}<span class="n">${ls.length}系統${fs.length?'・融合'+fs.length:''}</span></h2>`;
     for(const ch of ls){ const m=DX.M[ch[0]]; const home=DX.md.home[ch[0]];
       h+=`<div class="lnh">${DX.tyb(m.type)}${DX.esc(m.line_name||'')}${home?`<span class="mk arc">${DX.esc(home)}</span>`:''}</div><div class="ln">`+ch.map((id,i)=>(i?'<i class="ar"></i>':'')+DX.card(id)).join('')+'</div>'; }
-    if(fs.length){ h+=`<div class="lnh"><img class="ic" src="img/ui/fuse.webp" alt="">融合・いにしえ</div><div class="grid">`+fs.map(f=>DX.card(f.id)).join('')+'</div>'; }
+    if(fs.length){ h+=`<div class="lnh"><img class="ic" src="img/ui/fuse.webp" alt="">融合</div><div class="grid">`+fs.map(f=>DX.card(f.id)).join('')+'</div>'; }
     h+='</section>';
   }
   document.getElementById('main').innerHTML=h||'<div class="empty">0</div>';
