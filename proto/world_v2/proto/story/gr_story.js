@@ -160,10 +160,13 @@ const GR_PLAN={
   15:{ walk:{'g15_04': {'at': 'ディオルコス', 'obj': '運河ぞいの石の道へ。黒い荷の船がいる'}, 'g15_07': {'at': '港', 'obj': '夕方。待合所の裏の岸でひと休み'}, 'g15_08': {'at': '運河の大橋', 'obj': 'ノモスの机へもどる'}},map:'corinth', at:'運河の大橋', tod:'morning', obj:'運河の町コリンタの、大橋へ', end:{to:'marble', at:'from_corinth', obj:'大理石の谷へ'}},
   16:{ walk:{'g16_03': {'at': '保管庫', 'obj': '谷のいちばん奥の、保管庫へ'}, 'g16_07': {'at': '大理石の崖', 'obj': 'その夜。山の中腹の岩かげで休む'}},map:'marble', at:'谷の入口', tod:'dawn', obj:'大理石の谷へ', end:{to:'crete_maze', at:'from_surface', obj:'白い都を通って、丘の下の迷宮へ'}},
   17:{ walk:{'g17_03': {'at': '迷宮', 'obj': 'グリフォについて、右の道へ'}, 'g17_04': {'at': '広間の前', 'obj': '迷宮の奥の、広間の上へ'}, 'B': {'at': '迷宮の広間', 'obj': '階段を下りて、広間へ'}}, pre:2,map:'crete_maze', at:'迷宮の入口', obj:'がけの下の、迷宮の入口へ', end:{to:'oliva_hill', at:'from_sky', obj:'白い都の空の港へ。空の船でオリーヴァへ帰ろう'}},
-  18:{ walk:{'g18_02': {'at': '競技場の下の扉', 'obj': '競技場の下の、石の扉へ'}},map:'oliva_hill', at:'競技場の跡', tod:'night', obj:'夜。村の古代の競技場へ'},
-  19:{ walk:{'g19_04': {'at': '研究所あと', 'obj': 'アナさんがまだ池に！丘の上の研究所あとへ'}, 'g19_09': {'at': 'オリーブ畑', 'obj': 'フォルンの足を見せに、村へ下りる'}},map:'oliva_hill', at:'オリーブ畑', tod:'dawn', obj:'夜ふけ。裏の畑の道から、ホテルへ'},
-  20:{ walk:{'g20_02': {'at': '小川', 'obj': '夜明け前。丘のすその、おばあさんの家へ'}, 'g20_05': {'at': 'オリーブ畑', 'obj': '夜。ホテルの裏のぶどう畑へ'}, 'g20_06': {'at': '研究所あと', 'obj': 'ため池の土手へ。チップの子が待っている'}},map:'oliva_hill', at:'研究所あと', tod:'night', obj:'夜。丘の、ため池の堰へ'},
-  21:{ walk:{'g21_03': {'at': '研究所あと', 'obj': '坂を上って、ため池の堰の前へ'}}, pre:1,map:'oliva_hill', at:'オリーブ畑', obj:'夜明け前。ホテルの裏口から、堰へ', tod:'dawn'},
+  18:{ walk:{'g18_02': {'at': '競技場の下の扉', 'obj': '競技場の下の、石の扉へ'}},map:'oliva_hill', at:'競技場の跡', tod:'night', obj:'夜。村の古代の競技場へ', end:{to:'oliva_town', at:'start', obj:'夜ふけ。裏の畑の道から、村のホテルへ帰ろう'}},
+  19:{ walk:{'g19_04': {'at': '研究所あと', 'obj': 'アナさんがまだ池に！丘の上の研究所あとへ'}, 'g19_09': {'at': 'いこいの広場', 'obj': 'フォルンの足を見せに、村の広場へ'}, 'g19_10': {'at': 'ホテル', 'obj': '夜明け前。ホテルのロビーへ'}},map:'oliva_town', at:'ホテル', tod:'night', obj:'夜ふけ。村のホテルの裏口へ',
+      go:[{after:'g19_03', to:'oliva_hill', at:'from_town', obj:'アナさんがまだ池に！丘の上の研究所あとへ'}, {after:'g19_08', to:'oliva_town', at:'start', obj:'フォルンをつれて、村へ下りる'}]},   // 2026-11-20 オーナー「全然道中なのにホテルの会話ムービーが流れてきた」: ホテルの場面は村のホテルに着いてから
+  20:{ walk:{'g20_02': {'at': '港の見える丘', 'obj': '夜明け前。港の見える丘の、おばあさんの家へ'}, 'g20_03': {'at': 'ホテル', 'obj': '朝。ホテルの食堂へ'}, 'g20_05': {'at': 'オリーブ畑', 'obj': '夜。ホテルの裏のぶどう畑へ'}, 'g20_06': {'at': '研究所あと', 'obj': 'ため池の土手へ。チップの子が待っている'}},map:'oliva_town', at:'ホテル', tod:'night', obj:'夜。村のホテルへ',
+      go:[{after:'g20_05', to:'oliva_hill', at:'from_town', obj:'丘の、ため池の堰へ'}], end:{to:'oliva_town', at:'start', obj:'夜ふけ。村のホテルへ帰ろう'}},
+  21:{ walk:{'g21_02': {'at': 'オリーブ畑', 'obj': '坂の上のオリーブ畑へ'}, 'g21_03': {'at': '研究所あと', 'obj': '坂を上って、ため池の堰の前へ'}}, pre:1,map:'oliva_town', at:'ホテル', obj:'夜明け前。ホテルの台所から、裏口へ', tod:'dawn',
+      go:[{after:'g21_01', to:'oliva_hill', at:'from_town', obj:'夜明け前。丘の、坂の上のオリーブ畑へ'}]},
   22:{ walk:{'B': {'at': '空の船乗り場', 'obj': '数日あと。空の船乗り場の前の芝生へ'}}, pre:1,map:'oliva_hill', at:'*', chain:1, tod:'morning'},
 };
 // 全画面の絵で見せる場面(その場にいない所・回想・夜の部屋など)。ほかは今いる地図の上で見せる。代わりの絵は BG_ALIAS。場面の番号は 11/08 の台本(gr_scenes.js の GR_EP)
@@ -272,14 +275,15 @@ function grBuild(){ GR_STEPS.length=0; for(const k in GR_BY) delete GR_BY[k];
       if(P.tp&&P.tp.before===k) grS(Object.assign({id:'g'+pad2g(ep)+'_t', ep, kind:'tp', map, x:P.tp.x, z:P.tp.z, yaw:P.tp.yaw}, head.head?head:{at:'*'}));
       if(k==='B') grS(Object.assign({id:'g'+pad2g(ep)+'_b', ep, kind:'battle', map, F:GR_FIGHTS[ep]}, head));
       else grS(Object.assign({id:k, ep, kind:'scene', key:k, map, bg:(W&&W.field)?undefined:GR_BG[k], pro:!!(P.pro&&P.pro.includes(k))}, head));
-      if(P.go&&P.go.after===k){ grS({id:'g'+pad2g(ep)+'_g', ep, kind:'go', map, to:P.go.to, toAt:P.go.at, at:'*', wobj:P.go.obj}); map=P.go.to; }
+      (Array.isArray(P.go)?P.go:(P.go?[P.go]:[])).forEach((G,gi)=>{ if(G.after!==k) return; grS({id:'g'+pad2g(ep)+'_g'+(gi?gi+1:''), ep, kind:'go', map, to:G.to, toAt:G.at, at:'*', wobj:G.obj}); map=G.to; });   // 2026-11-20 go は配列も(地図を何度か移る話)
       if(P.end&&P.end.after===k){ grS({id:'g'+pad2g(ep)+'_e', ep, kind:'go', map, to:P.end.to, toAt:P.end.at, at:'*', wobj:P.end.obj}); map=P.end.to; } }   // 2026-11-17 end.after=その場面のあとで歩いて移る(あとの場面は着いた先で)
     if(P.end&&!P.end.after) grS({id:'g'+pad2g(ep)+'_e', ep, kind:'go', map, to:P.end.to, toAt:P.end.at, at:'*', wobj:P.end.obj}); }
   GR_STEPS.forEach((s,i)=>{ const n=GR_STEPS[i+1]; s.last=!n||n.ep!==s.ep; }); }
 
 // ---- 段を進める ----
 let GR_RUN=false, GR_RETRY=false;
-function grCur(){ if(!grOn()) return null; const f=GF(); for(const s of GR_STEPS) if(!f[s.id]) return s; return null; }
+function grCur(){ if(!grOn()) return null; const f=GF(); let last=-1; for(let i=0;i<GR_STEPS.length;i++) if(f[GR_STEPS[i].id]) last=i;
+  for(let i=0;i<GR_STEPS.length;i++){ const s=GR_STEPS[i]; if(f[s.id]) continue; if(s.kind==='go'&&i<last) continue; return s; } return null; }   // 2026-11-20 あとから足した「地図を移る段」は、もう先へ進んだセーブでは飛ばす
 function grHere(s){ if(s&&s.kind==='go') return MAP===s.to;   // 2026-11-17 地図を移る段は、ヤマトが歩いて出口を通り、行き先の地図に着いた時に終わる
   if(!s||s.map!==MAP) return false; if(!s.at||s.at==='*') return true;
   if(!(Array.isArray(s.at)?s.at:[s.at]).includes(AREA)){ const g=GR_GUIDE; if(!(s.wobj&&g&&g.id===s.id&&g.walk&&!g.lead&&Math.hypot(HERO.x-g.x,HERO.z-g.z)<3.4)) return false; }   // 話す人のそばまで来たら(場所の名前の外でも)始める
