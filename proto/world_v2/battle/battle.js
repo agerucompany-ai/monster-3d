@@ -2954,7 +2954,7 @@ function upd3DBtn(){ const b=$id('bt3D'); if(b) b.textContent=RENDER3D?'3D':'2D'
 // 2026-11-19 オーナー「ブレイグリオがバトルのときに変な方を向いてる」: モデルの前が +Z でない子(並べて撮って確かめた)。値=足す向き(ラジアン)
 const M3D_YAW_FIX={2014:Math.PI/2};
 // 2026-11-21 作り直した3D(古いモデルをキャッシュでつかまないように版をつける)
-const M3D_VER={2037:'20261121',2045:'20261121',2073:'20261121',2074:'20261121',2078:'20261121',2031:'20261121'};
+const M3D_VER={2007:'20261121',2020:'20261121',2030:'20261121',2039:'20261121',2047:'20261121',2077:'20261121',2079:'20261121',2080:'20261121',2081:'20261121',2082:'20261121',2037:'20261121',2045:'20261121',2073:'20261121',2074:'20261121',2078:'20261121',2031:'20261121'};
 const M3D={ ids:new Set((window._M3D||[]).map(Number)), nw:new Set((window._M3D_NEW||[]).map(Number)), proto:{}, prom:{}, bytes:0, loaded:0,
   isNew(mid){ return true; },                                                   // world_v2: 80体とも描き直しの新モデル design_v2/models/n{id}.glb
   has(mid){ return !!MID[+mid] && MID[+mid].model3d!==false && typeof THREE!=='undefined' && !!THREE.GLTFLoader && !BT.no3d; },   // v3: monsters.json の model3d:false(3Dがまだ無い/古い)は2Dの絵
@@ -6026,7 +6026,7 @@ function init(o){
     try{ applySeries(rd(CFG.series)); }catch(e){ applySeries(null); }   // 戦術v3: シリーズと合体攻撃
     return (_loadP=Promise.resolve(true)); }
   const gj=(f)=>fetch(CFG.base+f).then(r=>{ if(!r.ok) throw new Error(f+' '+r.status); return r.json(); });
-  _loadP=gj(CFG.data+'?v=20261121c').then(list=>{ setMonsters(list); return Promise.all([gj(CFG.stats+'?v=20261121c'),gj(CFG.moves+'?v=20261121c')]).then(([st,mv])=>applyV2Data(st,mv)).catch(e=>{ console.warn('技 v2 のデータが読めない',e); V2DATA=false; }); })
+  _loadP=gj(CFG.data+'?v=20261121d').then(list=>{ setMonsters(list); return Promise.all([gj(CFG.stats+'?v=20261121d'),gj(CFG.moves+'?v=20261121d')]).then(([st,mv])=>applyV2Data(st,mv)).catch(e=>{ console.warn('技 v2 のデータが読めない',e); V2DATA=false; }); })
     .then(()=>gj(CFG.series).then(applySeries).catch(e=>{ console.warn('シリーズの表が読めない',e); applySeries(null); }))   // 戦術v3
     .then(()=>true);   // 2026-10-27 技 v2
   return _loadP;
