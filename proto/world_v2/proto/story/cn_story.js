@@ -86,7 +86,7 @@ sc(8,'c08_1',PL,'*',{bg:'anime_cn_city',tod:'noon'});
 go(8,'c08_g',PL,B,'from_bamboo');
 sc(8,'c08_2',B);
 sc(8,'c08_3',B);
-bt(8,'c08_b','c08_4',B,{foe:()=>cnFoe({n:'乗っ取られた街の子',party:P(1056,1039,1022)}),R:{terrain:'castle'}});
+bt(8,'c08_b','c08_4',B,{foe:()=>cnFoe({n:'乗っ取られた街の子',party:P(1053,1039,1022)}),R:{terrain:'castle'}});
 sc(8,'c08_5',B,'*',{bg:'anime_cn_station'});
 // 第9話 火の山(南へ向かう列車で化石の谷へ)
 go(9,'c09_g',B,FO,'from_plateau');
@@ -144,7 +144,7 @@ sc(19,'c19_6',CA);
 // 第20話 都を守る(ランサム・リヴァイア＝セイリュ＋クロベク・メイリンの子を借りる)
 sc(20,'c20_1',CA,'*',{bg:'anime_cn_gate'});
 sc(20,'c20_2',CA);
-bt(20,'c20_b','c20_3',CA,{foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1067,lv:27,fixed:true},{mid:1060,lv:25},{mid:71,lv:25},{mid:1040,lv:25})}),R:{terrain:'ruins',guests:['partner',196,1012,1058],fuse:[2018],ai:{hpX:1.188,atkX:1.287}}});
+bt(20,'c20_b','c20_3',CA,{foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1067,lv:27,fixed:true},{mid:1060,lv:25},{mid:71,lv:25},{mid:1040,lv:25})}),R:{terrain:'ruins',guests:['partner',196,1012,1055],fuse:[2018],ai:{hpX:1.188,atkX:1.287}}});
 sc(20,'c20_4',CA,'*',{bg:'anime_cn_wall'});
 // 第21話 雪の高原
 sc(21,'c21_1',KU,'*',{bg:'anime_cn_gate',objAway:'都の北門から、雪の高原へ'});
@@ -267,7 +267,7 @@ function cnMigrate(){ const f=SAVE&&SAVE.flags; if(!f||f.cnMig) return; f.cnMig=
 const CN_MON=[['c02_1','白い、小さな子がうずくまっていた',196,{x:60,y:4,w:16}],['c04_2','セイリュは、片目をあけて',196,{x:60,y:4,w:16}],['c06_4','稲妻の模様のトラが',1023,{x:60,y:6,w:24}],['c06_4','小さなビリトラが一体',1022,{x:40,y:4,w:15}],
   ['c07_1','体を丸めた、大きな白い虎',3024,{x:58,y:8,w:34,op:.85}],['c07_2','虎が、ゆっくり頭を上げた',3024,{x:58,y:8,w:34}],['c07_5','南の空を見上げて',3024,{x:58,y:8,w:34}],
   ['c10_4','大きな火の鳥が',2004,{x:56,y:12,w:34}],['c13_1','黒い角の子が一体',1069,{x:60,y:6,w:22}],['c16_1','長い首がのびた',2053,{x:56,y:8,w:38}],['c17_1','氷の角の子が',2039,{x:64,y:14,w:20,op:.6}],
-  ['c21_4','大きな豹が',1047,{x:58,y:6,w:30}],['c24_2','光る小さな虫の子が',1057,{x:62,y:20,w:12}],['c25_3','八本の首が',2048,{x:56,y:10,w:42}],['c26_2','カブトムシの子が飛びこんで',1034,{x:62,y:6,w:20}],
+  ['c21_4','大きな豹が',1047,{x:58,y:6,w:30}],['c24_2','白く光る翼の子が',1054,{x:62,y:20,w:12}],['c25_3','八本の首が',2048,{x:56,y:10,w:42}],['c26_2','カブトムシの子が飛びこんで',1034,{x:62,y:6,w:20}],
   ['c29_2','海の色の大きな竜',291,{x:56,y:8,w:34}],['c30_1','とぐろを巻いて眠る',3291,{x:56,y:10,w:44}],['c30_2','セイリュが、もう一度',196,{x:40,y:4,w:16}]];
 function cnInit(){ Object.assign(SC,CN_SC); toastEl.style.zIndex=40;
   for(const [k,frag,id,o] of CN_MON){ const L=SC[k]; if(!L) continue; const i=L.findIndex(x=>x.t&&x.t.includes(frag)); if(i>=0) L.splice(i,0,{fn:async()=>monShow(id,o)}); } Object.assign(WHO,{lifa:'リーファ',hao:'ハオ',ransom:'ランサム',shifu:'師範',patch:'パッチ',log:'ログ'});

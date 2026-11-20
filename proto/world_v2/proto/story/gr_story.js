@@ -223,7 +223,7 @@ const GR_BGM={
   g20_01:'scene_villain', g20_02:'map_oliva', g20_03:'scene_daily', g20_04:'map_oliva', g20_05:'map_olive_hill', g20_06:'scene_villain', g20_10:'scene_reunion', g20_11:'scene_villain',
   g21_01:'scene_inn_night', g21_02:'map_oliva', g21_03:'scene_villain', g21_04:'scene_villain', g21_12:'map_olive_hill',
   g22_01:'scene_villain', g22_02:'map_oliva', g22_03:'scene_villain', g22_04:'map_oliva', g22_06:'map_olive_hill', g22_07:'map_olive_hill' };
-// 物語の勝負の曲(話 → 曲)。下っ端(ニーナ・マルコ・チップの子・野良のベルクマ・ノモスのホタルン)=下っ端戦・使い手=中ボス戦・レンやカシア=ボス戦・古代=古代の守り戦・ヴィクター本人=BOSS・大会の決勝と手合わせ=大会の決勝戦
+// 物語の勝負の曲(話 → 曲)。下っ端(ニーナ・マルコ・チップの子・野良のベルクマ・ノモスのグリフォ)=下っ端戦・使い手=中ボス戦・レンやカシア=ボス戦・古代=古代の守り戦・ヴィクター本人=BOSS・大会の決勝と手合わせ=大会の決勝戦
 //  勝負の中で押されると「劣勢」、盛り返すと「逆転」に切りかわる(greece_town.html の bgmMoodTick。ここの曲は はじめの曲)
 const GR_FIGHT_BGM={ 1:'battle_grunt', 2:'battle_elite', 3:'battle_elite', 4:'battle_grunt', 5:'battle_elite', 6:'battle_grunt', 7:'battle_boss', 8:'battle_grunt', 9:'battle_elite', 10:'battle_elite', 11:'battle_elite', 12:'battle_final',
   13:'battle_boss', 15:'battle_grunt', 16:'battle_elite', 17:'battle_ancient', 18:'battle_elite', 19:'battle_boss_big', 20:'battle_grunt', 21:'battle_boss_big', 22:'battle_final' };
