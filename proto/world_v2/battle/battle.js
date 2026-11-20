@@ -1912,7 +1912,7 @@ function camPxPerUnit(){ const {dFull,polar}=CAMV; if(!dFull) return [40,40]; co
   const a=camPY(CAMV.cx,0,CAMV.cz).clone(), b=camPY(CAMV.cx+1,0,CAMV.cz).clone(), e=camPY(CAMV.cx,0,CAMV.cz+1).clone(); CAMV.off=keep;
   const cv=renderer.domElement; return [Math.max(1,(b.x-a.x)*cv.clientWidth/2), Math.max(1,(a.y-e.y)*cv.clientHeight/2)]; }
 function camWire(cv){
-  cv.addEventListener('pointerdown', e=>{ if(!camOn()) return; CAMV.ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); try{ cv.setPointerCapture(e.pointerId); }catch(_){}
+  cv.addEventListener('pointerdown', e=>{ if(!camOn()) return; if(e.isPrimary){ CAMV.ptrs.clear(); CAMV.pinch=null; }   /* 2026-11-20 オーナー「またバトル中操作できんくなった」: 指を離した知らせ(pointerup)を1回取りこぼすと 指が残ったままと数え、以後のタップが全部2本指扱いで無視されていた → 最初の指(isPrimary)で数え直す */ CAMV.ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); try{ cv.setPointerCapture(e.pointerId); }catch(_){}
     if(CAMV.ptrs.size===1){ CAMV.dragged=false; CAMV.drag={x:e.clientX,y:e.clientY,on:false}; CAMV.pinch=null; }
     else if(CAMV.ptrs.size===2){ const [p,q]=[...CAMV.ptrs.values()]; CAMV.pinch={d:Math.hypot(p.x-q.x,p.y-q.y)||1,z:CAMV.uz}; CAMV.dragged=true; CAMV.drag=null; clearTimeout(_lpTimer); _lpTimer=0; } });
   cv.addEventListener('pointermove', e=>{ if(!CAMV.ptrs.has(e.pointerId)) return; CAMV.ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -1922,7 +1922,7 @@ function camWire(cv){
     const [px,pz]=camPxPerUnit(); CAMV.tx-=mx/px; CAMV.tz-=my/pz; g.x=e.clientX; g.y=e.clientY; });
   const up=e=>{ CAMV.ptrs.delete(e.pointerId); if(CAMV.ptrs.size<2) CAMV.pinch=null; if(CAMV.ptrs.size===0) CAMV.drag=null;
     else if(CAMV.ptrs.size===1 && !CAMV.drag){ const p=[...CAMV.ptrs.values()][0]; CAMV.drag={x:p.x,y:p.y,on:true}; } };
-  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('lostpointercapture', up);
   cv.addEventListener('wheel', e=>{ if(!camOn()) return; e.preventDefault(); CAMV.uz=Math.max(1,Math.min(CAM_ZMAX,CAMV.uz*Math.exp(-e.deltaY*0.0015))); CAMV.showZ=null; camBtnSync(); }, {passive:false});
 }
 // 「全体」ボタン(アイコンだけ): 全体 ⇔ 寄り
@@ -6313,7 +6313,7 @@ function startBattle(opts){
   opts=opts||{};
   return init(opts.init||{}).then(()=>new Promise((resolve)=>{
     const kind=KIND_DEFAULTS[opts.kind]?opts.kind:'trainer'; const KD=KIND_DEFAULTS[kind];
-    BT.kind=kind; BT.opts=opts; BT.order=(opts.turnOrder==='alt'||ONLINE)?null:'spd';   /* 2026-11-15 オーナー「素早さ順に行動してターン終了をなくす」: 素早さ順を既定に(turnOrder:'alt' で今までの交互) */ BT.v2=(opts.moveSystem?opts.moveSystem!=="v1":!(IS_NODE&&process.env.MOVESYS==="v1")); setStatMode(V2ON()); BT.onEnd=opts.onEnd||null; BT.resolve=resolve; BT.fusedNew=[]; BT.auto=false; BT._autoRun=false; BT.fxUntil=0;
+    BT.kind=kind; BT.opts=opts; BT.order=(opts.turnOrder==='alt'||ONLINE)?null:'spd';   /* 2026-11-15 オーナー「素早さ順に行動してターン終了をなくす」: 素早さ順を既定に(turnOrder:'alt' で今までの交互) */ BT.v2=(opts.moveSystem?opts.moveSystem!=="v1":!(IS_NODE&&process.env.MOVESYS==="v1")); setStatMode(V2ON()); BT.onEnd=opts.onEnd||null; BT.resolve=resolve; BT.fusedNew=[]; BT.auto=false; BT._autoRun=false; BT.fxUntil=0; CAMV.ptrs.clear(); CAMV.pinch=null; CAMV.drag=null; CAMV.dragged=false;   /* 2026-11-20 前の勝負で残った指の数を持ち越さない */
     try{ BT.fastPref=localStorage.getItem('mb_auto_fast')==='1'; }catch(e){ BT.fastPref=false; } BT.fast=false;
     setBoardSize(+opts.size||KD.size);
     const pl=opts.player||{}, en=opts.enemy||{};
