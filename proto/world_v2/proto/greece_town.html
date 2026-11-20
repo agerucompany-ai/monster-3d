@@ -2309,7 +2309,14 @@ function npcTalk(n){ if(n.o.brief){ talkClose(); HERO.yaw=Math.atan2(n.x-HERO.x,
   { const rr=ruleOf(n.o); if(rr&&rr.off&&rr.line){ talkTo(n,rr.line); return; } }
   let sc=n.o.scene; if(NPC_RULE[sc]) sc=storyOn()?NPC_RULE[sc](f):null; if(sc&&!n.o.trainer&&!f[sc]&&SC[sc]){ storyField(sc); return; }
   if(n.o.role==='shop'&&window.Progress&&Progress.state()){ talkClose(); HERO.yaw=Math.atan2(n.x-HERO.x,n.z-HERO.z); Progress.ui.open('shop'); return; }   // 2026-10-30 店の人=店を開く(肉・闘気の水晶)
+  { const h=grHintLine(); if(h){ talkTo(n,h); return; } }   // 2026-11-20 オーナー「会話が終わったあと、もう一回話しかけたら、どこ行ったらいいかわかるように」: 町の人が行き先を教える
   talkTo(n); }   // 2026-10-29 盤 v4: 回復の水筒はなくした
+window._grHint=()=>grHintLine();
+function grHintLine(){ try{ if(typeof grOn!=='function'||!grOn()) return null; const s=grCur(); if(!s) return null; const ob=s.wobj||(s.head&&GR_PLAN[s.ep]&&GR_PLAN[s.ep].obj)||null; if(!ob) return null;
+    let dir=''; if(s.kind==='go'){ dir='村の出口の方だよ。'; } else if(s.map===MAP&&s.at&&s.at!=='*'){ const at=Array.isArray(s.at)?s.at[0]:s.at; const p=grCastPt(at); if(p){ const fl=camFlip()?-1:1, dx=(p[0]-HERO.x)*fl, dz=(p[1]-HERO.z)*fl, L=Math.hypot(dx,dz);
+        dir=L<8?'もう、すぐそこだよ。':(Math.abs(dz)>=Math.abs(dx)?(dz<0?'この道を、奥の方へ。':'この道を、手前の方へ。'):(dx>0?'右の方へ行ってごらん。':'左の方へ行ってごらん。')); } }
+    else if(s.map!==MAP) dir='この先の、別の所だね。';
+    return '「'+ob.replace(/。$/,'')+'」だって？　'+dir; }catch(e){ return null; } }
 document.getElementById('tod').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) setTime(b.dataset.t); });
 const _pv=new THREE.Vector3();
 const talkEl=document.getElementById('talk'), bangEl=document.getElementById('bang'), flashEl=document.getElementById('flash'); let TALK=null;
@@ -2798,7 +2805,7 @@ function objText(){ const f=SAVE?SAVE.flags:{}; if(!f.arrived||TESTMODE) return 
   if(!f.nr_narwhal) return '海の氷の先で、モノケロスに会う'; if(!f.nr_glacier) return '海の氷をわたり、氷の研究所へ'; if(!f.nr_ransom3) return '研究所の前の広場で、ランサムを止める'; if(!f.nr_bot) return '研究所の入口で、ボットを止める';
   if(!f.nr_core) return '研究所の門から、アークの中心へ'; if(!f.nr_bella3) return 'サーバーの部屋で、ベラドンナを止める'; if(!f.nr_adrian) return 'アークの中心の前で、スペクターと向き合う'; if(!f.nr_ragna) return 'アークの中心で、ラグナディオの前に立つ';
   return 'ゲームクリア。空の船で東京へ(エンディングは未作成)'; }
-function objUpdate(){ const t=objText(); objEl.textContent=t; objEl.style.display=t&&!STORY&&!TRANS?'block':'none'; }
+function objUpdate(){ const t=(typeof grOn==='function'&&grOn())?'':objText();   /* 2026-11-20 オーナー「画面にどこいくか出さず、会話でわかるように」: ギリシャ編は行き先の文字を出さない */ objEl.textContent=t; objEl.style.display=t&&!STORY&&!TRANS?'block':'none'; }
 
 // ---------------------------------------------------------------- 会話(立ち絵つき)・イントロ
 const $=id=>document.getElementById(id);
@@ -3612,7 +3619,9 @@ function grBuild(){ GR_STEPS.length=0; for(const k in GR_BY) delete GR_BY[k];
       (Array.isArray(P.go)?P.go:(P.go?[P.go]:[])).forEach((G,gi)=>{ if(G.after!==k) return; grS({id:'g'+pad2g(ep)+'_g'+(gi?gi+1:''), ep, kind:'go', map, to:G.to, toAt:G.at, at:'*', wobj:G.obj}); map=G.to; });   // 2026-11-20 go は配列も(地図を何度か移る話)
       if(P.end&&P.end.after===k){ grS({id:'g'+pad2g(ep)+'_e', ep, kind:'go', map, to:P.end.to, toAt:P.end.at, at:'*', wobj:P.end.obj}); map=P.end.to; } }   // 2026-11-17 end.after=その場面のあとで歩いて移る(あとの場面は着いた先で)
     if(P.end&&!P.end.after) grS({id:'g'+pad2g(ep)+'_e', ep, kind:'go', map, to:P.end.to, toAt:P.end.at, at:'*', wobj:P.end.obj}); }
-  GR_STEPS.forEach((s,i)=>{ const n=GR_STEPS[i+1]; s.last=!n||n.ep!==s.ep; }); }
+  GR_STEPS.forEach((s,i)=>{ const n=GR_STEPS[i+1]; s.last=!n||n.ep!==s.ep; });
+  // 2026-11-20 行き先は会話で: 歩く段の前の場面の終わりに、行き先を一行(声なし)
+  GR_STEPS.forEach((s,i)=>{ const n=GR_STEPS[i+1]; const ob=n&&(n.wobj||(n.head&&n.at&&n.at!=='*'&&n.obj)); if(s.kind!=='scene'||!ob) return; const L=GR_SC[s.key]; if(!Array.isArray(L)||L._hint) return; L.push({w:null,t:ob.replace(/。?$/,'。'),hint:1}); L._hint=1; }); }
 
 // ---- 段を進める ----
 let GR_RUN=false, GR_RETRY=false;
@@ -3746,12 +3755,17 @@ function grFoeTick(s,live){ const g=GR_GUIDE; const ids=(live&&!ENC&&g)?(grFoeId
   let x0=Math.min(HERO.x,g.x), x1=Math.max(HERO.x,g.x), z0=Math.min(HERO.z,g.z), z1=Math.max(HERO.z,g.z); for(const f of GR_FOE.m){ const r=f.sc*0.35; x0=Math.min(x0,f.x-r); x1=Math.max(x1,f.x+r); z0=Math.min(z0,f.z-r); z1=Math.max(z1,f.z+r); } for(const k in (g.mem||{})){ const m=g.mem[k]; if(m&&m.x!=null){ x0=Math.min(x0,m.x-0.8); x1=Math.max(x1,m.x+0.8); z0=Math.min(z0,m.z-0.8); z1=Math.max(z1,m.z+0.8); } } x0-=0.8; x1+=0.8;
   window.GR_TALKF=[(x0+x1)/2,(z0+z1)/2]; window.GR_TALKW=Math.max(x1-x0,(z1-z0)*0.6); }   // 2026-11-20 大物まで入る幅(GR_TALKW)
 (function grFoeAnim(){ let t0=0; const f=t=>{ requestAnimationFrame(f); const dt=t0?Math.min(0.1,(t-t0)/1000):0; t0=t; if(GR_FOE) for(const m of GR_FOE.m) if(m.inst) m.inst.mixer.update(dt); }; requestAnimationFrame(f); })();
+function grEllyAhead(s){ let pt=null;
+  try{ if(s&&s.wobj&&s.map===MAP&&!STORY&&!ENC&&!grHere(s)&&grWho(s).includes('elly')&&!(SAVE&&SAVE.crew&&GR_CREW.elly(+s.ep||0)&&!SAVE.crew.elly)){ const at=Array.isArray(s.at)?s.at[0]:s.at; const p=grCastPt(at); if(p) pt=p; } }catch(e){}
+  if(!pt||(GR_ELLY&&GR_ELLY.map!==MAP)){ if(GR_ELLY){ grSpriteDrop(GR_ELLY); GR_ELLY=null; } if(!pt) return; }
+  if(!GR_ELLY){ GR_ELLY=grSprite('elly'); GR_ELLY.map=MAP; grPlace(GR_ELLY,pt[0]+1.2,pt[1]); }
+  const e=GR_ELLY; grFace&&grFace(e); grLabel(e,'エリー',false); e.lbl.style.display='none'; }
 // 歩く段の行き先の印(人の代わり)。画面の外なら矢印で向き
 let GR_DEST=null;
-function grDestTick(s,live){ const at=s&&s.wobj&&s.map===MAP&&!live&&!grHere(s)?(Array.isArray(s.at)?s.at[0]:s.at):null; const pt=at?grCastPt(at):null;
+function grDestTick(s,live){ if(window.GR_DEST_OFF!==false){ if(GR_DEST){ scene.remove(GR_DEST.mk); GR_DEST.lbl.remove(); GR_DEST=null; } return; }   /* 2026-11-20 行き先の印と札は出さない(会話と町の人で) */ const at=s&&s.wobj&&s.map===MAP&&!live&&!grHere(s)?(Array.isArray(s.at)?s.at[0]:s.at):null; const pt=at?grCastPt(at):null;
   if(!pt||ENC){ if(GR_DEST){ scene.remove(GR_DEST.mk); GR_DEST.lbl.remove(); GR_DEST=null; } return; }
   if(!GR_DEST){ GR_DEST={mk:grMark(),lbl:makeLabel(''),x:pt[0],z:pt[1],h:1.4,grp:{position:{y:0}}}; GR_DEST.mk.scale.set(0.8,0.8,1); }
-  const d=GR_DEST; d.x=pt[0]; d.z=pt[1]; const y=groundAt(d.x,d.z); d.grp.position.y=y; d.mk.position.set(d.x,y+1.9+Math.sin(performance.now()/260)*0.12,d.z); d.mk.visible=!STORY&&!TRANS;
+  const d=GR_DEST; d.x=pt[0]; d.z=pt[1]; const y=groundAt(d.x,d.z); d.grp.position.y=y; d.mk.position.set(d.x,y+1.9+Math.sin(performance.now()/260)*0.12,d.z); d.mk.visible=false;   /* 2026-11-20 行き先の印は出さない(会話と町の人で) */
   grLabel(d,'行き先',true); }
 function grMark(){ const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); x.fillStyle='#ffd23a'; x.strokeStyle='#5a3a00'; x.lineWidth=5; x.beginPath(); x.moveTo(8,14); x.lineTo(56,14); x.lineTo(32,54); x.closePath(); x.stroke(); x.fill();
   const mk=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false,depthWrite:false})); mk.scale.set(0.5,0.5,1); mk.renderOrder=999; scene.add(mk); return mk; }
@@ -3770,7 +3784,8 @@ function grOnScreen(x,z){ const v=new THREE.Vector3(x,groundAt(x,z)+0.6,z).proje
 function grEllyBehind(e){ const a=HERO.yaw||0; let last=null;   // ヤマトの後ろ(進む向きの逆)で、画面に映らない一番近い所
   for(let r=5;r<=16;r+=1) for(const da of [0,0.5,-0.5,1.0,-1.0]){ const x=HERO.x-Math.sin(a+da)*r, z=HERO.z-Math.cos(a+da)*r; if(!walkOK(x,z)) continue; last=[x,z]; if(!grOnScreen(x,z)){ grPlace(e,x,z); return true; } }
   return false; }
-function grEllyTick(s){ const on=!!s&&grEllyWith(s)&&!(GR_GUIDE&&GR_GUIDE.mem.elly)&&!(SAVE&&SAVE.crew&&GR_CREW.elly(+s.ep||0)&&!SAVE.crew.elly);   // 仲間になる演出の前には出さない
+function grEllyTick(s){ if(window.GR_ELLY_AHEAD!==false){ grEllyAhead(s); return; }   // 2026-11-20 オーナー「エリーもアレクと同じように歩かせずに先回り形式で」
+  const on=!!s&&grEllyWith(s)&&!(GR_GUIDE&&GR_GUIDE.mem.elly)&&!(SAVE&&SAVE.crew&&GR_CREW.elly(+s.ep||0)&&!SAVE.crew.elly);   // 仲間になる演出の前には出さない
   if(!on||(GR_ELLY&&GR_ELLY.map!==MAP)){ if(GR_ELLY){ grSpriteDrop(GR_ELLY); GR_ELLY=null; } if(!on) return; }
   if(!GR_ELLY){ GR_ELLY=grSprite('elly'); GR_ELLY.map=MAP; const a=HERO.yaw||0; grPlace(GR_ELLY,HERO.x-Math.sin(a)*1.4+Math.cos(a)*0.9,HERO.z-Math.cos(a)*1.4-Math.sin(a)*0.9); }
   const e=GR_ELLY, a=HERO.yaw||0, tx=HERO.x-Math.sin(a)*1.5+Math.cos(a)*0.9, tz=HERO.z-Math.cos(a)*1.5-Math.sin(a)*0.9, d=Math.hypot(tx-e.x,tz-e.z);
@@ -3836,7 +3851,7 @@ function grFornRunAnim(t){ requestAnimationFrame(grFornRunAnim); const dt=GR_FRT
     if(!frozen&&F.inst){ F.acc+=dt*(F.spd>0.5?38:5); const n=Math.floor(F.acc); F.acc-=n; if(n) grFrEmit(F,n); }
     for(const p of F.sparks){ if(p.life<=0) continue; if(!frozen){ p.life-=dt; p.vy-=0.6*dt; p.s.position.x+=p.vx*dt; p.s.position.y+=p.vy*dt; p.s.position.z+=p.vz*dt; }
       const k=Math.max(0,p.life/p.max); p.s.material.opacity=k; p.s.material.color.setRGB(1,0.55+0.45*k,0.2+0.6*k*k); p.s.scale.setScalar(0.07+0.16*k); if(p.life<=0) p.s.visible=false; }
-    if(F.grp&&!PAUSED) grLabel(F,'狐',F.st!=='end'); else F.lbl.style.display='none';
+    F.lbl.style.display='none';   /* 2026-11-20 行き先の札は出さない(狐の姿を追う) */
   }catch(e){ console.warn('fornrun',e&&e.message); } }
 requestAnimationFrame(grFornRunAnim);
 window.GR_FR_DBG=()=>GR_FRS&&{x:GR_FRS.x,z:GR_FRS.z,st:GR_FRS.st,pi:GR_FRS.pi,n:GR_FRS.path&&GR_FRS.path.length,inst:!!GR_FRS.inst,path:GR_FRS.path};
