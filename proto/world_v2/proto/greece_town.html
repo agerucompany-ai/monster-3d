@@ -286,7 +286,7 @@ function polyD(x,z,P){ if(x<P.bb[0]||x>P.bb[2]||z<P.bb[1]||z>P.bb[3]) return 1e9
 function makeTerrain(D){
   const T=D.terrain;
   // coast: dir=-1 で向きを逆にする(axis z なら「at より南が海」・axis x なら「at より東が海」)。アテネの東の港・クレタの南の港(2026-10-25)
-  const coastD=(x,z)=>{ let d=1e9; for(const c of (T.coast||[])){ const v=(c.axis==='z' ? z-c.at : x-c.at)*(c.dir||1)+c.noise*(c.axis==='z'?(vnoise(x*0.05,3.3+c.at)-0.5)*2:(vnoise(7.7+c.at,z*0.05)-0.5)*2); if(v<d) d=v; } return d; };
+  const coastD=(x,z)=>{ let d=1e9; for(const c of (T.coast||[])){ if(c.zr&&(z<c.zr[0]-c.zr[2]||z>c.zr[1]+c.zr[2])) continue; const ramp=c.zr?Math.min(1,Math.max(0,Math.min(z-(c.zr[0]-c.zr[2]),(c.zr[1]+c.zr[2])-z)/Math.max(0.01,c.zr[2]))):1; if(ramp<1){ const v0=((c.axis==='z'?z:x)-c.at)*(c.dir||1); if(v0+(1-ramp)*40<d) d=Math.min(d,v0+(1-ramp)*40); continue; } const v=(c.axis==='z' ? z-c.at : x-c.at)*(c.dir||1)+c.noise*(c.axis==='z'?(vnoise(x*0.05,3.3+c.at)-0.5)*2:(vnoise(7.7+c.at,z*0.05)-0.5)*2); if(v<d) d=v; } return d; };
   const natural=(x,z)=>{ const b=T.base; let h=b.h+b.amp*(fbm(x*b.freq+11,z*b.freq-7)-0.45);
     for(const g of (T.hills||[])) h+=gauss(x,z,g[0],g[1],g[2],g[3]);
     for(const e of (T.edges||[])) h+=sm(e.from,e.to,e.axis==='x'?x:z)*e.h; return h; };
@@ -500,7 +500,7 @@ const TEX={ leaf:leafTex(), noise:tileNoise(IS_MOBILE?192:256), cobble:cobbleTex
   mote:radialTex([[0,'rgba(255,255,255,1)'],[0.25,'rgba(255,255,255,.7)'],[1,'rgba(255,255,255,0)']]), petal:petalTex() };
 
 // ---------------------------------------------------------------- 材質
-const U={ uT:{value:0}, uHero:{value:new THREE.Vector3(0,-99,0)}, uCloud:{value:0.1}, uResY:{value:1000} };
+const U={ uT:{value:0}, uHero:{value:new THREE.Vector3(0,-99,0)}, uCloud:{value:0.1}, uResY:{value:1000}, uWhite:{value:0} };   // uWhite=白い漆喰の村(地図の D.white・2026-11-21)
 function patchLit(m,key,o){ o=o||{};
   m.onBeforeCompile=sh=>{
     sh.uniforms.uT=U.uT; sh.uniforms.uHero=U.uHero;
@@ -519,6 +519,14 @@ function patchLit(m,key,o){ o=o||{};
         float seg=length(vWq-cameraPosition-dir*clamp(t,0.0,L)); float k=max(1.0-smoothstep(1.2,3.2,cd), (t>0.0&&t<L-1.1)?(1.0-smoothstep(1.6,3.4,seg))*smoothstep(-0.2,1.0,vWq.y-uHeroF.y):0.0); k=max(k,(1.0-smoothstep(0.04,0.2,gl_FragCoord.y/uResY))*smoothstep(1.6,3.2,vWq.y-uHeroF.y)*0.92);
         ${o.noDither?'k=0.0;':''}if(k>0.0){ vec2 q=mod(floor(gl_FragCoord.xy),4.0); float b=mod(q.x*8.0+q.y*4.0+mod(q.x+q.y,2.0)*2.0+q.x*q.y,16.0)/16.0; if(k*0.9>b) discard; } }`);
     sh.fragmentShader=sh.fragmentShader.replace('* getShadowMask()','* (0.30+0.70*getShadowMask())');
+    if(o.white){ sh.uniforms.uWhite=U.uWhite; sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform float uWhite;').replace('#include <map_fragment>',`#include <map_fragment>
+      if(uWhite>0.0){ vec3 c=diffuseColor.rgb; float l=dot(c,vec3(0.299,0.587,0.114)); float sat=max(c.r,max(c.g,c.b))-min(c.r,min(c.g,c.b));
+        float warm=clamp((c.r-c.b)*2.2,0.0,1.0); float blue=clamp((c.b-c.r)*3.0,0.0,1.0);
+        vec3 plaster=vec3(0.97,0.965,0.95)*mix(0.86,1.0,smoothstep(0.25,0.75,l));
+        float wk=uWhite*(1.0-blue)*smoothstep(0.18,0.55,l)*(1.0-smoothstep(0.45,0.7,sat*(1.0-warm*0.7)));
+        vec3 roof=vec3(0.16,0.42,0.72)*mix(0.75,1.05,l);   // 赤い瓦・茶色の木の扉や窓 → 青
+        float hi=max(c.r,max(c.g,c.b)); float rk=uWhite*clamp((c.r-c.b)*3.5,0.0,1.0)*smoothstep(0.12,0.3,sat)*(1.0-smoothstep(0.7,0.9,hi))*(1.0-smoothstep(0.42,0.6,sat));   /* 茶色・赤茶の瓦や木(あざやかな花はそのまま) */
+        c=mix(c,plaster,wk); c=mix(c,roof,rk*0.85); diffuseColor.rgb=c; } `); }
     if(o.front) sh.fragmentShader=sh.fragmentShader.split('gl_FrontFacing').join('true');
   };
   m.customProgramCacheKey=()=>'lit_'+key; return m; }
@@ -548,10 +556,10 @@ const GTEX={}; (function(){ const L=new THREE.TextureLoader(); for(const k of ['
 const WHITE1=(()=>{ const t=new THREE.DataTexture(new Uint8Array([255,255,255,255]),1,1,THREE.RGBAFormat); t.needsUpdate=true; return t; })();
 const GTINT=new THREE.Vector3(1,1,1), GROCK=new THREE.Vector4(1,1,1,0);   // GROCK=岩の地面の色(北欧編 2026-10-27: terrain.rockTint=[r,g,b,強さ]。灰色の花崗岩など)   // 地面の色味(マップごと: terrain.tint。迷宮は暗い石の床)
 function groundMat(ao,rect){ const m=new THREE.MeshLambertMaterial({vertexColors:true}); const UA={value:ao||WHITE1}, UR={value:rect||new THREE.Vector4(0,0,1,1)};
-  m.onBeforeCompile=sh=>{ m.userData.sh=sh; Object.assign(sh.uniforms,{tCob:{value:GTEX.cobble},tGr:{value:GTEX.grass},tDi:{value:GTEX.dirt},tSa:{value:GTEX.sand},tRo:{value:GTEX.rock},uNoi:{value:TEX.noise},uAO:UA,uAOR:UR,uT:U.uT,uCloud:U.uCloud,uTint:{value:GTINT},uRockT:{value:GROCK}});
+  m.onBeforeCompile=sh=>{ m.userData.sh=sh; Object.assign(sh.uniforms,{tCob:{value:GTEX.cobble},tGr:{value:GTEX.grass},tDi:{value:GTEX.dirt},tSa:{value:GTEX.sand},tRo:{value:GTEX.rock},uNoi:{value:TEX.noise},uAO:UA,uAOR:UR,uT:U.uT,uCloud:U.uCloud,uTint:{value:GTINT},uRockT:{value:GROCK},uWhiteG:U.uWhite});
     sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nattribute vec2 aMix; attribute vec2 aMix2; varying vec4 vMix; varying vec3 vWp;')
       .replace('#include <begin_vertex>','#include <begin_vertex>\nvMix=vec4(aMix,aMix2); vWp=(modelMatrix*vec4(transformed,1.0)).xyz;');
-    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform sampler2D tCob,tGr,tDi,tSa,tRo,uNoi,uAO; uniform vec4 uAOR; uniform float uT,uCloud; uniform vec3 uTint; uniform vec4 uRockT; varying vec4 vMix; varying vec3 vWp;')
+    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform sampler2D tCob,tGr,tDi,tSa,tRo,uNoi,uAO; uniform vec4 uAOR; uniform float uT,uCloud; uniform float uWhiteG; uniform vec3 uTint; uniform vec4 uRockT; varying vec4 vMix; varying vec3 vWp;')
       .replace('#include <color_fragment>',`{ vec2 p=vWp.xz; float n1=texture2D(uNoi,p*0.023).r, n2=texture2D(uNoi,p*0.13).g, n0=texture2D(uNoi,p*0.0071+0.3).b;
         // 繰り返しを崩す: 2つの縮尺を混ぜる
         vec3 gr=mix(texture2D(tGr,p*0.31).rgb,texture2D(tGr,p*0.113+0.37).rgb,0.35+0.3*n1); gr*=vColor/vec3(0.616,0.706,0.388); gr*=0.9+0.2*n0;
@@ -562,8 +570,9 @@ function groundMat(ao,rect){ const m=new THREE.MeshLambertMaterial({vertexColors
           float ring2=smoothstep(9.9,10.0,r)*(1.0-smoothstep(10.4,10.5,r));
           co=mix(co,co*vec3(0.80,0.74,0.66),ring*0.85); co=mix(co,co*vec3(0.93,0.9,0.86),sec*0.7); co=mix(co,co*vec3(0.62,0.7,0.82),ring2*0.6); }
         vec3 di=mix(texture2D(tDi,p*0.27).rgb,texture2D(tDi,p*0.11+0.5).rgb,0.3); di=mix(di,vec3(dot(di,vec3(0.33))),0.35)*vec3(1.02,0.95,0.86);
-        vec3 sa=texture2D(tSa,p*0.22).rgb; sa=mix(sa,vec3(dot(sa,vec3(0.33))),0.45)*vec3(1.08,1.03,0.92);
+        vec3 sa=texture2D(tSa,p*0.22).rgb; sa=mix(sa,vec3(dot(sa,vec3(0.33))),0.45)*vec3(1.08,1.03,0.92); sa=mix(sa,vec3(dot(sa,vec3(0.33)))*vec3(1.02,1.02,1.03)*1.18+0.06,uWhiteG);   /* 2026-11-21 白い村は板石も白っぽく */
         vec3 ro=texture2D(tRo,p*0.19).rgb; ro=mix(ro,vec3(dot(ro,vec3(0.333)))*uRockT.rgb,uRockT.w);
+        if(uWhiteG>0.0){ float lc=dot(co,vec3(0.333)); co=mix(co,vec3(0.86,0.87,0.88)*mix(0.82,1.08,smoothstep(0.25,0.65,lc)),0.78*uWhiteG); float ld=dot(di,vec3(0.333)); di=mix(di,vec3(0.84,0.84,0.83)*mix(0.85,1.05,ld),0.6*uWhiteG); }   // 2026-11-21 白い村: 石畳を白い板石に
         // 高さで混ぜる(境目は石の目地や草の房から入れ替わる)
         { float hc0=dot(co,vec3(0.333)); float moss=smoothstep(0.55,0.78,texture2D(uNoi,p*0.045+0.71).r)*(1.0-smoothstep(0.62,0.74,hc0)); co=mix(co,gr*0.82,moss*0.75); }   // 目地の苔
         float hG=dot(gr,vec3(0.4))+n2*0.25, hC=dot(co,vec3(0.45)), hD=dot(di,vec3(0.3))+n2*0.3, hS=0.45+n2*0.2, hR=dot(ro,vec3(0.4));
@@ -943,8 +952,9 @@ OB.bed=(o)=>{ const y=G(o.x,o.z), M=T(o.x,y,o.z,(o.rot||0)*DEG), w=o.w||3, d=o.d
 // 置き方: {t:'m',k,x,z,rot,s}  s=足もとの長い辺(m)。読み込み時に「足もと中心・底=0・長い辺=1」へ正規化して、区画ごとにまとめて描く(InstancedMesh)
 let MIDX={}; const PROPM={}; const PROPMAT=new Map();
 const SWAYK={olive:0.5,olive2:0.4,cypress:0.35,flowers:1,lavender:0.8,bougain:0.45,planter:0.25};
-function propMat(mp,k){ const sw=SWAYK[k]||0; const key=(mp?mp.uuid:'x')+'|'+sw; let m=PROPMAT.get(key); if(m) return m;
-  m=patchLit(new THREE.MeshLambertMaterial({map:mp}),'prop'+(sw?'s':''),{propSway:sw}); PROPMAT.set(key,m); return m; }
+function propMat(mp,k){ const sw=SWAYK[k]||0; const key=(mp?mp.uuid:'x')+'|'+sw+'|'+(WHITE_K.has(k)?1:0); let m=PROPMAT.get(key); if(m) return m;
+  const wh=WHITE_K.has(k); m=patchLit(new THREE.MeshLambertMaterial({map:mp}),'prop'+(sw?'s':'')+(wh?'w':''),{propSway:sw,white:wh}); PROPMAT.set(key,m); return m; }
+const WHITE_K=new Set(['house_a','house_b','house_c','house_d','house_e','tavern','cafe','shop','hall','chapel','lab','stall','whitewall','steps']);   // 花の鉢・噴水・街灯は元の色(花まで青くなるので)
 function mInfo(k){ const m=MIDX[k]; if(!m) return null; const ex0=m.max[0]-m.min[0], ez=m.max[2]-m.min[2], ey=m.max[1]-m.min[1], ex=ex0*(m.sx||1); return {ex,ez,ey,sx:m.sx||1,n:1/Math.max(ex0,ez),front:(m.front||0)*DEG,kind:m.kind||'prop',sink:m.sink||0}; }
 function mFoot(o){ const I=mInfo(o.k); if(!I) return null; const s=o.s||3, f=I.front; const sw=Math.abs(Math.sin(f))>0.7; const w=(sw?I.ez:I.ex)*I.n*s, d=(sw?I.ex:I.ez)*I.n*s; return {w,d,h:I.ey*I.n*s*(o.sy||1),kind:I.kind,I}; }
 function propLoad(k){ if(!PROPM[k]) PROPM[k]=loadGLB('models/'+(IS_MOBILE&&Q.get('tex')!=='hi'?'lo/':'')+k+'.glb').then(g=>{ const out=[]; g.scene.updateMatrixWorld(true); const bb=new THREE.Box3();
@@ -2269,7 +2279,9 @@ const TOD={   // 光と色(post: 露出・にじみ・光の色・陰の色・�
   arklab:{top:'#10223a',mid:'#173050',hor:'#22466a',sunD:[0.25,0.9,0.35],sunC:'#e6f6ff',sunI:0.66,hS:'#b4d2ee',hG:'#44566a',hI:0.62,fog:'#132a40',cL:'#20385a',cS:'#10203a',deep:'#1d3a52',shal:'#2b5a6a',foam:'#c0e0f0',glow:1.0,win:0.7,cloud:0.0,mot:'#9fe8ff',
     expo:0.9,bloom:0.26,bT:0.74,gain:[0.95,1.0,1.07],lift:[0.02,0.03,0.05],sat:1.02,vig:0.36,hazeK:0.45} };
 let TODC=null, TODT=null, TODK=0, TODN='noon', TODP=null, TODPREV=null;
-function todVals(p){ return {expo:p.expo,bloom:p.bloom,bT:p.bT,sat:p.sat,vig:p.vig,hazeK:p.hazeK,gain:new THREE.Vector3(...p.gain),lift:new THREE.Vector3(...p.lift),top:col3(p.top),mid:col3(p.mid),hor:col3(p.hor),sunD:new THREE.Vector3(...p.sunD).normalize(),sunC:col3(p.sunC),sunI:p.sunI,hS:col3(p.hS),hG:col3(p.hG),hI:p.hI,fog:col3(p.fog),cL:col3(p.cL),cS:col3(p.cS),deep:col3(p.deep),shal:col3(p.shal),foam:col3(p.foam),glow:p.glow,win:p.win,cloud:p.cloud,mot:col3(p.mot)}; }
+function todVals(p){ const W=(typeof D!=='undefined'&&D&&D.white&&!p._cave)?D.white:0;   // 2026-11-21 白い村は明るく白っぽく(露出+・暖色をおさえる)
+  if(W){ p=Object.assign({},p,{expo:(p.expo||1)*1.12, gain:[p.gain[0]*0.98,p.gain[1]*1.0,p.gain[2]*1.04], sat:(p.sat||1)*0.94}); }
+  return {expo:p.expo,bloom:p.bloom,bT:p.bT,sat:p.sat,vig:p.vig,hazeK:p.hazeK,gain:new THREE.Vector3(...p.gain),lift:new THREE.Vector3(...p.lift),top:col3(p.top),mid:col3(p.mid),hor:col3(p.hor),sunD:new THREE.Vector3(...p.sunD).normalize(),sunC:col3(p.sunC),sunI:p.sunI,hS:col3(p.hS),hG:col3(p.hG),hI:p.hI,fog:col3(p.fog),cL:col3(p.cL),cS:col3(p.cS),deep:col3(p.deep),shal:col3(p.shal),foam:col3(p.foam),glow:p.glow,win:p.win,cloud:p.cloud,mot:col3(p.mot)}; }
 function setTime(n,instant){ if(!TOD[n]) return; TODN=n; const tv=todVals(TOD[n]); TODP=TOD[n]; if(instant||!TODC){ TODC=tv; TODT=null; applyTod(TODC); } else { TODT={from:TODC,to:tv,k:0}; }
   document.querySelectorAll('#tod button').forEach(b=>b.classList.toggle('sel',b.dataset.t===n)); }
 function mixTod(a,b,k){ const o={}; for(const key in a){ const A=a[key],B=b[key]; o[key]=typeof A==='number'?lerp(A,B,k):(A.isVector3?A.clone().lerp(B,k):A.clone().lerp(B,k)); } return o; }
@@ -2553,7 +2565,7 @@ function clearMap(){
   talkClose(); ENTER=null; enterEl.classList.remove('on'); AREA=''; }
 async function loadMap(id,at,pos){ const t0=performance.now();
   const nd=MAPC[id]||(MAPC[id]=await fetch('regions/'+id+'.json').then(r=>r.json()));
-  clearMap(); D=nd; MAP=id; CFG.loadR=D.loadR||52; CFG.unloadR=D.unloadR||76;
+  clearMap(); D=nd; MAP=id; CFG.loadR=D.loadR||52; CFG.unloadR=D.unloadR||76; U.uWhite.value=(D.white!=null?+D.white:(id==='oliva_town'?1:0)); if(typeof TODN!=='undefined'&&TOD[TODN]&&typeof setTime==='function') try{ setTime(TODN,true); }catch(e){}   // 2026-11-21 オーナー「オリーヴァ村がアニメの白い感じと全然違う」
   if(TESTMODE&&window.Progress&&Progress.state()){ const a=id.startsWith('cn_')?'china':id.startsWith('eg_')?'egypt':id.startsWith('nr_')?'norse':'greece'; if(Progress.arc()!==a) Progress.setArc(a); }   // 全部ためす: 編はマップから(開始の段・野生のレベルの既定)
   if(D.lv&&window.Progress) Progress.config.areas[id]=Object.assign({},Progress.config.areas[id]||{},{lv:D.lv},D.startStage?{startStage:D.startStage}:{});   // 野生のレベル帯はマップの lv(progress.js の config.areas)   // 読み込み半径はマップごと(アテネは見晴らしで遠くの神殿まで組み立てる)
   PATHS={un:D.paths.unpaved,town:D.paths.townPaved,stone:D.paths.stone.map(p=>prepPoly(p.p,p.w)),dirt:D.paths.dirt.map(p=>prepPoly(p.p,p.w)),sc:D.paths.stoneCircles,sr:D.paths.stoneRects,sa:D.paths.sandRects||null,rockAll:D.terrain.rockAll||0};
