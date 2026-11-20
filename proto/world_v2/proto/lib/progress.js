@@ -137,7 +137,7 @@ P.init=function(o){ o=o||{}; BASE=o.base||scriptBase(); if(o.arc) CFG.arc=o.arc;
       const pg=SAVE[CFG.sub]; if(!pg.lines) pg.lines={}; if(!pg.quests) pg.quests={}; if(!pg.log) pg.log=[]; if(!pg.partyMax) pg.partyMax=CFG.partyMax; if(!pg.arc) pg.arc=CFG.arc;
       pg.roster=pg.roster.filter(c=>mon(c.mid)); pg.party=pg.party.filter(u=>pg.roster.some(c=>c.uid===u));
       if(!pg.party.length&&pg.roster.length) pg.party.push(pg.roster[0].uid);
-      normalizeLearn(pg); legacySync(); emit('change',pg); return loadMoves().then(()=>P); });
+      normalizeLearn(pg); ancientSync(pg); legacySync(); emit('change',pg); return loadMoves().then(()=>P); });
   return ready; };
 // ---------------------------------------------------------------- 技(2026-10-27 Phase B): stats_v2.json の覚える技・moves.json。battle.js が読んでいればそれを使う
 let LS={}, MV={}, STV={};
@@ -164,7 +164,7 @@ function dropDom(list){ return list.filter((A,i)=>!list.some((B,j)=>domB(B,A)&&!
 function newMovesBetween(mid, a, b){ const L=LS[mid]||LS[String(mid)]; if(!L||L.fixed) return []; return learnAt(mid).filter(e=>(e.lv||1)>a && (e.lv||1)<=b).map(e=>MV[e.move]); }
 P.movesOf=(c)=>{ const f=formFor(c); return movesAt(f, c.lv); }; P.formFor=formFor; P.newMovesBetween=newMovesBetween;
 P.ready=()=>ready||Promise.reject(new Error('Progress.init を先に'));
-P.attachSave=function(sv, fn){ SAVE=sv; onSave=fn||onSave; migrateRetiredLine(SAVE); if(!SAVE[CFG.sub]) SAVE[CFG.sub]=migrate(SAVE); normalizeLearn(SAVE[CFG.sub]); legacySync(); emit('change',prog()); };
+P.attachSave=function(sv, fn){ SAVE=sv; onSave=fn||onSave; migrateRetiredLine(SAVE); if(!SAVE[CFG.sub]) SAVE[CFG.sub]=migrate(SAVE); normalizeLearn(SAVE[CFG.sub]); ancientSync(SAVE[CFG.sub]); legacySync(); emit('change',prog()); };
 
 // ---------------------------------------------------------------- 仲間・パーティ・牧場
 P.roster=()=>(prog()?prog().roster.slice():[]);
@@ -212,9 +212,14 @@ function caughtOf(o, p){ const pg=prog(), c=o.gave; const r={isNew:true, p, form
 P.learnBoss=function(lead){ const pg=prog(); const mid=+(lead&&lead.mid); const m=mon(mid); if(!pg||!m) return null; const fus=m.role==='fusion';
   if(fus?(pg.fusions&&pg.fusions[mid]):(P.knowsForm(mid)&&P.hasLine(mid))) return null;
   const p=CFG.bossLearn; if(!(Math.random()<p)) return {isNew:false, miss:true, p, tag:'覚えられなかった'};
-  if(fus){ pg.fusions=pg.fusions||{}; pg.fusions[mid]=1; return {isNew:true, p, fusion:mid, tag:'融合の仕方を覚えた：'+nameOf(mid)}; }
+  if(fus){ pg.fusions=pg.fusions||{}; pg.fusions[mid]=1; const c=ancientAlly(pg,mid,lead.lv); return {isNew:true, p, fusion:mid, card:c, tag:nameOf(mid)+'が仲間になった！'}; }
   return caughtOf(obtain(mid, lead.lv||1, 'boss'), p); };
 P.recruitBoss=P.learnBoss;   // 前の名前
+// 2026-11-21 オーナー「ミノタスは倒しても仲間にならんかった」: 倒した古代テリオン(融合)はその姿のまま仲間に入る(パーティに空きがあれば連れていく・なければほかの仲間)。前のセーブで覚えていた古代も入れる
+function ancientAlly(pg,mid,lv){ if(!pg||!ANCIENT_FUSIONS.includes(+mid)) return null; if(pg.roster.some(c=>+c.mid===+mid)) return null;
+  const top=Math.max(1,...pg.roster.map(c=>+c.lv||1)); const c={uid:uid(), mid:+mid, lv:Math.max(+lv||1, top), exp:0, src:'ancient', t:Date.now()}; pg.roster.push(c);
+  if(pg.party.length<(pg.partyMax||CFG.partyMax)) pg.party.push(c.uid); return c; }
+function ancientSync(pg){ if(!pg||!pg.fusions) return; for(const k in pg.fusions) if(ANCIENT_FUSIONS.includes(+k)) ancientAlly(pg,+k,1); }
 P.bossDone=(mid)=>{ const m=mon(mid); if(!m) return true; return m.role==='fusion'?!!(prog()&&prog().fusions&&prog().fusions[+mid]):(P.knowsForm(mid)&&P.hasLine(mid)); };   // 覚えた(もう再戦しなくてよい)
 // 古いセーブ: 2段目・3段目の子 → その進化の仕方を覚える＋その系統の子は1体(1段目・いちばん高いLv)に。融合体の子 → 融合の仕方
 function normalizeLearn(pg){ if(!pg||pg.learnV>=1) return; const F={}; for(const k in (pg.forms||{})){ const m=mon(+k); if(m&&m.role!=='fusion'&&stageOf(+k)>=2) F[+k]=1; } pg.forms=F; pg.fusions=pg.fusions||{};
