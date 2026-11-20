@@ -148,15 +148,21 @@ const LIGHT_HEAL_FRAC = 0.30;   // (旧)回復＝対象の最大HPの30%
 const INSECT = new Set();   // v3: monsters.json の archetype '蟲型' の子(setMonsters で埋める)
 const DIG_TURNS = 2;
 // 2026-11-20 オーナー「クワダチか誰かが水なのに地中に潜ってた」「水タイプも水中に潜ると陸から攻撃当たらんようにして欲しい。ただし、カミナリだけは効くように」:
-//  水辺・海のマスでは地中に潜れない。水の子は水辺・海のマスで「潜水」(DIG_TURNS ターン・u.dive)。潜った子には陸からの攻撃は当たらず、雷の技と 水の中にいる水の子の攻撃だけ当たる。潜っている間は水のマスだけ動ける
+//  水辺・海のマスでは地中に潜れない。水の子は水辺・海のマスで「潜水」(DIG_TURNS ターン・u.dive)。潜った子には陸からの攻撃は当たらず、雷の技と 水の中にいる水の子の攻撃だけ当たる。水の外へ出たら見つかる(森・闇も同じ: HIDE_T)
 const WET_T={water:1, sea:1};
+// 2026-11-20 オーナー「森タイプは森の中で、闇タイプは闇のなかで同じように１ターン隠れられるように」「そのエリアからでたらバレるように」:
+//  かくれる決まり(タイプ→その地形・何ターン・それでも当たる技のタイプ)。かくれた子(u.dug>0 && u.hideK)はその地形の外へ出たら見つかる(すぐ出てくる)
+const HIDE_T={ 水:{terr:WET_T, turns:2, hit:'雷', nm:'潜水', c:'#6ec8ff'}, 森:{terr:{forest:1}, turns:1, hit:'炎', nm:'森にかくれる', c:'#7ed07e'}, 闇:{terr:{gloom:1}, dark:1, turns:1, hit:'光', nm:'闇にかくれる', c:'#b88cff'} };
+function hideCell(k,r,c){ const H=HIDE_T[k]; if(!H||!state||!state.terrain) return false; try{ if(H.terr[state.terrain[r][c]]) return true; if(H.dark&&BT.darkB&&!darkLit(r,c)) return true; }catch(e){} return false; }
+function hideKind(u){ if(!u) return null; for(const k in HIDE_T) if(uHasType(u,k)&&hideCell(k,u.r,u.c)) return k; return null; }
 function onWet(u){ try{ return !!(u && state && state.terrain && WET_T[state.terrain[u.r][u.c]]); }catch(e){ return false; } }
-function canDive(u){ return !!u && uHasType(u,'水') && onWet(u) && !(u.dug>0) && !u.acted && !u.wait && !u.anc; }
-function hidFrom(t, att, mv){ if(!(t&&t.dug>0)) return false; if(!t.dive) return true;
-  const tys=mv?mvTypes(mv):(att?monTypes(mon(att)):[]); if(tys.includes('雷')) return false;
-  if(att && uHasType(att,'水') && onWet(att)) return false; return true; }
-function doDive(u){ if(!canDive(u)) return; u.dug=DIG_TURNS; u.dive=true; u.acted=true; healFx(u.r,u.c); floatText(u.r,u.c,'潜水！','#6ec8ff');
-  toast(`${mon(u).name}が水の中へ！ ${DIG_TURNS}ターン 陸からの攻撃は当たらない(雷は当たる)`); syncUnits(); afterAction(); }            // 地タイプ「潜行」：2ターン地中(無敵/攻撃不可)→自動浮上
+function canDive(u){ return !!u && !!hideKind(u) && !(u.dug>0) && !u.acted && !u.wait && !u.anc; }
+function hidFrom(t, att, mv){ if(!(t&&t.dug>0)) return false; const H=HIDE_T[t.hideK]; if(!H) return true;
+  const tys=mv?mvTypes(mv):(att?monTypes(mon(att)):[]); if(tys.includes(H.hit)) return false;
+  if(att && uHasType(att,t.hideK) && hideCell(t.hideK,att.r,att.c)) return false; return true; }   // 同じ地形の中の同じタイプには見える
+function hideOut(u){ if(u&&u.dug>0&&u.hideK&&!hideCell(u.hideK,u.r,u.c)){ u._hk=u.hideK; u.dug=0; const H=HIDE_T[u.hideK]; u.hideK=null; floatText(u.r,u.c,'見つかった！','#ffd24a'); if(!BT.headless) toast(`${mon(u).name}が${u._hk==='水'?'水':u._hk==='森'?'森':'闇'}から出て、見つかった！`); } }
+function doDive(u){ const k=hideKind(u); if(!k||!canDive(u)) return; const H=HIDE_T[k]; u.dug=H.turns; u.hideK=k; u.acted=true; healFx(u.r,u.c); floatText(u.r,u.c,H.nm+'！',H.c);
+  toast(`${mon(u).name}が${H.nm}！ ${H.turns}ターン ${H.hit}の技しか当たらない(外へ出たら見つかる)`); syncUnits(); afterAction(); }
 const LIGHT_HEAL_RANGE = 4;     // 光の回復魔法の射程
 const LIGHT_HEAL_ALL = 400;     // 全体回復＝射程内の味方全員をHP+400(固定)
 const LIGHT_HEAL_ONE = 600;     // 単体回復＝最も傷ついた味方1体をHP+600(固定)
@@ -789,8 +795,7 @@ function moveTargets(u){
     for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){
       const rr=r+dr, cc=c+dc; if(rr<0||cc<0||rr>=NR||cc>=NC)continue;
       const k=rr+','+cc; if(k===start) continue;
-      if(u.dug>0 && !u.dive && (state.terrain[rr][cc]==='sea'||state.terrain[rr][cc]==='lava')) continue;   // 潜行中は海・溶岩を潜って越えられない
-      if(u.dug>0 && u.dive && !WET_T[state.terrain[rr][cc]]) continue;   // 潜水中は水のマスだけ
+      if(u.dug>0 && !u.hideK && (state.terrain[rr][cc]==='sea'||state.terrain[rr][cc]==='lava')) continue;   // 潜行中は海・溶岩を潜って越えられない
       const nd=d+moveCost(u,rr,cc); if(nd>maxd) continue;
       if(state.sp && spBlk(rr,cc)) continue;   // 2026-10-31 専用の盤: 守る相手・壁のマス
       const occ=unitAt(rr,cc);
@@ -1281,7 +1286,7 @@ function moveUnit(u, r, c, pref){   // pref: 'triple'|'pair'|undefined(=プレ�
     if(t3 && pref!=='pair' && (pref==='triple' || fusionResult(u,occ)==null || u.owner!==0 || BT.auto)){ tryTriple(u,occ,t3.c,r,c); return; }
     tryFusion(u,occ,r,c); return; }
   const fr=u.r, fc=u.c;
-  state.board[u.r][u.c]=null; u.r=r; u.c=c; state.board[r][c]=u.uid; u.moved=true;
+  state.board[u.r][u.c]=null; u.r=r; u.c=c; state.board[r][c]=u.uid; u.moved=true; hideOut(u);   // 2026-11-20 かくれた地形の外へ出たら見つかる
   zoneEvolve(u, fr, fc);   // 2026-10-29: 進化のマスに入ったら必ず進化
   if(u.away>0 && u.acted){ u.away=0; }   // 下がったら終わり
   if(T3()){ if(hasType(mon(u),'風') && chargeSteps(u)>=TACT.charge.min) u.blur=(state.ht||0)+2; }   // 戦術v3: 風は動くとよけやすい
@@ -1441,7 +1446,7 @@ function startTurn(side){
   repairBoard();   // ターン開始ごとに盤を健全化(重なり/ゴースト/盤外を修復)
   state.cur=side; state.ht=(state.ht||0)+1;   // 技 v2: 半ターンの数(強化・弱体が切れる時)
   for(const u of alive(side)){ u.moved=false; u.acted=false; if(u.ancTired) u.ancTired=false;   // 古代テリオンの「隙」は自分の手番の始めまで
-    if(u.dug>0){ u.dug--; if(u.dug<=0){ u.dive=false; floatText(u.r,u.c,IC('dig')+'浮上','#e0c060'); } else { floatText(u.r,u.c,`${IC('dig')}潜行(残${u.dug})`,'#c9a24a'); } }
+    if(u.dug>0){ u.dug--; if(u.dug<=0){ u.hideK=null; floatText(u.r,u.c,IC('dig')+'浮上','#e0c060'); } else { floatText(u.r,u.c,`${IC('dig')}潜行(残${u.dug})`,'#c9a24a'); } }
   }
   for(const u of alive(side).slice()){ applyStatusTick(u); }   // 状態異常の解決（撃破あり得る）
   if(state.sp) spTurnStart(side);   // 2026-10-31 専用の盤(水が上がる)
@@ -1565,7 +1570,7 @@ function spdAct(u){ const S=state.spd;
   S.cur=u.uid; S.n++; state.cur=u.owner;
   if(u.owner===0 && !BT.headless){ const d=$id('ovDetail'); if(d) d.style.display='none'; }
   u.wait=false; u.moved=false; u.acted=false; if(u.ancTired) u.ancTired=false;
-  if(u.dug>0){ u.dug--; if(u.dug<=0){ u.dive=false; floatText(u.r,u.c,IC('dig')+'浮上','#e0c060'); } else { floatText(u.r,u.c,`${IC('dig')}潜行(残${u.dug})`,'#c9a24a'); } }
+  if(u.dug>0){ u.dug--; if(u.dug<=0){ u.hideK=null; floatText(u.r,u.c,IC('dig')+'浮上','#e0c060'); } else { floatText(u.r,u.c,`${IC('dig')}潜行(残${u.dug})`,'#c9a24a'); } }
   applyStatusTick(u);
   if(!state.units[u.uid]){ syncUnits(); if(checkWin()) return; spdNext(); return; }   // 毒・やけどで倒れた
   if(T3()){ u.sr=u.r; u.sc=u.c; u.away=0; }
@@ -1783,7 +1788,7 @@ function aiOneUnit(u){
   if(fz){ moveUnit(u,fz[0],fz[1]); const nu=unitAt(fz[0],fz[1]); if(nu && nu.owner===me && state.phase!=='end') aiStrike(nu); return; }
   // 光タイプ：手負いの味方がいれば回復、状態異常の味方がいれば浄化を優先
   if(V2ON()){ if(aiSupportV2(u)) return; }   // 技 v2: 回復・浄化・蘇生の技
-  if(V2ON() && canDive(u) && u.hp<u.maxhp*0.45 && alive(1-u.owner).length && !alive(1-u.owner).some(e=>uHasType(e,'雷'))){ u.dug=DIG_TURNS; u.dive=true; u.acted=true; floatText(u.r,u.c,'潜水！','#6ec8ff'); syncUnits(); return; }   // 2026-11-20 CPU の水の子も弱ったら水中へ(相手に雷がいなければ)
+  { const hk=V2ON()&&canDive(u)?hideKind(u):null; if(hk && u.hp<u.maxhp*0.45 && alive(1-u.owner).length && !alive(1-u.owner).some(e=>uHasType(e,HIDE_T[hk].hit))){ const H=HIDE_T[hk]; u.dug=H.turns; u.hideK=hk; u.acted=true; floatText(u.r,u.c,H.nm+'！',H.c); syncUnits(); return; } }   // 2026-11-20 CPU の水の子も弱ったら水中へ(相手に雷がいなければ)
   if(V2ON()) aiDigV2(u);   // 2026-10-30 オーナー: CPU も地に潜る(潜っても行動は終わらない=このあと地中を動く)
   else if(uHasType(u,'光') && canAttack(u)){
     const wounded=healTargets(u).filter(a=>a.hp<a.maxhp*0.55);
@@ -5058,7 +5063,7 @@ function updateUI(){ if(BT.headless) return;
       const outMP = !noMP(sel) && !sel.acted && !canAtkMP(sel);   // 攻撃MP切れ
       if(V2ON()){ const anyOk=!sel.acted && !(sel.dug>0) && movesV2(sel).some(mv=>moveReady(sel,mv));
         ac.appendChild(mkbt(`${IC('atk')}技${sel.acted?'(済)':''}`,'go', !!anyOk, ()=>setMode('attack')));
-        if(uHasType(sel,'水') && onWet(sel) && !(sel.dug>0) && !sel.acted && sel.owner===0) ac.appendChild(mkbt(`${IC('dig')}潜水(${DIG_TURNS}T・雷だけ当たる)`,'evo', canDive(sel), ()=>{ pushUndo(); doDive(sel); reselectAfter(); })); }
+        { const hk=hideKind(sel); if(hk && !(sel.dug>0) && !sel.acted && sel.owner===0){ const H=HIDE_T[hk]; ac.appendChild(mkbt(`${IC('dig')}${H.nm}(${H.turns}T・${H.hit}だけ当たる)`,'evo', canDive(sel), ()=>{ pushUndo(); doDive(sel); reselectAfter(); })); } } }
       else ac.appendChild(mkbt(`${IC('atk')}攻撃${sel.acted?'(済)':(outMP?'(MP切れ)':(noMP(sel)?'':`(残${atkLeft(sel)})`))}`,'go', !!atkOk, ()=>setMode('attack')));
       comboButtons(ac);   // 戦術v3: シリーズの合体攻撃
       // 合体攻撃: 対象トリオが近くに揃っていれば発動可
@@ -6785,7 +6790,7 @@ const API={ init, startBattle, simulate, _fxFalcon:(a,b)=>fxFalcon(a,b), TACT, P
   get MID(){ return MID; }, get MONSTERS(){ return MONSTERS; }, baseFormId:(m)=>baseFormId(m), lineOf:(m)=>lineUpIds(m),
   setAuto(v){ if(v===2||v==='fast'){ BT.fastPref=true; setAutoMode(2); } else if(!!v!==BT.auto) toggleAuto(); return BT.auto; },
   // 確認用(test.html・puppeteer)
-  _dbg:{ get state(){ return state; }, dive(u){ return {can:canDive(u), wet:onWet(u)}; }, doDive(u){ doDive(u); }, tg(u){ return attackTargetsV2(u,null).map(e=>e.uid); }, hid(t,a){ return hidFrom(t,a,null); }, cond(u){ return condHtml(u); }, detail(u){ showMonsterDetail(u.mid,u); }, sync(){ syncUnits(); updateUI(); }, busy(){ try{ return !!(animBusy()||(_seq&&!_seq.done)); }catch(e){ return false; } },   // 2026-11-06 演出・技の帯・ダメージの数字が出ている間(物語の勝負の中の吹き出しを待たせる)
+  _dbg:{ get state(){ return state; }, dive(u){ return {can:canDive(u), wet:onWet(u)}; }, mvTo(u,r,c){ moveUnit(u,r,c); }, doDive(u){ doDive(u); }, tg(u){ return attackTargetsV2(u,null).map(e=>e.uid); }, hid(t,a){ return hidFrom(t,a,null); }, cond(u){ return condHtml(u); }, detail(u){ showMonsterDetail(u.mid,u); }, sync(){ syncUnits(); updateUI(); }, busy(){ try{ return !!(animBusy()||(_seq&&!_seq.done)); }catch(e){ return false; } },   // 2026-11-06 演出・技の帯・ダメージの数字が出ている間(物語の勝負の中の吹き出しを待たせる)
     cam(){ return {uz:CAMV.uz, z:CAMV.cZ, x:CAMV.cx, zz:CAMV.cz, show:CAMV.showZ, ptrs:CAMV.ptrs.size, dragged:CAMV.dragged, pick:pickEnabled}; }, camAll(){ camAll(); }, camZoom(z){ CAMV.uz=z; CAMV.cZ=z; camBtnSync(); },   // 2026-10-30 確認用: 寄りのカメラ
     unitPx(uid){ const s=sprites[uid]; if(!s||!camera) return null; const rc=renderer.domElement.getBoundingClientRect(); const h=(s.m3d&&s.m3d.h)||s.sc||1; const p=s.grp.position; const a=new THREE.Vector3(p.x,p.y,p.z).project(camera), b=new THREE.Vector3(p.x,p.y+h,p.z).project(camera); const c=new THREE.Vector3(p.x+1,p.y,p.z).project(camera); return {w:Math.round((c.x-a.x)*rc.width/2), h:Math.round((b.y-a.y)*rc.height/2), x:Math.round((a.x*0.5+0.5)*rc.width), y:Math.round((-a.y*0.5+0.5)*rc.height)}; }, clear(){ clearSel(); }, tagURL(t,k){ const tx=tagTex(t,k); return tx.image.toDataURL(); },
     cellPx(r,c){ if(!renderer||!camera) return null; const w=cell2world(r,c); const v=new THREE.Vector3(w.x, cellH(r,c)+0.05, w.z).project(camera); const rc=renderer.domElement.getBoundingClientRect(); return [rc.left+(v.x+1)/2*rc.width, rc.top+(-v.y+1)/2*rc.height]; },
