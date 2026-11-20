@@ -4018,7 +4018,8 @@ function grFightOpt(opt,F){ const lv=F.lv; if(!opt.player) opt.player={}; let pa
   else { opt.kind='trainer'; opt.size=9; const ai=Object.assign({},F.ai||{}); if(ai.evo==null&&(+F._ep||0)<GR_FOE4_EP) ai.evo=1; /* 2026-11-20 人の敵の進化は3回までにしたが、12話まで(序盤〜決勝)の物語の勝負は今までどおり1回 */ ai.hpX=(ai.hpX||1)*adj; ai.atkX=(ai.atkX||1)*adj; opt.enemy={name:F.foe.n, party:F.foe.party.map(x=>Object.assign({lv},x)).concat(grFoeHelpers(foeAdd,lv,F._ep)), ai}; opt.recruit=()=>null; } }
 const GR_FOE4_EP=13;
 // 2026-11-21 オーナー「ダークレオンも追加したから、どっかで覚える感じに」: その話の勝負に勝ったら覚える融合(名前で引く・データが入るまでは何もしない)。16話=保管庫で闇のボロウルと戦ったあと(闇は後半)
-const GR_LEARN_FUSE={16:[1002,1063], 18:[71,1063], 20:[1012,1063]};   // 親の組で引く: 16話=ダークレオン(フォルコン＋ヨルフク・ヤマト)・18話=ピリムサ＋ヨルフク(エリーがもどった話)・20話=クロベク＋ヨルフク(アレクの話)。闇は後半から
+const GR_LEARN_FUSE={16:[1002,1063]};   // 16話=ダークレオン(フォルコン＋ヨルフク・ヤマト)。ピリムサ＋ヨルフク(エリー)・クロベク＋ヨルフク(アレク)は「主人公をエリー/アレクに選べる版」用に取っておく(GR_LEARN_FUSE_ALT・今は使わない 2026-11-21 オーナー)
+const GR_LEARN_FUSE_ALT={elly:{18:[71,1063]}, alek:{20:[1012,1063]}};
 let MFUSE={}; MONS_P.then(()=>fetch('../battle/data/monsters.json?v=20261121').then(r=>r.json())).then(a=>{ for(const m of a) if(m.role==='fusion'&&Array.isArray(m.fusion_from)&&m.fusion_from.length===2) MFUSE[m.fusion_from.slice().sort().join(',')]=m.id; }).catch(()=>{});
 window._grLearnId=(v)=>grLearnId(v); window._mfuse=()=>MFUSE;
 function grLearnId(v){ if(typeof v==='string') return +Object.keys(MNAME).find(k=>MNAME[k]===v)||0; return MFUSE[v.slice().sort().join(',')]||0; }
