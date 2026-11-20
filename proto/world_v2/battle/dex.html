@@ -43,7 +43,7 @@ function render(){
   if(F.arc==='all'){   // 全部: 編で分けず、monsters.json の順に1本で
     const ls=lines.filter(ch=>okT(DX.M[ch[0]])); const fs=DX.fusions.filter(f=>okT(DX.M[f.id]));
     if(ls.length){ h+=`<section data-sec="lines"><h2><img src="img/ui/evolve.webp" alt="">系統<span class="n">${ls.length}系統</span></h2>`+ls.map(ch=>lineRow(ch,true)).join('')+'</section>'; }
-    if(fs.length){ h+=`<section data-sec="fusion"><h2><img src="img/ui/fuse.webp" alt="">融合・いにしえ<span class="n">${fs.length}</span></h2><div class="grid">`+fs.map(f=>DX.card(f.id)).join('')+'</div></section>'; }
+    if(fs.length){ h+=`<section data-sec="fusion"><h2><img src="img/ui/fuse.webp" alt="">融合<span class="n">${fs.length}</span></h2><div class="grid">`+fs.map(f=>DX.card(f.id)).join('')+'</div></section>'; }
     if(elders.length){ h+=`<section data-sec="elder"><h2><img src="img/ui/evolve.webp" alt="">古の個体<span class="n">${elders.length}</span></h2><div class="grid">`+elders.map(id=>DX.card(id)).join('')+'</div></section>'; }
   }
   else for(const a of [F.arc]){
@@ -52,7 +52,7 @@ function render(){
     if(!ls.length && !fs.length) continue;
     h+=`<section data-sec="${a}"><h2><img src="img/ui/evolve.webp" alt="">${DX.ARC_JP[a]}<span class="n">${ls.length}系統${fs.length?'・融合'+fs.length:''}</span></h2>`;
     for(const ch of ls) h+=lineRow(ch,false);
-    if(fs.length){ h+=`<div class="lnh"><img class="ic" src="img/ui/fuse.webp" alt="">融合・いにしえ</div><div class="grid">`+fs.map(f=>DX.card(f.id)).join('')+'</div>'; }
+    if(fs.length){ h+=`<div class="lnh"><img class="ic" src="img/ui/fuse.webp" alt="">融合</div><div class="grid">`+fs.map(f=>DX.card(f.id)).join('')+'</div>'; }
     h+='</section>';
   }
   document.getElementById('main').innerHTML=h||'<div class="empty">0</div>';
