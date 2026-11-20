@@ -5984,6 +5984,94 @@
      "ロア"
     ]
    ]
+  },
+  "fsig_2080": {
+   "name": "闇炎月翼",
+   "type": "炎",
+   "type2": "闇",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 139,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": "stage",
+    "ail2": "poison",
+    "knock": 1
+   },
+   "desc": "月夜の翼で闇炎を巻き起こす",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ダークフレア"
+  },
+  "fsig_2081": {
+   "name": "月夜雷翼",
+   "type": "雷",
+   "type2": "闇",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 139,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "para",
+    "chance": "stage",
+    "ail2": "poison",
+    "knock": 1
+   },
+   "desc": "月夜の大翼から雷を降らせる",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ムーンボルト"
+  },
+  "fsig_2082": {
+   "name": "月潮大顎",
+   "type": "水",
+   "type2": "闇",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 139,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "poison",
+    "chance": "stage",
+    "knock": 1,
+    "debuff": {
+     "stat": "mob",
+     "add": -1,
+     "turns": 2
+    }
+   },
+   "desc": "月光の潮と大顎で敵をのみこむ",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "ナイトタイド"
   }
  }
 }

@@ -6524,6 +6524,102 @@
    "fixed": true,
    "note_1120": "2026-11-20 オーナー指示の新しい融合(フォルコン＋ラプント)。数は消したヒョウエンコ(2026)の写し",
    "note_1121": "2026-11-21 写しをやめ、重い炎のティラノに(体力・攻撃・守り高め・遅い)"
+  },
+  "2080": {
+   "name": "ダークレオン",
+   "type": "炎",
+   "type2": "闇",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1340,
+   "atk": 185,
+   "def": 44,
+   "mob": 3,
+   "spd": 62,
+   "red": 0.329,
+   "src_hp": 1400,
+   "src_atk": 168,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "fire_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2080",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2081": {
+   "name": "ヨルカミ",
+   "type": "雷",
+   "type2": "闇",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1390,
+   "atk": 182,
+   "def": 44,
+   "mob": 3,
+   "spd": 64,
+   "red": 0.329,
+   "src_hp": 1450,
+   "src_atk": 172,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "thunder_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2081",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  },
+  "2082": {
+   "name": "クロコアウル",
+   "type": "水",
+   "type2": "闇",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1660,
+   "atk": 158,
+   "def": 58,
+   "mob": 3,
+   "spd": 48,
+   "red": 0.367,
+   "src_hp": 1640,
+   "src_atk": 158,
+   "src_move": 3,
+   "learnset": [
+    {
+     "move": "water_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dark_ring",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2082",
+     "lv": 1
+    }
+   ],
+   "fixed": true
   }
  }
 }
