@@ -5946,6 +5946,44 @@
      "ファング"
     ]
    ]
+  },
+  "fsig_2072": {
+   "name": "雷炎咆哮",
+   "type": "炎",
+   "type2": "雷",
+   "category": "attack",
+   "role": "sig_fusion",
+   "rank": null,
+   "target": "area",
+   "range": [
+    1,
+    2
+   ],
+   "p": true,
+   "mp": 3,
+   "power": 139,
+   "hit": 100,
+   "crit": 10,
+   "effect": {
+    "ail": "burn",
+    "chance": "stage",
+    "ail2": "para",
+    "knock": 1
+   },
+   "desc": "炎と雷のたてがみの獅子が、ほえ声といっしょに雷の火をたたきつける",
+   "range_class": "mid",
+   "cost": "few",
+   "yomi": "サンダーロア",
+   "ruby": [
+    [
+     "雷炎",
+     "サンダー"
+    ],
+    [
+     "咆哮",
+     "ロア"
+    ]
+   ]
   }
  }
 }

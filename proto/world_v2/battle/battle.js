@@ -6024,7 +6024,7 @@ function init(o){
     try{ applySeries(rd(CFG.series)); }catch(e){ applySeries(null); }   // 戦術v3: シリーズと合体攻撃
     return (_loadP=Promise.resolve(true)); }
   const gj=(f)=>fetch(CFG.base+f).then(r=>{ if(!r.ok) throw new Error(f+' '+r.status); return r.json(); });
-  _loadP=gj(CFG.data+'?v=20261120c').then(list=>{ setMonsters(list); return Promise.all([gj(CFG.stats+'?v=20261120c'),gj(CFG.moves+'?v=20261120c')]).then(([st,mv])=>applyV2Data(st,mv)).catch(e=>{ console.warn('技 v2 のデータが読めない',e); V2DATA=false; }); })
+  _loadP=gj(CFG.data+'?v=20261121a').then(list=>{ setMonsters(list); return Promise.all([gj(CFG.stats+'?v=20261121a'),gj(CFG.moves+'?v=20261121a')]).then(([st,mv])=>applyV2Data(st,mv)).catch(e=>{ console.warn('技 v2 のデータが読めない',e); V2DATA=false; }); })
     .then(()=>gj(CFG.series).then(applySeries).catch(e=>{ console.warn('シリーズの表が読めない',e); applySeries(null); }))   // 戦術v3
     .then(()=>true);   // 2026-10-27 技 v2
   return _loadP;

@@ -2355,7 +2355,7 @@ async function startEncounter(e){ ENC=e; BGM.bt=bgmBattleTrack(e); BGM.res=false
   if(e.n){ HERO.yaw=Math.atan2(e.n.x-HERO.x,e.n.z-HERO.z); e.n.yaw=Math.atan2(HERO.x-e.n.x,HERO.z-e.n.z); talkTo(e.n,e.n.o.n+'が勝負をしかけてきた！'); { const sc0=grTrainerScene(e.n); if(sc0&&SC[sc0]&&!(SAVE&&SAVE.flags['seen_'+sc0])){ await sleep(500); bangEl.style.display='none'; talkClose(); await grScene(sc0,e.n); if(SAVE) SAVE.flags['seen_'+sc0]=1; } } }
   if(e.m) toast(e.m.o.ancient?'古代テリオン・'+monName(e.m.o.id)+'が、こちらを見た！':(e.m.o.boss?monName(e.m.o.id)+'が、嵐の中から現れた！':'野生の'+monName(e.m.o.id)+'が飛び出してきた！'));
   if(e.m&&e.m.o.scene&&SC[e.m.o.scene]&&!(SAVE&&SAVE.flags['seen_'+e.m.o.scene])){ await sleep(500); bangEl.style.display='none'; await storyField(e.m.o.scene); if(SAVE) SAVE.flags['seen_'+e.m.o.scene]=1; }   // 古代テリオン(守り)・ボスに会う場面
-  const load=window.startBattle?Promise.resolve():loadScript('../battle/battle.js?v=20261121b');
+  const load=window.startBattle?Promise.resolve():loadScript('../battle/battle.js?v=20261121c');
   await new Promise(r=>setTimeout(r,e.n?1300:700)); bangEl.style.display='none'; talkClose();
   flashEl.style.opacity=1; await load; await new Promise(r=>setTimeout(r,350));
   PAUSED=true; flashEl.style.opacity=0; const place=placeAt(HERO.x,HERO.z); STATS.battles=(STATS.battles||0)+1;
@@ -2604,7 +2604,7 @@ const BRIEF_NO={};   // 野生のいない土地(村)
 const briefRegion=id=>MAPC[id]?Promise.resolve(MAPC[id]):fetch('regions/'+id+'.json').then(r=>r.json()).then(j=>(MAPC[id]=j));
 const briefHas=R=>!!(R&&(R.wild||[]).some(w=>!w.ancient&&!w.boss));
 const briefArc=id=>id.startsWith('cn_')?'china':id.startsWith('eg_')?'egypt':id.startsWith('nr_')?'norse':'greece';
-async function briefLib(){ if(!window.MonBattle) await loadScript('../battle/battle.js?v=20261121b'); await MONS_P; return window.MonBattle; }
+async function briefLib(){ if(!window.MonBattle) await loadScript('../battle/battle.js?v=20261121c'); await MONS_P; return window.MonBattle; }
 const BRIEF_TK=['plain','forest','wasteland','sea','water','ruins','lava','snow','gloom'];
 function briefBoards(R){ const B=R.battle, out=[]; const add=(tt,a)=>{ if(!tt||typeof tt!=='string') return; let o=out.find(x=>x.tt===tt); if(!o){ o={tt,areas:[]}; out.push(o); } if(a&&!o.areas.includes(a)) o.areas.push(a); };
   if(!B){ add('meadow'); add('olive'); if(R.terrain&&(R.terrain.streams||[]).length) add('stream','川ぞい'); if(R.terrain&&(R.terrain.coast||[]).length) add('seaside','海ぞい'); return out; }   // 盤の指定が無いマップ(オリーブの丘)は placeAt と同じ(草原・オリーブ畑・小川・海辺)
@@ -2779,7 +2779,7 @@ async function progInit(){ if(!window.Progress) return;
   else { await PROG; Progress.attachSave(SAVE,saveGame); hudRefresh(); } }
 document.getElementById('btMenu').addEventListener('click',async()=>{ if(!canSave()) return; try{ await briefLib(); }catch(_){} if(!canSave()) return; Progress.ui.open('menu',{canSwap:TESTMODE||inTown(HERO.x,HERO.z)}); });   // メニュー(パーティ・牧場・ずかん・もちもの 2026-10-27)。入れかえは今までどおり街(静域)の中だけ・地形の表を出すため battle.js を先に読む
 const MONN={1001:'フォルン',70:'ピリポン',1011:'クロッコ'};   // 御三家(2026-10-28 決定54: ヤマト=フォルン・エリー=ピリポン・アレク=クロッコ)
-let MNAME={}, MEVO={}, MMODEL={}, MTYPE={}, MLV={}; const MONS_P=fetch('../battle/data/monsters.json?v=20261120').then(r=>r.json()).then(a=>{ for(const m of a){ MNAME[m.id]=m.name; MTYPE[m.id]=[m.type,m.type2]; MEVO[m.id]=m.evolves_to; MMODEL[m.id]=m.model3d!==false; MLV[m.id]=m.level; } }).catch(()=>{});
+let MNAME={}, MEVO={}, MMODEL={}, MTYPE={}, MLV={}; const MONS_P=fetch('../battle/data/monsters.json?v=20261121b').then(r=>r.json()).then(a=>{ for(const m of a){ MNAME[m.id]=m.name; MTYPE[m.id]=[m.type,m.type2]; MEVO[m.id]=m.evolves_to; MMODEL[m.id]=m.model3d!==false; MLV[m.id]=m.level; } }).catch(()=>{});
 // 持っている種類(owned): 仲間にした子は、その系統(次の段・その次の段)を全部持っている扱い(game_design 9-2)。バトルでの進化の判定に渡す
 // 解禁(SAVE.unlock): 序盤は進化も融合も未解禁(相性と地形の時期)。進化の解禁後は、仲間の系統(進化先)も持っている扱い。融合は物語の後半で解禁
 function unlocks(){ const u=(SAVE&&SAVE.unlock)||{}; return {evo:!!u.evo,fusion:!!u.fusion,triple:!!u.triple}; }
@@ -4020,7 +4020,7 @@ const GR_FOE4_EP=13;
 // 2026-11-21 オーナー「ダークレオンも追加したから、どっかで覚える感じに」: その話の勝負に勝ったら覚える融合(名前で引く・データが入るまでは何もしない)。16話=保管庫で闇のボロウルと戦ったあと(闇は後半)
 const GR_LEARN_FUSE={16:[1002,1063]};   // 16話=ダークレオン(フォルコン＋ヨルフク・ヤマト)。ピリムサ＋ヨルフク(エリー)・クロベク＋ヨルフク(アレク)は「主人公をエリー/アレクに選べる版」用に取っておく(GR_LEARN_FUSE_ALT・今は使わない 2026-11-21 オーナー)
 const GR_LEARN_FUSE_ALT={elly:{18:[71,1063]}, alek:{20:[1012,1063]}};
-let MFUSE={}; MONS_P.then(()=>fetch('../battle/data/monsters.json?v=20261121').then(r=>r.json())).then(a=>{ for(const m of a) if(m.role==='fusion'&&Array.isArray(m.fusion_from)&&m.fusion_from.length===2) MFUSE[m.fusion_from.slice().sort().join(',')]=m.id; }).catch(()=>{});
+let MFUSE={}; MONS_P.then(()=>fetch('../battle/data/monsters.json?v=20261121b').then(r=>r.json())).then(a=>{ for(const m of a) if(m.role==='fusion'&&Array.isArray(m.fusion_from)&&m.fusion_from.length===2) MFUSE[m.fusion_from.slice().sort().join(',')]=m.id; }).catch(()=>{});
 window._grLearnId=(v)=>grLearnId(v); window._mfuse=()=>MFUSE;
 function grLearnId(v){ if(typeof v==='string') return +Object.keys(MNAME).find(k=>MNAME[k]===v)||0; return MFUSE[v.slice().sort().join(',')]||0; }
 // 2026-11-20 オーナー「全然決めた通りのボス戦じゃなかった。アニメのシナリオと違う」: 台本(バトル_第NN話.md の「双方の手持ち」)どおりの段取り。battle.js の opts.script
