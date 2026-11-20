@@ -35,8 +35,8 @@ const CFG={
 // 編ごとの野生の系統(1段目のid)。テリオン_編ごとの表.md より。相棒3系統(1001/178/1022)は「生み出す」に入れない・融合といにしえは入れない
 const ARC_ORDER=['greece','china','egypt','norse'];
 const ARC_POOL={
-  greece:[1007,1026,1030,1033,166,1053,1062,1065],
-  china:[1014,1019,1022,1030,1039,1045,1056,1059,1068,195],   // 2026-10-28 決定54: ピリポン系(70)→ビリトラ系(1022)に入れかえ(御三家の変更・新テリオン_御三家融合.md)
+  greece:[1007,1014,1039,1026,1030,1033,166,1053,1062,1065],   // 2026-11-21 オーナー「ほえまるもギリシャ」「こくわっこもギリシャ」
+  china:[1019,1022,1030,1045,1056,1059,1068,195],   // 2026-10-28 決定54: ピリポン系(70)→ビリトラ系(1022)に入れかえ(御三家の変更・新テリオン_御三家融合.md)
   egypt:[1004,1036,1042],                                  // 2026-10-28 決定54: クロッコ系(1011)を外した(アレクの相棒)
   norse:[26,1017,1048,16,198,178],                         // 2026-10-28 決定54: クマ系(178)は御三家から外れて北欧の野生に
 };
@@ -637,7 +637,7 @@ UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const 
       B.appendChild(el('div','pgSec',`<span>融合の仕方</span><span>${fk.length} / ${all}</span>`)); if(!fk.length) B.appendChild(el('div','pgItem','<span>—</span>'));
       if(anc.length){ B.appendChild(el('div','pgSec',`<span>古代テリオン</span><span>${anc.length}</span>`)); for(const f of anc) B.appendChild(el('div','',fuseRow(f))); }
       if(nor.length){ B.appendChild(el('div','pgSec',`<span>融合</span><span>${nor.length}</span>`)); for(const f of nor) B.appendChild(el('div','',fuseRow(f))); }
-      if(SAVE&&SAVE.unlock&&SAVE.unlock.fusion){ const nx=Object.values(MON).filter(m=>m.role==='fusion'&&!P.knowsFusion(m.id)&&!ANCIENT_FUSIONS.includes(m.id)&&Array.isArray(m.recipe)&&m.recipe.length===2&&m.recipe.some(r=>P.hasLine(r))).map(m=>m.id).sort(byOrd);   // 2026-11-19 まだ覚えていない融合と覚え方
+      if(SAVE&&SAVE.unlock&&SAVE.unlock.fusion){ const nx=Object.values(MON).filter(m=>m.role==='fusion'&&!P.knowsFusion(m.id)&&!ANCIENT_FUSIONS.includes(m.id)&&Array.isArray(m.recipe)&&m.recipe.length===2&&m.recipe.some(r=>P.hasLine(r))&&!!(prog().seen&&prog().seen[m.id])).map(m=>m.id).sort(byOrd);   /* 2026-11-21 オーナー「出てない融合が図鑑に出てる」: 見たことがある融合だけ */   // 2026-11-19 まだ覚えていない融合と覚え方
         if(nx.length){ B.appendChild(el('div','pgSec',`<span>まだ覚えていない融合</span><span>${nx.length}</span>`)); for(const f of nx) B.appendChild(el('div','pgItem',`<span>${nameOf(f)}</span><small style="opacity:.8">${P.fuseHint(f)}</small>`)); } } }
     else if(tab==='items'){ const it=(SAVE&&SAVE.items)||{}; B.appendChild(el('div','pgSec','<span>もちもの</span>'));
       const ks=Object.keys(ITEMJ).filter(k=>+it[k]>0); for(const k of ks){ const j=ITEMJ[k]||[k,'potion']; B.appendChild(el('div','pgItem',`${ICON(j[1])}<span>${j[0]}</span><b>×${it[k]}</b>`)); } if(!ks.length) B.appendChild(el('div','pgItem','<span>なし</span>'));

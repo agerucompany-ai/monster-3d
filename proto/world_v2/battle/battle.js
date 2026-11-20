@@ -6361,7 +6361,7 @@ function spawnEnemy(){
   const lead=team.splice(li,1)[0]; if(lead) team.unshift(lead);
   const cc=CASTLE[1];
   const spots=castleArea(1).filter(([r,c])=>!unitAt(r,c)).sort((a,b)=>(Math.abs(a[0]-cc.r)+Math.abs(a[1]-cc.c)*0.9)-(Math.abs(b[0]-cc.r)+Math.abs(b[1]-cc.c)*0.9));
-  team.forEach((e,i)=>{ if(i>=spots.length) return; const [r,c]=(T3()&&TACT.place!==false&&!BT.anc&&tactPickSpot(e.mid,1,i===0))||spots.find(([rr,cc])=>!unitAt(rr,cc))||spots[i]; const u=addUnit(1,e.mid,r,c); /* 戦術v3: 敵も同じ並べ方(古代テリオンは中央のまま) */ const PV=(T3()&&TACT.pve[BT.kind])||{}; const SK=BT.anc?1:pveStageX(); unitMul(u,e.rank,(D.hpX||1)*(PV.hp||1)*SK,(D.atkX||1)*(PV.atk||1)*SK); if(e.lv) u.lv=e.lv; u.src=[e.idx]; u.mid0=e.mid; if(i===0) u.leader=true; if(e.boss) u.isBoss=true; if(BT.anc && i===0) ancientApply(u); });   // 古代テリオンは ANCIENT の決まりで体力・攻撃を決める(ai.hpX/atkX は使わない)
+  team.forEach((e,i)=>{ if(i>=spots.length) return; const [r,c]=(T3()&&TACT.place!==false&&!BT.anc&&tactPickSpot(e.mid,1,i===0))||spots.find(([rr,cc])=>!unitAt(rr,cc))||spots[i]; const u=addUnit(1,e.mid,r,c); /* 戦術v3: 敵も同じ並べ方(古代テリオンは中央のまま) */ const PV=(T3()&&TACT.pve[BT.kind])||{}; const SK=BT.anc?1:pveStageX(); unitMul(u,e.rank,(D.hpX||1)*(PV.hp||1)*SK*(e.hpX||1),(D.atkX||1)*(PV.atk||1)*SK*(e.atkX||1)); if(e.lv) u.lv=e.lv; u.src=[e.idx]; u.mid0=e.mid; if(i===0) u.leader=true; if(e.boss) u.isBoss=true; if(BT.anc && i===0) ancientApply(u); });   // 古代テリオンは ANCIENT の決まりで体力・攻撃を決める(ai.hpX/atkX は使わない)
   state.leaderSet=false;
 }
 
@@ -6607,7 +6607,7 @@ function spInit(o){ if(!state) return; state.sp=null; if(!o || !SP_DEF[o.mode]) 
     S.goal=[L.goal[0], fc(L.goal[1])]; S.posts=L.posts.map(p=>({s:[p.s[0],fc(p.s[1])], a:[p.a[0],fc(p.a[1])], b:[p.b[0],fc(p.b[1])], i:p.i})); }
   state.sp=S; }
 // 敵を置いたあと(潜入: 見張りを巡回の場所へ)
-function spAddFoe(e,r,c){ const D=BT.diff||{}; const u=addUnit(1,e.mid,r,c); const PV=(T3()&&TACT.pve[BT.kind])||{}; const SK=pveStageX(); unitMul(u,e.rank,(D.hpX||1)*(PV.hp||1)*SK,(D.atkX||1)*(PV.atk||1)*SK); if(e.lv) u.lv=e.lv; u.mid0=e.mid; return u; }
+function spAddFoe(e,r,c){ const D=BT.diff||{}; const u=addUnit(1,e.mid,r,c); const PV=(T3()&&TACT.pve[BT.kind])||{}; const SK=pveStageX(); unitMul(u,e.rank,(D.hpX||1)*(PV.hp||1)*SK*(e.hpX||1),(D.atkX||1)*(PV.atk||1)*SK*(e.atkX||1)); if(e.lv) u.lv=e.lv; u.mid0=e.mid; return u; }
 function spPlace(){ const S=state&&state.sp; if(!S || S.mode!=='sneak') return;
   for(let k=alive(1).length;k<(+S.guardN||0);k++){ const e=BT.enemyParty[k%BT.enemyParty.length]; const P=S.posts[k%S.posts.length]; let at=null; for(let c=0;c<NC&&!at;c++){ const cc=(P.s[1]+c)%NC; if(!unitAt(P.s[0],cc)&&!spBlk(P.s[0],cc)) at=[P.s[0],cc]; } if(at) spAddFoe(e,at[0],at[1]); }   // 見張りを足す(guardN 体まで)
   const us=alive(1).slice().sort((a,b)=>(b.leader?1:0)-(a.leader?1:0)||a.uid-b.uid); S.guards=[];
