@@ -799,6 +799,7 @@ function fuseRelaxed(o){ const T=BT.tune||TUNE; if((BT.startStage||1)>=3) return
 function fusionResult(a,b){
   if(!campFusionOK()) return null;
   if(!a||!b||a.uid===b.uid||a.owner!==b.owner) return null;
+  if(BT._forceEvo) return fusePair(a.mid,b.mid);   // 2026-11-20 台本どおりの融合(opts.script.fuse)
   if(!fuseWindow(a.owner)) return null;
   if(!(a.evo||b.evo) && !fuseRelaxed(a.owner)) return null;   // 少なくとも片方は戦闘中に進化したLv2(味方が倒されていれば不要)
 
@@ -1371,7 +1372,7 @@ function evolveUnit(u, free, why){
   if(!free && netGuestIntercept('evolve',{uid:u.uid})) return false;
   const m=mon(u); if(m.evolves_to==null) return false;
   // 進化先を集めていないと進化できない（ガチャで収集。オンラインのみ無制限）
-  if(!ONLINE && !canEverEvolve(u.owner, u.mid, !!u.isBoss) && (u.owner===0 || !free)){
+  if(!ONLINE && !BT._forceEvo && !canEverEvolve(u.owner, u.mid, !!u.isBoss) && (u.owner===0 || !free)){
     if(!free) toast(`「${MID[m.evolves_to].name}」の進化の仕方を覚えていない`);
     return false;
   }
@@ -1534,6 +1535,20 @@ function spdNext(){ const S=state.spd; if(!S||state.phase!=='battle') return;
   S.cur=null;
   for(let g=0; g<3; g++){ const nx=spdLeft()[0]; if(nx){ spdAct(nx); return; }
     state.turn++; if(overTurn()){ finishByTimeout(); return; } spdRound(false); } }
+// 2026-11-20 オーナー「全然決めた通りのボス戦じゃなかった。アニメのシナリオと違う」: 物語の勝負の段取りを台本どおりに(opts.script)
+//  head=[姿の id] … 一段目(戻り)で出て、勝負の頭で「進化！」の合図でその姿まで進化 / evo=[{mid,turn}] … その番になったら その子が次の姿へ(台本の初進化) / fuse=[{a,b,turn}] … その番に二体が融合(台本の融合)
+function scrForce(fn){ BT._forceEvo=true; try{ return fn(); } finally{ BT._forceEvo=false; } }
+function scrReach(mid,to){ let m=MID[mid], g=0; while(m&&g++<4){ if(m.id===+to) return true; m=MID[m.evolves_to]; } return false; }
+function scrEvoTo(u,to){ let g=0; while(u&&state.units[u.uid]&&u.mid!==+to&&MID[u.mid]&&MID[u.mid].evolves_to!=null&&g++<3) if(!scrForce(()=>evolveUnit(u,true,'script'))) break; }
+function scrHead(){ const S=BT.opts&&BT.opts.script; if(!S||!S.head||!S.head.length||!state) return; const us=alive(0).filter(u=>S.head.some(t=>t!==u.mid&&scrReach(u.mid,t))); if(!us.length) return;
+  const go=()=>{ for(const u of us){ const t=S.head.find(t=>scrReach(u.mid,t)); if(t!=null) scrEvoTo(u,t); u.moved=false; } syncUnits(); if(typeof updateUI==='function') updateUI(); };
+  if(BT.headless||window._SIM){ go(); return; } showBanner((us.length>=3?'三人':us.length===2?'二人':'')+'　進化！'); setTimeout(go,700); }
+function scrTick(u){ const S=BT.opts&&BT.opts.script; if(!S||!state||state.phase!=='battle'||!u||u.owner!==0) return; S._done=S._done||{};
+  (S.evo||[]).forEach((e,i)=>{ const k='e'+i; if(S._done[k]||state.turn<e.turn||u.mid!==+e.mid) return; S._done[k]=1; const run=()=>{ if(state.units[u.uid]&&u.mid===+e.mid){ scrEvoTo(u,MID[u.mid].evolves_to); syncUnits(); updateUI(); } }; if(BT.headless||window._SIM) run(); else setTimeout(run,500); });
+  (S.fuse||[]).forEach((f,i)=>{ const k='f'+i; if(S._done[k]||state.turn<f.turn) return; const isA=scrReach(f.a,u.mid)||u.mid===+f.a, isB=scrReach(f.b,u.mid)||u.mid===+f.b; if(!isA&&!isB) return;
+    const lineHas=(x,id)=>x.mid===+id||scrReach(id,x.mid); const p=alive(0).find(x=>x.uid!==u.uid&&(isA?lineHas(x,f.b):lineHas(x,f.a))); if(!p) return; S._done[k]=1;
+    const run=()=>{ if(!state.units[u.uid]||!state.units[p.uid]||state.phase!=='battle') return; u.evo=true; scrForce(()=>tryFusion(u,p,u.r,u.c)); };
+    if(BT.headless||window._SIM) run(); else setTimeout(run,600); }); }
 function spdAct(u){ const S=state.spd;
   repairBoard(); if(!state.units[u.uid]){ u.sdone=true; spdNext(); return; }
   S.cur=u.uid; S.n++; state.cur=u.owner;
@@ -1546,6 +1561,7 @@ function spdAct(u){ const S=state.spd;
   if(V2ON() && EVO_CELLS.length && gaugeZone(u) && !(u.dug>0)) addGauge(u, CENTER.tick);
   ancCheck(); refreshEvoArea(); syncUnits();
   if(checkWin()) return;
+  scrTick(u);
   if(window._SIM || BT.headless) return;
   const sw=S.last!==u.owner; S.last=u.owner;
   if(u.owner===0){ undoStack=[]; if(sw) showBanner('あなたの番'); clearSel(); updateUI(); if(BT.auto) autoTurn(); else selectUnit(u); }
@@ -5349,6 +5365,7 @@ function beginBattle(){
   spReady();   // 2026-10-31 専用の盤
   setEvoArea(V2ON()||evoNeededNow(), false);
   if(!BT.headless) setTimeout(flashGoodTerrain, 900);
+  scrHead();
   if(!BT.headless && (BT.kind==='master'||BT.kind==='ancient')) setTimeout(bossIntro, 150);   // FX2: 物語のボス・古代テリオンの登場
   if(!BT.headless) setTimeout(ciHiPrefetch,0);
   if(!BT.headless) hudReset();   // 2026-10-30 盤が跳ねないように 下の帯の高さを先に決める(はじめの updateUI で測る)
@@ -5793,7 +5810,7 @@ function playerStageMode(){ const cnt={}; for(const p of BT.party){ const s=lvSt
 function alignMinions(opts){ BT.minionSt=null; if(BT.kind==='wild') return; const a=opts&&opts.alignMinions; if(!(a!=null?!!a:(BT.kind==='master'||BT.kind==='ancient'))) return;
   const S=playerStageMode(); BT.minionSt=S; const eo=BT.enemyOwned||(BT.enemyOwned=new Set());
   let li=BT.enemyParty.findIndex(e=>e.leader); if(li<0) li=0;
-  BT.enemyParty.forEach((e,i)=>{ if(i===li) return; const m=MID[e.mid]; if(!m) return; let src=+e.mid;
+  BT.enemyParty.forEach((e,i)=>{ if(i===li) return; if(e.fixed&&!e.helper) return; /* 2026-11-20 オーナー「アトラードとか出んやん」: 物語の表で決めた相手(fixed)は手下の段にそろえない(融合のアトラードが材料のニジッコにされていた) */ const m=MID[e.mid]; if(!m) return; let src=+e.mid;
     if(m.role==='fusion'){ const r=(m.recipe||m.recipe3||[]).map(Number).filter(x=>MID[x]&&MID[x].role!=='fusion'); if(!r.length) return; src=r[0]; }
     else if(lvStage(e.mid)<=S) return;
     const to=enemyStageForm(baseFormId(src), S); let q=MID[to], g=0; while(q && q.evolves_to!=null && q.id!==src && g++<4){ eo.add(q.evolves_to); q=MID[q.evolves_to]; }
