@@ -3051,7 +3051,9 @@ function m3dPlay(inst,name,fade){ const to=inst.act[name]; if(!to) return; const
   if(name!=='Idle'||inst.cur!=='Idle'){ to.reset(); to.play(); if(from&&from!==to) from.crossFadeTo(to, fade==null?0.12:fade, false); }
   inst.cur=name; }
 // 体の大きさの段(2026-10-28): 1段目0.9・2段目1.0(今の大きさ)・3段目/融合1.35・古代テリオン/ボス/3体融合1.75
-function unitSizeK(u){ const m=mon(u); if(u.anc||u.isBoss||(m.recipe3&&m.recipe3.length)) return 1.75; if(m.role==='fusion'||m.level===3) return 1.35; return m.level===2?1.0:0.9; }
+// 2026-11-20 オーナー「アトラードとかめちゃくちゃデカくせなあかん」: 神話の大物は段の大きさより大きく(マスをこえて立つ)
+const MYTH_BIG={2067:3.2, 2066:2.4, 2061:2.4, 2045:2.0};
+function unitSizeK(u){ const m=mon(u); if(MYTH_BIG[+u.mid]) return MYTH_BIG[+u.mid]; if(u.anc||u.isBoss||(m.recipe3&&m.recipe3.length)) return 1.75; if(m.role==='fusion'||m.level===3) return 1.35; return m.level===2?1.0:0.9; }
 function m3dHeight(u){ const m=mon(u); const k=unitSizeK(u); let h=1.25*k;
   const e=ci3Ext(u.mid); if(e){ const foot=Math.max(e.w,e.d)/Math.max(0.01,e.h); const lim=0.8*k/Math.max(0.01,foot); if(h>lim) h=Math.max(lim, 0.8*k); }   // 体の幅・奥行き = マスの 0.8×段(大きい子はマスをこえてよい・中心はマス)   // 2026-10-28: 体の幅・奥行きがマスの 80%(大きい子 95%)に収まる高さに
   // 2026-10-30 オーナー「レベル1なのにデカすぎる」(スミヤモ): 長い体は上の下限(0.8×段)で 体の長さがマス1.8個分になっていた。
