@@ -2220,19 +2220,25 @@ const CAM={yaw:0,yawT:0,pitch:45*DEG,dist:27,tx:0,ty:3,tz:19,fixed:null,lead:0};
 // 進む向きが +z の地図(村→丘→森、施設→港町→獅子門、雲の道→コリントス→大理石): 出口と着く所の向きをそろえ、進む先がいつも画面の上になるようカメラを反対側に置く
 const CAM_FLIP={oliva_town:0, oliva_hill:0, oliva_maze:0, nafria:1, corinth:1};   // 2026-11-20 オーナー「最初はオリーヴァ村が北にあって南に下っていたのに、今は南にオリーヴァ村があって位置関係がおかしい」: オリーヴァ村・丘は北が上にもどす(村=上・丘=下。村の下の出口→丘の上に出る)
 function camFlip(){ return !!(typeof D!=='undefined'&&D&&(D.camFlip!=null?D.camFlip:CAM_FLIP[MAP])&&!(CAM.lv&&CAM.vk>0.01)); }
+// 2026-11-20 オーナー「角度的に写ってない」「見えてない」(迷宮の入口の屋根でヤマトが隠れた): その場の会話(#st.field)の間は、寄って高めから写す。屋根つきの門の中にいたら門の前へ出す
+function camFieldTalk(){ try{ return camFieldTalk0(); }catch(e){ return false; } }
+function camFieldTalk0(){ const e=ST&&ST.el; const on=!!(e&&e.style.display==='block'&&e.classList.contains('field')&&!ENC);
+  if(on&&!CAM._ftOn&&D&&D.objects) for(const o of D.objects){ if(o.t!=='mazegate') continue; const hw=(o.w||3.2)/2+1.2, a=-(o.rot||0)*DEG, dx=HERO.x-o.x, dz=HERO.z-o.z, lx=dx*Math.cos(a)-dz*Math.sin(a), lz=dx*Math.sin(a)+dz*Math.cos(a);
+    if(Math.abs(lx)<hw&&Math.abs(lz)<3.2){ const fz=o.z+(camFlip()?-1:1)*6.5; const q=(typeof grSpot==='function')?grSpot(o.x,fz):[o.x,fz]; WORLD.tp(q[0],q[1]); break; } }
+  CAM._ftOn=on; return on; }
 function camDist(){ return camera.aspect<1?27:32; }
 function camFov(port){ const cb=typeof D!=='undefined'&&D&&D.cam; return cb&&cb.fov?(port?cb.fov:(cb.fovW||cb.fov)):(port?34:26); }   // 地図ごとの画角(D.cam.fov/fovW)。白い都は少し広く撮って通りの両側の建物まで入れる(2026-11-17)
 function camUpdate(dt){ if(CAM.fixed){ const f=CAM.fixed; camera.position.set(f[0],f[1],f[2]); camera.lookAt(f[3],f[4],f[5]); return; }
-  const k=1-Math.exp(-dt*3.4); CAM.tx+=(HERO.x-CAM.tx)*k; CAM.tz+=(HERO.z-CAM.tz)*k; CAM.ty+=(HERO.y-CAM.ty)*(1-Math.exp(-dt*2.2));
+  const k=1-Math.exp(-dt*3.4), TF=window.GR_TALKF, FT=camFieldTalk(); CAM.tk=(CAM.tk||0)+(((TF||FT)?1:0)-(CAM.tk||0))*(1-Math.exp(-dt*2.5)); const tgx=TF?TF[0]:HERO.x, tgz=TF?TF[1]:HERO.z; CAM.tx+=(tgx-CAM.tx)*k; CAM.tz+=(tgz-CAM.tz)*k;   // 2026-11-20 話す間は話す人とのまん中を寄って写す(GR_TALKF) CAM.ty+=(HERO.y-CAM.ty)*(1-Math.exp(-dt*2.2));
   // 見晴らし(D.vista の矩形の中): カメラが低く傾いて、遠くの高い名所(アクロポリス)が画面に入る。出ると元に戻る(2026-10-25)
   let V=null; if(D&&D.vista) for(const v of D.vista){ if(HERO.x>v.r[0]&&HERO.x<v.r[2]&&HERO.z>v.r[1]&&HERO.z<v.r[3]){ V=v; break; } } if(V) CAM.lv=V;
   CAM.vk=(CAM.vk||0)+((V?1:0)-(CAM.vk||0))*(1-Math.exp(-dt*1.4)); const lv=CAM.lv||{}; const vk=sm(0,1,CAM.vk);
   // 地図ごとの低いカメラ(D.cam={pitch,dist,distW}): 白い都は建物の正面と高さが見えるように低く構える(2026-11-17 オーナー「角度的に見えない」)
   if(Math.abs(camera.fov-camFov(camera.aspect<1))>0.01) resize();
   const cb=D&&D.cam, bd=cb?(camera.aspect<1?cb.dist:(cb.distW||cb.dist)):camDist(), bp=cb?cb.pitch*DEG:CAM.pitch;
-  const d=CAM.dist=lerp(bd,lv.dist||bd,vk), p=lerp(bp,(lv.pitch||45)*DEG,vk); const ah=camera.aspect<1?1.6:0.8;   // 主人公を画面の少し下に置く(進む先=北を広く)
+  const tk=sm(0,1,CAM.tk||0); const d=CAM.dist=lerp(bd,lv.dist||bd,vk)*(1-0.32*tk), p=lerp(lerp(bp,(lv.pitch||45)*DEG,vk),Math.max(bp,58*DEG),tk); const ah=camera.aspect<1?1.6:0.8;   // 主人公を画面の少し下に置く(進む先=北を広く)
   const fl=camFlip()?-1:1; CAM.yaw=fl<0?Math.PI:0;   // 2026-11-18 オーナー「上に進んだら、画面の下からマップが広がるはず」: 物語で進む向きが南(+z)の地図は、カメラを北から見下ろす(進む先=画面の上)
-  const fx=CAM.tx, fz=CAM.tz-fl*(ah+vk*(lv.ahead||0)), fy=CAM.ty+0.6+vk*(lv.yOff||0);
+  const fx=CAM.tx, fz=CAM.tz-fl*(ah*(1-tk)+vk*(lv.ahead||0)), fy=CAM.ty+0.6+vk*(lv.yOff||0);
   camera.position.set(fx,fy+Math.sin(p)*d,fz+fl*Math.cos(p)*d); camera.lookAt(fx,fy,fz);
   POST.U.uFocus.value=d; POST.U.uDof.value=(cb&&cb.dof!=null?cb.dof:1)*(1-vk*0.9); }
 
@@ -2754,7 +2760,7 @@ async function progInit(){ if(!window.Progress) return;
   else { await PROG; Progress.attachSave(SAVE,saveGame); hudRefresh(); } }
 document.getElementById('btMenu').addEventListener('click',async()=>{ if(!canSave()) return; try{ await briefLib(); }catch(_){} if(!canSave()) return; Progress.ui.open('menu',{canSwap:TESTMODE||inTown(HERO.x,HERO.z)}); });   // メニュー(パーティ・牧場・ずかん・もちもの 2026-10-27)。入れかえは今までどおり街(静域)の中だけ・地形の表を出すため battle.js を先に読む
 const MONN={1001:'フォルン',70:'ピリポン',1011:'クロッコ'};   // 御三家(2026-10-28 決定54: ヤマト=フォルン・エリー=ピリポン・アレク=クロッコ)
-let MNAME={}, MEVO={}, MMODEL={}, MTYPE={}; const MONS_P=fetch('../battle/data/monsters.json?v=20261120').then(r=>r.json()).then(a=>{ for(const m of a){ MNAME[m.id]=m.name; MTYPE[m.id]=[m.type,m.type2]; MEVO[m.id]=m.evolves_to; MMODEL[m.id]=m.model3d!==false; } }).catch(()=>{});
+let MNAME={}, MEVO={}, MMODEL={}, MTYPE={}, MLV={}; const MONS_P=fetch('../battle/data/monsters.json?v=20261120').then(r=>r.json()).then(a=>{ for(const m of a){ MNAME[m.id]=m.name; MTYPE[m.id]=[m.type,m.type2]; MEVO[m.id]=m.evolves_to; MMODEL[m.id]=m.model3d!==false; MLV[m.id]=m.level; } }).catch(()=>{});
 // 持っている種類(owned): 仲間にした子は、その系統(次の段・その次の段)を全部持っている扱い(game_design 9-2)。バトルでの進化の判定に渡す
 // 解禁(SAVE.unlock): 序盤は進化も融合も未解禁(相性と地形の時期)。進化の解禁後は、仲間の系統(進化先)も持っている扱い。融合は物語の後半で解禁
 function unlocks(){ const u=(SAVE&&SAVE.unlock)||{}; return {evo:!!u.evo,fusion:!!u.fusion,triple:!!u.triple}; }
@@ -3709,11 +3715,28 @@ function grCastTick(s){ const ellyF=grEllyWith(s);
   const need=live?grWho(s).filter(w=>!(w==='elly'&&ellyF)):[];
   let g=GR_GUIDE; if(g&&(g.map!==MAP||!need.length)){ grGuideDrop(); g=null; }
   grDestTick(s,live);
-  if(!need.length) return;
+  if(!need.length){ grFoeTick(s,false); return; }
   if(!g){ const a=Math.atan2(HERO.x-camera.position.x,HERO.z-camera.position.z); g=GR_GUIDE={id:s.id,map:MAP,x:HERO.x+Math.sin(a)*2.4,z:HERO.z+Math.cos(a)*2.4,walk:false,mem:{}}; window.GR_GUIDE=g; }   // カメラから見てヤマトの向こう(顔が見える)
   g.id=s.id; for(const k of Object.keys(g.mem)) if(!need.includes(k)){ grSpriteDrop(g.mem[k]); delete g.mem[k]; }
   need.forEach(w=>{ if(g.mem[w]) return; const m=g.mem[w]=grSprite(w); const n=Object.keys(g.mem).length-1, off=(n%2?1:-1)*Math.ceil(n/2)*0.95; grPlace(m,g.x+off,g.z+(n?0.3:0)); });
-  Object.values(g.mem).forEach(m=>grLabel(m,GR_GUIDE_ART[m.who].n,false)); }
+  Object.values(g.mem).forEach(m=>grLabel(m,GR_GUIDE_ART[m.who].n,false)); grFoeTick(s,live); }
+// 2026-11-20 オーナー「3D映像がないので誰と戦ったのか分からないままヴィクターが出てきた」「角度的に写ってない」:
+//  ①その場で話す間はカメラを寄せて、ヤマトと話す人のまん中を写す(GR_TALKF) ②勝負の直前の場面(と勝負の頭の会話)では、相手のテリオンを話す人の向こうに3Dで立たせる
+let GR_FOE=null; window.GR_TALKF=null; window._grFoe=()=>GR_FOE;
+function grFoeIds(s){ if(!s||!grHere(s)) return null; const i=GR_STEPS.indexOf(s); if(i<0) return null; let b=null;
+  if(s.kind==='battle') b=s; else if(s.kind==='scene'){ const n=GR_STEPS[i+1]; if(n&&n.kind==='battle'&&n.ep===s.ep) b=n; }
+  const F=b&&b.F; if(!F) return null; const ids=F.anc?[F.anc.mid]:((F.foe&&F.foe.party)||[]).map(x=>x.mid); return ids.length?ids:null; }
+function grFoeDrop(){ if(!GR_FOE) return; for(const f of GR_FOE.m){ f.dead=true; if(f.inst) scene.remove(f.inst.root); } GR_FOE=null; }
+function grFoeTick(s,live){ const g=GR_GUIDE; const ids=(live&&!ENC&&g)?grFoeIds(s):null; const key=ids&&(s.ep+':'+ids.join(','));
+  if(!ids){ grFoeDrop(); window.GR_TALKF=(live&&g&&!ENC)?[(HERO.x+g.x)/2,(HERO.z+g.z)/2]:null; return; }
+  if(!GR_FOE||GR_FOE.key!==key){ grFoeDrop(); let dx=g.x-HERO.x, dz=g.z-HERO.z; const L=Math.hypot(dx,dz)||1; dx/=L; dz/=L;
+    const n=ids.length, F=GR_FOE={key,m:[]};
+    ids.forEach((id,i)=>{ const lv=MLV[id]||1, sc=lv>=3?1.7:lv===2?1.15:0.8, side=(i%2?1:-1)*(1.0+sc*0.55+Math.floor(i/2)*1.4)*(n>1?1:0), back=1.6+sc*0.4;   /* 話す人の横(奥は建物の壁のことがある)*/
+      let x=g.x+dx*back-dz*side, z=g.z+dz*back+dx*side; if(typeof grSpot==='function'){ const q=grSpot(x,z); if(q){ x=q[0]; z=q[1]; } }
+      const f={id,x,z,sc,yaw:Math.atan2(HERO.x-x,HERO.z-z),inst:null,dead:false}; F.m.push(f);
+      monProto(id).then(gg=>{ if(f.dead) return; f.inst=monMake(gg); const R=f.inst.root; R.scale.setScalar(f.sc); R.position.set(f.x,groundAt(f.x,f.z),f.z); R.rotation.y=f.yaw; scene.add(R); }).catch(()=>{}); }); }
+  let cx=HERO.x+g.x, cz=HERO.z+g.z, k=2; for(const f of GR_FOE.m){ cx+=f.x; cz+=f.z; k++; } window.GR_TALKF=[cx/k,cz/k]; }
+(function grFoeAnim(){ let t0=0; const f=t=>{ requestAnimationFrame(f); const dt=t0?Math.min(0.1,(t-t0)/1000):0; t0=t; if(GR_FOE) for(const m of GR_FOE.m) if(m.inst) m.inst.mixer.update(dt); }; requestAnimationFrame(f); })();
 // 歩く段の行き先の印(人の代わり)。画面の外なら矢印で向き
 let GR_DEST=null;
 function grDestTick(s,live){ const at=s&&s.wobj&&s.map===MAP&&!live&&!grHere(s)?(Array.isArray(s.at)?s.at[0]:s.at):null; const pt=at?grCastPt(at):null;
