@@ -1498,6 +1498,9 @@ function spdDone(){ const S=state&&state.spd; if(!S) return false; const u=state
 // 移動だけ・進化だけ(進化は移動あつかい)の時は まだ技などが残るので進めない(残りが1つもなければ進める)。風の「当てて下がる」も下がるまで待つ。
 // 待った: 進む前の0.4秒の間に押せば戻せる(戻すと行動前に戻る=まだできることがあるので進まない)。進んだ後は今までどおり戻せない。オート・CPU・シムは変えない。
 const SPD_AUTO_MS=400;
+// 2026-11-20 オーナー「光属性だけ攻撃しても待機を押さないといけない」「攻撃後直ちに終わればよい。他と一緒」:
+// 光/風の子は攻撃後に下がれる(away)ので手番が残っていた。下がる以外にやれることが無ければ、ほかの子と同じくすぐ終える
+function spdAwayOnly(u){ return !!(u && !u.wait && u.acted && u.away>0); }
 function spdHasMore(u){ if(!u||u.wait) return false; if(canMove(u)) return true; if(u.acted) return false;
   if(!V2ON()) return true;   // 古い技の形(v1)は 移動のあとも今までどおり「待機」で終える
   if(movesV2(u).some(mv=>moveReady(u,mv))) return true;
@@ -1508,11 +1511,11 @@ function spdHasMore(u){ if(!u||u.wait) return false; if(canMove(u)) return true;
   if(!ONLINE && u.owner===0 && feedOn() && feedTargets().length) return true;
   return false; }
 function spdAutoCheck(){ const S=state&&state.spd; if(!S||state.phase!=='battle'||state.cur!==0||BT.auto||ONLINE||BT.headless||window._SIM) return;
-  const u=state.units[S.cur]; if(u && (u.owner!==0 || spdHasMore(u))) return;
+  const u=state.units[S.cur]; if(u && (u.owner!==0 || (spdHasMore(u) && !spdAwayOnly(u)))) return;
   const st=state, n=S.n; if(spdAutoCheck._k===st && spdAutoCheck._n===n) return; spdAutoCheck._k=st; spdAutoCheck._n=n;
   let t0=0; const stop=()=>{ spdAutoCheck._k=null; };
   (function tick(){ const S2=state&&state.spd; if(state!==st||!S2||S2.n!==n||state.phase!=='battle'||state.cur!==0||BT.auto) return stop();
-    const cu=state.units[S2.cur]; if(cu && spdHasMore(cu)) return stop();   // 待ったで戻した
+    const cu=state.units[S2.cur]; const aw=spdAwayOnly(cu); if(cu && spdHasMore(cu) && !aw) return stop();   // 待ったで戻した
     if(animBusy() || (_seq && !_seq.done)){ t0=0; setTimeout(tick,80); return; }
     if(!t0) t0=performance.now();
     if(performance.now()-t0<SPD_AUTO_MS){ setTimeout(tick,80); return; }
