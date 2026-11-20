@@ -321,7 +321,8 @@ P.joinLv=joinLv;
 function battleItems(){ const o={}; for(const k of Object.keys(ITEMJ)){ const n=P.itemCount(k); if(n>0) o[k]=n; } return o; }
 P.prepare=function(opt, ctx){ opt=opt||{}; ctx=ctx||{}; const pl=opt.player||{};
   const party=P.battleParty(); if(!party.length) throw new Error('progress: パーティが空');
-  opt.player=Object.assign({}, pl, {party, box:P.legacyBox(), owned:pl.owned||P.ownedList(), fusionKnown:pl.fusionKnown||P.fusionKnownList(), rankCap:20, items:battleItems()});   // 盤 v4: 回復の道具はなし。2026-10-30 店の肉・闘気の水晶だけ
+  const bench=P.ranch().map(c=>({mid:c.mid, lv:c.lv, uid:c.uid}));   // 2026-11-21 オーナー「どこでも戦闘時に入れ替えられるように」: 勝負の並べる画面で入れかえる控え
+  opt.player=Object.assign({}, pl, {party, bench:pl.bench||bench, swap:pl.swap||((a,b)=>P.swap(a,b)), box:P.legacyBox(), owned:pl.owned||P.ownedList(), fusionKnown:pl.fusionKnown||P.fusionKnownList(), rankCap:20, items:battleItems()});   // 盤 v4: 回復の道具はなし。2026-10-30 店の肉・闘気の水晶だけ
   if(opt.startStage==null) opt.startStage=P.startStage(ctx.area);
   opt.noWildForms=TRUMP_FORMS.slice();   // battle.js: 野生・古代テリオン戦では切り札の姿まで上げない
   if((opt.kind||'wild')==='wild' && opt.enemy && Array.isArray(opt.enemy.pack) && opt.enemy.party && opt.enemy.party.length===1){   // 野生の群れ(呼ぶ側が enemy.pack=そのマップの野生の種類 を渡した時)
@@ -552,7 +553,7 @@ function card(c, opts){ const d=el('div','pgCard'+(opts.on?' on':'')+(opts.pend?
   d.innerHTML=`${opts.leader?'<i class="ld"></i>':''}${opts.tag?`<span class="tg">${opts.tag}</span>`:''}<img src="${IMG(c.mid)}" alt=""><div class="nm">${nameOf(c.mid)}</div><div class="lv">Lv${c.lv}</div><div class="bar"><i style="width:${pct}%"></i></div>`; d.dataset.uid=c.uid; return d; }
 // メニュー(2026-10-27 オーナー「ステータスとかパーティーの情報みれるタブのような画面欲しいな」): パーティ・牧場・ずかん・もちもの。ラベル・アイコン・数字だけ
 // 2026-11-16 オーナー「課金システムはいらない」: ジェムを買う・有償ジェムの表示をはずした(lib/pay.js は引き継ぎだけに使う)
-const TABS=[['party','パーティ','ally'],['ranch','牧場','terrain'],['dex','ずかん','evolve'],['fuse','融合','fuse'],['items','もちもの','potion'],['move','引き継ぎ','move']];   // 2026-10-31 引き継ぎ(機種を変えた時・lib/pay.js の TherionPay.transfer)
+const TABS=[['party','パーティ','ally'],['dex','ずかん','evolve'],['fuse','融合','fuse'],['items','もちもの','potion'],['move','引き継ぎ','move']];   // 2026-10-31 引き継ぎ(機種を変えた時・lib/pay.js の TherionPay.transfer)
 const ITEMJ={meat1:['ふつうの肉','meat1'], meat2:['上等な肉','meat2'], meat3:['特上の肉','meat3'], ki:['闘気の水晶','kicrystal']};   // 2026-10-29 盤 v4: 回復の水筒・おやつの材料・〇〇のおやつはなくした(古いセーブに残っていても出さない)。2026-10-30 店の肉・闘気の水晶
 function terrInfo(){ const MB=root.MonBattle; return MB&&MB.TYPE_TERR&&MB.BRIEF?{TT:MB.TYPE_TERR, J:MB.BRIEF.TERR_JP, H:MB.BRIEF.TERR_HEX, X:Math.round((MB.BRIEF.TERR_X||0.3)*100)}:null; }
 function tnB(t,I){ const h=I.H[t]; const hx=h!=null?'#'+(h>>>0&0xffffff).toString(16).padStart(6,'0'):'#777'; const lt=h!=null&&(((h>>16)&255)*0.299+((h>>8)&255)*0.587+(h&255)*0.114)>150; return `<span class="pgTn${lt?' lt':''}" style="background:${hx}">${I.J[t]||t}</span>`; }
@@ -613,14 +614,15 @@ UI.render=function(){ const B=R.querySelector('#pgBody'); B.innerHTML=''; const 
   if(cur==='menu'){ T.textContent='メニュー'; TB.innerHTML=TABS.map(([k,n,ic])=>`<button data-t="${k}" class="${k===tab?'on':''}">${ICON(ic)}${n}</button>`).join('');
     TB.querySelectorAll('button').forEach(b=>b.onclick=()=>{ tab=b.dataset.t; pick=null; pend=null; UI.render(); B.scrollTop=0; emit('ui',{open:'menu',tab}); });
     const party=P.party(), ranch=P.ranch(), max=P.partyMax();
-    if(tab==='party'){ B.appendChild(el('div','pgSec',`<span>パーティ</span><span>${party.length} / ${max}</span>`));
+    if(tab==='ranch') tab='party';   // 2026-11-21 オーナー「牧場システムはなくていい」: 持っている子は全部パーティのタブの「ほかの仲間」に
+    if(tab==='party'&&!pend){ B.appendChild(el('div','pgSec',`<span>パーティ</span><span>${party.length} / ${max}</span>`));
       party.forEach((c,i)=>{ const d=UI.detail(c,{leader:i===0}); const a=el('div','pgAct'); const b1=el('button','pgBtn','リーダーにする'); b1.disabled=i===0; b1.onclick=()=>{ if(!canSwap()) return; P.setLeader(c.uid); UI.render(); };
-        const b2=el('button','pgBtn','牧場へ'); b2.disabled=party.length<=1; b2.onclick=()=>{ if(!canSwap()) return; P.toRanch(c.uid); UI.render(); }; a.appendChild(b1); a.appendChild(b2); d.appendChild(a); B.appendChild(d); }); }
-    else if(tab==='ranch'){
+        const b2=el('button','pgBtn','はずす'); b2.disabled=party.length<=1; b2.onclick=()=>{ if(!canSwap()) return; P.toRanch(c.uid); UI.render(); }; a.appendChild(b1); a.appendChild(b2); d.appendChild(a); B.appendChild(d); }); }
+    if(tab==='party'){
       if(pend){ const pc=P.get(pend); B.appendChild(el('div','pgSec',`<span>いれかえる相手</span><span>${pc?nameOf(pc.mid):''}</span>`)); const g=el('div','pgGrid');
         party.forEach((c,i)=>{ const d=card(c,{leader:i===0}); d.onclick=()=>{ P.swap(c.uid,pend); pend=null; pick=null; UI.toast('いれかえた'); UI.render(); }; g.appendChild(d); }); B.appendChild(g);
         const a=el('div','pgAct'); const bx=el('button','pgBtn','やめる'); bx.onclick=()=>{ pend=null; UI.render(); }; a.appendChild(bx); B.appendChild(a); }
-      else { B.appendChild(el('div','pgSec',`<span>牧場</span><span>${ranch.length}</span>`)); const g=el('div','pgGrid');
+      else { B.appendChild(el('div','pgSec',`<span>ほかの仲間</span><span>${ranch.length}</span>`)); const g=el('div','pgGrid');
         ranch.forEach(c=>{ const d=card(c,{on:pick===c.uid}); d.onclick=()=>{ pick=pick===c.uid?null:c.uid; UI.render(); }; g.appendChild(d); }); B.appendChild(g);
         if(!ranch.length) B.appendChild(el('div','pgSec','<span>—</span>'));
         if(pick&&ranch.some(c=>c.uid===pick)){ const full=party.length>=max; const a=el('div','pgAct'); const b1=el('button','pgBtn main',full?'いれかえる':'つれていく');

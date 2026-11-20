@@ -5325,8 +5325,24 @@ let placePick=null;
 function placedUnit(i){ return Object.values(state.units).find(x=>x.owner===0&&x._pl===i)||null; }
 function placedLevel(){ return placeList.reduce((s,p)=>s+(p.placed?MID[p.mid].level:0),0); }
 function fitsBudget(i){ const p=placeList[i]; return p && (p.placed || placedLevel()+MID[p.mid].level<=BT.budget); }
+// 2026-11-21 オーナー「牧場システムはなくていい。どこでも戦闘時に入れ替えられるように」: 並べる画面で、選んだ子を控え(opts.player.bench)と入れかえる。入れかえはセーブのパーティにも残す(opts.player.swap)
+function benchList(){ const P=BT.opts&&BT.opts.player; if(!P||!Array.isArray(P.bench)||ONLINE||(BT.opts&&BT.opts.script)) return []; return P.bench; }
+function benchOpen(){ const B=benchList(); if(!B.length||state.phase!=='place') return; const i=placePick!=null?placePick:0; const cur=placeList[i]; if(!cur) return;
+  let el=$id('mb-bench'); if(!el){ el=document.createElement('div'); el.id='mb-bench'; el.style.cssText=`position:fixed;inset:0;z-index:${(CFG.zIndex||9000)+40};background:rgba(5,8,16,.6);display:flex;align-items:flex-end;justify-content:center;padding:0 10px calc(14px + env(safe-area-inset-bottom))`; (ROOT||document.body).appendChild(el); }
+  const card=(e,k)=>{ const m=MID[playerStartMid(e.mid)]||MID[e.mid]; return `<div data-k="${k}" style="width:84px;flex:0 0 auto;background:#fbf7ee;border-radius:10px;padding:6px 4px;text-align:center;color:#2d2620;font-size:12px"><img src="${IMG[m.id]}" style="width:64px;height:64px;object-fit:contain"><div style="font-weight:700">${m.name}</div><div>Lv${e.lv||1}</div></div>`; };
+  el.innerHTML=`<div style="width:100%;max-width:480px;background:#22283a;border-radius:14px;padding:12px;color:#fff;font-size:14px"><div style="margin-bottom:8px"><b>${(MID[cur.mid]||{}).name||''}</b> と入れかえる子</div><div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px">${B.map((e,k)=>card(e,k)).join('')}</div><button data-k="x" class="bt" style="width:100%;margin-top:8px">やめる</button></div>`;
+  el.style.display='flex'; el.onpointerdown=e=>e.stopPropagation();
+  el.onclick=e=>{ e.stopPropagation(); const t=e.target.closest('[data-k]'); if(!t||t.dataset.k==='x'){ el.style.display='none'; return; } benchSwap(i,+t.dataset.k); el.style.display='none'; }; }
+function benchSwap(i,k){ const P=BT.opts.player, B=P.bench, cur=placeList[i], nb=B[k]; if(!cur||!nb) return;
+  const pu=cur.placed?placedUnit(i):null, at=pu?[pu.r,pu.c]:null; if(cur.placed) unplace(i);
+  const ne=normParty([nb])[0]; ne.idx=cur.ent.idx; const old=cur.ent; const oldRaw={mid:old.mid, lv:old.lv, uid:old.uid};
+  BT.party[BT.party.indexOf(old)]=ne; placeList[i]={mid:playerStartMid(ne.mid), base:ne.mid, ent:ne, placed:false};
+  B[k]=oldRaw; try{ if(P.swap&&old.uid&&nb.uid) P.swap(old.uid,nb.uid); }catch(e){}
+  if(at&&fitsBudget(i)&&!unitAt(at[0],at[1])) placeOne(i,at[0],at[1]);
+  placePick=i; syncUnits(); renderPlaceRow(); drawPlaceHL(); toast(`${MID[placeList[i].mid].name} を出す`); }
 function renderPlaceRow(){
   const row=$id('placeRow'); row.innerHTML='';
+  { const sb=$id('btSwap'); if(sb) sb.style.display=benchList().length?'':'none'; }
   placeList.forEach((p,i)=>{
     const d=document.createElement('div'); d.className='pcard'+(placePick===i?' on':'')+(!fitsBudget(i)?' off':''); d.style.cssText+=';width:76px;flex:0 0 auto;position:relative';
     d.style.opacity=p.placed&&placePick!==i?'0.55':'';
@@ -6307,7 +6323,7 @@ const DOM=`<div id="mb-wrap"><canvas id="mb-cv"></canvas><div id="mb-hud"><div i
 <div id="mb-ovPlace"><div id="mb-placeBar">
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><b style="font-size:14px;color:#ffd86b;white-space:nowrap">配置</b><span id="mb-placeHint" style="font-size:12px;color:#cfe0ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span><span id="mb-placeCount" style="margin-left:auto;font-size:12px;color:#8ee0ff;white-space:nowrap"></span></div>
   <div id="mb-placeRow"></div>
-  <div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="bt" id="mb-btAutoPlace">おまかせ配置</button><button class="bt" id="mb-btResetPlace">やり直す</button><button class="bt go" id="mb-btBegin" disabled style="flex:1 1 100%;min-height:50px;font-size:16px;padding:10px 18px">バトル開始</button></div>
+  <div style="margin-top:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="bt" id="mb-btAutoPlace">おまかせ配置</button><button class="bt" id="mb-btSwap" style="display:none">入れかえ</button><button class="bt" id="mb-btResetPlace">やり直す</button><button class="bt go" id="mb-btBegin" disabled style="flex:1 1 100%;min-height:50px;font-size:16px;padding:10px 18px">バトル開始</button></div>
 </div></div>
 <div id="mb-ovDetail"><div class="box" id="mb-detailBox"></div></div>
 <div id="mb-ovEnd"><h1 id="mb-endTitle"></h1><div id="mb-endCard"></div><div id="mb-endList"></div><button class="bt go" id="mb-btEnd" style="font-size:16px;padding:12px 30px;margin-top:6px">もどる</button></div>
@@ -6320,7 +6336,7 @@ function buildDom(){
   ROOT=document.createElement('div'); ROOT.id='mbRoot'; ROOT.innerHTML=DOM; document.body.appendChild(ROOT);
   $id('cutin').addEventListener('pointerdown',(e)=>{ e.preventDefault(); _ci.q.length=0; _cutinEnd(); });
   $id('menu').addEventListener('click',(e)=>{ const b=e.target.closest('[data-m]'); if(b){ menuClick(b.dataset.m); return; } if(!e.target.closest('#mb-menuBox')) closeMenu(); });
-  $id('btAutoPlace').onclick=autoPlace; $id('btResetPlace').onclick=resetPlace; $id('btBegin').onclick=beginBattle;
+  $id('btAutoPlace').onclick=autoPlace; $id('btSwap').onclick=benchOpen; $id('btResetPlace').onclick=resetPlace; $id('btBegin').onclick=beginBattle;
   { const b=$id('camAll'); b.querySelector('img').src=icSrc('terrain'); b.addEventListener('click',e=>{ e.stopPropagation(); camAll(); }); }
   initThree();
 }
