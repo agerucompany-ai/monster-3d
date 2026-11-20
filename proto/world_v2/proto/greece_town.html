@@ -241,7 +241,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 <script src="lib/v83char.js"></script>
 <script src="../chars/viewer/hero_v2.js"></script>
 <script src="../v3/chars/char_v3.js"></script>
-<script src="lib/progress.js?v=20261121d"></script>
+<script src="lib/progress.js?v=20261121e"></script>
 <script src="lib/pay.js"></script>
 <script>
 (function(){
@@ -4021,7 +4021,7 @@ const GR_FOE4_EP=13;
 const GR_SCRIPT={ 12:{head:1, evo:[{mid:1002,turn:3}]}, 13:{head:1}, 15:{head:1}, 16:{head:1}, 17:{head:1, nohead:[1054], fuse:[{a:1003,b:1012,turn:3}]},
   18:{head:1, nohead:[1054], fuse:[{a:1003,b:1012,turn:2}]}, 19:{head:1, evo:[{mid:71,turn:2}], fuse:[{a:1003,b:1012,turn:3}]}, 20:{head:1, evo:[{mid:1012,turn:3}]}, 21:{head:1} };
 // 2026-11-21 オーナー「ギリシャの融合モンスターもつくったから中盤から後半出してほしい」: 13話からの人の勝負の助っ人に融合の子(16話から2体)。神話・ギリシャの生き物の姿の子を話の順に
-const GR_FUSE_FOES={13:[2036],15:[2037],16:[2036],18:[2037]};   // 2026-11-21 オーナー「融合はボスとか対人で」: 人の勝負の助っ人に決めた子(イカヅチジカ・イーグリズ)。セラホエルは22話のレン
+const GR_FUSE_FOES={13:[2036],15:[2042],16:[2014],18:[2037],20:[2078],21:[2059]};   // 2026-11-21 オーナー「作った融合から出せ」: 親がギリシャの子だけの融合(作り直し済み)を人の勝負の助っ人に。イカヅチジカ・ライジンドリ・ブレイグリオ・イーグリズ・フレアホーク・エクリオン(闇は後半)。セラホエルは22話のレン
 function grFuseFoes(ep){ return (GR_FUSE_FOES[+ep]||[]).slice(); }
 function grFoeHelpers(n,lv,ep){ if(!(n>0)) return []; const P=window.Progress; if(!P||!P.lineOf) return [];
   const FZ=grFuseFoes(+ep||0), nf=Math.min(n,FZ.length); const fz=FZ.slice(0,nf).map(mid=>({mid, lv:Math.max(1,lv-2), fixed:true}));
