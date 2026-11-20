@@ -3938,6 +3938,7 @@ async function grStep(s){ const f=GF();
     const win=b===2;
     if(!win&&s.F.must){ delete f[s.id+'_b']; GR_RETRY=true; saveGame(); await runScene(grLoseLines(s.F),{field:true}); objUpdate(); return false; }
     const B=GR_BT[s.ep]; if(B&&B.post&&B.post.length) await runScene(B.post,{field:true}); }   // 2026-11-05 台本の勝負の場面の、決着から後の台詞
+  if(s.kind==='battle'&&f[s.id+'_b']===2&&GR_LEARN_FUSE[s.ep]){ const nm=GR_LEARN_FUSE[s.ep]; const id=+Object.keys(MNAME).find(k=>MNAME[k]===nm); if(id&&!(SAVE.fuseFx&&SAVE.fuseFx[id])) await grFuseFx({fuse:[id]}); }   // 勝ったあとに、融合を覚える(演出)
   flag(s.id); if(s.last){ if(GR_DONE[s.ep]) GR_DONE[s.ep](); flag('a'+pad2g(s.ep)); } saveGame(); return true; }
 async function grTp(x,z,yaw){ TRANS=true; fadeEl.classList.add('on'); await sleep(260);
   HERO.x=x; HERO.z=z; if(yaw!=null) HERO.yaw=yaw; HERO.speed=0; HERO.dir=null; CAM.tx=x; CAM.tz=z; HERO.y=groundAt(x,z); CAM.ty=HERO.y; partnerPlace();
@@ -4016,6 +4017,8 @@ function grFightOpt(opt,F){ const lv=F.lv; if(!opt.player) opt.player={}; let pa
     opt.recruit=F.learn?(()=>grLearn(F.anc.mid)):(()=>null); }
   else { opt.kind='trainer'; opt.size=9; const ai=Object.assign({},F.ai||{}); if(ai.evo==null&&(+F._ep||0)<GR_FOE4_EP) ai.evo=1; /* 2026-11-20 人の敵の進化は3回までにしたが、12話まで(序盤〜決勝)の物語の勝負は今までどおり1回 */ ai.hpX=(ai.hpX||1)*adj; ai.atkX=(ai.atkX||1)*adj; opt.enemy={name:F.foe.n, party:F.foe.party.map(x=>Object.assign({lv},x)).concat(grFoeHelpers(foeAdd,lv,F._ep)), ai}; opt.recruit=()=>null; } }
 const GR_FOE4_EP=13;
+// 2026-11-21 オーナー「ダークレオンも追加したから、どっかで覚える感じに」: その話の勝負に勝ったら覚える融合(名前で引く・データが入るまでは何もしない)。16話=保管庫で闇のボロウルと戦ったあと(闇は後半)
+const GR_LEARN_FUSE={16:'ダークレオン'};
 // 2026-11-20 オーナー「全然決めた通りのボス戦じゃなかった。アニメのシナリオと違う」: 台本(バトル_第NN話.md の「双方の手持ち」)どおりの段取り。battle.js の opts.script
 //  head:1=表の隊は一段目(戻り)で出て、頭の「進化！」の合図で表の姿へ(12話から) / nohead=戻りをしない子(グリフォ) / evo=その番に台本の初進化 / fuse=その番に台本の融合
 const GR_SCRIPT={ 12:{head:1, evo:[{mid:1002,turn:3}]}, 13:{head:1}, 15:{head:1}, 16:{head:1}, 17:{head:1, nohead:[1054], fuse:[{a:1003,b:1012,turn:3}]},
@@ -4148,7 +4151,7 @@ function grAreaPt(n){ const a=(D.areas||[]).find(a=>a.n===n); if(!a) return null
 function grFree(x,z){ return colFree(x+0.013,z+0.011,0.4)&&colFree(x-0.011,z-0.013,0.4); }
 
 // ---- 本体の SC のすぐあとで呼ぶ ----
-function grInit(){ Object.assign(SC,GR_SC);
+function grInit(){ Object.assign(SC,GR_SC); setTimeout(()=>{ try{ const f=GF(); for(const ep in GR_LEARN_FUSE){ if(!f['a'+pad2g(+ep)]) continue; const nm=GR_LEARN_FUSE[ep]; const id=+Object.keys(MNAME).find(k=>MNAME[k]===nm); if(id&&window.Progress&&Progress.learnFusion) Progress.learnFusion(id); } }catch(e){} },3000);   /* その話をもう過ぎたセーブも覚える */
   Object.assign(WHO,{nina:'ニーナ',marco:'マルコ',ana:'アナ',oba:'おばあさん',marina:'マリナ',victor:'ヴィクター',bella:'ベラドンナ',nomos:'ノモス',yusuf:'ユスフ',mihalis:'ミハリス',kenkyu:'研究者',shocho:'所長',kasia:'カシア',zeno:'ゼノ',hao:'ハオ',tarik:'タリク',aura:'オーラ'});
   if(!TOD.night) TOD.night=Object.assign({},TOD.cave,{top:'#0f1a33',mid:'#1c2a4a',hor:'#33476e',sunD:[0.3,0.6,-0.6],sunC:'#b8c8f0',sunI:0.42,hS:'#7f90c0',hG:'#2c3040',hI:0.48,fog:'#18223a',glow:1.0,win:0.85,cloud:0.04,mot:'#cfe0ff',expo:0.95,bloom:0.3,bT:0.7,gain:[0.9,0.96,1.1],sat:0.95,vig:0.4,hazeK:0.5});
   if(!TOD.dawn) TOD.dawn=Object.assign({},TOD.morning,{top:'#7d94c2',mid:'#c9bcd0',hor:'#ffd9b8',sunD:[0.7,0.18,0.6],sunC:'#ffc896',sunI:0.62,hS:'#b4bcd8',hI:0.42,fog:'#d8ccd4',expo:0.9,sat:1.05});
