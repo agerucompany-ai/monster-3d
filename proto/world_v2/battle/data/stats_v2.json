@@ -4452,7 +4452,7 @@
    "fixed": true
   },
   "2007": {
-   "name": "ツバサウルス",
+   "name": "プラテノ",
    "type": "竜",
    "type2": "風",
    "stage": 3,
@@ -4979,38 +4979,6 @@
    ],
    "fixed": true
   },
-  "2022": {
-   "name": "ジョウキリン",
-   "type": "炎",
-   "type2": "水",
-   "stage": 3,
-   "line": null,
-   "archetype": "神格型",
-   "hp": 1460,
-   "atk": 179,
-   "def": 59,
-   "mob": 2,
-   "spd": 44,
-   "red": 0.371,
-   "src_hp": 1460,
-   "src_atk": 156,
-   "src_move": 2,
-   "learnset": [
-    {
-     "move": "fire_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "water_ring",
-     "lv": 1
-    },
-    {
-     "move": "fsig_2022",
-     "lv": 1
-    }
-   ],
-   "fixed": true
-  },
   "2024": {
    "name": "ホムライジュ",
    "type": "雷",
@@ -5074,38 +5042,6 @@
     },
     {
      "move": "earth_dig",
-     "lv": 1
-    }
-   ],
-   "fixed": true
-  },
-  "2026": {
-   "name": "ヒョウエンコ",
-   "type": "炎",
-   "type2": "氷",
-   "stage": 3,
-   "line": null,
-   "archetype": "神格型",
-   "hp": 1440,
-   "atk": 178,
-   "def": 59,
-   "mob": 2,
-   "spd": 46,
-   "red": 0.371,
-   "src_hp": 1440,
-   "src_atk": 155,
-   "src_move": 2,
-   "learnset": [
-    {
-     "move": "fire_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "ice_ring",
-     "lv": 1
-    },
-    {
-     "move": "fsig_2026",
      "lv": 1
     }
    ],
@@ -5189,52 +5125,8 @@
     "cn_fossil"
    ]
   },
-  "2029": {
-   "name": "ケローネ",
-   "type": "地",
-   "type2": "水",
-   "stage": 3,
-   "line": null,
-   "archetype": "神格型",
-   "hp": 2045,
-   "atk": 157,
-   "def": 84,
-   "mob": 2,
-   "spd": 32,
-   "red": 0.457,
-   "src_hp": 1830,
-   "src_atk": 140,
-   "src_move": 2,
-   "learnset": [
-    {
-     "move": "earth_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "water_ring",
-     "lv": 1
-    },
-    {
-     "move": "fsig_2029",
-     "lv": 1
-    },
-    {
-     "move": "earth_dig",
-     "lv": 1
-    }
-   ],
-   "fixed": true,
-   "god": "ヴィシュヌの亀クールマ(神の化身)",
-   "god_base": {
-    "hp": 1825,
-    "atk": 140,
-    "def": 75,
-    "mob": 2,
-    "spd": 29
-   }
-  },
   "2030": {
-   "name": "エレキナギ",
+   "name": "ライリュウ",
    "type": "竜",
    "type2": "雷",
    "stage": 3,
@@ -5580,7 +5472,7 @@
   "2039": {
    "name": "ツララジカ",
    "type": "氷",
-   "type2": "森",
+   "type2": "地",
    "stage": 3,
    "line": null,
    "archetype": "神格型",
@@ -5599,7 +5491,7 @@
      "lv": 1
     },
     {
-     "move": "forest_ring",
+     "move": "earth_ring",
      "lv": 1
     },
     {
@@ -5607,7 +5499,8 @@
      "lv": 1
     }
    ],
-   "fixed": true
+   "fixed": true,
+   "note_1120": "2026-11-20 材料をレパルド＋クワダチに(氷＋地)。数はそのまま"
   },
   "2040": {
    "name": "ヒナタケモノ",
@@ -5789,7 +5682,7 @@
    ]
   },
   "2045": {
-   "name": "ペガライ",
+   "name": "サンダーペガス",
    "type": "光",
    "type2": "雷",
    "stage": 3,
@@ -5969,46 +5862,6 @@
    ],
    "fixed": true
   },
-  "2050": {
-   "name": "タオス",
-   "type": "風",
-   "type2": "光",
-   "stage": 3,
-   "line": null,
-   "archetype": "神格型",
-   "hp": 1131,
-   "atk": 159,
-   "def": 39,
-   "mob": 3,
-   "spd": 68,
-   "red": 0.281,
-   "src_hp": 1460,
-   "src_atk": 159,
-   "src_move": 3,
-   "learnset": [
-    {
-     "move": "wind_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "fsig_2050",
-     "lv": 1
-    },
-    {
-     "move": "light_heal1",
-     "lv": 1
-    },
-    {
-     "move": "light_heal_all",
-     "lv": 1
-    },
-    {
-     "move": "light_revive",
-     "lv": 1
-    }
-   ],
-   "fixed": true
-  },
   "2051": {
    "name": "ヤタクロウ",
    "type": "風",
@@ -6036,34 +5889,6 @@
     },
     {
      "move": "fsig_2051",
-     "lv": 1
-    }
-   ],
-   "fixed": true
-  },
-  "2052": {
-   "name": "アラシドラ",
-   "type": "竜",
-   "type2": "風",
-   "stage": 3,
-   "line": null,
-   "archetype": "神格型",
-   "hp": 1535,
-   "atk": 160,
-   "def": 72,
-   "mob": 3,
-   "spd": 53,
-   "red": 0.419,
-   "src_hp": 1540,
-   "src_atk": 160,
-   "src_move": 3,
-   "learnset": [
-    {
-     "move": "dragon_ladder4",
-     "lv": 1
-    },
-    {
-     "move": "fsig_2052",
      "lv": 1
     }
    ],
@@ -6758,7 +6583,7 @@
    "placeholder": "ホムライジュ(2024)の写し・TODO"
   },
   "2073": {
-   "name": "グレンカイザー",
+   "name": "グレンダイル",
    "type": "炎",
    "type2": "水",
    "stage": 3,
@@ -6791,7 +6616,7 @@
    "placeholder": "2022の写し(数)・決め技は2026-10-28に自分の技・TODO"
   },
   "2074": {
-   "name": "ライゼンギガス",
+   "name": "ライゼンダイル",
    "type": "雷",
    "type2": "水",
    "stage": 3,
@@ -6924,6 +6749,72 @@
     }
    ],
    "fixed": true
+  },
+  "2078": {
+   "name": "フレアホーク",
+   "type": "炎",
+   "type2": "風",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1440,
+   "atk": 178,
+   "def": 59,
+   "mob": 2,
+   "spd": 46,
+   "red": 0.371,
+   "src_hp": 1440,
+   "src_atk": 155,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "wind_ring",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2078",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "note_1120": "2026-11-20 オーナー指示の新しい融合(フォルコン＋ディーグル)。数は消したヒョウエンコ(2026)の写し"
+  },
+  "2079": {
+   "name": "カエンレクス",
+   "type": "炎",
+   "type2": "竜",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1440,
+   "atk": 178,
+   "def": 59,
+   "mob": 2,
+   "spd": 46,
+   "red": 0.371,
+   "src_hp": 1440,
+   "src_atk": 155,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "fire_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2079",
+     "lv": 1
+    }
+   ],
+   "fixed": true,
+   "note_1120": "2026-11-20 オーナー指示の新しい融合(フォルコン＋ラプント)。数は消したヒョウエンコ(2026)の写し"
   }
  }
 }

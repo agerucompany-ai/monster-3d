@@ -11,7 +11,7 @@
 //   R: terrain=盤 size=盤の大きさ ai=強さ guests=こちらの盤('partner'=フォルン・'own2'=コグリフ系・'own3'=セイリュ系・数=借りる子) fuse=覚えている融合(借りる子との融合)
 //      triple=3体融合 keep2=その子の先の姿を持たない扱い(2段目のまま) maxTurn=手数(時間切れ=引き分け・draw:1 の段)
 // ============================================================================
-const AMAKA_ID=2073, NARUMI_ID=2074, LOKI_ID=2075;   // 新2グレンカイザー・新3ライゼンギガス・新4ゴルドレクス(2026-10-28 オーナー決定で改名・絵と3Dあり)
+const AMAKA_ID=2073, NARUMI_ID=2074, LOKI_ID=2075;   // 新2グレンダイル・新3ライゼンダイル・新4ゴルドレクス(2026-10-28 オーナー決定で改名・絵と3Dあり)
 for(const id of [AMAKA_ID,NARUMI_ID,LOKI_ID]) NO_ART.add(id);   // 場面では絵を出さない(生まれた場では名前も出さない決まり)
 const OWN3=[195,196,291];   // ヤマトの3体目(セイリュ系)
 const X_ARCS=[];
@@ -178,7 +178,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(5,'e05_2',VA,'王家の谷',{obj:'西の谷の、明かりのついた墓の穴へ',tod:'night'});
   bt(5,'e05_b','e05_3',VA,{foe:()=>cnFoe({n:'墓の番の子たち',party:P(1037,1043)}),R:{terrain:'kingsvalley'}});
   sc(5,'e05_4',VA,'*',{bg:'anime_eg_tomb'});
-  // 第6話 本当のこと(扉の前・全画面→王の墓の玄室で守り①アヌビド。新2グレンカイザー=フォルコン＋アレクのクロベク)
+  // 第6話 本当のこと(扉の前・全画面→王の墓の玄室で守り①アヌビド。新2グレンダイル=フォルコン＋アレクのクロベク)
   sc(6,'e06_1',VA,'*',{bg:'anime_eg_tomb'}); sc(6,'e06_2',VA,'*',{bg:'anime_eg_tomb'}); sc(6,'e06_3',VA,'*',{bg:'anime_eg_tomb'});
   go(6,'e06_g',VA,TB,'from_valley');
   sc(6,'e06_4',TB,'玄室',{obj:'墓の奥、星の天井の部屋へ'});
@@ -192,7 +192,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(7,'e07_3b',LU);
   bt(7,'e07_b','e07_5',LU,{prox:1,must:1,obj:'神殿の広場のネフェルと、古印の勝負'});
   sc(7,'e07_6',LU,'*',{bg:'anime_eg_luxor_dusk',tod:'evening'});
-  // 第8話 夜の川の男(夜の帆船・全画面。男の話を最後まで聞く→夜のナイルのエレキナギ。オーロフ=レパルド＋ピリムサ)
+  // 第8話 夜の川の男(夜の帆船・全画面。男の話を最後まで聞く→夜のナイルのライリュウ。オーロフ=レパルド＋ピリムサ)
   const NB='anime_eg_nile_night';
   sc(8,'e08_1',LU,'*',{bg:NB,tod:'night'}); sc(8,'e08_2',LU,'*',{bg:NB}); sc(8,'e08_3',LU,'*',{bg:NB});
   fn(8,'e08_q',LU,()=>xQuiz([['男の話',['最後まで聞く','言い返す'],0,'男は、話をやめた']],NB));
@@ -224,7 +224,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   sc(12,'e12_2b',AB,'*',{bg:'anime_eg_temple_in'}); sc(12,'e12_3',AB,'*',{bg:'anime_eg_temple_in'});
   bt(12,'e12_b','e12_4',AB,{bg:'anime_eg_temple_in',wild:2059,must:1,R:{terrain:'ruins',own:[1054],fuse:[2014],tune:{hp:0.882,atk:3.596}}});
   sc(12,'e12_5',AB,'*',{tod:'morning'});
-  // 第13話 上がる水(空の船で下流の町=ルクソールの川岸へ・2026-10-31 水と時間の盤。新3ライゼンギガス=ピリムサ＋クロベク)
+  // 第13話 上がる水(空の船で下流の町=ルクソールの川岸へ・2026-10-31 水と時間の盤。新3ライゼンダイル=ピリムサ＋クロベク)
   go(13,'e13_g',AB,LU,'from_cairo',{tod:'noon'});
   sc(13,'e13_1',LU,'*',{bg:'anime_eg_sky'}); sc(13,'e13_2',LU,'*',{bg:'anime_eg_flood'}); sc(13,'e13_3',LU,'*',{bg:'anime_eg_flood'}); sc(13,'e13_4',LU,'*',{bg:'anime_eg_flood',tod:'evening'});
   bt(13,'e13_b','e13_5',LU,{bg:'anime_eg_flood',foe:()=>cnFoe({n:'ログ＆パッチとミラ＆ジョー',zeroday:1,party:P(1007,1062,1005,1043)}),R:{terrain:'stream',guests:['partner',71,1012,'own2'],fuse:[NARUMI_ID],ai:{hpX:1.41,atkX:1.41},special:{mode:'flood',need:2,turns:10}}});
@@ -245,7 +245,7 @@ xArc('eg','e',f=>!!f.c30,EG_MAPJ,({sc,bt,go,fn})=>{
   bt(16,'e16_b','e16_4',AS,{bg:DI,mid:'e16_3',foe:()=>cnFoe({n:'ミラ＆ジョー',zeroday:1,party:P(1005,1006,1038)}),R:{terrain:'ruins',ai:{hpX:0.769,atkX:0.769}}});
   sc(16,'e16_5',AS,'*',{bg:DI});
   sc(17,'e17_1',AS,'*',{bg:'anime_eg_control'}); sc(17,'e17_2',AS,'*',{bg:'anime_eg_control'});
-  bt(17,'e17_b','e17_3',AS,{bg:'anime_eg_control',foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1061,lv:40,fixed:true,leader:true,boss:true,circle:true},{mid:1005,lv:39,stage:2,evo:true},{mid:1006,lv:39,fixed:true},{mid:1013,lv:39,fixed:true},{mid:1012,lv:38,stage:2,evo:true})},'ランサム'),R:{terrain:'ruins',guests:['partner',1046,'own2','own3'],fuse:[2026],ai:{hpX:0.73,atkX:0.785}}});   // 2026-10-30 タイプ相性の作り直しのあと 0.89/0.96→0.93/1.0(tune_v4 e17 約67%)。2026-10-28 切り札ディアボーグ(ボス・1.75倍・魔法陣から出る)。シム sim/sim_e17.js 150戦: 勝率66%(前の hpX/atkX 1.2 では3%)。2026-10-30 ボスが奥にいるようになって53%→ 0.89/0.96 で約73%(tune_v4 360戦)
+  bt(17,'e17_b','e17_3',AS,{bg:'anime_eg_control',foe:()=>cnFoe({n:'ランサム',zeroday:1,master:1,party:P({mid:1061,lv:40,fixed:true,leader:true,boss:true,circle:true},{mid:1005,lv:39,stage:2,evo:true},{mid:1006,lv:39,fixed:true},{mid:1013,lv:39,fixed:true},{mid:1012,lv:38,stage:2,evo:true})},'ランサム'),R:{terrain:'ruins',guests:['partner',1031,'own2','own3'],fuse:[2078],ai:{hpX:0.73,atkX:0.785}}});   // 2026-10-30 タイプ相性の作り直しのあと 0.89/0.96→0.93/1.0(tune_v4 e17 約67%)。2026-10-28 切り札ディアボーグ(ボス・1.75倍・魔法陣から出る)。シム sim/sim_e17.js 150戦: 勝率66%(前の hpX/atkX 1.2 では3%)。2026-10-30 ボスが奥にいるようになって53%→ 0.89/0.96 で約73%(tune_v4 360戦)
   sc(17,'e17_4',AS,'*',{bg:'anime_eg_control',post:()=>flag('eg_ransom')});
   sc(18,'e18_1',AS,'*',{bg:'anime_eg_control',tod:'dawn'}); sc(18,'e18_2a',AS,'*',{bg:'anime_eg_control'});
   fn(18,'e18_q',AS,()=>xQuiz(EG_Q18,'anime_eg_control'));

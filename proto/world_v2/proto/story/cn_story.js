@@ -127,7 +127,7 @@ sc(16,'c16_1',GO,'*',{bg:'anime_cn_frozen'}); sc(16,'c16_2',GO,'*',{bg:'anime_cn
 bt(16,'c16_b','c16_3',GO,{bg:'anime_cn_frozen',foe:()=>cnFoe({n:'手下のボー',zeroday:1,party:P(1014,1059,1060)}),R:{terrain:'stream',ai:{hpX:2,atkX:2},special:{mode:'guard',turns:8,look:'shell',wardHp:1}}});
 sc(16,'c16_4',GO,'*',{bg:'anime_cn_frozen'}); sc(16,'c16_5',GO,'*',{bg:'anime_cn_river_dusk'});
 sc(16,'c16_6',GO,'*',{bg:'anime_cn_wall',post:()=>flag('guard_n')});
-// 第17話 古い都の門(2026-10-28 唐獅子の記憶の問い c17_2a/c17_q/c17_2b はオーナー判断で削除=白虎と被る。門の外の麒麟ジョウキリンは寄り道の古代テリオン)
+// 第17話 古い都の門(2026-10-28 唐獅子の記憶の問い c17_2a/c17_q/c17_2b はオーナー判断で削除=白虎と被る。門の外の氷の鹿ツララジカは寄り道の古代テリオン)
 go(17,'c17_g',GO,CA,'from_gorges',{tod:'morning'});
 sc(17,'c17_1',CA);
 sc(17,'c17_3',CA,'鐘楼の広場',{obj:'鐘楼の広場へ'});
@@ -248,7 +248,7 @@ async function cnStep(s){ const f=GF();
 async function cnTp(x,z,yaw){ TRANS=true; fadeEl.classList.add('on'); await sleep(260);
   HERO.x=x; HERO.z=z; if(yaw!=null) HERO.yaw=yaw; HERO.speed=0; HERO.dir=null; CAM.tx=x; CAM.tz=z; HERO.y=groundAt(x,z); CAM.ty=HERO.y; partnerPlace();
   await settleMap(2500); LAST=performance.now(); fadeEl.classList.remove('on'); await sleep(260); TRANS=false; AREA=zoneAt(HERO.x,HERO.z)||D.name; saveGame(); }
-// 古代テリオンの「試し」(物語では戦わない白虎・朱雀・玄武・青龍と、物語のあとのサジンオロチ・寄り道の麒麟ジョウキリン): 地図の wild[].trial の旗のあとは、近づいても始まらず「再戦」のボタンから
+// 古代テリオンの「試し」(物語では戦わない白虎・朱雀・玄武・青龍と、物語のあとのサジンオロチ・寄り道の氷の鹿ツララジカ): 地図の wild[].trial の旗のあとは、近づいても始まらず「再戦」のボタンから
 function cnTrials(){ if(!cnOn()||!MONS) return; const f=GF(); for(const m of MONS){ if(m.o.trial&&f[m.o.trial]) m.rematch=true; } }
 
 // ---- 目的の表示 ----
@@ -266,7 +266,7 @@ function cnMigrate(){ const f=SAVE&&SAVE.flags; if(!f||f.cnMig) return; f.cnMig=
 // 場面の中で2Dのテリオンを見せる所(その文の行の前に出す。場面が終わると消える)
 const CN_MON=[['c02_1','白い、小さな子がうずくまっていた',196,{x:60,y:4,w:16}],['c04_2','セイリュは、片目をあけて',196,{x:60,y:4,w:16}],['c06_4','稲妻の模様のトラが',1023,{x:60,y:6,w:24}],['c06_4','小さなビリトラが一体',1022,{x:40,y:4,w:15}],
   ['c07_1','体を丸めた、大きな白い虎',3024,{x:58,y:8,w:34,op:.85}],['c07_2','虎が、ゆっくり頭を上げた',3024,{x:58,y:8,w:34}],['c07_5','南の空を見上げて',3024,{x:58,y:8,w:34}],
-  ['c10_4','大きな火の鳥が',2004,{x:56,y:12,w:34}],['c13_1','黒い角の子が一体',1069,{x:60,y:6,w:22}],['c16_1','長い首がのびた',2053,{x:56,y:8,w:38}],['c17_1','金色の角の子が',2022,{x:64,y:14,w:20,op:.6}],
+  ['c10_4','大きな火の鳥が',2004,{x:56,y:12,w:34}],['c13_1','黒い角の子が一体',1069,{x:60,y:6,w:22}],['c16_1','長い首がのびた',2053,{x:56,y:8,w:38}],['c17_1','氷の角の子が',2039,{x:64,y:14,w:20,op:.6}],
   ['c21_4','大きな豹が',1047,{x:58,y:6,w:30}],['c24_2','光る小さな虫の子が',1057,{x:62,y:20,w:12}],['c25_3','八本の首が',2048,{x:56,y:10,w:42}],['c26_2','カブトムシの子が飛びこんで',1034,{x:62,y:6,w:20}],
   ['c29_2','海の色の大きな竜',291,{x:56,y:8,w:34}],['c30_1','とぐろを巻いて眠る',3291,{x:56,y:10,w:44}],['c30_2','セイリュが、もう一度',196,{x:40,y:4,w:16}]];
 function cnInit(){ Object.assign(SC,CN_SC); toastEl.style.zIndex=40;
