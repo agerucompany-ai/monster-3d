@@ -104,7 +104,8 @@
     },
     {
      "move": "starter_enou",
-     "lv": 1, "evo": true
+     "lv": 1,
+     "evo": true
     },
     {
      "move": "fire_ladder3",
@@ -1559,9 +1560,9 @@
    "stage": 3,
    "line": "piri",
    "archetype": "電撃型",
-   "hp": 1400,
-   "atk": 164,
-   "def": 45,
+   "hp": 1550,
+   "atk": 192,
+   "def": 56,
    "mob": 2,
    "spd": 76,
    "red": 0.31,
@@ -6892,37 +6893,37 @@
    "fixed": true,
    "note_1108": "2026-11-08 新しい融合(ベルクマ＋ラプント・森＋竜)。数はトリケラス(2009・森＋竜・神格型)と同じ決め方: 守り59・素早さ37・体力は monsters.json の +5"
   },
- "2077": {
-  "name": "サンドラタイガー",
-  "type": "雷",
-  "type2": "竜",
-  "stage": 3,
-  "line": null,
-  "archetype": "神格型",
-  "hp": 1472,
-  "atk": 175,
-  "def": 44,
-  "mob": 2,
-  "spd": 51,
-  "red": 0.329,
-  "src_hp": 1540,
-  "src_atk": 170,
-  "src_move": 2,
-  "learnset": [
-   {
-    "move": "thunder_ladder4",
-    "lv": 1
-   },
-   {
-    "move": "dragon_ring",
-    "lv": 1
-   },
-   {
-    "move": "fsig_2077",
-    "lv": 1
-   }
-  ],
-  "fixed": true
- }
+  "2077": {
+   "name": "サンドラタイガー",
+   "type": "雷",
+   "type2": "竜",
+   "stage": 3,
+   "line": null,
+   "archetype": "神格型",
+   "hp": 1472,
+   "atk": 175,
+   "def": 44,
+   "mob": 2,
+   "spd": 51,
+   "red": 0.329,
+   "src_hp": 1540,
+   "src_atk": 170,
+   "src_move": 2,
+   "learnset": [
+    {
+     "move": "thunder_ladder4",
+     "lv": 1
+    },
+    {
+     "move": "dragon_ring",
+     "lv": 1
+    },
+    {
+     "move": "fsig_2077",
+     "lv": 1
+    }
+   ],
+   "fixed": true
+  }
  }
 }

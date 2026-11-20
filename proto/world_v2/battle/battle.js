@@ -1716,7 +1716,7 @@ function aiFusePartner(u){ if(mon(u).level<2 || mon(u).role==='fusion') return n
     if(f==null){ if(!pairOK || (!(u.evo||p.evo) && !fuseRelaxed(u.owner))) continue; f=fusePair(u.mid,p.mid); if(f==null) continue; }
     const sc=MID[f].atk-(Math.abs(p.r-u.r)+Math.abs(p.c-u.c))*3+aiFuseWeakScore(u.owner,[mon(u),mon(p)],MID[f]); if(!best||sc>best.sc) best={p,f,sc}; }
   return best; }
-function aiFuseCell(u){ if(u.acted) return null;
+function aiFuseCell(u){ if(u.acted) return null; if(u.owner===0 && !ONLINE && ((BT.opts&&BT.opts.script)||(state&&state.turn<3))) return null;   /* 2026-11-20 オーナー「こちらのテリオンが最初からエルレオンとかで出てる」: 自分の側のおまかせは1手目から融合しない(物語の勝負は台本の番だけ) */
   const cells=(canMove(u)?moveTargets(u).fuse:[]).concat(adjFuse(u));
   let best=null, bs=-1e9;
   for(const [r,c] of cells){ const p=unitAt(r,c); if(!p) continue; const t3=tripleResult(u,p); const f=t3?t3.id:fusionResult(u,p); if(f==null) continue; const sc=MID[f].atk+MID[f].hp*0.1+aiFuseWeakScore(u.owner,t3?[mon(u),mon(p),mon(t3.c)]:[mon(u),mon(p)],MID[f]); if(sc>bs){ bs=sc; best=[r,c]; } }
@@ -6008,7 +6008,7 @@ function init(o){
     try{ applySeries(rd(CFG.series)); }catch(e){ applySeries(null); }   // 戦術v3: シリーズと合体攻撃
     return (_loadP=Promise.resolve(true)); }
   const gj=(f)=>fetch(CFG.base+f).then(r=>{ if(!r.ok) throw new Error(f+' '+r.status); return r.json(); });
-  _loadP=gj(CFG.data+'?v=20261120b').then(list=>{ setMonsters(list); return Promise.all([gj(CFG.stats+'?v=20261120b'),gj(CFG.moves+'?v=20261120b')]).then(([st,mv])=>applyV2Data(st,mv)).catch(e=>{ console.warn('技 v2 のデータが読めない',e); V2DATA=false; }); })
+  _loadP=gj(CFG.data+'?v=20261120c').then(list=>{ setMonsters(list); return Promise.all([gj(CFG.stats+'?v=20261120c'),gj(CFG.moves+'?v=20261120c')]).then(([st,mv])=>applyV2Data(st,mv)).catch(e=>{ console.warn('技 v2 のデータが読めない',e); V2DATA=false; }); })
     .then(()=>gj(CFG.series).then(applySeries).catch(e=>{ console.warn('シリーズの表が読めない',e); applySeries(null); }))   // 戦術v3
     .then(()=>true);   // 2026-10-27 技 v2
   return _loadP;

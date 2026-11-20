@@ -2236,7 +2236,7 @@ function camUpdate(dt){ if(CAM.fixed){ const f=CAM.fixed; camera.position.set(f[
   // 地図ごとの低いカメラ(D.cam={pitch,dist,distW}): 白い都は建物の正面と高さが見えるように低く構える(2026-11-17 オーナー「角度的に見えない」)
   if(Math.abs(camera.fov-camFov(camera.aspect<1))>0.01) resize();
   const cb=D&&D.cam, bd=cb?(camera.aspect<1?cb.dist:(cb.distW||cb.dist)):camDist(), bp=cb?cb.pitch*DEG:CAM.pitch;
-  const tk=sm(0,1,CAM.tk||0); const d=CAM.dist=lerp(bd,lv.dist||bd,vk)*(1-0.32*tk), p=lerp(lerp(bp,(lv.pitch||45)*DEG,vk),Math.max(bp,58*DEG),tk); const ah=camera.aspect<1?1.6:0.8;   // 主人公を画面の少し下に置く(進む先=北を広く)
+  const tk=sm(0,1,CAM.tk||0); const tw=window.GR_TALKW||0, b0=lerp(bd,lv.dist||bd,vk), hf=2*Math.atan(Math.tan(camera.fov*DEG/2)*camera.aspect), dN=tw>0?(tw*0.62)/Math.tan(hf/2):0; const d=CAM.dist=lerp(b0, Math.min(b0*1.9,Math.max(b0*0.68,dN)), tk),   /* 2026-11-20 入れたい幅(大物まで)からカメラの距離 */ p=lerp(lerp(bp,(lv.pitch||45)*DEG,vk),Math.max(bp,58*DEG),tk); const ah=camera.aspect<1?1.6:0.8;   // 主人公を画面の少し下に置く(進む先=北を広く)
   const fl=camFlip()?-1:1; CAM.yaw=fl<0?Math.PI:0;   // 2026-11-18 オーナー「上に進んだら、画面の下からマップが広がるはず」: 物語で進む向きが南(+z)の地図は、カメラを北から見下ろす(進む先=画面の上)
   const fx=CAM.tx, fz=CAM.tz-fl*(ah*(1-tk)+vk*(lv.ahead||0)), fy=CAM.ty+0.6+vk*(lv.yOff||0);
   camera.position.set(fx,fy+Math.sin(p)*d,fz+fl*Math.cos(p)*d); camera.lookAt(fx,fy,fz);
@@ -2336,7 +2336,7 @@ async function startEncounter(e){ ENC=e; BGM.bt=bgmBattleTrack(e); BGM.res=false
   if(e.n){ HERO.yaw=Math.atan2(e.n.x-HERO.x,e.n.z-HERO.z); e.n.yaw=Math.atan2(HERO.x-e.n.x,HERO.z-e.n.z); talkTo(e.n,e.n.o.n+'が勝負をしかけてきた！'); { const sc0=grTrainerScene(e.n); if(sc0&&SC[sc0]&&!(SAVE&&SAVE.flags['seen_'+sc0])){ await sleep(500); bangEl.style.display='none'; talkClose(); await grScene(sc0,e.n); if(SAVE) SAVE.flags['seen_'+sc0]=1; } } }
   if(e.m) toast(e.m.o.ancient?'古代テリオン・'+monName(e.m.o.id)+'が、こちらを見た！':(e.m.o.boss?monName(e.m.o.id)+'が、嵐の中から現れた！':'野生の'+monName(e.m.o.id)+'が飛び出してきた！'));
   if(e.m&&e.m.o.scene&&SC[e.m.o.scene]&&!(SAVE&&SAVE.flags['seen_'+e.m.o.scene])){ await sleep(500); bangEl.style.display='none'; await storyField(e.m.o.scene); if(SAVE) SAVE.flags['seen_'+e.m.o.scene]=1; }   // 古代テリオン(守り)・ボスに会う場面
-  const load=window.startBattle?Promise.resolve():loadScript('../battle/battle.js?v=20261120o');
+  const load=window.startBattle?Promise.resolve():loadScript('../battle/battle.js?v=20261120p');
   await new Promise(r=>setTimeout(r,e.n?1300:700)); bangEl.style.display='none'; talkClose();
   flashEl.style.opacity=1; await load; await new Promise(r=>setTimeout(r,350));
   PAUSED=true; flashEl.style.opacity=0; const place=placeAt(HERO.x,HERO.z); STATS.battles=(STATS.battles||0)+1;
@@ -2585,7 +2585,7 @@ const BRIEF_NO={};   // 野生のいない土地(村)
 const briefRegion=id=>MAPC[id]?Promise.resolve(MAPC[id]):fetch('regions/'+id+'.json').then(r=>r.json()).then(j=>(MAPC[id]=j));
 const briefHas=R=>!!(R&&(R.wild||[]).some(w=>!w.ancient&&!w.boss));
 const briefArc=id=>id.startsWith('cn_')?'china':id.startsWith('eg_')?'egypt':id.startsWith('nr_')?'norse':'greece';
-async function briefLib(){ if(!window.MonBattle) await loadScript('../battle/battle.js?v=20261120o'); await MONS_P; return window.MonBattle; }
+async function briefLib(){ if(!window.MonBattle) await loadScript('../battle/battle.js?v=20261120p'); await MONS_P; return window.MonBattle; }
 const BRIEF_TK=['plain','forest','wasteland','sea','water','ruins','lava','snow','gloom'];
 function briefBoards(R){ const B=R.battle, out=[]; const add=(tt,a)=>{ if(!tt||typeof tt!=='string') return; let o=out.find(x=>x.tt===tt); if(!o){ o={tt,areas:[]}; out.push(o); } if(a&&!o.areas.includes(a)) o.areas.push(a); };
   if(!B){ add('meadow'); add('olive'); if(R.terrain&&(R.terrain.streams||[]).length) add('stream','川ぞい'); if(R.terrain&&(R.terrain.coast||[]).length) add('seaside','海ぞい'); return out; }   // 盤の指定が無いマップ(オリーブの丘)は placeAt と同じ(草原・オリーブ畑・小川・海辺)
@@ -3731,15 +3731,19 @@ function grFoeIds(s){ if(!s||!grHere(s)) return null; const i=GR_STEPS.indexOf(s
   if(s.kind==='battle') b=s; else if(s.kind==='scene'){ const n=GR_STEPS[i+1]; if(n&&n.kind==='battle'&&n.ep===s.ep) b=n; }
   const F=b&&b.F; if(!F) return null; const ids=F.anc?[F.anc.mid]:((F.foe&&F.foe.party)||[]).map(x=>x.mid); return ids.length?ids:null; }
 function grFoeDrop(){ if(!GR_FOE) return; for(const f of GR_FOE.m){ f.dead=true; if(f.inst) scene.remove(f.inst.root); } GR_FOE=null; }
-function grFoeTick(s,live){ const g=GR_GUIDE; const ids=(live&&!ENC&&g)?grFoeIds(s):null; const key=ids&&(s.ep+':'+ids.join(','));
-  if(!ids){ grFoeDrop(); window.GR_TALKF=(live&&g&&!ENC)?[(HERO.x+g.x)/2,(HERO.z+g.z)/2]:null; return; }
-  if(!GR_FOE||GR_FOE.key!==key){ grFoeDrop(); let dx=g.x-HERO.x, dz=g.z-HERO.z; const L=Math.hypot(dx,dz)||1; dx/=L; dz/=L;
+// 2026-11-20 オーナー「アトラードがデカくなるだけじゃなくて、ヴィクターのよこに立っているときとか(マップでね)」: ヴィクターが立つ場面は、勝負の前でなくても連れている子を横に(14話からヴァンプロード・19話からアトラードも)
+function grVicIds(s){ const g=GR_GUIDE; if(!g||!g.mem||!g.mem.victor) return null; const ep=+s.ep||0; return ep>=19?[1067,2067]:ep>=14?[1067]:null; }
+function grFoeTick(s,live){ const g=GR_GUIDE; const ids=(live&&!ENC&&g)?(grFoeIds(s)||grVicIds(s)):null; const key=ids&&(s.ep+':'+ids.join(',')+(g&&g.mem&&g.mem.victor?':v':''));
+  if(!ids){ grFoeDrop(); window.GR_TALKF=(live&&g&&!ENC)?[(HERO.x+g.x)/2,(HERO.z+g.z)/2]:null; window.GR_TALKW=0; return; }
+  if(!GR_FOE||GR_FOE.key!==key){ grFoeDrop(); let dx=g.x-HERO.x, dz=g.z-HERO.z; const L=Math.hypot(dx,dz)||1; dx/=L; dz/=L; const V=g.mem&&g.mem.victor; const ax=V?V.x:g.x, az=V?V.z:g.z;   // ヴィクターがいれば その横
+    const lat=V?((V.x-g.x)*(-dz)+(V.z-g.z)*dx):0, out=lat>0.05?1:lat<-0.05?-1:-1;   // ヴィクターの外側(こちらの人と反対)
     const n=ids.length, F=GR_FOE={key,m:[]};
-    ids.forEach((id,i)=>{ const lv=MLV[id]||1, sc=({2067:4.2,2066:3.2,2061:3.2,2045:2.6})[id]||(lv>=3?1.7:lv===2?1.15:0.8),   /* 2026-11-20 神話の大物は大きく(battle.js MYTH_BIG) */ side=(i%2?1:-1)*(1.0+sc*0.55+Math.floor(i/2)*1.4)*(n>1?1:0), back=1.6+sc*0.4;   /* 話す人の横(奥は建物の壁のことがある)*/
-      let x=g.x+dx*back-dz*side, z=g.z+dz*back+dx*side; if(typeof grSpot==='function'){ const q=grSpot(x,z); if(q){ x=q[0]; z=q[1]; } }
+    ids.forEach((id,i)=>{ const lv=MLV[id]||1, sc=({2067:6.0,2066:4.0,2061:4.0,2045:3.0})[id]||(lv>=3?1.7:lv===2?1.15:0.8),   /* 2026-11-20 神話の大物は大きく(battle.js MYTH_BIG) */ big=sc>=2.5, side=out*(big?(1.2+sc*0.35):(n>1?1.2:0)), back=big?(0.6+sc*0.25):(n>1?0.3:1.6+sc*0.4);   /* 外側に並べる(大物はいちばん外)。後ろは建物の陰になることがある */   /* 話す人の横(奥は建物の壁のことがある)*/
+      let x=ax+dx*back-dz*side, z=az+dz*back+dx*side; if(typeof grSpot==='function'){ const q=grSpot(x,z); if(q){ x=q[0]; z=q[1]; } }
       const f={id,x,z,sc,yaw:Math.atan2(HERO.x-x,HERO.z-z),inst:null,dead:false}; F.m.push(f);
       monProto(id).then(gg=>{ if(f.dead) return; f.inst=monMake(gg); const R=f.inst.root; R.scale.setScalar(f.sc); R.position.set(f.x,groundAt(f.x,f.z),f.z); R.rotation.y=f.yaw; scene.add(R); }).catch(()=>{}); }); }
-  let cx=HERO.x+g.x, cz=HERO.z+g.z, k=2; for(const f of GR_FOE.m){ cx+=f.x; cz+=f.z; k++; } window.GR_TALKF=[cx/k,cz/k]; }
+  let x0=Math.min(HERO.x,g.x), x1=Math.max(HERO.x,g.x), z0=Math.min(HERO.z,g.z), z1=Math.max(HERO.z,g.z); for(const f of GR_FOE.m){ const r=f.sc*0.35; x0=Math.min(x0,f.x-r); x1=Math.max(x1,f.x+r); z0=Math.min(z0,f.z-r); z1=Math.max(z1,f.z+r); } for(const k in (g.mem||{})){ const m=g.mem[k]; if(m&&m.x!=null){ x0=Math.min(x0,m.x-0.8); x1=Math.max(x1,m.x+0.8); z0=Math.min(z0,m.z-0.8); z1=Math.max(z1,m.z+0.8); } } x0-=0.8; x1+=0.8;
+  window.GR_TALKF=[(x0+x1)/2,(z0+z1)/2]; window.GR_TALKW=Math.max(x1-x0,(z1-z0)*0.6); }   // 2026-11-20 大物まで入る幅(GR_TALKW)
 (function grFoeAnim(){ let t0=0; const f=t=>{ requestAnimationFrame(f); const dt=t0?Math.min(0.1,(t-t0)/1000):0; t0=t; if(GR_FOE) for(const m of GR_FOE.m) if(m.inst) m.inst.mixer.update(dt); }; requestAnimationFrame(f); })();
 // 歩く段の行き先の印(人の代わり)。画面の外なら矢印で向き
 let GR_DEST=null;
@@ -3962,7 +3966,8 @@ function grOwnLv(){ const P=window.Progress; const R=(P&&P.roster)?P.roster():[]
 function grFightOpt(opt,F){ const lv=F.lv; if(!opt.player) opt.player={}; let party=opt.player.party; if(!Array.isArray(party)){ party=[]; opt.player.party=party; }
   const enju=party.find(p=>ENJU_LINE.includes(+p.mid))||null;
   const own=grOwnLv();   // 2026-11-17 オーナー「レベル上がったのに、バトルで反映されてない」: 自分の子は自分のLv(話のLvより低ければ話のLv)
-  const L=F.me.map(m=>{ if(typeof m==='string'){ const mid=GR_PMID[m]; return enju&&enju.uid?{uid:enju.uid, mid, lv:Math.max(+enju.lv||1, lv)}:{mid, lv, guest:1}; } const o=own(+m); return o?{uid:o.uid, mid:+m, lv:Math.max(+o.lv||1, lv)}:{mid:+m, lv, guest:1}; });
+  const heroLv=Math.max(lv, enju&&enju.uid?(+enju.lv||1):lv);   // 2026-11-20 オーナー「ナルカミのステータスと攻撃力が低すぎる」: 借りる子(エリー・アレクの子)は話のLvのままでヤマトの子よりずっと弱かった → ヤマトの子のLvにそろえる
+  const L=F.me.map(m=>{ if(typeof m==='string'){ const mid=GR_PMID[m]; return enju&&enju.uid?{uid:enju.uid, mid, lv:Math.max(+enju.lv||1, lv)}:{mid, lv, guest:1}; } const o=own(+m); return o?{uid:o.uid, mid:+m, lv:Math.max(+o.lv||1, heroLv)}:{mid:+m, lv:heroLv, guest:1}; });
   // 2026-11-06 自分の仲間から足した子(grPickTeam で選んだ・GR_TEAM)。1段目・Lv はその話の Lv まで・覚えた進化の仕方まで
   const EX=(GR_TEAM&&GR_TEAM.F===F?GR_TEAM.cards:[]).map(c=>({uid:c.uid, mid:+c.mid, lv:Math.max(+c.lv||1, 1)}));   // 2026-11-17: 話のLvで頭打ちにしない(育てた分がそのまま効く)
   const exOwn=[]; { const MN=id=>(window.Progress&&Progress.mon&&Progress.mon(+id))||null; const ow=new Set(((window.Progress&&Progress.ownedList&&Progress.ownedList())||[]).map(Number));
@@ -3972,7 +3977,7 @@ function grFightOpt(opt,F){ const lv=F.lv; if(!opt.player) opt.player={}; let pa
   { const P=window.Progress; if(P&&P.formsList&&P.lineOf&&P.knowsForm&&(P.evoOn?P.evoOn():!(SAVE&&SAVE.unlock&&!SAVE.unlock.evo))){ const lines=new Set(L.concat(EX).map(p=>+P.baseOf(+p.mid))); const add=P.formsList().filter(id=>lines.has(+P.baseOf(+id))&&P.knowsForm(id)); for(const p of L) if(P.evoLv) for(const id of P.lineOf(+p.mid)){ const nd=P.storyEvoLv?P.storyEvoLv(id):P.evoLv(id); if(nd&&(F.lv0||lv)>=nd) add.push(+id); }   /* 2026-11-19: 隊は台本どおり(その話の元の Lv で見る。12話でフォルレオン) */   /* 2026-11-17 オーナー「クロッコがLvを超えても進化しなかった」: 連れの子(アレクのクロッコ等)もLvで覚えた進化は使える */ if(add.length) opt.player.owned=[...new Set(opt.player.owned.concat(add))]; } }   // 2026-11-17 オーナー「Lv12でフォルレオンに進化したのに進化できない」: 物語の勝負でも、Lvで覚えた進化の姿は使える opt.player.fusionKnown=(F.fuse||[]).slice(); opt.player.stageFree=true;
   opt.fusionUnlocked=!!(F.fuse&&F.fuse.length); opt.tripleUnlocked=false; opt.startStage=1; opt.alignMinions=true;
   opt.budget=L.reduce((a,p)=>a+grStageOf(p.mid),0)+EX.reduce((a,p)=>a+grStageOf(p.mid),0);
-  { const SC=GR_SCRIPT[+F._ep], P=window.Progress; if(SC){ const sc={head:[], evo:(SC.evo||[]).map(x=>Object.assign({},x)), fuse:(SC.fuse||[]).map(x=>Object.assign({},x))};
+  { const SC=GR_SCRIPT[+F._ep]||{head:1}, P=window.Progress; if(SC){   /* 2026-11-20 オーナー「こちらのテリオンが最初からエルレオンとかナルカミとして出てる」: どの話も一段目(戻り)で出て頭で進化 */ const sc={head:[], evo:(SC.evo||[]).map(x=>Object.assign({},x)), fuse:(SC.fuse||[]).map(x=>Object.assign({},x))};
     if(SC.head&&P&&P.baseOf) for(const p of L){ if((SC.nohead||[]).includes(+p.mid)) continue; const b=+P.baseOf(+p.mid); if(b&&b!==+p.mid){ sc.head.push(+p.mid); p.mid=b; } }
     opt.script=sc; } }
   // 2026-11-19 オーナー「敵が弱いのはこちらが4体なのに敵は3とかやから。ある程度の話数いったら4でいい」: 13話(決勝のあと)からは 相手の数を こちらの数(4まで)にそろえる。足す子=その地図の野生の2段目(助っ人)。数がそろうので 足した数の埋め合わせ(tadj)はかけない
