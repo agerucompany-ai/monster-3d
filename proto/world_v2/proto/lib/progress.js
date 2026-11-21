@@ -29,7 +29,7 @@ const CFG={
   cradlePrice:150,                            // 「テリオンを生み出す」1回のジェム(中の名前は cradle のまま)
   dupGemsBack:75,
   bossLearn:0.33,                             // 2026-10-28 オーナー「だいたい33％」: ボスの姿(進化)・古代テリオン(融合)を倒した時に覚える確率。初めての時だけ・また戦えば何度でも挑める                             // ダブりで相手がLv99の時だけジェムを返す(ふだんのダブりは「その子が1レベル上がる」)
-  partyMax:3, partyMaxLate:5, partyMaxFinal:6, followMax:3,    // 連れて歩く数(序盤3・守り②のあと5・北欧編に入ったら6=2026-10-27 終盤のボス戦が6対6)・画面でついて歩くのは3
+  partyMax:3, partyMaxLate:4, partyMaxFinal:6,   /* 2026-11-21 オーナー: 3→4(ギリシャはここまで)→中国の大会優勝で5→北欧で6 */ followMax:3,    // 連れて歩く数(序盤3・守り②のあと4・中国の大会優勝で5・北欧編に入ったら6=2026-10-27 終盤のボス戦が6対6)・画面でついて歩くのは3
   arc:'greece',
 };
 // 編ごとの野生の系統(1段目のid)。テリオン_編ごとの表.md より。相棒3系統(1001/178/1022)は「生み出す」に入れない・融合といにしえは入れない
@@ -173,7 +173,7 @@ P.party=()=>{ const pg=prog(); return pg?pg.party.map(u=>pg.roster.find(c=>c.uid
 P.ranch=()=>{ const pg=prog(); return pg?pg.roster.filter(c=>!pg.party.includes(c.uid)):[]; };
 P.partyMax=()=>prog()?prog().partyMax:CFG.partyMax;
 P.setPartyMax=(n)=>{ const pg=prog(); if(!pg) return; pg.partyMax=Math.max(1,Math.min(6,+n||CFG.partyMax)); while(pg.party.length>pg.partyMax) pg.party.pop(); P.save(); };
-P.unlockLate=()=>P.setPartyMax(CFG.partyMaxLate);
+P.unlockLate=()=>{ if(P.partyMax()<CFG.partyMaxLate) P.setPartyMax(CFG.partyMaxLate); };   // 減らさない(前の版で5体にしたセーブはそのまま)
 P.followers=()=>P.party().slice(0,CFG.followMax).map(c=>c.mid);   // 画面でついて歩く子(3体まで)
 P.leader=()=>P.party()[0]||null;
 P.isBossForm=(mid)=>BOSS_FORMS.includes(+mid)||TRUMP_FORMS.includes(+mid);

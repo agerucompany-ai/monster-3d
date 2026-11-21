@@ -241,7 +241,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 <script src="lib/v83char.js"></script>
 <script src="../chars/viewer/hero_v2.js"></script>
 <script src="../v3/chars/char_v3.js"></script>
-<script src="lib/progress.js?v=20261121e"></script>
+<script src="lib/progress.js?v=20261121f"></script>
 <script src="lib/pay.js"></script>
 <script>
 (function(){
@@ -2754,7 +2754,8 @@ const QUEST_GEMS={mission:120,guard1:150,guard2:150,guard3:150,guard4:150,king:3
   eg_cairo:60,eg_giza:40,eg_delta:40,eg_luxor:40,eg_valley:40,eg_tomb:40,eg_aswan:40,eg_abusimbel:40,eg_white:40,eg_redsea:40, eg_champ0:100,eg_sphinga:150,eg_doroka:150,eg_champ1:100,eg_osira:150,eg_anubid:150,eg_champ2:100,eg_ransom:150,eg_eleki:150,eg_oberi:120,eg_raga:200,eg_ekuri:150,eg_levia:300,
   nr_oslo:60,nr_fjord:40,nr_lofoten:40,nr_iceland:40,nr_uppsala:40,nr_lapland:40,nr_ygg:40,nr_svalbard:40,nr_glacier:40,nr_core:40, nr_champ0:100,nr_champ1:100,nr_champ2:100,nr_mitsu:150,nr_kubi:120,nr_kraken:150,nr_surtr:150,nr_odin:150,nr_sleip:150,nr_aurora:150,nr_fenrir:150,nr_nidhogg:200,nr_unicorn:120,nr_mammoth:120,nr_narwhal:150,nr_ransom3:150,nr_bot:200,nr_bella3:200,nr_adrian:300,nr_ragna:500};   // 北欧編(2026-10-27): 新しい土地40・古印100・古代テリオン150・幹部200・スペクター300・ラグナディオ500   // 中国編(2026-10-26): 新しい土地40・守り150・八つ首200・青龍300 / エジプト編(2026-10-26): 新しい土地40・古印100・古代テリオン150・ラーガ200・リヴァイア300
 function onFlag(k){ if(!(window.Progress&&Progress.state())) return;
-  if(k==='guard2') Progress.unlockLate();                 // 守り②のあと: 連れて歩くのが5体に
+  if(k==='guard2') Progress.unlockLate();                 // 守り②のあと: 連れて歩くのが4体に(2026-11-21 オーナー「最初は3体、次は4体」・ギリシャは4体まで)
+  if(k==='cn_champ'&&Progress.partyMax()<5) Progress.setPartyMax(5);   // 2026-11-21 オーナー「中国以降もっと増やせるように。大会優勝後とか」: 中国の大会で優勝したら5体(北欧に入ったら6体)
   // 進化の解禁は第19話の大橋の場面(SC.evo19)へ移した(2026-10-28)。古いセーブは contGame で手当て    // 運河の町コリンタ(第19話 フォルン→フォルコン): 進化の解禁
   if(k==='guard4'&&SAVE.unlock){ SAVE.unlock.fusion=true; setTimeout(()=>toast('融合ができるようになった。材料の2体をどちらもLv'+Progress.FUSE_LV+'まで育てると、その融合の仕方を覚える'),2600); }   // 2026-10-28: 古代テリオン以外の融合の仕方はここでまとめて覚える  // 守り④のあと(第26話 初めての融合): 融合の解禁
   if(k==='cn_bund') Progress.setArc('china');            // 中国編(2026-10-26): 巨大都市アークに着いたら編を中国へ(「生み出す」の種類・野生の既定)
@@ -3332,9 +3333,9 @@ const GR_FIGHTS={
       hint:'光は闇によく効く。羽を閉じたコウモリには、炎も水も通らない。'},   // 11/08: ヴィクター本人の最強の子ヴァンプロード＋チップのアトラード(負けてよい回)
   20:{tadj:1.3, foe:{n:'チップの子', party:[{mid:1027,fixed:true,evo:true}]}, me:[1025,1012], lv:16, board:'ep20', look:'olive', must:1, own:[1013], ai:{hpX:1.983,atkX:1.983},
       hint:'雷は水を伝う。池のまん中まで来れば雷は散る。クロベクは、相手の陣の三列でクロコディロスに進化できる。'},   // 11/08: カシアのルナウル＋ニジッコ→チップのトールジン→トールガ
-  21:{tadj:1.0, foe:{n:'ヴィクター', party:[{mid:1067,fixed:true},{mid:1064,fixed:true}]}, me:['P3',1025,1013], lv:17, board:'ep21', look:'olive', must:1, fuse:[], ai:{hpX:1.006,atkX:1.006},
+  21:{tadj:1.0, foe:{n:'ヴィクター', party:[{mid:1067,fixed:true},{mid:1064,fixed:true}]}, me:['P3',1025,1013], lv:17, board:'ep21', look:'olive', must:1, fuse:[], ai:{hpX:2.1,atkX:1.55},   /* 2026-11-21 オーナー「21と22はめちゃくちゃ難しくして」: 1.006→2.1/1.55(シムの勝ち 96%→約2割) */
       hint:'光は闇によく効く。雷は水を伝う。三段目の三体で、コウモリの羽が開いた所をねらえ。'},   // 11/08: 古代アトラード(＋融合2つ)→ヴァンプロード＋カシアのルナウル。融合は呼ばない(台本「手を開く」)
-  22:{tadj:1.3, foe:{n:'レン', party:[{mid:2054,fixed:true},{mid:2031,fixed:true}]},   /* 2026-11-21 オーナー「最後はバジリクとクジラのやつで(大会はバジリクのまま)」 */ me:['P3'], lv:17, board:'ep22', look:'olive', must:0, ai:{hpX:0.444,atkX:0.444},
+  22:{tadj:1.3, foe:{n:'レン', party:[{mid:2054,fixed:true},{mid:2031,fixed:true}]},   /* 2026-11-21 オーナー「最後はバジリクとクジラのやつで(大会はバジリクのまま)」 */ me:['P3'], lv:17, board:'ep22', look:'olive', must:0, ai:{hpX:1.4,atkX:1.2},   /* 2026-11-21 オーナー「21と22はめちゃくちゃ難しくして」: 0.444→1.4/1.2(シムの勝ち 100%→約2割) */
       hint:'目を閉じて待て。もぐった相手が出る所をねらえ。'},
 };
 // 2026-11-19 オーナー「後半の敵がちょっと弱すぎる」: 野生は話数で上がる(progress.js wildLvW=1.5+1.25×話)のに、物語の勝負は話のLv(22話で17)のままで、育てた子より10以上低かった。
@@ -3345,8 +3346,8 @@ const GR_PMID={P1:1001,P2:1002,P3:1003};
 // 2026-11-06 オーナー「仲間にしたはずのトールキッドとかが使えないのは意味がない」: 物語の勝負でも、表の隊(me・必ず出る)に 自分の仲間から足せる。
 //  足せる数 grTeamSlots(F)=4−表の数(1つは必ず)。足した子は1段目・Lv はその話の Lv まで・戦いの中では覚えた姿まで進化できる。
 //  相手の強さの埋め合わせ grTeamAdj(F, 足した数)=相手の体力・攻撃にかける倍率。F.tadj=枠いっぱいに足した時の倍率(話ごとに 人の手 naiveB で合わせる。上限2)。少なく足した時はその割合
-function grTeamMax(){ const P=window.Progress; const n=(P&&P.partyMax)?+P.partyMax():4; return Math.max(4, Math.min(6, n||4)); }   // 2026-11-20 オーナー「こっち4体しか選べないのはおかしい。いつも通りに」: 物語の勝負も 連れて歩ける数(9話の守り②のあと5体)まで
-function grTeamSlots(F){ return Math.max(1, grTeamMax()-(F.me||[]).length); }
+function grTeamMax(){ const P=window.Progress; const n=(P&&P.partyMax)?+P.partyMax():3; return Math.max(3, Math.min(6, n||3)); }   // 2026-11-21 オーナー「こちらのテリオン数を制限するような戦いはやめて。最初は3体、次は4体、5体、6体」: 物語の勝負は いつも 連れて歩ける数(序盤3・守り②のあと4・中国の大会で優勝したら5・北欧で6)まで出せる   // 2026-11-20 オーナー「こっち4体しか選べないのはおかしい。いつも通りに」: 物語の勝負も 連れて歩ける数(9話の守り②のあと5体)まで
+function grTeamSlots(F){ return Math.max(0, grTeamMax()-(F.me||[]).length); }
 function grTeamAdj(F, n){ return n>0?1+((F.tadj||1)-1)*Math.min(1,n/grTeamSlots(F)):1; }
 
 // ============================================================================
@@ -3601,7 +3602,7 @@ const GR_HOOK={
 const GR_DONE={
   2: ()=>{ flag('ep2'); flag('mission'); },      // 村の研究所(テリオンを生み出す)が開く・古代の競技場(ジェム)
   5: ()=>{ flag('stavros'); },                   // ヤニスの畑
-  9: ()=>{ flag('guard2'); },                    // 連れて歩けるのが5体に(白い都へ)
+  9: ()=>{ flag('guard2'); },                    // 連れて歩けるのが4体に(白い都へ)
   11:()=>{ flag('thunder'); flag('guard4'); },   // 準決勝(ジェム)・初めての融合(エルレオン)→ 融合の解禁(11/08: 17話から11話へ)
   12:()=>{ flag('sophia'); },                    // 優勝(ジェム)
   15:()=>{ flag('mihalis'); },                   // 運河の記録(ジェム)
@@ -4050,7 +4051,7 @@ function grPickTeam(s){ const F=s.F; GR_TEAM=null;
   for(const m of fixed){ const r=mon(m); if(r&&r.role==='fusion') for(const x of (r.recipe||r.fusion_from||[])) used.add(base(x)); }
   const cand=P.roster().filter(c=>{ const r=mon(c.mid); return r&&r.role!=='fusion'&&!used.has(base(c.mid)); }).sort((a,b)=>(b.lv||1)-(a.lv||1));
   if(!cand.length) return Promise.resolve(null);
-  const n=grTeamSlots(F); const prev=(SAVE&&Array.isArray(SAVE.grTeam)?SAVE.grTeam:[]).filter(u=>cand.some(c=>c.uid===u)).slice(0,n);
+  const n=grTeamSlots(F); if(n<=0) return Promise.resolve(null); const prev=(SAVE&&Array.isArray(SAVE.grTeam)?SAVE.grTeam:[]).filter(u=>cand.some(c=>c.uid===u)).slice(0,n);
   const sel=new Set(prev); const img=mid=>'../battle/img/'+mid+'.webp';
   return new Promise(res=>{ const w=document.createElement('div'); w.id='grTeam';
     w.style.cssText='position:fixed;inset:0;z-index:80;background:rgba(14,20,36,.78);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;font-family:inherit';
