@@ -491,6 +491,7 @@ function checkWin(){
   if(!state || state.phase==='end') return true;
   if(state.phase!=='battle') return false;
   if(state.sp){ const sr=spCheck(); if(sr!==null) return sr; }   // 2026-10-31 専用の盤の勝ち負け
+  if(laterPending()){ laterJoin(false); if(!alive(1).length||!leaderAlive(1)) laterJoin(true); if(!leaderAlive(1)&&alive(1).length){ const nl=alive(1)[alive(1).length-1]; nl.leader=true; } }   // 2026-11-24 あとから加わる子(18話のゴッドヘラク)
   const wa=!!(BT.diff&&BT.diff.winAll);   // 2026-10-27 終盤のボス戦(enemy.ai.winAll): 相手はリーダーを倒しても終わらない=全員倒せば勝ち(自分はリーダーが倒れたら負けのまま)
   const a0=leaderAlive(0), a1=wa?alive(1).length>0:leaderAlive(1);
   if(a0 && a1) return false;
@@ -1565,6 +1566,13 @@ function scrTick(u){ const S=BT.opts&&BT.opts.script; if(!S||!state||state.phase
     const lineHas=(x,id)=>x.mid===+id||scrReach(id,x.mid); const p=alive(0).find(x=>x.uid!==u.uid&&(isA?lineHas(x,f.b):lineHas(x,f.a))); if(!p) return; S._done[k]=1;
     const run=()=>{ if(!state.units[u.uid]||!state.units[p.uid]||state.phase!=='battle') return; u.evo=true; scrForce(()=>tryFusion(u,p,u.r,u.c)); };
     if(BT.headless||window._SIM) run(); else setTimeout(run,600); }); }
+// 2026-11-24 オーナー(18話)「こっちが押してると融合する」: 相手の二体(opts.enemy.fuseAt={a,b,hp})が弱ったら、その場で融合(ニーナとマルコ→イーグリズ)。hp=二体の体力の合計の割合がこれを切る・どちらか一体が4割を切る
+function foeFuseTick(u){ const F=BT.opts&&BT.opts.enemy&&BT.opts.enemy.fuseAt; if(!F||!state||state.phase!=='battle'||!u||u.owner!==1||state.foeFused) return;
+  const isA=u.mid===+F.a||scrReach(F.a,u.mid), isB=u.mid===+F.b||scrReach(F.b,u.mid); if(!isA&&!isB) return;
+  const p=alive(1).find(x=>x.uid!==u.uid&&(isA?(x.mid===+F.b||scrReach(F.b,x.mid)):(x.mid===+F.a||scrReach(F.a,x.mid)))); if(!p) return;
+  const sh=(u.hp+p.hp)/Math.max(1,u.maxhp+p.maxhp); if(!(sh<(F.hp||0.6)||u.hp<u.maxhp*0.4||p.hp<p.maxhp*0.4)) return;
+  state.foeFused=1; const run=()=>{ if(!state.units[u.uid]||!state.units[p.uid]||state.phase!=='battle') return; u.evo=true; scrForce(()=>tryFusion(u,p,u.r,u.c)); if(F.msg&&!BT.headless) toast(F.msg); laterJoin(false); };
+  if(BT.headless||window._SIM) run(); else setTimeout(run,600); }
 function spdAct(u){ const S=state.spd;
   repairBoard(); if(!state.units[u.uid]){ u.sdone=true; spdNext(); return; }
   S.cur=u.uid; S.n++; state.cur=u.owner;
@@ -1577,7 +1585,7 @@ function spdAct(u){ const S=state.spd;
   if(V2ON() && EVO_CELLS.length && gaugeZone(u) && !(u.dug>0)) addGauge(u, CENTER.tick);
   ancCheck(); refreshEvoArea(); syncUnits();
   if(checkWin()) return;
-  scrTick(u);
+  scrTick(u); foeFuseTick(u);
   if(window._SIM || BT.headless) return;
   const sw=S.last!==u.owner; S.last=u.owner;
   if(u.owner===0){ undoStack=[]; if(sw) showBanner('あなたの番'); clearSel(); updateUI(); if(BT.auto) autoTurn(); else selectUnit(u); }
@@ -5728,7 +5736,7 @@ const ANCIENT={
     3:{hp:6.24, atk:2.33, actions:2, phases:3, big:{from:0, every:3, rng:2, x:3.0, shape:'area'},  minions:1, rageAtk:0.12},   // 守り③ ペガゼウス(コリンタ・Lv7〜10・5体・進化あり): 序盤を耐えて進化で逆転
     4:{hp:7.11, atk:2.32, actions:2, phases:3, big:{from:0, every:3, rng:2, x:3.0, shape:'area'},  minions:2, rageAtk:0.12},   // ボス トールガ(雲の山道・Lv9〜12)
     5:{hp:4.68, atk:1.64, actions:2, phases:3, big:{from:0, every:3, rng:4, x:3.0, shape:'cross'}, minions:2, rageAtk:0.15},   // 守り④ アトラード(デルフィナ・Lv11〜14): 大技が十字(幅3)で広い
-    6:{hp:5.31, atk:0.99, actions:2, phases:3, big:{from:0, every:2, rng:4, x:3.0, shape:'cross'}, minions:2, rageAtk:0.15},   // 王 ゴッドヘラク(競技場の下・Lv13〜16・融合あり): 移動3の近接・大技が2ターンおき・目覚めで攻撃+15%ずつ
+    6:{hp:5.31, atk:0.99, actions:2, phases:3, big:{from:0, every:2, rng:4, x:3.0, shape:'cross'}, minions:2, rageAtk:0.15},   // 段6の古代(前は競技場の下の王ゴッドヘラク用。2026-11-24 ゴッドヘラクは18話のゼノの子になり、ここは北欧・海などの大物で使う): 移動3の近接・大技が2ターンおき・目覚めで攻撃+15%ずつ
   },
 };
 function ancUnit(){ return state?alive(1).find(u=>u.anc)||null:null; }
@@ -6357,6 +6365,19 @@ function unitMul(u, rank, extraHp, extraAtk){   // 出撃時の体力・攻撃�
 }
 function partyLevel(arr){ return arr.reduce((s,p)=>s+(MID[p.mid]?MID[p.mid].level:1),0); }
 // 敵を自陣の奥に並べる(リーダー=先頭 or leader:true を中央の奥)
+// 2026-11-24 オーナー「グリズガルド、ゼファーグルと戦ってて、こっちが押してると融合する流れ」「ゼノの手持ちはゴッドヘラクだけ」(18話): あとから加わる相手(opts.enemy.later)。
+//  [{mid, lv, onFuse:1(相手が融合したら)・turn:N(その手番から)・onLoss:n(相手がn体減ったら), msg}]。相手が全員倒れても まだ来ていない子は先に出す(勝ちにしない)
+function laterJoin(force){ const L=BT.opts&&BT.opts.enemy&&BT.opts.enemy.later; if(!Array.isArray(L)||!L.length||!state||state.phase!=='battle') return false;
+  const done=state.laterDone||(state.laterDone=[]); let added=false;
+  L.forEach((e,i)=>{ if(done[i]) return; const foes=alive(1); const fused=foes.some(u=>(mon(u)||{}).role==='fusion'); const lost=(BT.enemyParty||[]).length-foes.length;
+    if(!(force||(e.onFuse&&fused)||(e.turn&&state.turn>=e.turn)||(e.onLoss&&lost>=e.onLoss))) return;
+    const mc=(NC-1)/2, cells=[]; for(const r of START_ROWS[1]) for(let c=0;c<NC;c++) if(!unitAt(r,c)) cells.push([r,c]); if(!cells.length) return;
+    cells.sort((p,q)=>(Math.abs(p[1]-mc)+Math.abs(p[0]-START_ROWS[1][0])*0.5)-(Math.abs(q[1]-mc)+Math.abs(q[0]-START_ROWS[1][0])*0.5)); const [r,c]=cells[0];
+    const D=BT.diff||{}, PV=(T3()&&TACT.pve[BT.kind])||{}, SK=pveStageX(); const ent=normParty([Object.assign({fixed:true},e)])[0]; if(!MID[ent.mid]) return;
+    const nu=addUnit(1,ent.mid,r,c); unitMul(nu, ent.rank, (D.hpX||1)*(PV.hp||1)*SK*(e.hpX||1), (D.atkX||1)*(PV.atk||1)*SK*(e.atkX||1)); if(ent.lv) nu.lv=ent.lv; nu.src=[]; nu.mid0=ent.mid; if(e.boss) nu.isBoss=true;
+    done[i]=1; added=true; if(!BT.headless){ floatText(r,c,e.msg||'加わった！','#ffd860'); toast(e.msg||(MID[ent.mid].name+'が 加わった！')); } });
+  if(added) syncUnits(); return added; }
+function laterPending(){ const L=BT.opts&&BT.opts.enemy&&BT.opts.enemy.later; if(!Array.isArray(L)) return false; const d=(state&&state.laterDone)||[]; return L.some((e,i)=>!d[i]); }
 function spawnEnemy(){
   const D=BT.diff||{};
   const team=BT.enemyParty.slice(); let li=team.findIndex(e=>e.leader); if(li<0) li=0;

@@ -67,8 +67,10 @@ const GR_FIGHTS={
       hint:'光は遺跡の上で回復する。逃げ道に先に立て。'},
   17:{tadj:1.2, anc:{mid:2066, tier:3, tune:{hp:2.175,atk:0.870}, minions:[1064]}, me:['P3',1012,1054], lv:14, board:'ep17', look:'agora', must:1, learn:1, fuse:[2073],
       hint:'古代は一つの番に二回動く。赤く光るマスは、崩れない柱のかげなら半分。'},   // 11/08: 目覚めで呼ぶ子分=カシアのルナウル
-  18:{tadj:1.5, foe:{n:'ゼノ', party:[{mid:111,fixed:true,evo:true}]}, me:['P3',1012,71,1054], lv:15, board:'ep18', look:'agora', must:1, fuse:[2073], ai:{hpX:1.699,atkX:1.699},
-      hint:'水の子は水路から大技を撃つ。撃ちつくさせてから、紅蓮竜顎。'},
+  18:{tadj:1.0, foe:{n:'ニーナとマルコ', party:[{mid:1071,fixed:true},{mid:1032,fixed:true}], noAdd:1,   /* 2026-11-24 オーナー「もう一回ニーナとマルコ登場させてイーグリズに」「グリズガルド、ゼファーグルと戦ってて、こっちが押してると融合する」「ゼノの手持ちはゴッドヘラクだけ」: 前=ゼノのラッコン＋助っ人イーグリズ */
+        fuseAt:{a:1071,b:1032,hp:0.6,msg:'ニーナとマルコ「グリズガルド、ゼファーグル、融合！」'}, later:[{mid:2061,onFuse:1,onLoss:1,turn:6,msg:'ゼノのゴッドヘラクが 起き上がった！'}]},
+      me:['P3',1012,71,1054], lv:15, board:'ep18', look:'agora', must:1, fuse:[2073], ai:{hpX:1.3,atkX:1.1,winAll:1},   /* 2026-11-24 シム(3段目どうし40回): 前のゼノ戦と同じくらいの勝ち(約2〜3割)。相手のAIの融合は使わず、fuseAt の台本どおりの融合だけ */
+      hint:'大波は金の角の子が起こす。水がなくなるまで待って、紅蓮竜顎。'},
   19:{tadj:1.0, foe:{n:'ヴィクター', party:[{mid:1067,fixed:true},{mid:2067,fixed:true}]}, me:['P3',71,1012], lv:15, board:'ep19', look:'olive', must:0, own:[1025], fuse:[2073], ai:{hpX:1.101,atkX:1.101},
       hint:'光は闇によく効く。羽を閉じたコウモリには、炎も水も通らない。'},   // 11/08: ヴィクター本人の最強の子ヴァンプロード＋チップのアトラード(負けてよい回)
   20:{tadj:1.3, foe:{n:'チップの子', party:[{mid:1027,fixed:true,evo:true}]}, me:[1025,1012], lv:16, board:'ep20', look:'olive', must:1, own:[1013], ai:{hpX:1.983,atkX:1.983},
