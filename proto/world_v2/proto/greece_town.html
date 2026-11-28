@@ -137,6 +137,10 @@ html,body{margin:0;height:100%;overflow:hidden;background:#dbe8ee;touch-action:n
 #stBox.nar{background:rgba(20,24,40,.84);border-color:rgba(255,255,255,.4)}#stBox.nar p{color:#fff}#stBox.nar b{display:none}
 #stBox i{position:absolute;right:16px;bottom:8px;width:0;height:0;border:7px solid transparent;border-top-color:var(--ink);animation:bob 1s infinite}
 #stBox.nar i{border-top-color:#fff}
+/* 2026-11-29 場面の絵(全画面)の時は全身の立ち絵を出さず、枠の左に話す人の顔だけ(絵を隠さない・同じ人が二人並ばない) */
+#st.cg .stP{display:none}
+#stFc{display:none;position:absolute;left:14px;top:50%;transform:translateY(-50%);width:78px;height:78px;border-radius:14px;background-color:#efe7d8;background-repeat:no-repeat;border:3px solid var(--ink);box-sizing:border-box}
+#stBox.fc{padding-left:106px;min-height:106px}#stBox.fc #stFc{display:block}#stBox.fc b{left:106px}
 @keyframes bob{50%{transform:translateY(3px)}}
 #stCard{position:absolute;inset:0;display:none;cursor:pointer}
 #stCard::after{content:"";position:absolute;left:0;right:0;bottom:0;height:46%;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.55));pointer-events:none}
@@ -230,7 +234,7 @@ button,a{-webkit-tap-highlight-color:transparent}
   <div id="stCard"><div class="cap"></div></div>
   <img class="stP off" id="stR2" alt=""><img class="stP off" id="stL" alt=""><img class="stP off" id="stR" alt=""><div id="stPh"><img alt=""></div>
   <div id="stPick"></div>
-  <div id="stBox"><b></b><p></p><i></i></div>
+  <div id="stBox"><span id="stFc"></span><b></b><p></p><i></i></div>
   <div id="stTitle"><h1><img src="ui/logo.webp" alt="テリオンモンスター"></h1><button class="stBtn" id="btNew">はじめから</button><button class="stBtn sub" id="btCont">つづきから</button><div class="stMini"><button id="btTest">全部ためす</button><a id="btVs" href="../battle/vs.html">CPU対戦</a><a id="btDex" href="../battle/dex.html">テリオン表</a><a id="btFuse" href="../battle/fusion.html">融合表</a></div><button id="btXfer" class="stXfer">機種変更の引き継ぎ</button><button id="btBgmT">曲 大</button></div>
   <button id="stSkip">スキップ</button><button id="stFF">早送り</button><button id="stVc">声 大</button><button id="stBgm">曲 大</button>
 </div>
@@ -3040,9 +3044,13 @@ let ST_END=-1e9; function stHide(){ if(!ST.el.classList.contains('field')) ST_EN
 let BG_N=99, BG_SC=0; const BG_MIN=4;   // 2026-11-27 オーナー「画面がパッパと切り替わりすぎで逆に見にくい」: 場面の絵は前に変えてから4行たつまで次へ変えない(場面の頭の2行と暗転は別)
 /* 2026-11-29 台本の指示書きはゲームの画面に出さない: 台詞の頭の（小声で）など・語りの中の制作メモ（1カット・台詞なし／顔は映さない／2100年の作業着 など）。台本の文は変えない */
 function grStageOff(L,t){ if(L.w!=null) return t.replace(/^\s*[（(][^）)]*[）)]\s*/,''); return t.replace(/（[^）]*(カット|台詞なし|映さない|字幕なし|年の|話の|のまま)[^）]*）/g,''); }
+const FC={alek:[152,122,180],ana:[163,110,150],dimi:[150,75,130],elly:[155,58,90],hao:[150,80,130],hero_f:[145,130,190],hero_m:[155,122,190],kasia:[150,75,130],marco:[175,85,130],marina:[150,95,150],nina:[140,90,140],nomos:[155,90,150],oba:[160,95,170],stavros:[160,85,170],victor:[150,70,130],zeno:[155,80,140]},
+  FC_F={alek_serious:[160,170,210],alek_angry:[160,175,210],alek_sad:[170,140,210],alek_surprised:[150,140,210],hero_m_serious:[148,135,200]};   // 顔の切り抜き [中心x,中心y,幅] (立ち絵を320四方としたとき)
+function fcSet(src){ const el=$('stFc'); const f=src.split('/').pop().split('?')[0].replace(/\.webp$/,''); const [cx,cy,w]=FC_F[f]||FC[f.replace(/_[a-z]+$/,'')]||[160,100,180]; el.style.backgroundImage=`url(${src})`; el.style.backgroundSize=(32000/w)+'%'; el.style.backgroundPosition=`${(cx-w/2)/(320-w)*100}% ${(cy-w/2)/(320-w)*100}%`; }
 async function runScene(lines,opt){ opt=opt||{}; lines=grNoEpNo(lines); if(Array.isArray(lines)) lines=lines.filter(L=>!(L&&L.w==null&&typeof L.t==='string'&&(L.t.startsWith('【プロフィール】')||L.t.startsWith('【字幕】'))));   /* 2026-11-20 オーナー「新しいテリオンの紹介、名前のあと●○○とか入ってて、それやったらいらん。なしでいい」: 台本の【プロフィール】(アニメのテロップ用)は出さない */ const field=!!opt.field; if(opt.prologue&&OPEN_SKIP){ for(const L of lines){ if(L.fn&&!VISUAL_FN.test(String(L.fn))&&(!L.if||L.if())) await L.fn(); } return; } STORY=true; objUpdate(); enterEl.classList.remove('on'); talkClose(); IN.active=false; IN.sx=IN.sy=0; stick.style.display='none'; AUTO=null;
   stShow(field?'field':'full',opt.bg); if(!field) PAUSED=true; SKIP_SCENE=!!(opt.prologue&&OPEN_SKIP)||performance.now()-SKIP_CHAIN_T<8000; ST_FF.style.display='block'; ST.skip.style.display='block'; ST.skip.textContent=opt.prologue?'冒頭をスキップ':'スキップ'; ST_FF.style.right=(14+ST.skip.offsetWidth+8)+'px'; VC.btn.style.display=vcHas()?'block':'none'; VC.btn.style.right=(14+ST.skip.offsetWidth+8+ST_FF.offsetWidth+8)+'px'; { const bb=$('stBgm'); bb.style.display='block'; bb.style.right=(14+ST.skip.offsetWidth+8+ST_FF.offsetWidth+8+(vcHas()?VC.btn.offsetWidth+8:0))+'px'; }
   ST.skip.onclick=e=>{ e.stopPropagation(); SKIP_SCENE=true; vcStop(); if(opt.prologue) OPEN_SKIP=true; advance(); };
+  ST.el.classList.toggle('cg',!field); ST.box.classList.remove('fc');
   if(Array.isArray(lines)&&!lines.some(x=>x&&x.w==='hero'&&x.t)) ST.L.classList.add('off');   /* 2026-11-29 ヤマトが出ない場面(悪役だけの部屋など)では、前の場面のヤマトの立ち絵を残さない */
   if(ST.L.classList.contains('off')) ST.L.removeAttribute('src'); ST.R.removeAttribute('src'); ST.R2.removeAttribute('src');   // 2026-11-13 続けて始まる場面ではヤマトの立ち絵を消さない(場面の切れ目でぱかぱか出入りしない)
   if(!SKIP_SCENE){ const ps=[]; for(const L of lines){ const q=L.w&&L.w!=='partner'?pSrc(L.w,lineFace(L)):null; if(q&&!ps.includes(q)) ps.push(q); } await Promise.race([Promise.all(ps.map(u=>new Promise(r=>{ const im=new Image(); PIMG[u]=im; im.onload=im.onerror=r; im.src=u; }))),sleep(1500)]); }
@@ -3057,6 +3065,7 @@ async function runScene(lines,opt){ opt=opt||{}; lines=grNoEpNo(lines); if(Array
     const src=w&&w!=='partner'&&!L.np?pSrc(w,lineFace(L)):null;   // np=絵の中に本人が描いてある時は立ち絵を出さない
     // 置き方(style_v3 10章): 主人公=左(右向き)。相手=右(反転して左向き)。右に2人目が来たら、前の人は右のうしろの枠へ。電話は右上の画面
     ST.ph.style.display=L.ph&&src?'block':'none';
+    if(!field&&src&&!L.ph){ fcSet(src); ST.box.classList.add('fc'); } else ST.box.classList.remove('fc');
     if(L.ph&&src){ const im=ST.ph.querySelector('img'); if(im.getAttribute('src')!==src) im.src=src; im.style.transform=w==='ryo'?'':'scale(2.1)'; im.style.transformOrigin='50% 30%'; ST.L.classList.add('dim'); ST.R.classList.add('dim'); ST.R2.classList.add('dim'); }
     else if(src&&w==='hero'){ if(ST.L.getAttribute('src')!==src) ST.L.src=src; ST.L.classList.remove('off','dim'); ST.R.classList.add('dim'); ST.R2.classList.add('dim'); }
     else if(src){ const R=ST.R, R2=ST.R2;
@@ -3066,7 +3075,7 @@ async function runScene(lines,opt){ opt=opt||{}; lines=grNoEpNo(lines); if(Array
     pFace(ST.L,'L'); pFace(ST.R,'R'); pFace(ST.R2,'R');
     ST.el.classList.toggle('trio',!ST.R2.classList.contains('off')&&!!ST.R2.getAttribute('src'));
     vcPlay(L.w==null?null:L.v);   /* 2026-11-20 オーナー「ゲームでは声のナレーションいらない」: 語り(話す人なし)の声は鳴らさない */ { const P=splitT(grStageOff(L,fillT(L.t))); for(let pi=0;pi<P.length;pi++){ await typeOut(ST.tx,P[pi]); if(SKIP_SCENE) break; await waitAdvFF(P[pi].length); if(SKIP_SCENE) break; } } if(SKIP_SCENE){ vcStop(); continue; } vcStop(); }
-  if(SKIP_SCENE) SKIP_CHAIN_T=performance.now(); SKIP_SCENE=false; ST_FF.style.display='none'; VC.btn.style.display='none'; $('stBgm').style.display='none'; ST.skip.onclick=null; stHide(); STORY=false; if(!field){ PAUSED=!READY.scene||!!opt.keepPaused; LAST=performance.now(); } objUpdate(); saveGame(); }
+  if(SKIP_SCENE) SKIP_CHAIN_T=performance.now(); SKIP_SCENE=false; ST.el.classList.remove('cg'); ST.box.classList.remove('fc'); ST_FF.style.display='none'; VC.btn.style.display='none'; $('stBgm').style.display='none'; ST.skip.onclick=null; stHide(); STORY=false; if(!field){ PAUSED=!READY.scene||!!opt.keepPaused; LAST=performance.now(); } objUpdate(); saveGame(); }
 async function runCards(cards){ stShow('full'); PAUSED=true; ST.card.style.display='block'; ST.skip.style.display='block'; let skipAll=false; ST.skip.onclick=e=>{ e.stopPropagation(); skipAll=true; advance(); };
   for(const c of cards){ if(skipAll||!c.t) continue; ST.bg.style.opacity=0; await sleep(250); ST.bg.style.backgroundImage=`url(${bgUrl(c.bg)})`; ST.card.querySelectorAll('.mon2d').forEach(e=>e.remove());
     for(const m of c.mons||[]){ const im=document.createElement('img'); im.className='mon2d'; im.src='../battle/img/'+m[0]+'.webp'; im.style.left=m[1]+'%'; im.style.top=m[2]+'%'; im.style.width=`min(${m[3]||30}vw,${(m[3]||30)*6.3}px)`; im.style.animationDelay=(Math.random()*2)+'s'; if(m[4]) im.style.opacity=m[4]; ST.card.appendChild(im); }
