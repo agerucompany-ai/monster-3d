@@ -61,7 +61,7 @@ DX.arcOf=id=>{ const a=DX.md.arc[id]; if(a) return a; const m=DX.M[id]; if(m&&m.
 DX.makeArc=id=>DX.md.make[id]||DX.arcOf(id);
 DX.god=id=>(DX.S[id]&&DX.S[id].god)||null;
 DX.ancientArcs=id=>{ const a=(DX.S[id]&&DX.S[id].ancient)||[]; const out=[]; for(const p of a){ const k=/^cn_/.test(p)?'china':/^eg_/.test(p)?'egypt':/^nr_/.test(p)?'norse':'greece'; if(!out.includes(k)) out.push(k); } return out; };
-DX.roleTag=id=>{ const s=DX.md.memo[id]||''; const m=s.match(/守り[①-⑳]|ラスボス|王|玄武|朱雀|青龍|白虎|大会の相手/g); return m?m.join('・'):''; };
+DX.roleTag=id=>{ const s=DX.md.memo[id]||''; const m=s.match(/ラスボス|王|玄武|朱雀|青龍|白虎|大会の相手/g);   /* 2026-11-29 オーナーのGO「守りの札は消す」(今の22話の台本に守り①〜④は出てこない) */ return m?m.join('・'):''; };
 
 // ---- 相性(battle.js typeBonusT / typePenaltyT / typeResExt と同じ考え・案B) ----
 DX.resExt=(a,d)=>(DX.WEAK[a]||[]).includes(d) || (DX.STRONG[d]||[]).includes(a);
