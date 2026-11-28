@@ -36,7 +36,7 @@ function render(){
   const lines=[]; for(const b of bases){ const ch=[]; let c=b.id; const seen={}; while(c!=null&&DX.M[c]&&!seen[c]){ seen[c]=1; ch.push(c); c=DX.M[c].evolves_to; } lines.push(ch); }
   lines.sort((x,y)=>(DX.no[x[0]]??9999)-(DX.no[y[0]]??9999));   // 2026-11-13: monsters.json の順(新しい番号の順)
   const inLine=new Set(lines.flat()); const fids=new Set(DX.fusions.map(f=>f.id));
-  const elders=DX.list.filter(m=>!inLine.has(m.id) && !fids.has(m.id) && okT(m)).map(m=>m.id);   // 物語だけの古の個体(3024 ボルケン・3291 セイリュウ)など
+  const elders=DX.list.filter(m=>!inLine.has(m.id) && !fids.has(m.id) && okT(m) && DX.S[m.id]).map(m=>m.id);   /* 2026-11-29 強さの数字がない子(物語だけの古の個体 3024・3291。名前もふつうのボルケン・セイリュウと同じ)は図鑑に出さない(NaNと出ていた) */   // 物語だけの古の個体(3024 ボルケン・3291 セイリュウ)など
   const lineRow=(ch,mark)=>{ const m=DX.M[ch[0]]; const home=DX.md.home[ch[0]]; const a=DX.arcOf(ch[0]);
     return `<div class="lnh">${DX.tyb(m.type)}${DX.esc(m.line_name||'')}${mark&&a?`<span class="mk arc">${DX.esc(DX.ARC_JP[a])}</span>`:''}${home&&!(mark&&a&&home===DX.ARC_JP[a])?`<span class="mk arc">${DX.esc(home)}</span>`:''}</div><div class="ln">`+ch.map((id,i)=>(i?'<i class="ar"></i>':'')+DX.card(id)).join('')+'</div>'; };
   let h='';
